@@ -9,6 +9,7 @@ Tuist/DerivedData/
 
 # Derived data
 DerivedData/
+Derived/
 .build/
 
 # User-specific Xcode settings
@@ -28,7 +29,7 @@ xcuserdata/
 Package.resolved
 
 # SwiftPM Xcode integration
-.swiftpm/xcode/package.xcworkspace
+.swiftpm/
 
 # OS generated files
 .DS_Store
@@ -44,7 +45,7 @@ fastlane/screenshots/
 fastlane/test_output/
 
 *.env
-*.xcconfig.local
+*.xcconfig
 
 .idea/
 .vscode/

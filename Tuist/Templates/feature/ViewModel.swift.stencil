@@ -1,0 +1,16 @@
+//
+//  {{ name }}ViewModel.swift
+//  {{ name }}
+
+import Foundation
+
+final class {{ name }}ViewModel {
+    
+    init() {
+        // TODO: Initialize
+    }
+}
+
+
+
+
