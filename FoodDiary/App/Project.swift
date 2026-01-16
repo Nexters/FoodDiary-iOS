@@ -26,7 +26,7 @@ let project = Project(
                 .project(target: "Data", path: "../Data"),
                 .project(target: "DesignSystem", path: "../DesignSystem"),
                 .project(target: "Domain", path: "../Domain"),
-                .project(target: "Main", path: "../Feature/Main"),
+                .project(target: "Presentation", path: "../Presentation"),
             ]
         )
     ],

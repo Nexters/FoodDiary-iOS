@@ -13,15 +13,5 @@ public enum Module {
     case data
     case designSystem
     case domain
-    case feature(Feature)
-}
-
-public extension Module {
-    enum Feature: String, CaseIterable {
-        case main
-        
-        public var capitalized: String {
-            rawValue.prefix(1).uppercased() + rawValue.dropFirst()
-        }
-    }
+    case presentation
 }
