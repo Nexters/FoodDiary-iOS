@@ -6,7 +6,7 @@
 //
 
 import UIKit
-import Main
+import Presentation
 
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     
