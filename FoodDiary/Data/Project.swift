@@ -17,9 +17,11 @@ let project = Project(
             bundleId: "com.fooddiary.data",
             deploymentTargets: .iOS("18.0"),
             sources: ["Sources/**"],
+            resources: ["Resources/**"],
             dependencies: [
                 .project(target: "Domain", path: "../Domain"),
                 .project(target: "Core", path: "../Core"),
+                .external(name: "TensorFlowLiteSwift"),
             ]
         ),
         .target(
@@ -29,10 +31,10 @@ let project = Project(
             bundleId: "com.fooddiary.data.tests",
             deploymentTargets: .iOS("18.0"),
             sources: ["Tests/**"],
+            resources: ["Resources/**"],
             dependencies: [
-                .target(name: "Data")
+                .target(name: "Data"),
             ]
-        )
+        ),
     ]
 )
-
