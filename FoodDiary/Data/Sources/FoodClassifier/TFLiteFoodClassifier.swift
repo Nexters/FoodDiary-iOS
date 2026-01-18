@@ -1,16 +1,16 @@
 //
-//  FoodClassifier.swift
-//  Core
+//  TFLiteFoodClassifier.swift
+//  Data
 //
 //  Created by Kai Lee on 1/18/26.
 //
 
+import Core
 import Foundation
 import TensorFlowLiteSwift
 import UIKit
 
-/// Spec docs: https://www.notion.so/teamnexters/ML-2eb235c592d980beb451c46dd3101d27?source=copy_link
-public struct FoodClassifier {
+public struct TFLiteFoodClassifier: FoodClassifierRepresentable {
     public static let modelFileName = "food_classifier"
     public static let modelType = "tflite"
     public static let confidenceThreshold: Float = 0.75
@@ -27,11 +27,11 @@ public struct FoodClassifier {
         bundle: Bundle = .main
     ) throws {
         guard let modelPath = bundle.path(forResource: modelName, ofType: modelType) else {
-            throw FoodClassifierError.modelNotFound
+            throw TFLiteFoodClassifierError.modelNotFound
         }
 
         guard FileManager.default.fileExists(atPath: modelPath) else {
-            throw FoodClassifierError.modelNotFound
+            throw TFLiteFoodClassifierError.modelNotFound
         }
 
         do {
@@ -44,7 +44,7 @@ public struct FoodClassifier {
             inputHeight = inputShape[1]
             inputWidth = inputShape[2]
         } catch {
-            throw FoodClassifierError.failedToCreateInterpreter
+            throw TFLiteFoodClassifierError.failedToCreateInterpreter
         }
     }
 
@@ -52,7 +52,7 @@ public struct FoodClassifier {
 
     public func classify(image: UIImage) throws -> FoodClassificationResult {
         guard let pixelBuffer = preprocessImage(image) else {
-            throw FoodClassifierError.failedToProcessImage
+            throw TFLiteFoodClassifierError.failedToProcessImage
         }
 
         do {
@@ -77,25 +77,12 @@ public struct FoodClassifier {
                 return .notFood(confidence: notFoodConfidence)
             }
         } catch {
-            throw FoodClassifierError.failedToCopyData
-        }
-    }
-
-    public func isFood(
-        image: UIImage,
-        threshold: Float = Self.confidenceThreshold
-    ) throws -> Bool {
-        let result = try classify(image: image)
-        switch result {
-        case let .food(confidence):
-            return confidence >= threshold
-        case .notFood:
-            return false
+            throw TFLiteFoodClassifierError.failedToCopyData
         }
     }
 }
 
-private extension FoodClassifier {
+private extension TFLiteFoodClassifier {
     func preprocessImage(_ image: UIImage) -> Data? {
         guard let cgImage = image.cgImage else { return nil }
 
@@ -136,8 +123,8 @@ private extension FoodClassifier {
     }
 }
 
-public extension FoodClassifier {
-    enum FoodClassifierError: LocalizedError {
+public extension TFLiteFoodClassifier {
+    enum TFLiteFoodClassifierError: LocalizedError {
         case modelNotFound
         case failedToCreateInterpreter
         case failedToAllocateTensors
