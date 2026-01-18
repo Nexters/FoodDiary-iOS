@@ -66,10 +66,11 @@ jobs:
 
       - name: Run Tests
         run: |
-          set -o pipefail
-          xcodebuild test \
-            -workspace Workspace.xcworkspace \
-            -scheme App \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
-            -resultBundlePath build/TestResults.xcresult \
-            2>&1 | xcbeautify --renderer github-actions
+          for scheme in Core Domain Data Presentation; do
+            echo "=== Testing $scheme ==="
+            xcodebuild test \
+              -workspace Workspace.xcworkspace \
+              -scheme "$scheme" \
+              -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+              -resultBundlePath "build/${scheme}Tests.xcresult"
+          done
