@@ -9,6 +9,7 @@ import Foundation
 import TensorFlowLiteSwift
 import UIKit
 
+/// Spec docs: https://www.notion.so/teamnexters/ML-2eb235c592d980beb451c46dd3101d27?source=copy_link
 public struct FoodClassifier {
     public static let modelFileName = "food_classifier"
     public static let modelType = "tflite"
