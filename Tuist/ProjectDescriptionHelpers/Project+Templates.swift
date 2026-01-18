@@ -22,12 +22,6 @@ public extension ProjectDescription.Scheme {
             .scheme(
                 name: "debug",
                 buildAction: .buildAction(targets: [.target("App")]),
-                testAction: .targets([
-                    .testableTarget(target: .project(path: "../Core", target: "CoreTests")),
-                    .testableTarget(target: .project(path: "../Domain", target: "DomainTests")),
-                    .testableTarget(target: .project(path: "../Data", target: "DataTests")),
-                    .testableTarget(target: .project(path: "../Presentation", target: "PresentationTests")),
-                ], configuration: "Debug"),
                 runAction: .runAction(configuration: "Debug")
             ),
             .scheme(

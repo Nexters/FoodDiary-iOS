@@ -68,7 +68,7 @@ jobs:
           set -o pipefail
           xcodebuild test \
             -workspace Workspace.xcworkspace \
-            -scheme debug \
+            -scheme AllTests \
             -destination 'platform=iOS Simulator,name=iPhone 16' \
             -resultBundlePath build/TestResults.xcresult \
             | xcpretty --color
