@@ -60,12 +60,13 @@ jobs:
 
       - name: Build for Testing
         run: |
+          set -o pipefail
           xcodebuild build-for-testing \
             -workspace Workspace.xcworkspace \
             -scheme App \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             -derivedDataPath DerivedData \
-            | xcbeautify
+            2>&1 | xcbeautify --renderer github-actions
 
       - name: Upload DerivedData
         uses: actions/upload-artifact@v4
