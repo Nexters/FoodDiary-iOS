@@ -21,7 +21,15 @@ public struct FoodClassifier {
 
     // MARK: - Initialization
 
-    public init(modelPath: String) throws {
+    public init(
+        modelName: String = Self.modelFileName,
+        modelType: String = Self.modelType,
+        bundle: Bundle = .main
+    ) throws {
+        guard let modelPath = bundle.path(forResource: modelName, ofType: modelType) else {
+            throw FoodClassifierError.modelNotFound
+        }
+
         guard FileManager.default.fileExists(atPath: modelPath) else {
             throw FoodClassifierError.modelNotFound
         }
@@ -38,17 +46,6 @@ public struct FoodClassifier {
         } catch {
             throw FoodClassifierError.failedToCreateInterpreter
         }
-    }
-
-    public init(
-        modelName: String = Self.modelFileName,
-        modelType: String = Self.modelType,
-        bundle: Bundle = .main
-    ) throws {
-        guard let modelPath = bundle.path(forResource: modelName, ofType: modelType) else {
-            throw FoodClassifierError.modelNotFound
-        }
-        try self.init(modelPath: modelPath)
     }
 
     // MARK: - Classification
