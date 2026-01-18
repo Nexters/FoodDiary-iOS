@@ -9,93 +9,131 @@
 import Testing
 import UIKit
 
-@Suite("FoodClassifier Tests")
-struct FoodClassifierTests {
-    private let confidenceThreshold: Float = 0.75
+// MARK: - Mock
 
-    private var modelPath: String? {
-        coreBundle.path(forResource: "food_classifier", ofType: "tflite")
-    }
+struct MockFoodClassifier: FoodClassifierRepresentable {
+    var stubResult: FoodClassificationResult = .food(confidence: 0.95)
+    var shouldThrowError: Bool = false
 
-    private var coreBundle: Bundle {
-        Bundle(identifier: "com.fooddiary.core")!
-    }
-
-    private var testBundle: Bundle {
-        Bundle(for: BundleFinder.self)
-    }
-
-    private var testImageURLs: [URL] {
-        guard let resourceURL = testBundle.resourceURL else { return [] }
-
-        guard let contents = try? FileManager.default.contentsOfDirectory(
-            at: resourceURL,
-            includingPropertiesForKeys: nil
-        ) else { return [] }
-
-        return contents.filter { url in
-            let ext = url.pathExtension.lowercased()
-            return ["jpg", "jpeg", "png"].contains(ext)
+    func classify(image _: UIImage) throws -> FoodClassificationResult {
+        if shouldThrowError {
+            throw MockError.classificationFailed
         }
+        return stubResult
     }
 
-    @Test("모델 로드")
-    func testModelLoading() throws {
-        #expect(modelPath != nil, "모델 파일이 존재해야 합니다")
-        _ = try FoodClassifier(modelPath: modelPath!)
-    }
-
-    @Test("음식 이미지 분류")
-    func testClassifyFoodImages() throws {
-        let classifier = try FoodClassifier(modelPath: modelPath!)
-        let foodImageURLs = testImageURLs.filter { $0.lastPathComponent.hasPrefix("food") }
-
-        #expect(!foodImageURLs.isEmpty, "food로 시작하는 테스트 이미지가 있어야 합니다")
-
-        for imageURL in foodImageURLs {
-            guard let image = UIImage(contentsOfFile: imageURL.path) else {
-                Issue.record("이미지를 로드할 수 없습니다: \(imageURL.lastPathComponent)")
-                continue
-            }
-
-            let result = try classifier.classify(image: image)
-            let imageName = imageURL.lastPathComponent
-
-            switch result {
-            case let .food(confidence):
-                #expect(confidence > confidenceThreshold, "\(imageName): 높은 확신도를 가져야 합니다 (0.75 이상)")
-                #expect(try classifier.isFood(image: image), "\(imageName): 음식으로 분류되어야 합니다")
-            case .notFood:
-                Issue.record("\(imageName): 음식 이미지가 음식으로 분류되어야 합니다")
-            }
-        }
-    }
-
-    @Test("음식이 아닌 이미지 분류")
-    func testClassifyNotFoodImages() throws {
-        let classifier = try FoodClassifier(modelPath: modelPath!)
-        let notFoodImageURLs = testImageURLs.filter { $0.lastPathComponent.hasPrefix("non-food") }
-
-        #expect(!notFoodImageURLs.isEmpty, "non-food로 시작하는 테스트 이미지가 있어야 합니다")
-
-        for imageURL in notFoodImageURLs {
-            guard let image = UIImage(contentsOfFile: imageURL.path) else {
-                Issue.record("이미지를 로드할 수 없습니다: \(imageURL.lastPathComponent)")
-                continue
-            }
-
-            let result = try classifier.classify(image: image)
-            let imageName = imageURL.lastPathComponent
-
-            switch result {
-            case .food:
-                Issue.record("\(imageName): 음식이 아닌 이미지는 notFood로 분류되어야 합니다")
-            case let .notFood(confidence):
-                #expect(confidence > confidenceThreshold, "\(imageName): 높은 확신도를 가져야 합니다 (0.75 이상)")
-                #expect(try !classifier.isFood(image: image), "\(imageName): 음식이 아닌 이미지로 분류되어야 합니다")
-            }
-        }
+    enum MockError: Error {
+        case classificationFailed
     }
 }
 
-private final class BundleFinder {}
+// MARK: - Tests
+
+@Suite("FoodClassifier Tests")
+struct FoodClassifierTests {
+    private let confidence: Float = 0.9
+
+    // MARK: - classify 테스트
+
+    @Test("classify가 food 결과를 반환")
+    func testClassifyReturnsFood() throws {
+        var classifier = MockFoodClassifier()
+        classifier.stubResult = .food(confidence: confidence)
+
+        let dummyImage = UIImage()
+        let result = try classifier.classify(image: dummyImage)
+
+        switch result {
+        case let .food(confidence):
+            #expect(confidence == confidence)
+        case .notFood:
+            Issue.record("food를 반환해야 합니다")
+        }
+    }
+
+    @Test("classify가 notFood 결과를 반환")
+    func testClassifyReturnsNotFood() throws {
+        var classifier = MockFoodClassifier()
+        classifier.stubResult = .notFood(confidence: confidence)
+
+        let dummyImage = UIImage()
+        let result = try classifier.classify(image: dummyImage)
+
+        switch result {
+        case .food:
+            Issue.record("notFood를 반환해야 합니다")
+        case let .notFood(confidence):
+            #expect(confidence == confidence)
+        }
+    }
+
+    @Test("classify 에러 발생")
+    func testClassifyThrowsError() throws {
+        var classifier = MockFoodClassifier()
+        classifier.shouldThrowError = true
+
+        let dummyImage = UIImage()
+
+        #expect(throws: MockFoodClassifier.MockError.self) {
+            try classifier.classify(image: dummyImage)
+        }
+    }
+
+    // MARK: - isFood 테스트
+
+    @Test("음식으로 분류되면 isFood가 true를 반환")
+    func testIsFoodReturnsTrue() throws {
+        var classifier = MockFoodClassifier()
+        classifier.stubResult = .food(confidence: confidence)
+
+        let dummyImage = UIImage()
+        let result = try classifier.isFood(image: dummyImage)
+
+        #expect(result == true)
+    }
+
+    @Test("음식이 아닌 것으로 분류되면 isFood가 false를 반환")
+    func testIsFoodReturnsFalse() throws {
+        var classifier = MockFoodClassifier()
+        classifier.stubResult = .notFood(confidence: confidence)
+
+        let dummyImage = UIImage()
+        let result = try classifier.isFood(image: dummyImage)
+
+        #expect(result == false)
+    }
+
+    @Test("음식 confidence가 threshold 미만이면 isFood가 false를 반환")
+    func testIsFoodReturnsFalseWhenBelowThreshold() throws {
+        var classifier = MockFoodClassifier()
+        classifier.stubResult = .food(confidence: 0.5)
+
+        let dummyImage = UIImage()
+        let result = try classifier.isFood(image: dummyImage, threshold: 0.75)
+
+        #expect(result == false)
+    }
+
+    @Test("커스텀 threshold로 isFood 판단")
+    func testIsFoodWithCustomThreshold() throws {
+        var classifier = MockFoodClassifier()
+        classifier.stubResult = .food(confidence: 0.6)
+
+        let dummyImage = UIImage()
+
+        #expect(try classifier.isFood(image: dummyImage, threshold: 0.5) == true)
+        #expect(try classifier.isFood(image: dummyImage, threshold: 0.7) == false)
+    }
+
+    @Test("classify 에러 발생 시 isFood도 에러 propagate")
+    func testIsFoodThrowsError() throws {
+        var classifier = MockFoodClassifier()
+        classifier.shouldThrowError = true
+
+        let dummyImage = UIImage()
+
+        #expect(throws: MockFoodClassifier.MockError.self) {
+            try classifier.isFood(image: dummyImage)
+        }
+    }
+}

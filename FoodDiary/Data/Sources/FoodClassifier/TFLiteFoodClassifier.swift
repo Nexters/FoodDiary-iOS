@@ -29,7 +29,10 @@ public struct TFLiteFoodClassifier: FoodClassifierRepresentable {
         guard let modelPath = bundle.path(forResource: modelName, ofType: modelType) else {
             throw TFLiteFoodClassifierError.modelNotFound
         }
+        try self.init(modelPath: modelPath)
+    }
 
+    public init(modelPath: String) throws {
         guard FileManager.default.fileExists(atPath: modelPath) else {
             throw TFLiteFoodClassifierError.modelNotFound
         }
