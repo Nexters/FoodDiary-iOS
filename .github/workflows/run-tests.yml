@@ -99,6 +99,12 @@ jobs:
         with:
           name: build-artifacts
 
+      - name: Boot Simulator
+        run: |
+          DEVICE_ID=$(xcrun simctl list devices available -j | jq -r '.devices | to_entries | map(select(.key | contains("iOS"))) | last | .value | map(select(.name == "iPhone 16")) | first | .udid')
+          xcrun simctl boot "$DEVICE_ID" || true
+          xcrun simctl bootstatus "$DEVICE_ID" -b
+
       - name: Test ${{ matrix.scheme }}
         run: |
           set -o pipefail
