@@ -21,10 +21,6 @@ let project = Project(
             dependencies: [
                 .external(name: "SnapKit"),
             ]
-        )
+        ),
     ]
 )
-
-
-
-

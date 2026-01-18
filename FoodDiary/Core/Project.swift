@@ -27,9 +27,8 @@ let project = Project(
             deploymentTargets: .iOS("18.0"),
             sources: ["Tests/**"],
             dependencies: [
-                .target(name: "Core")
+                .target(name: "Core"),
             ]
-        )
+        ),
     ]
 )
-

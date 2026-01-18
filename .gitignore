@@ -49,3 +49,5 @@ fastlane/test_output/
 
 .idea/
 .vscode/
+
+buildServer.json
