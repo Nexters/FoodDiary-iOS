@@ -32,18 +32,26 @@ jobs:
         with:
           install: true
 
-      - name: Cache SPM Dependencies
+      - name: Cache Tuist Dependencies
         uses: actions/cache@v4
         with:
-          path: Tuist/.build
-          key: spm-${{ runner.os }}-${{ hashFiles('Tuist/Package.swift', 'Tuist/Package.resolved') }}
-          restore-keys: spm-${{ runner.os }}-
+          path: |
+            Tuist/.build
+            ~/.tuist
+          key: tuist-${{ runner.os }}-${{ hashFiles('Tuist/Package.swift', 'Tuist/Package.resolved') }}
+          restore-keys: tuist-${{ runner.os }}-
 
       - name: Install Tuist
         run: |
           mise install tuist@${{ env.TUIST_VERSION }}
           mise use -g tuist@${{ env.TUIST_VERSION }}
           tuist version
+
+      - name: Create Config Files
+        run: |
+          mkdir -p Configs
+          echo "// Debug Configuration" > Configs/debug.xcconfig
+          echo "// Release Configuration" > Configs/release.xcconfig
 
       - name: Install Dependencies & Generate Project
         run: |
