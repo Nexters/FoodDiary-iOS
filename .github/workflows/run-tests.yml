@@ -25,7 +25,7 @@ jobs:
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          xcode-version: '16.1'
 
       - name: Setup Mise
         uses: jdx/mise-action@v2
@@ -60,17 +60,21 @@ jobs:
 
       - name: Boot Simulator
         run: |
-          DEVICE_ID=$(xcrun simctl list devices available -j | jq -r '.devices | to_entries | map(select(.key | contains("iOS"))) | last | .value | map(select(.name == "iPhone 16")) | first | .udid')
-          xcrun simctl boot "$DEVICE_ID" || true
-          xcrun simctl bootstatus "$DEVICE_ID" -b
+          xcrun simctl boot "iPhone 16" || true
+          xcrun simctl bootstatus "iPhone 16" -b
+
+      - name: Install xcpretty
+        run: gem install xcpretty
 
       - name: Run Tests
         run: |
+          set -o pipefail
           for scheme in Core Domain Data Presentation; do
             echo "=== Testing $scheme ==="
             xcodebuild test \
               -workspace Workspace.xcworkspace \
               -scheme "$scheme" \
-              -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
-              -resultBundlePath "build/${scheme}Tests.xcresult"
+              -destination 'platform=iOS Simulator,name=iPhone 16' \
+              -resultBundlePath "build/${scheme}Tests.xcresult" \
+              | xcpretty --color
           done
