@@ -14,8 +14,8 @@ enum MockEndpoint {
 }
 
 extension MockEndpoint: Requestable {
-    var baseURL: String {
-        "https://api.example.com"
+    var baseURL: URL? {
+        URL(string: "https://api.example.com")
     }
 
     var path: String {

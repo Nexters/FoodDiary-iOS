@@ -8,7 +8,7 @@
 import Foundation
 
 public protocol Requestable {
-    var baseURL: String { get }
+    var baseURL: URL? { get }
     var path: String { get }
     var httpMethod: HTTPMethod { get }
     var queryParameters: Encodable? { get }
@@ -20,7 +20,13 @@ public protocol Requestable {
 
 extension Requestable {
     public func makeURLRequest() throws -> URLRequest {
-        guard var urlComponent = URLComponents(string: baseURL + path) else {
+        guard let baseURL else {
+            throw NetworkError.invalidURL
+        }
+        
+        let fullURL = baseURL.appendingPathComponent(path)
+        
+        guard var urlComponent = URLComponents(url: fullURL, resolvingAgainstBaseURL: false) else {
             throw NetworkError.invalidURL
         }
         
