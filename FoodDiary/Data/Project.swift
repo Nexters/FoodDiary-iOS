@@ -31,7 +31,7 @@ let project = Project(
             bundleId: "com.fooddiary.data.tests",
             deploymentTargets: .iOS("18.0"),
             sources: ["Tests/**"],
-            resources: ["Resources/**"],
+            resources: ["Tests/Resources/**"],
             dependencies: [
                 .target(name: "Data"),
             ]
