@@ -71,4 +71,23 @@ jobs:
             -scheme AllTests \
             -destination 'platform=iOS Simulator,name=iPhone 16' \
             -resultBundlePath build/TestResults.xcresult \
-            | xcpretty --color
+            2>&1 | tee build/xcodebuild.log | xcpretty --color --report junit --output build/test-results.xml
+
+      - name: Show Test Failures (if any)
+        if: failure()
+        run: |
+          echo "=== Test Failures ==="
+          if [ -f build/xcodebuild.log ]; then
+            grep -A 20 "Test.*failed" build/xcodebuild.log || true
+            grep -A 5 "error:" build/xcodebuild.log || true
+          fi
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            build/TestResults.xcresult
+            build/test-results.xml
+            build/xcodebuild.log
