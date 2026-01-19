@@ -17,7 +17,7 @@ public struct HTTPClient<Target: Requestable> {
     }
     
     func request<T: Decodable>(_ request: Target) async throws -> T {
-        let (data, response) = try await session.data(for: request.makeURLrequest())
+        let (data, response) = try await session.data(for: request.makeURLRequest())
         try checkResponse(data, response)
         
         do {

@@ -19,7 +19,7 @@ public protocol Requestable {
 // TODO: 추후에 JWT가 생겼을 때 어떻게 Header에 포함시킬 것인지?
 
 extension Requestable {
-    public func makeURLrequest() throws -> URLRequest {
+    public func makeURLRequest() throws -> URLRequest {
         guard var urlComponent = URLComponents(string: baseURL + path) else {
             throw NetworkError.invalidURL
         }

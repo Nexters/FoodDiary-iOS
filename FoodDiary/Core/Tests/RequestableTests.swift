@@ -12,14 +12,14 @@ import Testing
 struct RequestableTests {
     @Test("URLRequest가 잘 생성되는지")
     func createURLRequest() throws {
-        let _ = try MockEndpoint.minimal.makeURLrequest()
-        let _ = try MockEndpoint.full.makeURLrequest()
+        let _ = try MockEndpoint.minimal.makeURLRequest()
+        let _ = try MockEndpoint.full.makeURLRequest()
     }
 
     @Test("URL이 잘 생성되는지")
     func createURL() throws {
         let expected = URL(string: "https://api.example.com/health")
-        let request = try MockEndpoint.minimal.makeURLrequest()
+        let request = try MockEndpoint.minimal.makeURLRequest()
 
         let url = try #require(request.url)
 
@@ -29,7 +29,7 @@ struct RequestableTests {
     @Test("쿼리 파라미터가 잘 만들어지는지")
     func testQueryParameter() throws {
         let expected = [URLQueryItem(name: "tests", value: "1")]
-        let request = try MockEndpoint.full.makeURLrequest()
+        let request = try MockEndpoint.full.makeURLRequest()
 
         let url = try #require(request.url)
         let urlComponents = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false))
@@ -42,7 +42,7 @@ struct RequestableTests {
     func testBodyParameter() throws {
         let expectedName = "Kang"
         let expectedAge = 999
-        let request = try MockEndpoint.full.makeURLrequest()
+        let request = try MockEndpoint.full.makeURLRequest()
 
         let body = try #require(request.httpBody)
         let json = try JSONSerialization.jsonObject(with: body, options: [])
@@ -55,7 +55,7 @@ struct RequestableTests {
     @Test("헤더가 잘 만들어지는지")
     func testHeaders() throws {
         let expected = "kang"
-        let request = try MockEndpoint.full.makeURLrequest()
+        let request = try MockEndpoint.full.makeURLRequest()
 
         let headers = try #require(request.allHTTPHeaderFields)
 
