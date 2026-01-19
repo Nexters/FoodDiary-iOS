@@ -66,6 +66,7 @@ jobs:
       - name: Run Tests
         run: |
           set -o pipefail
+          mkdir -p build
           xcodebuild test \
             -workspace Workspace.xcworkspace \
             -scheme AllTests \
