@@ -1,0 +1,94 @@
+name: run-tests
+
+on:
+  pull_request:
+    branches: [main, dev]
+  push:
+    branches: [main, dev]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TUIST_VERSION: 4.123.0
+
+jobs:
+  test:
+    name: Build & Test
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Setup Mise
+        uses: jdx/mise-action@v2
+        with:
+          install: true
+
+      - name: Cache Tuist Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            Tuist/.build
+            ~/.tuist
+          key: tuist-${{ runner.os }}-${{ hashFiles('Tuist/Package.swift', 'Tuist/Package.resolved') }}
+          restore-keys: tuist-${{ runner.os }}-
+
+      - name: Install Tuist
+        run: |
+          mise install tuist@${{ env.TUIST_VERSION }}
+          mise use -g tuist@${{ env.TUIST_VERSION }}
+          tuist version
+
+      - name: Create Config Files
+        run: |
+          mkdir -p Configs
+          echo "// Debug Configuration" > Configs/debug.xcconfig
+          echo "// Release Configuration" > Configs/release.xcconfig
+
+      - name: Install Dependencies & Generate Project
+        run: |
+          tuist install
+          tuist generate --no-open
+
+      - name: Boot Simulator
+        run: |
+          xcrun simctl boot "iPhone 16" || true
+          xcrun simctl bootstatus "iPhone 16" -b
+
+      - name: Run Tests
+        run: |
+          set -o pipefail
+          mkdir -p build
+          xcodebuild test \
+            -workspace Workspace.xcworkspace \
+            -scheme AllTests \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -resultBundlePath build/TestResults.xcresult \
+            2>&1 | tee build/xcodebuild.log | xcpretty --color --report junit --output build/test-results.xml
+
+      - name: Show Test Failures (if any)
+        if: failure()
+        run: |
+          echo "=== Test Failures ==="
+          if [ -f build/xcodebuild.log ]; then
+            grep -A 20 "Test.*failed" build/xcodebuild.log || true
+            grep -A 5 "error:" build/xcodebuild.log || true
+          fi
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            build/TestResults.xcresult
+            build/test-results.xml
+            build/xcodebuild.log

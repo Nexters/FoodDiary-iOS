@@ -1,0 +1,19 @@
+{
+	"name": "xcode build server",
+	"version": "0.2",
+	"bspVersion": "2.0",
+	"languages": [
+		"c",
+		"cpp",
+		"objective-c",
+		"objective-cpp",
+		"swift"
+	],
+	"argv": [
+		"/opt/homebrew/bin/xcode-build-server"
+	],
+	"workspace": "/Users/kai.lee/Documents/Github/Others/FoodDiary-iOS/FoodDiary/App/App.xcodeproj/project.xcworkspace",
+	"build_root": "/Users/kai.lee/Library/Developer/Xcode/DerivedData/App-egpwuwdghphqbyaylcqwtdvxopfk",
+	"scheme": "debug",
+	"kind": "xcode"
+}
