@@ -6,7 +6,7 @@
 //
 
 import Foundation
-@testable import Core
+@testable import Data
 
 enum MockEndpoint {
     case minimal

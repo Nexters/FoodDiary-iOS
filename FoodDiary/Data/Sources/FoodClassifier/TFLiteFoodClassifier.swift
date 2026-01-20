@@ -5,9 +5,9 @@
 //  Created by Kai Lee on 1/18/26.
 //
 
-import Core
 import Foundation
 import TensorFlowLiteSwift
+import Domain
 import UIKit
 
 public struct TFLiteFoodClassifier: FoodClassifierRepresentable {

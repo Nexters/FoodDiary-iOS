@@ -5,7 +5,8 @@
 //  Created by Kai Lee on 1/18/26.
 //
 
-@testable import Core
+@testable import Data
+@testable import Domain
 import Testing
 import UIKit
 
