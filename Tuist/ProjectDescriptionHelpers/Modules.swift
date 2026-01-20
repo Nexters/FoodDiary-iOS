@@ -9,7 +9,6 @@ import Foundation
 
 public enum Module {
     case app
-    case core
     case data
     case designSystem
     case domain
