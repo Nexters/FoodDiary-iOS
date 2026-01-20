@@ -5,7 +5,7 @@
 //  Created by Kai Lee on 1/19/26.
 //
 
-import Core
+import Domain
 import Photos
 
 public final class PHPhotoLibraryFetcher: PhotoLibraryRepresentable {
