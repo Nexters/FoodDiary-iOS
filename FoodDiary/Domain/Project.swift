@@ -17,9 +17,7 @@ let project = Project(
             bundleId: "com.fooddiary.domain",
             deploymentTargets: .iOS("18.0"),
             sources: ["Sources/**"],
-            dependencies: [
-                .project(target: "Core", path: "../Core"),
-            ]
+            dependencies: []
         ),
         .target(
             name: "DomainTests",

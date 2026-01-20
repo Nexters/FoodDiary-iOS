@@ -7,7 +7,7 @@
 
 import Foundation
 import Testing
-@testable import Core
+@testable import Data
 
 struct RequestableTests {
     @Test("URLRequest가 잘 생성되는지")

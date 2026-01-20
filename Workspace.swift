@@ -14,7 +14,6 @@ let workspace = Workspace(
         .scheme(
             name: "AllTests",
             testAction: .targets([
-                .testableTarget(target: .project(path: "FoodDiary/Core", target: "CoreTests")),
                 .testableTarget(target: .project(path: "FoodDiary/Domain", target: "DomainTests")),
                 .testableTarget(target: .project(path: "FoodDiary/Data", target: "DataTests")),
                 .testableTarget(target: .project(path: "FoodDiary/Presentation", target: "PresentationTests")),

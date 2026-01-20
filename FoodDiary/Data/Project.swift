@@ -20,7 +20,6 @@ let project = Project(
             resources: ["Resources/**"],
             dependencies: [
                 .project(target: "Domain", path: "../Domain"),
-                .project(target: "Core", path: "../Core"),
                 .external(name: "TensorFlowLiteSwift"),
             ]
         ),
