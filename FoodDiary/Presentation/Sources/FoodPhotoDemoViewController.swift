@@ -54,7 +54,7 @@ public final class FoodPhotoDemoViewController: UIViewController {
 
     private var sortedDates: [Date] = []
     private var photosByDate: [Date: [FoodPhoto]] = [:]
-    private lazy var photoFetcher: FoodPhotoFetcher<PHPhotoLibraryFetcher, TFLiteFoodClassifier>? = {
+    private lazy var photoFetcher: FoodPhotoFetchUseCase<PHPhotoLibraryFetcher, TFLiteFoodClassifier>? = {
         do {
             let photoLibrary = PHPhotoLibraryFetcher()
 
@@ -66,11 +66,10 @@ public final class FoodPhotoDemoViewController: UIViewController {
 
             let classifier = try TFLiteFoodClassifier(
                 modelName: "food_classifier",
-                modelType: "tflite",
-                bundle: dataBundle
+                modelType: "tflite"
             )
 
-            return FoodPhotoFetcher(
+            return FoodPhotoFetchUseCase(
                 photoLibrary: photoLibrary,
                 foodClassifier: classifier
             )

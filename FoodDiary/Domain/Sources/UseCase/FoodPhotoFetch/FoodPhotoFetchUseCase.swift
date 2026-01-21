@@ -9,7 +9,6 @@ import Foundation
 import Photos
 import UIKit
 
-
 public struct FoodPhotoFetchUseCase<
     PhotoLibrary: PhotoLibraryRepresentable,
     FoodClassifier: FoodClassifierRepresentable
@@ -41,9 +40,7 @@ public struct FoodPhotoFetchUseCase<
 
             var result: [Date: [FoodPhoto]] = [:]
             for try await (date, photos) in group {
-                if !photos.isEmpty {
-                    result[date] = photos
-                }
+                result[date] = photos
             }
 
             return result
@@ -52,6 +49,7 @@ public struct FoodPhotoFetchUseCase<
 }
 
 private extension FoodPhotoFetchUseCase {
+    /// 섹션 내의 모든 사진을 분류하고 음식 확률 순으로 정렬된 `FoodPhoto` 배열 반환
     func classifyPhotosInSection(_ section: PhotoSection) async throws -> [FoodPhoto] {
         try await withThrowingTaskGroup(of: FoodPhoto.self) { group in
             for asset in section.photos {
@@ -69,6 +67,7 @@ private extension FoodPhotoFetchUseCase {
         }
     }
 
+    /// `PHAsset`에서 음식 정확도를 판단하고 `FoodPhoto` 객체로 변환
     func classifyAsset(_ asset: PHAsset) async throws -> FoodPhoto {
         let image = try await photoLibrary.loadImage(
             from: asset,
