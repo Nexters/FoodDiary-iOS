@@ -6,6 +6,7 @@
 //
 
 import Photos
+import UIKit
 
 public protocol PhotoLibraryRepresentable: Sendable {
     /// 사진 라이브러리 접근 권한 요청
@@ -20,4 +21,11 @@ public protocol PhotoLibraryRepresentable: Sendable {
         from startDate: Date,
         to endDate: Date?
     ) async throws -> [PhotoSection]
+
+    /// PHAsset에서 이미지 로드
+    /// - Parameters:
+    ///   - asset: 로드할 PHAsset
+    ///   - targetSize: 요청할 이미지 크기
+    /// - Returns: 로드된 UIImage
+    func loadImage(from asset: PHAsset, targetSize: CGSize) async throws -> UIImage
 }

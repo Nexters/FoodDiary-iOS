@@ -76,7 +76,10 @@ private extension FoodPhotoFetchUseCase {
     }
 
     func classifyAsset(_ asset: PHAsset) async throws -> FoodPhoto? {
-        let image = try await loadImage(from: asset)
+        let image = try await photoLibrary.loadImage(
+            from: asset,
+            targetSize: CGSize(width: 224, height: 224)
+        )
         let result = try foodClassifier.classify(image: image)
 
         if case let .food(confidence) = result, confidence >= threshold {
@@ -85,29 +88,4 @@ private extension FoodPhotoFetchUseCase {
 
         return nil
     }
-
-    func loadImage(from asset: PHAsset) async throws -> UIImage {
-        try await withCheckedThrowingContinuation { continuation in
-            let options = PHImageRequestOptions()
-            options.deliveryMode = .highQualityFormat
-            options.isSynchronous = false
-
-            PHImageManager.default().requestImage(
-                for: asset,
-                targetSize: CGSize(width: 224, height: 224),
-                contentMode: .aspectFit,
-                options: options
-            ) { image, _ in
-                if let image {
-                    continuation.resume(returning: image)
-                } else {
-                    continuation.resume(throwing: FoodPhotoQueryError.imageLoadFailed)
-                }
-            }
-        }
-    }    
-}
-
-public enum FoodPhotoQueryError: Error {
-    case imageLoadFailed
 }

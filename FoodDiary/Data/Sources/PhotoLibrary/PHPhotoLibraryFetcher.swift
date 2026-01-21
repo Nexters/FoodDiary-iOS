@@ -7,12 +7,34 @@
 
 import Domain
 import Photos
+import UIKit
 
 public final class PHPhotoLibraryFetcher: PhotoLibraryRepresentable {
     public init() {}
 
     public func requestAuthorization() async -> PHAuthorizationStatus {
         await PHPhotoLibrary.requestAuthorization(for: .readWrite)
+    }
+    
+    public func loadImage(from asset: PHAsset, targetSize: CGSize) async throws -> UIImage {
+        try await withCheckedThrowingContinuation { continuation in
+            let options = PHImageRequestOptions()
+            options.deliveryMode = .highQualityFormat
+            options.isSynchronous = false
+
+            PHImageManager.default().requestImage(
+                for: asset,
+                targetSize: targetSize,
+                contentMode: .aspectFit,
+                options: options
+            ) { image, _ in
+                if let image {
+                    continuation.resume(returning: image)
+                } else {
+                    continuation.resume(throwing: PhotoLibraryError.imageLoadFailed)
+                }
+            }
+        }
     }
 
     public func fetchPhotosByDate(
@@ -70,11 +92,14 @@ private extension PHPhotoLibraryFetcher {
 
 public enum PhotoLibraryError: LocalizedError {
     case notAuthorized
+    case imageLoadFailed
 
     public var errorDescription: String? {
         switch self {
         case .notAuthorized:
             return "사진 라이브러리 접근 권한이 없습니다."
+        case .imageLoadFailed:
+            return "이미지를 불러올 수 없습니다."
         }
     }
 }
