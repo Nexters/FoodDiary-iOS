@@ -16,46 +16,44 @@ public struct FoodPhotoFetchUseCase<
 > {
     private let photoLibrary: PhotoLibrary
     private let foodClassifier: FoodClassifier
-    private let threshold: Float
 
     public init(
         photoLibrary: PhotoLibrary,
-        foodClassifier: FoodClassifier,
-        threshold: Float = 0.75
+        foodClassifier: FoodClassifier
     ) {
         self.photoLibrary = photoLibrary
         self.foodClassifier = foodClassifier
-        self.threshold = threshold
     }
 
     public func fetchFoodPhotos(
         from startDate: Date,
         to endDate: Date?
-    ) async throws -> [FoodPhotoSection] {
+    ) async throws -> [Date: [FoodPhoto]] {
         let sections = try await photoLibrary.fetchPhotosByDate(from: startDate, to: endDate)
 
-        return try await withThrowingTaskGroup(of: FoodPhotoSection.self) { group in
+        return try await withThrowingTaskGroup(of: (Date, [FoodPhoto]).self) { group in
             for section in sections {
                 group.addTask {
-                    try await self.processFoodPhotosInSection(section)
+                    let photos = try await self.classifyPhotosInSection(section)
+                    return (section.date, photos)
                 }
             }
 
-            var foodPhotoSections: [FoodPhotoSection] = []
-            for try await section in group {
-                if !section.photos.isEmpty {
-                    foodPhotoSections.append(section)
+            var result: [Date: [FoodPhoto]] = [:]
+            for try await (date, photos) in group {
+                if !photos.isEmpty {
+                    result[date] = photos
                 }
             }
 
-            return foodPhotoSections
+            return result
         }
     }
 }
 
 private extension FoodPhotoFetchUseCase {
-    func processFoodPhotosInSection(_ section: PhotoSection) async throws -> FoodPhotoSection {
-        let foodPhotos = try await withThrowingTaskGroup(of: FoodPhoto?.self) { group in
+    func classifyPhotosInSection(_ section: PhotoSection) async throws -> [FoodPhoto] {
+        try await withThrowingTaskGroup(of: FoodPhoto.self) { group in
             for asset in section.photos {
                 group.addTask {
                     try await self.classifyAsset(asset)
@@ -64,28 +62,25 @@ private extension FoodPhotoFetchUseCase {
 
             var results: [FoodPhoto] = []
             for try await photo in group {
-                if let photo {
-                    results.append(photo)
-                }
+                results.append(photo)
             }
 
-            return results.sorted { $0.confidenceScore > $1.confidenceScore }
+            return results.sorted { $0.foodProbability > $1.foodProbability }
         }
-
-        return FoodPhotoSection(date: section.date, photos: foodPhotos)
     }
 
-    func classifyAsset(_ asset: PHAsset) async throws -> FoodPhoto? {
+    func classifyAsset(_ asset: PHAsset) async throws -> FoodPhoto {
         let image = try await photoLibrary.loadImage(
             from: asset,
             targetSize: CGSize(width: 224, height: 224)
         )
         let result = try foodClassifier.classify(image: image)
 
-        if case let .food(confidence) = result, confidence >= threshold {
-            return FoodPhoto(asset: asset, confidenceScore: confidence)
+        let foodProbability: Float = switch result {
+        case .food(let confidence): confidence
+        case .notFood(let confidence): 1.0 - confidence
         }
 
-        return nil
+        return FoodPhoto(asset: asset, foodProbability: foodProbability)
     }
 }

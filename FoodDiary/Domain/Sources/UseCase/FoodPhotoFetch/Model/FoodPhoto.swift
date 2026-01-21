@@ -10,10 +10,13 @@ import UIKit
 
 public struct FoodPhoto {
     public let asset: PHAsset
-    public let confidenceScore: Float
+    /// 음식일 확률 (0.0 ~ 1.0)
+    /// - food(0.9) -> 0.9
+    /// - notFood(0.9) -> 0.1
+    public let foodProbability: Float
 
-    public init(asset: PHAsset, confidenceScore: Float) {
+    public init(asset: PHAsset, foodProbability: Float) {
         self.asset = asset
-        self.confidenceScore = confidenceScore
+        self.foodProbability = foodProbability
     }
 }
