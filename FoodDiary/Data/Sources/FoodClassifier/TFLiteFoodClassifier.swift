@@ -14,7 +14,6 @@ import UIKit
 public struct TFLiteFoodClassifier: FoodClassifierRepresentable {
     public static let modelFileName = "food_classifier"
     public static let modelType = "tflite"
-    public static let confidenceThreshold: Float = 0.75
 
     private let interpreter: Interpreter
     private let inputWidth: Int
