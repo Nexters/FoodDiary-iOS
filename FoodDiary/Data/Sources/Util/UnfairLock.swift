@@ -7,7 +7,7 @@
 
 import Foundation
 
-final class UnfairLock {
+final class UnfairLock: @unchecked Sendable {
     private var _lock = os_unfair_lock()
 
     func lock() {
