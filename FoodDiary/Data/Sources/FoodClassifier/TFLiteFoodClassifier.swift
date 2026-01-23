@@ -6,29 +6,30 @@
 //
 
 import Foundation
-import TensorFlowLiteSwift
-import Domain
+import os
+@preconcurrency import TensorFlowLiteSwift
 import UIKit
 
 public struct TFLiteFoodClassifier: FoodClassifierRepresentable {
     public static let modelFileName = "food_classifier"
     public static let modelType = "tflite"
-    public static let confidenceThreshold: Float = 0.75
 
     private let interpreter: Interpreter
     private let inputWidth: Int
     private let inputHeight: Int
+    private let lock = UnfairLock()
 
     // MARK: - Initialization
 
     public init(
         modelName: String = Self.modelFileName,
         modelType: String = Self.modelType,
-        bundle: Bundle = .main
     ) throws {
-        guard let modelPath = bundle.path(forResource: modelName, ofType: modelType) else {
+        guard let bundle = Bundle(identifier: "com.fooddiary.data"),
+              let modelPath = bundle.path(forResource: modelName, ofType: modelType) else {
             throw TFLiteFoodClassifierError.modelNotFound
         }
+        
         try self.init(modelPath: modelPath)
     }
 
@@ -57,6 +58,9 @@ public struct TFLiteFoodClassifier: FoodClassifierRepresentable {
         guard let pixelBuffer = preprocessImage(image) else {
             throw TFLiteFoodClassifierError.failedToProcessImage
         }
+
+        lock.lock()
+        defer { lock.unlock() }
 
         do {
             try interpreter.copy(pixelBuffer, toInputAt: 0)

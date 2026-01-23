@@ -6,7 +6,6 @@
 //
 
 @testable import Data
-@testable import Domain
 import Testing
 import UIKit
 
