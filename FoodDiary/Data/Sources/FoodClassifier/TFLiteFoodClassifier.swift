@@ -7,8 +7,7 @@
 
 import Foundation
 import os
-import TensorFlowLiteSwift
-import Domain
+@preconcurrency import TensorFlowLiteSwift
 import UIKit
 
 public struct TFLiteFoodClassifier: FoodClassifierRepresentable {

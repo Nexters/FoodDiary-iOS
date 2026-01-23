@@ -1,20 +1,20 @@
 //
 //  FoodClassifierRepresentable.swift
-//  Core
+//  Data
 //
 //  Created by Kai Lee on 1/18/26.
 //
 
 import UIKit
 
-public protocol FoodClassifierRepresentable {
+public protocol FoodClassifierRepresentable: Sendable {
     func classify(image: UIImage) throws -> FoodClassificationResult
 }
 
-public extension FoodClassifierRepresentable {
+extension FoodClassifierRepresentable {
     func isFood(
         image: UIImage,
-        threshold: Float = 0.75
+        threshold: Float = 0.6
     ) throws -> Bool {
         let result = try classify(image: image)
         switch result {
