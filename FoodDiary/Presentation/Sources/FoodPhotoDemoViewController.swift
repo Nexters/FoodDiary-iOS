@@ -5,10 +5,10 @@
 //  Created by Claude on 1/21/26.
 //
 
-import UIKit
-import Photos
 import Data
 import Domain
+import Photos
+import UIKit
 
 public final class FoodPhotoDemoViewController: UIViewController {
 
@@ -53,31 +53,21 @@ public final class FoodPhotoDemoViewController: UIViewController {
     // MARK: - Properties
 
     private var sortedDates: [Date] = []
-    private var photosByDate: [Date: [FoodPhoto]] = [:]
-    private lazy var photoFetcher: FoodPhotoFetchUseCase<PHPhotoLibraryFetcher, TFLiteFoodClassifier>? = {
-        do {
-            let photoLibrary = PHPhotoLibraryFetcher()
+    private var photosByDate: [Date: [FoodPhoto<PHAsset>]] = [:]
+    private let repository: FoodPhotoFetcher<TFLiteFoodClassifier, PHImageCache>
+    private let imageCache = PHImageCache()
 
-            // Data 모듈의 번들을 명시적으로 지정
-            guard let dataBundle = Bundle(identifier: "com.fooddiary.data") else {
-                print("❌ Failed to find Data bundle")
-                return nil
-            }
+    // MARK: - Initialization
 
-            let classifier = try TFLiteFoodClassifier(
-                modelName: "food_classifier",
-                modelType: "tflite"
-            )
+    public init(repository: FoodPhotoFetcher<TFLiteFoodClassifier, PHImageCache>) {
+        self.repository = repository
+        super.init(nibName: nil, bundle: nil)
+    }
 
-            return FoodPhotoFetchUseCase(
-                photoLibrary: photoLibrary,
-                foodClassifier: classifier
-            )
-        } catch {
-            print("❌ Failed to initialize: \(error)")
-            return nil
-        }
-    }()
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 
     // MARK: - Lifecycle
 
@@ -144,7 +134,7 @@ public final class FoodPhotoDemoViewController: UIViewController {
 
     private func checkPhotoLibraryPermission() {
         Task {
-            let status = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
+            let status = await repository.requestAuthorization()
 
             await MainActor.run {
                 switch status {
@@ -156,9 +146,6 @@ public final class FoodPhotoDemoViewController: UIViewController {
                     fetchButton.isEnabled = false
                 case .notDetermined:
                     statusLabel.text = "❓ 권한 상태 미확인"
-                    fetchButton.isEnabled = false
-                @unknown default:
-                    statusLabel.text = "❓ 알 수 없는 권한 상태"
                     fetchButton.isEnabled = false
                 }
             }
@@ -174,13 +161,6 @@ public final class FoodPhotoDemoViewController: UIViewController {
     }
 
     private func fetchFoodPhotos() async {
-        guard let fetcher = photoFetcher else {
-            await MainActor.run {
-                statusLabel.text = "❌ 초기화 실패"
-            }
-            return
-        }
-
         await MainActor.run {
             activityIndicator.startAnimating()
             fetchButton.isEnabled = false
@@ -194,7 +174,7 @@ public final class FoodPhotoDemoViewController: UIViewController {
             let endDate = Date()
             let startDate = Calendar.current.date(byAdding: .day, value: -30, to: endDate)!
 
-            let result = try await fetcher.fetchFoodPhotos(from: startDate, to: endDate)
+            let result = try await repository.fetchFoodPhotos(from: startDate, to: endDate)
 
             let duration = Date().timeIntervalSince(startTime)
             let totalPhotos = result.values.reduce(0) { $0 + $1.count }
@@ -238,7 +218,7 @@ extension FoodPhotoDemoViewController: UICollectionViewDataSource {
 
         let date = sortedDates[indexPath.section]
         if let photos = photosByDate[date] {
-            cell.configure(with: photos[indexPath.item])
+            cell.configure(with: photos[indexPath.item], imageCache: imageCache)
         }
 
         return cell
@@ -328,25 +308,33 @@ private class FoodPhotoCell: UICollectionViewCell {
         contentView.clipsToBounds = true
     }
 
-    func configure(with foodPhoto: FoodPhoto) {
-        let manager = PHImageManager.default()
-        let options = PHImageRequestOptions()
-        options.isSynchronous = false
-        options.deliveryMode = .highQualityFormat
+    private var currentLoadingId: String?
 
-        manager.requestImage(
-            for: foodPhoto.asset,
-            targetSize: CGSize(width: 300, height: 300),
-            contentMode: .aspectFill,
-            options: options
-        ) { [weak self] image, _ in
-            DispatchQueue.main.async {
-                self?.imageView.image = image
-            }
-        }
+    func configure(with foodPhoto: FoodPhoto<PHAsset>, imageCache: PHImageCache) {
+        let photoId = foodPhoto.id
+        currentLoadingId = photoId
+        imageView.image = nil
 
         let percentage = Int(foodPhoto.foodProbability * 100)
         confidenceLabel.text = "\(percentage)%"
+
+        Task {
+            do {
+                let image = try await imageCache.requestImage(
+                    for: foodPhoto.imageAsset,
+                    targetSize: CGSize(width: 300, height: 300)
+                )
+                await MainActor.run {
+                    guard self.currentLoadingId == photoId else { return }
+                    self.imageView.image = image
+                }
+            } catch {
+                await MainActor.run {
+                    guard self.currentLoadingId == photoId else { return }
+                    self.imageView.image = nil
+                }
+            }
+        }
     }
 }
 
