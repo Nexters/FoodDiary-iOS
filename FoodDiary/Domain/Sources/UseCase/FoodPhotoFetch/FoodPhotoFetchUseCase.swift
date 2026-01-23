@@ -29,48 +29,32 @@ public struct FoodPhotoFetchUseCase<
         to endDate: Date?
     ) async throws -> [Date: [FoodPhoto]] {
         let sections = try await photoLibrary.fetchPhotosByDate(from: startDate, to: endDate)
-
-        return try await withThrowingTaskGroup(of: (Date, [FoodPhoto]).self) { group in
-            for section in sections {
-                group.addTask {
-                    let photos = try await self.classifyPhotosInSection(section)
-                    return (section.date, photos)
-                }
-            }
-
-            var result: [Date: [FoodPhoto]] = [:]
-            for try await (date, photos) in group {
-                result[date] = photos
-            }
-
-            return result
-        }
+        return try await classifyAllSections(sections)
     }
 }
 
 private extension FoodPhotoFetchUseCase {
+    /// 모든 섹션을 병렬로 분류하고 날짜별 음식 사진 딕셔너리 반환
+    func classifyAllSections(_ sections: [PhotoSection]) async throws -> [Date: [FoodPhoto]] {
+        let results = try await mapEach(sections) { section in
+            let photos = try await self.classifyPhotosInSection(section)
+            return (section.date, photos)
+        }
+        return Dictionary(uniqueKeysWithValues: results)
+    }
+
     /// 섹션 내의 모든 사진을 분류하고 음식 확률 순으로 정렬된 `FoodPhoto` 배열 반환
     func classifyPhotosInSection(_ section: PhotoSection) async throws -> [FoodPhoto] {
-        try await withThrowingTaskGroup(of: FoodPhoto.self) { group in
-            for asset in section.photos {
-                group.addTask {
-                    try await self.classifyAsset(asset)
-                }
-            }
-
-            var results: [FoodPhoto] = []
-            for try await photo in group {
-                results.append(photo)
-            }
-
-            return results.sorted { $0.foodProbability > $1.foodProbability }
+        try await mapEach(section.photos) { phAsset in
+            try await self.classifyAsset(phAsset)
         }
+        .sorted { $0.foodProbability > $1.foodProbability }
     }
 
     /// `PHAsset`에서 음식 정확도를 판단하고 `FoodPhoto` 객체로 변환
-    func classifyAsset(_ asset: PHAsset) async throws -> FoodPhoto {
+    func classifyAsset(_ phAsset: PHAsset) async throws -> FoodPhoto {
         let image = try await photoLibrary.loadImage(
-            from: asset,
+            from: phAsset,
             targetSize: CGSize(width: 224, height: 224)
         )
         let result = try foodClassifier.classify(image: image)
@@ -81,5 +65,23 @@ private extension FoodPhotoFetchUseCase {
         }
 
         return FoodPhoto(asset: asset, foodProbability: foodProbability)
+    }
+
+    /// 각 요소에 대해 비동기 작업을 병렬로 수행하고 결과 배열 반환
+    func mapEach<T, R: Sendable>(
+        _ items: [T],
+        transform: @escaping @Sendable (T) async throws -> R
+    ) async throws -> [R] {
+        try await withThrowingTaskGroup(of: R.self) { group in
+            for item in items {
+                group.addTask { try await transform(item) }
+            }
+
+            var results: [R] = []
+            for try await result in group {
+                results.append(result)
+            }
+            return results
+        }
     }
 }
