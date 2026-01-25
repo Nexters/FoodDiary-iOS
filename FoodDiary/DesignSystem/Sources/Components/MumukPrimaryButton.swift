@@ -9,7 +9,9 @@ import UIKit
 public final class MumukPrimaryButton: UIButton {
     // MARK: - Properties
 
-    private var colorConfiguration: ImagePickerColorConfiguration = .default
+    private var primaryColor: UIColor = DesignSystemAsset.primary.color
+    private var buttonTextColor: UIColor = .white
+    private var buttonDisabledColor: UIColor = DesignSystemAsset.disabled.color
 
     // MARK: - Initialization
 
@@ -35,12 +37,18 @@ public final class MumukPrimaryButton: UIButton {
     /// 버튼 설정
     /// - Parameters:
     ///   - title: 버튼 타이틀
-    ///   - colorConfiguration: 색상 설정
+    ///   - primaryColor: 기본 색상
+    ///   - buttonTextColor: 텍스트 색상
+    ///   - buttonDisabledColor: 비활성화 색상
     public func configure(
         title: String,
-        colorConfiguration: ImagePickerColorConfiguration = .default
+        primaryColor: UIColor = DesignSystemAsset.primary.color,
+        buttonTextColor: UIColor = .white,
+        buttonDisabledColor: UIColor = DesignSystemAsset.disabled.color
     ) {
-        self.colorConfiguration = colorConfiguration
+        self.primaryColor = primaryColor
+        self.buttonTextColor = buttonTextColor
+        self.buttonDisabledColor = buttonDisabledColor
         setTitle(title, for: .normal)
         updateAppearance()
     }
@@ -57,11 +65,11 @@ public final class MumukPrimaryButton: UIButton {
 
     private func updateAppearance() {
         if isEnabled {
-            backgroundColor = colorConfiguration.primaryColor
-            setTitleColor(colorConfiguration.buttonTextColor, for: .normal)
+            backgroundColor = primaryColor
+            setTitleColor(buttonTextColor, for: .normal)
         } else {
-            backgroundColor = colorConfiguration.buttonDisabledColor
-            setTitleColor(colorConfiguration.buttonTextColor.withAlphaComponent(0.5), for: .normal)
+            backgroundColor = buttonDisabledColor
+            setTitleColor(buttonTextColor.withAlphaComponent(0.5), for: .normal)
         }
     }
 }

@@ -46,7 +46,7 @@ public final class SelectableImageCell: UICollectionViewCell {
 
     // MARK: - Properties
 
-    private var colorConfiguration: ImagePickerColorConfiguration = .default
+    private var configuration: ImagePickerConfiguration = .default
     private var isSelectedState: Bool = false
     private var showsProbabilityLabel: Bool = true
 
@@ -101,18 +101,17 @@ public final class SelectableImageCell: UICollectionViewCell {
     /// 셀 설정
     /// - Parameters:
     ///   - isSelected: 선택 상태
-    ///   - colorConfiguration: 색상 설정
+    ///   - configuration: 피커 설정
     ///   - showsProbabilityLabel: 확률 라벨 표시 여부 (디버그용)
     public func configure(
         isSelected: Bool,
-        colorConfiguration: ImagePickerColorConfiguration = .default,
+        configuration: ImagePickerConfiguration = .default,
         showsProbabilityLabel: Bool = true
     ) {
-        self.colorConfiguration = colorConfiguration
+        self.configuration = configuration
         self.isSelectedState = isSelected
         self.showsProbabilityLabel = showsProbabilityLabel
 
-        contentView.backgroundColor = colorConfiguration.cellBackgroundColor
         probabilityLabel.isHidden = !showsProbabilityLabel
         updateSelectionAppearance()
     }
@@ -151,13 +150,13 @@ public final class SelectableImageCell: UICollectionViewCell {
     private func updateSelectionAppearance() {
         if isSelectedState {
             // 선택됨
-            selectionBorderView.layer.borderColor = colorConfiguration.primaryColor.cgColor
+            selectionBorderView.layer.borderColor = configuration.primaryColor.cgColor
             selectionBorderView.isHidden = false
-            checkmarkImageView.image = MumukImage.checkmarkSelected
+            checkmarkImageView.image = DesignSystemAsset.checkmarkSelected.image
         } else {
             // 미선택
             selectionBorderView.isHidden = true
-            checkmarkImageView.image = MumukImage.checkmarkUnselected
+            checkmarkImageView.image = DesignSystemAsset.checkmarkUnselected.image
         }
     }
 

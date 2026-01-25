@@ -66,7 +66,9 @@ public final class ImagePickerViewController<
         let button = MumukPrimaryButton()
         button.configure(
             title: configuration.confirmButtonTitle,
-            colorConfiguration: configuration.colorConfiguration
+            primaryColor: configuration.primaryColor,
+            buttonTextColor: configuration.buttonTextColor,
+            buttonDisabledColor: configuration.buttonDisabledColor
         )
         button.isEnabled = false
         button.addTarget(self, action: #selector(confirmButtonTapped), for: .touchUpInside)
@@ -106,8 +108,8 @@ public final class ImagePickerViewController<
     // MARK: - Setup
 
     private func setupUI() {
-        view.backgroundColor = configuration.colorConfiguration.backgroundColor
-
+        view.backgroundColor = DesignSystemAsset.background.color
+        
         view.addSubview(navigationBar)
         view.addSubview(collectionView)
         view.addSubview(confirmButton)
@@ -200,7 +202,7 @@ public final class ImagePickerViewController<
 
         cell.configure(
             isSelected: isSelected,
-            colorConfiguration: configuration.colorConfiguration,
+            configuration: configuration,
             showsProbabilityLabel: configuration.showsFoodProbability
         )
 

@@ -33,7 +33,7 @@ final class ImagePickerDemoViewController: UIViewController {
         let button = UIButton(type: .system)
         button.setTitle("이미지 피커 열기", for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
-        button.backgroundColor = UIColor(hex: "#FF6B35")
+        button.backgroundColor = DesignSystemAsset.background.color
         button.setTitleColor(.white, for: .normal)
         button.layer.cornerRadius = 12
         return button
@@ -153,16 +153,9 @@ final class ImagePickerDemoViewController: UIViewController {
 
     private func presentPicker(with photos: [FoodPhoto<PHAsset>]) {
         let imageProvider = PHAssetImageProvider(photos: photos, imageCache: imageCache)
-        let configuration = ImagePickerConfiguration(
-            maxSelectionCount: nil,
-            colorConfiguration: .default,
-            confirmButtonTitle: "추가하기",
-            showsFoodProbability: true  // 데모에서 확률 표시 활성화
-        )
         let picker = ImagePickerViewController(
             photos: photos,
-            imageProvider: imageProvider,
-            configuration: configuration
+            imageProvider: imageProvider
         )
 
         picker.resultPublisher
