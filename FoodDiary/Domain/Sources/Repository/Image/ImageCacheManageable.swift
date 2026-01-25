@@ -8,7 +8,7 @@
 import UIKit
 
 /// 이미지 캐싱 및 로드를 담당하는 프로토콜
-public protocol ImageCacheManageable: Sendable {
+public protocol ImageCacheManageable<Asset>: Sendable {
     associatedtype Asset: ImageAssetable
 
     /// 이미지 요청
