@@ -6,7 +6,6 @@
 //
 
 import Domain
-import Data
 
 /// 이미지 피커 결과
 public enum FoodImagePickerResult<Asset: ImageAssetable> {
