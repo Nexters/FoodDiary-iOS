@@ -9,11 +9,13 @@ import Foundation
 import Domain
 
 final public class LoginViewModel {
-    private let loginUseCase: LoginUseCase = LoginUseCase()
+    private let finalizeAppleLoginUseCase: FinalizeAppleLoginUseCase
     
-    public init() {}
+    public init(finalizeAppleLoginUseCase: FinalizeAppleLoginUseCase = .init()) {
+        self.finalizeAppleLoginUseCase = finalizeAppleLoginUseCase
+    }
     
     public func sendIdentityToken(_ token: Data) async throws {
-        try await loginUseCase.execute(token)
+        try await finalizeAppleLoginUseCase.execute(token)
     }
 }
