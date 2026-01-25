@@ -1,5 +1,5 @@
 //
-//  SelectableImageCell.swift
+//  ImagePickerCell.swift
 //  Presentation
 //
 
@@ -8,8 +8,8 @@ import SnapKit
 import UIKit
 
 /// 선택 가능한 이미지 셀
-public final class SelectableImageCell: UICollectionViewCell {
-    public static let reuseIdentifier = "SelectableImageCell"
+public final class ImagePickerCell: UICollectionViewCell {
+    public static let reuseIdentifier = "ImagePickerCell"
 
     // MARK: - UI Components
 

@@ -23,13 +23,13 @@ public final class ImagePickerViewController<
     // MARK: - Public Publisher
 
     /// 피커 결과 Publisher
-    public var resultPublisher: AnyPublisher<FoodImagePickerResult<Asset>, Never> {
+    public var resultPublisher: AnyPublisher<ImagePickerResult<Asset>, Never> {
         resultSubject.eraseToAnyPublisher()
     }
 
     // MARK: - Private Properties
 
-    private let resultSubject = PassthroughSubject<FoodImagePickerResult<Asset>, Never>()
+    private let resultSubject = PassthroughSubject<ImagePickerResult<Asset>, Never>()
     private var cancellables = Set<AnyCancellable>()
 
     private let photos: [FoodPhoto<Asset>]
@@ -56,8 +56,8 @@ public final class ImagePickerViewController<
         cv.delegate = self
         cv.dataSource = self
         cv.register(
-            SelectableImageCell.self,
-            forCellWithReuseIdentifier: SelectableImageCell.reuseIdentifier
+            ImagePickerCell.self,
+            forCellWithReuseIdentifier: ImagePickerCell.reuseIdentifier
         )
         return cv
     }()
@@ -160,7 +160,7 @@ public final class ImagePickerViewController<
         }
 
         // 셀 업데이트
-        if let cell = collectionView.cellForItem(at: indexPath) as? SelectableImageCell {
+        if let cell = collectionView.cellForItem(at: indexPath) as? ImagePickerCell {
             cell.setSelected(selectedPhotoIds.contains(photo.id))
         }
 
@@ -193,9 +193,9 @@ public final class ImagePickerViewController<
 
     public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(
-            withReuseIdentifier: SelectableImageCell.reuseIdentifier,
+            withReuseIdentifier: ImagePickerCell.reuseIdentifier,
             for: indexPath
-        ) as! SelectableImageCell
+        ) as! ImagePickerCell
 
         let photo = photos[indexPath.item]
         let isSelected = selectedPhotoIds.contains(photo.id)
@@ -216,7 +216,7 @@ public final class ImagePickerViewController<
         return cell
     }
 
-    private func loadImage(for photo: FoodPhoto<Asset>, cell: SelectableImageCell, at indexPath: IndexPath) {
+    private func loadImage(for photo: FoodPhoto<Asset>, cell: ImagePickerCell, at indexPath: IndexPath) {
         Task {
             do {
                 let image = try await imageProvider.loadImage(
