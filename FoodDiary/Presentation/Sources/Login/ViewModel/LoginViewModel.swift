@@ -13,11 +13,7 @@ final public class LoginViewModel {
     
     public init() {}
     
-    public func sendIdentityToken(_ token: Data) async {
-        do {
-            try await loginUseCase.execute(token)
-        } catch {
-            print(error.localizedDescription)
-        }
+    public func sendIdentityToken(_ token: Data) async throws {
+        try await loginUseCase.execute(token)
     }
 }
