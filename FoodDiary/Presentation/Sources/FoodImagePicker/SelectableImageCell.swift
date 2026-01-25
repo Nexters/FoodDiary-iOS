@@ -1,8 +1,9 @@
 //
 //  SelectableImageCell.swift
-//  DesignSystem
+//  Presentation
 //
 
+import DesignSystem
 import SnapKit
 import UIKit
 
@@ -47,6 +48,7 @@ public final class SelectableImageCell: UICollectionViewCell {
 
     private var colorConfiguration: ImagePickerColorConfiguration = .default
     private var isSelectedState: Bool = false
+    private var showsProbabilityLabel: Bool = true
 
     // MARK: - Initialization
 
@@ -100,14 +102,18 @@ public final class SelectableImageCell: UICollectionViewCell {
     /// - Parameters:
     ///   - isSelected: 선택 상태
     ///   - colorConfiguration: 색상 설정
+    ///   - showsProbabilityLabel: 확률 라벨 표시 여부 (디버그용)
     public func configure(
         isSelected: Bool,
-        colorConfiguration: ImagePickerColorConfiguration = .default
+        colorConfiguration: ImagePickerColorConfiguration = .default,
+        showsProbabilityLabel: Bool = true
     ) {
         self.colorConfiguration = colorConfiguration
         self.isSelectedState = isSelected
+        self.showsProbabilityLabel = showsProbabilityLabel
 
         contentView.backgroundColor = colorConfiguration.cellBackgroundColor
+        probabilityLabel.isHidden = !showsProbabilityLabel
         updateSelectionAppearance()
     }
 
@@ -122,8 +128,11 @@ public final class SelectableImageCell: UICollectionViewCell {
         updateSelectionAppearance()
     }
 
-    /// Food probability 표시 (디버그용)
+    /// Food probability 표시
+    /// - Note: 디버그 목적으로 임시 구현된 기능입니다. 추후 제거될 수 있습니다.
     public func setFoodProbability(_ probability: Float) {
+        guard showsProbabilityLabel else { return }
+
         let percentage = Int(probability * 100)
         probabilityLabel.text = " \(percentage)% "
 
@@ -144,11 +153,11 @@ public final class SelectableImageCell: UICollectionViewCell {
             // 선택됨
             selectionBorderView.layer.borderColor = colorConfiguration.primaryColor.cgColor
             selectionBorderView.isHidden = false
-            checkmarkImageView.image = UIImage(named: "image_checked", in: Bundle.module, compatibleWith: nil)
+            checkmarkImageView.image = MumukImage.checkmarkSelected
         } else {
             // 미선택
             selectionBorderView.isHidden = true
-            checkmarkImageView.image = UIImage(named: "image_unchecked", in: Bundle.module, compatibleWith: nil)
+            checkmarkImageView.image = MumukImage.checkmarkUnselected
         }
     }
 
