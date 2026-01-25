@@ -16,7 +16,7 @@ public protocol LoginViewControllerDelegate: AnyObject {
 final public class LoginViewController: UIViewController {
     public weak var delegate: LoginViewControllerDelegate?
     
-    let viewModel: LoginViewModel
+    private let viewModel: LoginViewModel
     
     public init(viewModel: LoginViewModel = LoginViewModel()) {
         self.viewModel = viewModel
@@ -39,7 +39,7 @@ private extension LoginViewController {
         
         let appleLoginBtn = ASAuthorizationAppleIDButton(authorizationButtonType: .continue, authorizationButtonStyle: .black)
         appleLoginBtn.clipsToBounds = true
-        appleLoginBtn.cornerRadius = 10
+        appleLoginBtn.layer.cornerRadius = 10
         appleLoginBtn.addTarget(self, action: #selector(loginButtonTapped), for: .touchUpInside)
         
         view.addSubview(appleLoginBtn)
@@ -53,10 +53,10 @@ private extension LoginViewController {
     
     @objc func loginButtonTapped() {
         let provider = ASAuthorizationAppleIDProvider()
-        let reqeust = provider.createRequest()
-        reqeust.requestedScopes = [.fullName, .email]
+        let request = provider.createRequest()
+        request.requestedScopes = [.fullName, .email]
         
-        let controller = ASAuthorizationController(authorizationRequests: [reqeust])
+        let controller = ASAuthorizationController(authorizationRequests: [request])
         controller.delegate = self
         controller.presentationContextProvider = self
         controller.performRequests()
@@ -83,6 +83,9 @@ extension LoginViewController: ASAuthorizationControllerDelegate {
 
 extension LoginViewController: ASAuthorizationControllerPresentationContextProviding {
     public func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
-        return view.window!
+        guard let window = view.window else {
+            fatalError("View controller's view must be in a window hierarchy")
+        }
+        return window
     }
 }
