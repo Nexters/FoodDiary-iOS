@@ -1,8 +1,6 @@
 //
 //  FoodPhotoDemoViewController.swift
-//  Presentation
-//
-//  Created by Claude on 1/21/26.
+//  App
 //
 
 import Data
@@ -10,7 +8,7 @@ import Domain
 import Photos
 import UIKit
 
-public final class FoodPhotoDemoViewController: UIViewController {
+final class FoodPhotoDemoViewController: UIViewController {
 
     // MARK: - UI Components
 
@@ -59,7 +57,7 @@ public final class FoodPhotoDemoViewController: UIViewController {
 
     // MARK: - Initialization
 
-    public init(repository: FoodPhotoFetcher<TFLiteFoodClassifier, PHImageCache>) {
+    init(repository: FoodPhotoFetcher<TFLiteFoodClassifier, PHImageCache>) {
         self.repository = repository
         super.init(nibName: nil, bundle: nil)
     }
@@ -71,7 +69,7 @@ public final class FoodPhotoDemoViewController: UIViewController {
 
     // MARK: - Lifecycle
 
-    public override func viewDidLoad() {
+    override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupConstraints()
@@ -204,16 +202,16 @@ public final class FoodPhotoDemoViewController: UIViewController {
 // MARK: - UICollectionViewDataSource
 
 extension FoodPhotoDemoViewController: UICollectionViewDataSource {
-    public func numberOfSections(in collectionView: UICollectionView) -> Int {
+    func numberOfSections(in collectionView: UICollectionView) -> Int {
         return sortedDates.count
     }
 
-    public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         let date = sortedDates[section]
         return photosByDate[date]?.count ?? 0
     }
 
-    public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FoodPhotoCell", for: indexPath) as! FoodPhotoCell
 
         let date = sortedDates[indexPath.section]
@@ -224,7 +222,7 @@ extension FoodPhotoDemoViewController: UICollectionViewDataSource {
         return cell
     }
 
-    public func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
+    func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         let header = collectionView.dequeueReusableSupplementaryView(
             ofKind: kind,
             withReuseIdentifier: "SectionHeaderView",
@@ -242,14 +240,14 @@ extension FoodPhotoDemoViewController: UICollectionViewDataSource {
 // MARK: - UICollectionViewDelegateFlowLayout
 
 extension FoodPhotoDemoViewController: UICollectionViewDelegateFlowLayout {
-    public func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let padding: CGFloat = 16 * 2 + 8 * 2 // section padding + spacing
         let availableWidth = collectionView.bounds.width - padding
         let itemWidth = availableWidth / 3
         return CGSize(width: itemWidth, height: itemWidth)
     }
 
-    public func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
         return CGSize(width: collectionView.bounds.width, height: 50)
     }
 }
