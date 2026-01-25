@@ -153,9 +153,19 @@ final class ImagePickerDemoViewController: UIViewController {
 
     private func presentPicker(with photos: [FoodPhoto<PHAsset>]) {
         let imageProvider = PHAssetImageProvider(photos: photos, imageCache: imageCache)
+        
+        let config: ImagePickerConfiguration = {
+            #if DEBUG
+            return .debug
+            #else
+            return .default
+            #endif
+        }()
+        
         let picker = ImagePickerViewController(
             photos: photos,
-            imageProvider: imageProvider
+            imageProvider: imageProvider,
+            configuration: config
         )
 
         picker.resultPublisher

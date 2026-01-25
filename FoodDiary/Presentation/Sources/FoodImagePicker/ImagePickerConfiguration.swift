@@ -40,6 +40,16 @@ public struct ImagePickerConfiguration: Sendable {
         confirmButtonTitle: "추가하기",
         showsFoodProbability: false
     )
+    
+    /// 디버그 설정
+    public static let debug = ImagePickerConfiguration(
+        primaryColor: DesignSystemAsset.primary.color,
+        buttonTextColor: .white,
+        buttonDisabledColor: DesignSystemAsset.disabled.color,
+        maxSelectionCount: nil,
+        confirmButtonTitle: "추가하기",
+        showsFoodProbability: true
+    )
 
     public init(
         primaryColor: UIColor,
