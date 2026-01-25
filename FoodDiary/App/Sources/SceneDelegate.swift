@@ -7,7 +7,9 @@
 
 import UIKit
 import Data
+import DesignSystem
 import Presentation
+import Photos
 
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
@@ -25,14 +27,17 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                 foodClassifier: classifier,
                 imageCacheManager: PHImageCache()
             )
-            demoVC = FoodPhotoDemoViewController(repository: repository)
+            // FoodImagePicker 데모용 ViewController
+            demoVC = ImagePickerDemoViewController(
+                repository: repository,
+                imageCache: PHImageCache()
+            )
         } catch {
             demoVC = UIViewController()
             print("❌ Failed to initialize: \(error)")
         }
 
-        let navigationController = UINavigationController(rootViewController: demoVC)
-        window?.rootViewController = navigationController
+        window?.rootViewController = demoVC
         window?.makeKeyAndVisible()
     }
     
