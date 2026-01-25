@@ -5,6 +5,7 @@
 //  Created by 강대훈 on 1/23/26.
 //
 
+import Combine
 import UIKit
 import Presentation
 import Domain
@@ -13,6 +14,7 @@ import Data
 final class AppFlowController: UIViewController {
     private var isLogin: Bool = false
     private var currentChild: UIViewController?
+    private var cancellables = Set<AnyCancellable>()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -32,8 +34,20 @@ private extension AppFlowController {
     
     func createLoginView() -> UIViewController {
         let loginVC = LoginViewController()
-        loginVC.delegate = self
+        
+        loginVC.didLogin
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.handleLoginSuccess()
+            }
+            .store(in: &cancellables)
+        
         return loginVC
+    }
+    
+    func handleLoginSuccess() {
+        isLogin = true
+        routeToAppropriateScreen()
     }
     
     func transition(to viewController: UIViewController) {
@@ -50,12 +64,5 @@ private extension AppFlowController {
         viewController.didMove(toParent: self)
 
         currentChild = viewController
-    }
-}
-
-extension AppFlowController: LoginViewControllerDelegate {
-    func loginViewControllerDidLogin() {
-        isLogin = true
-        routeToAppropriateScreen()
     }
 }

@@ -6,15 +6,12 @@
 //
 
 import AuthenticationServices
+import Combine
 import UIKit
 import SnapKit
 
-public protocol LoginViewControllerDelegate: AnyObject {
-    func loginViewControllerDidLogin()
-}
-
 final public class LoginViewController: UIViewController {
-    public weak var delegate: LoginViewControllerDelegate?
+    public let didLogin = PassthroughSubject<Void, Never>()
     
     private let viewModel: LoginViewModel
     
@@ -69,7 +66,7 @@ extension LoginViewController: ASAuthorizationControllerDelegate {
             if let token = appleIDCredential.identityToken {
                 Task { @MainActor in
                     await viewModel.sendIdentityToken(token)
-                    delegate?.loginViewControllerDidLogin()
+                    didLogin.send()
                 }
             }
         }
