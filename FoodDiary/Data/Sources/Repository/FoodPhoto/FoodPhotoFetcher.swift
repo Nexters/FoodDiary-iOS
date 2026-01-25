@@ -17,7 +17,7 @@ public final class FoodPhotoFetcher<
     ImageCacheManager: ImageCacheManageable
 >: FoodPhotoRepository where ImageCacheManager.Asset == PHAsset {
     public typealias Asset = PHAsset
-    
+
     private let foodClassifier: FoodClassifier
     private let imageCacheManager: ImageCacheManager
     private let imageTargetSize: CGSize
@@ -113,7 +113,7 @@ private extension FoodPhotoFetcher {
             return (section.date, photos)
         }
 
-        // UI 표시용 썸네일 미리 캐싱
+        // UI 표시용 썸네일 캐싱
         let allAssets = results.flatMap { $0.1.map(\.imageAsset) }
         imageCacheManager.startCaching(
             assets: allAssets,

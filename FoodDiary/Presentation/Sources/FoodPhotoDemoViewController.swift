@@ -170,9 +170,9 @@ public final class FoodPhotoDemoViewController: UIViewController {
         let startTime = Date()
 
         do {
-            // 최근 30일간의 사진 가져오기
+            // 최근 7일간의 사진 가져오기
             let endDate = Date()
-            let startDate = Calendar.current.date(byAdding: .day, value: -30, to: endDate)!
+            let startDate = Calendar.current.date(byAdding: .day, value: -7, to: endDate)!
 
             let result = try await repository.fetchFoodPhotos(from: startDate, to: endDate)
 
