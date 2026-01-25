@@ -9,11 +9,48 @@ import Domain
 import SnapKit
 import UIKit
 
-// MARK: - Picker Result
-
 // MARK: - ImagePickerViewController
 
-/// 이미지를 선택하는 UI를 제공합니다.
+/// 음식 사진을 선택할 수 있는 커스텀 이미지 피커 뷰 컨트롤러입니다.
+///
+/// ## Overview
+/// `ImagePickerViewController`는 `FoodPhoto` 배열을 받아 그리드 형태로 표시하고,
+/// 사용자가 사진을 선택하면 `resultPublisher`를 통해 결과를 전달합니다.
+///
+/// ## Usage
+/// ```swift
+/// // 1. 피커 생성
+/// let picker = ImagePickerViewController(
+///     photos: foodPhotos,
+///     imageProvider: myImageProvider,
+///     configuration: .default
+/// )
+///
+/// // 2. 결과 구독
+/// picker.resultPublisher
+///     .sink { result in
+///         switch result {
+///         case .selected(let photos):
+///             // 선택된 사진 처리
+///             self.dismiss(animated: true)
+///         case .cancelled:
+///             // 취소 처리
+///             self.dismiss(animated: true)
+///         }
+///     }
+///     .store(in: &cancellables)
+///
+/// // 3. 피커 표시
+/// present(picker, animated: true)
+/// ```
+///
+/// ## Configuration
+/// `ImagePickerConfiguration`을 통해 다음 항목을 커스터마이징할 수 있습니다:
+/// - `primaryColor`: 선택 테두리 및 버튼 색상
+/// - `maxSelectionCount`: 최대 선택 가능 수 (nil이면 무제한)
+/// - `confirmButtonTitle`: 확인 버튼 텍스트
+/// - `showsFoodProbability`: 음식 확률 표시 여부 (디버그용)
+///
 public final class ImagePickerViewController<
     Asset: ImageAssetable,
     ImageProvider: ImageProviding
