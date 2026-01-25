@@ -81,20 +81,27 @@ public struct ImagePickerConfiguration: Sendable {
     /// 확인 버튼 타이틀
     public let confirmButtonTitle: String
 
+    /// 음식 확률 라벨 표시 여부
+    /// - Note: 디버그 목적으로 임시 구현된 기능입니다. 추후 제거될 수 있습니다.
+    public let showsFoodProbability: Bool
+
     /// 기본 설정
     public static let `default` = ImagePickerConfiguration(
         maxSelectionCount: nil,
         colorConfiguration: .default,
-        confirmButtonTitle: "추가하기"
+        confirmButtonTitle: "추가하기",
+        showsFoodProbability: false
     )
 
     public init(
         maxSelectionCount: Int?,
         colorConfiguration: ImagePickerColorConfiguration,
-        confirmButtonTitle: String
+        confirmButtonTitle: String,
+        showsFoodProbability: Bool = false
     ) {
         self.maxSelectionCount = maxSelectionCount
         self.colorConfiguration = colorConfiguration
         self.confirmButtonTitle = confirmButtonTitle
+        self.showsFoodProbability = showsFoodProbability
     }
 }

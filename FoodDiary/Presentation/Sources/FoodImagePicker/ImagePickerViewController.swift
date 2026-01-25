@@ -200,9 +200,13 @@ public final class ImagePickerViewController<
 
         cell.configure(
             isSelected: isSelected,
-            colorConfiguration: configuration.colorConfiguration
+            colorConfiguration: configuration.colorConfiguration,
+            showsProbabilityLabel: configuration.showsFoodProbability
         )
-        cell.setFoodProbability(photo.foodProbability)
+
+        if configuration.showsFoodProbability {
+            cell.setFoodProbability(photo.foodProbability)
+        }
 
         // 이미지 로딩(비동기)
         loadImage(for: photo, cell: cell, at: indexPath)

@@ -153,9 +153,16 @@ final class ImagePickerDemoViewController: UIViewController {
 
     private func presentPicker(with photos: [FoodPhoto<PHAsset>]) {
         let imageProvider = PHAssetImageProvider(photos: photos, imageCache: imageCache)
+        let configuration = ImagePickerConfiguration(
+            maxSelectionCount: nil,
+            colorConfiguration: .default,
+            confirmButtonTitle: "추가하기",
+            showsFoodProbability: true  // 데모에서 확률 표시 활성화
+        )
         let picker = ImagePickerViewController(
             photos: photos,
-            imageProvider: imageProvider
+            imageProvider: imageProvider,
+            configuration: configuration
         )
 
         picker.resultPublisher
