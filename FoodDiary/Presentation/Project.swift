@@ -22,7 +22,7 @@ let project = Project(
             dependencies: [
                 .project(target: "Domain", path: "../Domain"),
                 .project(target: "DesignSystem", path: "../DesignSystem"),
-                .project(target: "Data", path: "../Data"),
+                .external(name: "SnapKit"),
             ]
         ),
         .target(
