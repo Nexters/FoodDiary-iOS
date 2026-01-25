@@ -25,6 +25,7 @@ let project = Project(
             dependencies: [
                 .project(target: "Data", path: "../Data"),
                 .project(target: "DesignSystem", path: "../DesignSystem"),
+                .project(target: "DI", path: "../DI"),
                 .project(target: "Domain", path: "../Domain"),
                 .project(target: "Presentation", path: "../Presentation"),
             ]

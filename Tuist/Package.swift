@@ -13,6 +13,7 @@ let package = Package(
     name: "FoodDiary",
     dependencies: [
         .package(url: "https://github.com/SnapKit/SnapKit.git", from: "5.7.0"),
-        .package(url: "https://github.com/tareksabry1337/TensorFlowLiteSwift.git", from: "2.14.0")
+        .package(url: "https://github.com/tareksabry1337/TensorFlowLiteSwift.git", from: "2.14.0"),
+        .package(url: "https://github.com/Swinject/Swinject.git", from: "2.10.0"),
     ]
 )
