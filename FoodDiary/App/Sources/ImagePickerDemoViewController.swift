@@ -130,8 +130,29 @@ final class ImagePickerDemoViewController: UIViewController {
 
     @objc private func openPickerTapped() {
         Task {
+            // 권한 체크
+            let status = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
+
+            guard status == .authorized || status == .limited else {
+                await MainActor.run {
+                    let alert = UIAlertController(
+                        title: "권한 필요",
+                        message: "사진 라이브러리 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.",
+                        preferredStyle: .alert
+                    )
+                    alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { _ in
+                        if let url = URL(string: UIApplication.openSettingsURLString) {
+                            UIApplication.shared.open(url)
+                        }
+                    })
+                    alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+                    self.present(alert, animated: true)
+                }
+                return
+            }
+
             do {
-                // 최근 30일간의 사진 가져오기
+                // 최근 7일간의 사진 가져오기
                 let endDate = Date()
                 let startDate = Calendar.current.date(byAdding: .day, value: -7, to: endDate)!
 
@@ -142,11 +163,31 @@ final class ImagePickerDemoViewController: UIViewController {
                     .flatMap { $0 }
                     .sorted { $0.foodProbability > $1.foodProbability }
 
+                print("📷 가져온 사진 수: \(photos.count)")
+
                 await MainActor.run {
+                    if photos.isEmpty {
+                        let alert = UIAlertController(
+                            title: "알림",
+                            message: "최근 7일간 사진이 없습니다.",
+                            preferredStyle: .alert
+                        )
+                        alert.addAction(UIAlertAction(title: "확인", style: .default))
+                        self.present(alert, animated: true)
+                        return
+                    }
                     presentPicker(with: photos)
                 }
             } catch {
-                // 에러 처리
+                await MainActor.run {
+                    let alert = UIAlertController(
+                        title: "오류",
+                        message: "사진 가져오기 실패: \(error.localizedDescription)",
+                        preferredStyle: .alert
+                    )
+                    alert.addAction(UIAlertAction(title: "확인", style: .default))
+                    self.present(alert, animated: true)
+                }
             }
         }
     }
