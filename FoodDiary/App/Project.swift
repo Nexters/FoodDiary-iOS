@@ -16,7 +16,7 @@ let project = Project(
             name: "App",
             destinations: .iOS,
             product: .app,
-            bundleId: "com.fooddiary.app",
+            bundleId: "com.fooddiary.ios.app",
             deploymentTargets: .iOS("18.0"),
             infoPlist: .sceneDelegateApp(),
             sources: ["Sources/**"],
