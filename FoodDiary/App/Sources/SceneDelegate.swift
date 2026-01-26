@@ -11,7 +11,6 @@ import DesignSystem
 import Presentation
 import Domain
 import DI
-import Swinject
 
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
@@ -28,21 +27,49 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
 private extension SceneDelegate {
     func registerDependencies() {
+        #if DEBUG
+        registerMockData()
+        #else
         registerData()
+        #endif
+        
         registerDomain()
         registerPresentation()
     }
     
+    func registerMockData() {
+         container.register(TokenRepository.self) { _ in
+             MockTokenRepository()
+         }
+    }
+    
     func registerData() {
-        container.register(TokenManager.self) { _ in
-            TokenManager(userDefaults: .standard)
+        container.register(KeychainService.self) { _ in
+            KeychainService()
         }
-
+        
+        container.register(HTTPClient<AuthEndpoint>.self) { _ in
+            HTTPClient()
+        }
+        
+        container.register(TokenManager.self) { resolver in
+            guard let service = resolver.resolve(KeychainService.self) else {
+                fatalError("KeychainService not registered")
+            }
+            
+            return TokenManager(keychainService: service)
+        }
+        
         container.register(TokenRepository.self) { resolver in
             guard let manager = resolver.resolve(TokenManager.self) else {
                 fatalError("TokenManager not registered")
             }
-            return TokenRepositoryImpl(tokenManager: manager)
+            
+            guard let client = resolver.resolve(HTTPClient<AuthEndpoint>.self) else {
+                fatalError("HTTPClient not registered")
+            }
+            
+            return TokenRepositoryImpl(httpClient: client, tokenManager: manager)
         }
 
         container.register(PHAssetConverter.self) { _ in
@@ -139,7 +166,4 @@ private extension SceneDelegate {
             return LoginViewModel(finalizeAppleLoginUseCase: useCase)
         }
     }
-    
 }
-
-
