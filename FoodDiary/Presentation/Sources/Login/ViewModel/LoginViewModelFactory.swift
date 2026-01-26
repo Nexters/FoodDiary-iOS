@@ -9,14 +9,14 @@ import Foundation
 import Domain
 
 public struct LoginViewModelFactory {
-    private let loginUseCase: LoginUseCase
+    private let finalizeAppleLoginUseCase: FinalizeAppleLoginUseCase
     
-    public init(loginUseCase: LoginUseCase) {
-        self.loginUseCase = loginUseCase
+    public init(finalizeAppleLoginUseCase: FinalizeAppleLoginUseCase) {
+        self.finalizeAppleLoginUseCase = finalizeAppleLoginUseCase
     }
     
     public func make() -> LoginViewModel {
-        return LoginViewModel(loginUseCase: loginUseCase)
+        return LoginViewModel(finalizeAppleLoginUseCase: finalizeAppleLoginUseCase)
     }
 }
 
