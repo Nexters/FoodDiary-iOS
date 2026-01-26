@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct AuthResponseDTO: Decodable {
+public struct AuthResponseDTO: Decodable {
     let accessToken: String
     let id: String
     let isFirst: Bool
