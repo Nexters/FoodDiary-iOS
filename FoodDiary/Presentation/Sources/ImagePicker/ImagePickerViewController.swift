@@ -53,7 +53,7 @@ import UIKit
 ///
 public final class ImagePickerViewController<
     Asset: ImageAssetable,
-    ImageProvider: ImageProviding
+    ImageProvider: ImageProviding<Asset>
 >:
     UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
 
@@ -252,7 +252,7 @@ public final class ImagePickerViewController<
         Task {
             do {
                 let image = try await imageProvider.loadImage(
-                    for: photo.id,
+                    for: photo,
                     targetSize: CGSize(width: 300, height: 300)
                 )
                 await MainActor.run {

@@ -17,6 +17,7 @@ public enum PhotoAuthorizationStatus: Sendable {
 
 public protocol FoodPhotoRepository<Asset>: Sendable {
     associatedtype Asset: ImageAssetable
+    
     /// 사진 라이브러리 접근 권한 요청
     func requestAuthorization() async -> PhotoAuthorizationStatus
 

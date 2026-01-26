@@ -65,7 +65,7 @@ final class ImagePickerDemoViewController: UIViewController {
 
     // MARK: - State
 
-    private var selectedPhotos: [FoodPhoto<PHAsset>] = []
+    private var selectedPhotos: [PHAsset] = []
 
     // MARK: - Initialization
 
@@ -193,20 +193,13 @@ final class ImagePickerDemoViewController: UIViewController {
     }
 
     private func presentPicker(with photos: [FoodPhoto<PHAsset>]) {
-        let imageProvider = PHAssetImageProvider(photos: photos, imageCache: imageCache)
-        
-        let config: ImagePickerConfiguration = {
-            #if DEBUG
-            return .debug
-            #else
-            return .default
-            #endif
-        }()
-        
+        let imageProvider = PHAssetImageProvider(imageCache: imageCache)
+        let assets = photos.map { $0.imageAsset }
+
         let picker = ImagePickerViewController(
-            photos: photos,
+            photos: assets,
             imageProvider: imageProvider,
-            configuration: config
+            configuration: .default
         )
 
         picker.resultPublisher
@@ -246,7 +239,7 @@ extension ImagePickerDemoViewController: UICollectionViewDataSource {
         Task {
             do {
                 let image = try await imageCache.requestImage(
-                    for: photo.imageAsset,
+                    for: photo,
                     targetSize: CGSize(width: 200, height: 200)
                 )
                 await MainActor.run {
