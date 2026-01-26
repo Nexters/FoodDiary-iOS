@@ -11,11 +11,11 @@ public protocol TokenRepository {
     func save(_ identityToken: Data) async throws
 }
 
-public struct TokenRepositoryImpl: TokenRepository {
+public struct TokenRepositoryImpl<Manager: TokenManaging>: TokenRepository {
     // TODO: HTTPClient 사용
-    let tokenManager: TokenManaging
+    let tokenManager: Manager
     
-    public init(tokenManager: TokenManaging = TokenManager()) {
+    public init(tokenManager: Manager = TokenManager()) {
         self.tokenManager = tokenManager
     }
     
