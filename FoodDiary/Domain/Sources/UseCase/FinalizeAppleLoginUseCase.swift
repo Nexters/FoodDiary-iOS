@@ -14,7 +14,7 @@ public struct FinalizeAppleLoginUseCase {
         self.tokenRepository = tokenRepository
     }
     
-    public func execute(_ token: Data) async throws {
-        try await tokenRepository.save(token)
+    public func execute(_ token: Data) async throws -> LoginResult {
+        return try await tokenRepository.save(token)
     }
 }

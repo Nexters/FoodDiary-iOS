@@ -15,11 +15,11 @@ public struct TokenManager: TokenManaging {
         self.userDefault = userDefaults
     }
     
-    public func getToken() -> String? {
+    public func get() -> String? {
         userDefault.string(forKey: "token")
     }
     
-    public func setToken(_ token: String) {
+    public func set(_ token: String) {
         userDefault.set(token, forKey: "token")
     }
 }

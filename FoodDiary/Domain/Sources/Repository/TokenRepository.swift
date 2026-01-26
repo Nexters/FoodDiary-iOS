@@ -8,5 +8,5 @@
 import Foundation
 
 public protocol TokenRepository {
-    func save(_ identityToken: Data) async throws
+    func save(_ identityToken: Data) async throws -> LoginResult
 }
