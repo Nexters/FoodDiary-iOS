@@ -11,7 +11,11 @@ import UIKit
 import SnapKit
 
 final public class LoginViewController: UIViewController {
-    public let didLogin = PassthroughSubject<Void, Never>()
+    private let didLoginSubject = PassthroughSubject<Void, Never>()
+    
+    public var didLoginPublisher: AnyPublisher<Void, Never> {
+        didLoginSubject.eraseToAnyPublisher()
+    }
     
     private let viewModel: LoginViewModel
     
@@ -67,7 +71,7 @@ extension LoginViewController: ASAuthorizationControllerDelegate {
                 Task {
                     do {
                         try await viewModel.sendIdentityToken(token)
-                        didLogin.send()
+                        didLoginSubject.send()
                     } catch {
                         // TODO: 추후에 에러 처리 필요
                         print(error.localizedDescription)

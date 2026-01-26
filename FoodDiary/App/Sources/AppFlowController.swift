@@ -35,7 +35,7 @@ private extension AppFlowController {
     func createLoginView() -> UIViewController {
         let loginVC = LoginViewController()
         
-        loginVC.didLogin
+        loginVC.didLoginPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.handleLoginSuccess()
