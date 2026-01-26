@@ -11,7 +11,7 @@ import Domain
 final public class LoginViewModel {
     private let finalizeAppleLoginUseCase: FinalizeAppleLoginUseCase
     
-    public init(finalizeAppleLoginUseCase: FinalizeAppleLoginUseCase = .init()) {
+    public init(finalizeAppleLoginUseCase: FinalizeAppleLoginUseCase) {
         self.finalizeAppleLoginUseCase = finalizeAppleLoginUseCase
     }
     

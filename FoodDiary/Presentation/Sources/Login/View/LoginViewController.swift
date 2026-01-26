@@ -19,7 +19,7 @@ final public class LoginViewController: UIViewController {
     
     private let viewModel: LoginViewModel
     
-    public init(viewModel: LoginViewModel = .init()) {
+    public init(viewModel: LoginViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
