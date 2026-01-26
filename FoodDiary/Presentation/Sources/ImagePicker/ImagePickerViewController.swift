@@ -69,7 +69,7 @@ public final class ImagePickerViewController<
     private let resultSubject = PassthroughSubject<ImagePickerResult<Asset>, Never>()
     private var cancellables = Set<AnyCancellable>()
 
-    private let photos: [FoodPhoto<Asset>]
+    private let photos: [Asset]
     private let imageProvider: ImageProvider
     private let configuration: ImagePickerConfiguration
 
@@ -115,7 +115,7 @@ public final class ImagePickerViewController<
     // MARK: - Initialization
 
     public init(
-        photos: [FoodPhoto<Asset>],
+        photos: [Asset],
         imageProvider: ImageProvider,
         configuration: ImagePickerConfiguration = .default
     ) {
@@ -214,8 +214,8 @@ public final class ImagePickerViewController<
     // MARK: - Actions
 
     @objc private func confirmButtonTapped() {
-        let selectedPhotos = photos.filter { selectedPhotoIds.contains($0.id) }
-        resultSubject.send(.selected(selectedPhotos))
+        let selectedAssets = photos.filter { selectedPhotoIds.contains($0.id) }
+        resultSubject.send(.selected(selectedAssets))
     }
 
     private func handleCancel() {
@@ -239,13 +239,8 @@ public final class ImagePickerViewController<
 
         cell.configure(
             isSelected: isSelected,
-            configuration: configuration,
-            showsProbabilityLabel: configuration.showsFoodProbability
+            configuration: configuration
         )
-
-        if configuration.showsFoodProbability {
-            cell.setFoodProbability(photo.foodProbability)
-        }
 
         // 이미지 로딩(비동기)
         loadImage(for: photo, cell: cell, at: indexPath)
@@ -253,7 +248,7 @@ public final class ImagePickerViewController<
         return cell
     }
 
-    private func loadImage(for photo: FoodPhoto<Asset>, cell: ImagePickerCell, at indexPath: IndexPath) {
+    private func loadImage(for photo: Asset, cell: ImagePickerCell, at indexPath: IndexPath) {
         Task {
             do {
                 let image = try await imageProvider.loadImage(

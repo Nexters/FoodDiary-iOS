@@ -5,7 +5,6 @@
 
 import UIKit
 
-/// 이미지를 비동기적으로 제공하는 프로토콜
 public protocol ImageProviding: Sendable {
     /// 지정된 ID의 이미지를 로드합니다.
     /// - Parameters:

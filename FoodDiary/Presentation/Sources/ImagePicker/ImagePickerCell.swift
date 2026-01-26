@@ -34,21 +34,10 @@ public final class ImagePickerCell: UICollectionViewCell {
         return view
     }()
 
-    private let probabilityLabel: UILabel = {
-        let label = UILabel()
-        label.font = .systemFont(ofSize: 11, weight: .bold)
-        label.textColor = .white
-        label.textAlignment = .center
-        label.layer.cornerRadius = 4
-        label.clipsToBounds = true
-        return label
-    }()
-
     // MARK: - Properties
 
     private var configuration: ImagePickerConfiguration = .default
     private var isSelectedState: Bool = false
-    private var showsProbabilityLabel: Bool = true
 
     // MARK: - Initialization
 
@@ -72,7 +61,6 @@ public final class ImagePickerCell: UICollectionViewCell {
         contentView.addSubview(imageView)
         contentView.addSubview(selectionBorderView)
         contentView.addSubview(checkmarkImageView)
-        contentView.addSubview(probabilityLabel)
     }
 
     private func setupConstraints() {
@@ -88,12 +76,6 @@ public final class ImagePickerCell: UICollectionViewCell {
             $0.top.leading.equalToSuperview().inset(8)
             $0.size.equalTo(20)
         }
-
-        probabilityLabel.snp.makeConstraints {
-            $0.trailing.bottom.equalToSuperview().inset(4)
-            $0.width.greaterThanOrEqualTo(40)
-            $0.height.equalTo(18)
-        }
     }
 
     // MARK: - Configuration
@@ -102,17 +84,12 @@ public final class ImagePickerCell: UICollectionViewCell {
     /// - Parameters:
     ///   - isSelected: 선택 상태
     ///   - configuration: 피커 설정
-    ///   - showsProbabilityLabel: 확률 라벨 표시 여부 (디버그용)
     public func configure(
         isSelected: Bool,
-        configuration: ImagePickerConfiguration = .default,
-        showsProbabilityLabel: Bool = true
+        configuration: ImagePickerConfiguration = .default
     ) {
         self.configuration = configuration
         self.isSelectedState = isSelected
-        self.showsProbabilityLabel = showsProbabilityLabel
-
-        probabilityLabel.isHidden = !showsProbabilityLabel
         updateSelectionAppearance()
     }
 
@@ -125,24 +102,6 @@ public final class ImagePickerCell: UICollectionViewCell {
     public func setSelected(_ selected: Bool) {
         isSelectedState = selected
         updateSelectionAppearance()
-    }
-
-    /// Food probability 표시
-    /// - Note: 디버그 목적으로 임시 구현된 기능입니다. 추후 제거될 수 있습니다.
-    public func setFoodProbability(_ probability: Float) {
-        guard showsProbabilityLabel else { return }
-
-        let percentage = Int(probability * 100)
-        probabilityLabel.text = " \(percentage)% "
-
-        // 확률에 따라 배경색 변경
-        if probability >= 0.7 {
-            probabilityLabel.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.85)
-        } else if probability >= 0.4 {
-            probabilityLabel.backgroundColor = UIColor.systemOrange.withAlphaComponent(0.85)
-        } else {
-            probabilityLabel.backgroundColor = UIColor.systemRed.withAlphaComponent(0.85)
-        }
     }
 
     // MARK: - Private Methods
@@ -166,8 +125,6 @@ public final class ImagePickerCell: UICollectionViewCell {
         super.prepareForReuse()
         imageView.image = nil
         isSelectedState = false
-        probabilityLabel.text = nil
-        probabilityLabel.backgroundColor = .clear
         updateSelectionAppearance()
     }
 }

@@ -8,7 +8,7 @@ import Photos
 import UIKit
 
 /// PHAsset 기반 이미지 제공자
-public final class PHAssetImageProvider: ImageProviding, @unchecked Sendable {
+public final class PHAssetImageProvider: ImageProviding {
     private let assets: [String: PHAsset]
     private let imageCache: PHImageCache
 
