@@ -64,7 +64,7 @@ extension LoginViewController: ASAuthorizationControllerDelegate {
     public func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
         if case let appleIDCredential as ASAuthorizationAppleIDCredential = authorization.credential {
             if let token = appleIDCredential.identityToken {
-                Task { @MainActor in
+                Task {
                     do {
                         try await viewModel.sendIdentityToken(token)
                         didLogin.send()
