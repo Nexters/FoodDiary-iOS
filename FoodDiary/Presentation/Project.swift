@@ -21,8 +21,7 @@ let project = Project(
             resources: ["Resources/**"],
             dependencies: [
                 .project(target: "Domain", path: "../Domain"),
-                .project(target: "DesignSystem", path: "../DesignSystem"),
-                .external(name: "SnapKit"),
+                .project(target: "DesignSystem", path: "../DesignSystem")
             ]
         ),
         .target(
