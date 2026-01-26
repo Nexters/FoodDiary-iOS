@@ -11,13 +11,15 @@ public struct HTTPClient<Target: Requestable> {
     private let session: URLSession
     private let decoder: JSONDecoder
     
-    init(session: URLSession = .shared, decoder: JSONDecoder = .init()) {
+    public init(session: URLSession = .shared, decoder: JSONDecoder = .init()) {
         self.session = session
         self.decoder = decoder
     }
     
-    func request<T: Decodable>(_ request: Target) async throws -> T {
-        let (data, response) = try await session.data(for: request.makeURLRequest())
+    public func request<T: Decodable>(_ request: Target, accessToken: String? = nil) async throws -> T {
+        var urlRequest = try request.makeURLRequest()
+        applyAccessToken(accessToken, to: &urlRequest)
+        let (data, response) = try await session.data(for: urlRequest)
         try checkResponse(data, response)
         
         do {
@@ -29,9 +31,13 @@ public struct HTTPClient<Target: Requestable> {
 }
 
 // MARK: - Private Method
-
-extension HTTPClient {
-    private func checkResponse(_ data: Data, _ response: URLResponse) throws {
+private extension HTTPClient {
+    func applyAccessToken(_ accessToken: String?, to request: inout URLRequest) {
+        guard let accessToken else { return }
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+    }
+    
+    func checkResponse(_ data: Data, _ response: URLResponse) throws {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NetworkError.invalidResponse
         }
