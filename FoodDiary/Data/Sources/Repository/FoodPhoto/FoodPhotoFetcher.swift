@@ -40,9 +40,8 @@ public final class FoodPhotoFetcher<
         self.thumbnailSize = thumbnailSize
     }
 
-    public func requestAuthorization() async -> PhotoAuthorizationStatus {
-        let status = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
-        return status.toDomain()
+    public func requestAuthorization() async -> PHAuthorizationStatus {
+        await PHPhotoLibrary.requestAuthorization(for: .readWrite)
     }
 
     public func fetchFoodPhotos(
@@ -173,27 +172,6 @@ public enum FoodPhotoAlbumError: LocalizedError {
             return "사진 라이브러리 접근 권한이 없습니다."
         case .imageLoadFailed:
             return "이미지를 불러올 수 없습니다."
-        }
-    }
-}
-
-// MARK: - PHAuthorizationStatus Extension
-
-private extension PHAuthorizationStatus {
-    func toDomain() -> PhotoAuthorizationStatus {
-        switch self {
-        case .notDetermined:
-            return .notDetermined
-        case .restricted:
-            return .restricted
-        case .denied:
-            return .denied
-        case .authorized:
-            return .authorized
-        case .limited:
-            return .limited
-        @unknown default:
-            return .denied
         }
     }
 }
