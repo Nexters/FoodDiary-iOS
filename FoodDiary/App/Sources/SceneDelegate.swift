@@ -8,15 +8,18 @@
 import UIKit
 import Data
 import Presentation
+import Domain
+import DI
 
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
-
     var window: UIWindow?
+    private let container = DIContainer.shared
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
+        registerDependencies()
         guard let windowScene = scene as? UIWindowScene else { return }
         window = UIWindow(windowScene: windowScene)
-        window?.rootViewController = AppFlowController()
+        window?.rootViewController = AppFlowController(container: container)
         window?.makeKeyAndVisible()
     }
     
@@ -38,6 +41,56 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func sceneDidEnterBackground(_ scene: UIScene) {
 
+    }
+}
+
+private extension SceneDelegate {
+    func registerDependencies() {
+        #if DEBUG
+        registerMockData()
+        #else
+        registerData()
+        #endif
+        
+        registerDomain()
+        registerPresentation()
+    }
+    
+    func registerMockData() {
+         container.register(TokenRepository.self) { _ in
+             MockTokenRepository()
+         }
+    }
+    
+    func registerData() {
+        container.register(TokenManager.self) { _ in
+            TokenManager(userDefaults: .standard)
+        }
+        
+        container.register(TokenRepository.self) { resolver in
+            guard let manager = resolver.resolve(TokenManager.self) else {
+                fatalError("TokenManager not registered")
+            }
+            return TokenRepositoryImpl(tokenManager: manager)
+        }
+    }
+    
+    func registerDomain() {
+        container.register(FinalizeAppleLoginUseCase.self) { resolver in
+            guard let repository = resolver.resolve(TokenRepository.self) else {
+                fatalError("TokenRepository not registered")
+            }
+            return FinalizeAppleLoginUseCase(tokenRepository: repository)
+        }
+    }
+    
+    func registerPresentation() {
+        container.register(LoginViewModelFactory.self) { resolver in
+            guard let useCase = resolver.resolve(FinalizeAppleLoginUseCase.self) else {
+                fatalError("FinalizeAppleLoginUseCase not registered")
+            }
+            return LoginViewModelFactory(finalizeAppleLoginUseCase: useCase)
+        }
     }
 }
 
