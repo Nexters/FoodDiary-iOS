@@ -29,6 +29,7 @@ final class AppFlowController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        updateLoginStateFromToken()
         routeToAppropriateScreen()
     }
 }
@@ -37,6 +38,14 @@ private extension AppFlowController {
     func routeToAppropriateScreen() {
         let destinationVC = isLogin ? createMainView() : createLoginView()
         transition(to: destinationVC)
+    }
+    
+    func updateLoginStateFromToken() {
+        guard let tokenManager = try? container.resolve(TokenManager.self) else {
+            fatalError("TokenManager Failed Resolve")
+        }
+        
+        isLogin = tokenManager.get() != nil
     }
     
     func createMainView() -> UIViewController {
@@ -93,16 +102,13 @@ private extension AppFlowController {
         loginVC.didLoginPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
-                self?.handleLoginSuccess()
+                guard let self else { return }
+                self.isLogin = true
+                self.routeToAppropriateScreen()
             }
             .store(in: &cancellables)
        
         return loginVC
-    }
-    
-    func handleLoginSuccess() {
-        isLogin = true
-        routeToAppropriateScreen()
     }
     
     func transition(to viewController: UIViewController) {
