@@ -22,6 +22,12 @@ let project = Project(
             sources: ["Sources/**"],
             resources: ["Resources/**"],
             entitlements: "App.entitlements",
+            settings: .settings(
+                base: [
+                    "BASE_URL": "$(BASE_URL)"
+                ],
+                configurations: []
+            ),
             dependencies: [
                 .project(target: "Data", path: "../Data"),
                 .project(target: "DesignSystem", path: "../DesignSystem"),
