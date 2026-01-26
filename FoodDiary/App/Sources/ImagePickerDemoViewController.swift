@@ -15,8 +15,8 @@ import UIKit
 final class ImagePickerDemoViewController: UIViewController {
     // MARK: - Properties
 
-    private let repository: FoodPhotoFetcher<TFLiteFoodClassifier, PHImageCache>
-    private let imageCache: PHImageCache
+    private let repository: FoodPhotoFetcher<TFLiteFoodClassifier, PHImageLoader>
+    private let imageLoader: PHImageLoader
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - UI Components
@@ -69,9 +69,9 @@ final class ImagePickerDemoViewController: UIViewController {
 
     // MARK: - Initialization
 
-    init(repository: FoodPhotoFetcher<TFLiteFoodClassifier, PHImageCache>, imageCache: PHImageCache) {
+    init(repository: FoodPhotoFetcher<TFLiteFoodClassifier, PHImageLoader>, imageLoader: PHImageLoader) {
         self.repository = repository
-        self.imageCache = imageCache
+        self.imageLoader = imageLoader
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -193,12 +193,11 @@ final class ImagePickerDemoViewController: UIViewController {
     }
 
     private func presentPicker(with photos: [FoodPhoto<PHAsset>]) {
-        let imageProvider = PHAssetImageProvider(imageCache: imageCache)
         let assets = photos.map { $0.imageAsset }
 
         let picker = ImagePickerViewController(
             photos: assets,
-            imageProvider: imageProvider,
+            imageProvider: imageLoader,
             configuration: .default
         )
 
@@ -238,7 +237,7 @@ extension ImagePickerDemoViewController: UICollectionViewDataSource {
 
         Task {
             do {
-                let image = try await imageCache.requestImage(
+                let image = try await imageLoader.loadImage(
                     for: photo,
                     targetSize: CGSize(width: 200, height: 200)
                 )

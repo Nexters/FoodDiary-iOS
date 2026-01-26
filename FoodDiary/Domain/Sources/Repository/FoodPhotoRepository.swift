@@ -7,7 +7,7 @@
 
 import Foundation
 
-public protocol FoodPhotoRepository<Asset>: Sendable {
+public protocol FoodPhotoRepository: Sendable {
     associatedtype Asset: ImageAssetable
     
     /// 날짜별 음식 사진 조회 (음식 확률 순 정렬)

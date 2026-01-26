@@ -1,13 +1,14 @@
 //
-//  ImageProviding.swift
+//  ImageLoading.swift
 //  Domain
 //
 
 import UIKit
 
-/// 구체적인 이미지를 제공하는 프로토콜
-public protocol ImageProviding<Asset>: Sendable {
+/// 이미지 로딩을 담당하는 프로토콜
+public protocol ImageLoading<Asset>: Sendable {
     associatedtype Asset: ImageAssetable
+
     /// 지정된 Asset의 이미지를 로드합니다.
     /// - Parameters:
     ///   - asset: 이미지 에셋

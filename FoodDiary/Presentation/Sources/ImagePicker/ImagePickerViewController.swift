@@ -49,11 +49,10 @@ import UIKit
 /// - `primaryColor`: 선택 테두리 및 버튼 색상
 /// - `maxSelectionCount`: 최대 선택 가능 수 (nil이면 무제한)
 /// - `confirmButtonTitle`: 확인 버튼 텍스트
-/// - `showsFoodProbability`: 음식 확률 표시 여부 (디버그용)
 ///
 public final class ImagePickerViewController<
     Asset: ImageAssetable,
-    ImageProvider: ImageProviding<Asset>
+    ImageProvider: ImageLoading<Asset>
 >:
     UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
 

@@ -9,35 +9,29 @@ import Domain
 import Photos
 import UIKit
 
-/// 사진 라이브러리에서 음식 사진을 가져오는 Repository 구현체
+/// 사진 라이브러리에서 음식 사진을 정확도 높은 순으로 정렬해서 가져오는 `Repository` 구현체
 ///
-/// PHAsset을 직접 반환하여 UI에서 이미지 로드 시 PHCachingImageManager 캐싱 활용
+/// PHAsset을 직접 반환하여 UI에서 이미지 로드 시 `PHCachingImageManager` 캐싱 활용
 public final class FoodPhotoFetcher<
     FoodClassifier: FoodClassifierRepresentable,
-    ImageCacheManager: ImageCacheManageable
->: FoodPhotoRepository where ImageCacheManager.Asset == PHAsset {
-    public typealias Asset = PHAsset
-
+    ImageLoader: ImageLoading
+>: FoodPhotoRepository where ImageLoader.Asset == PHAsset {
     private let foodClassifier: FoodClassifier
-    private let imageCacheManager: ImageCacheManager
+    private let imageLoader: ImageLoader
     private let imageTargetSize: CGSize
-    private let thumbnailSize: CGSize
 
     /// - Parameters:
     ///   - foodClassifier: 음식 분류기
-    ///   - imageCacheManager: 이미지 캐시 매니저
+    ///   - imageLoader: 이미지 로더
     ///   - imageTargetSize: ML 분류용 이미지 크기 (기본: 224x224)
-    ///   - thumbnailSize: UI 썸네일 캐싱 크기 (기본: 300x300)
     public init(
         foodClassifier: FoodClassifier,
-        imageCacheManager: ImageCacheManager,
-        imageTargetSize: CGSize = CGSize(width: 224, height: 224),
-        thumbnailSize: CGSize = CGSize(width: 300, height: 300)
+        imageLoader: ImageLoader,
+        imageTargetSize: CGSize = CGSize(width: 224, height: 224)
     ) {
         self.foodClassifier = foodClassifier
-        self.imageCacheManager = imageCacheManager
+        self.imageLoader = imageLoader
         self.imageTargetSize = imageTargetSize
-        self.thumbnailSize = thumbnailSize
     }
 
     public func requestAuthorization() async -> PHAuthorizationStatus {
@@ -81,6 +75,7 @@ private extension FoodPhotoFetcher {
         }
         options.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
 
+        // DB 쿼리, 캐싱 불필요함
         return await Task.detached(priority: .userInitiated) {
             let fetchResult = PHAsset.fetchAssets(with: options)
             return self.groupByDate(fetchResult)
@@ -97,9 +92,7 @@ private extension FoodPhotoFetcher {
             sections[dateKey, default: []].append(asset)
         }
 
-        return sections
-            .map { PhotoSection(date: $0.key, assets: $0.value) }
-            .sorted { $0.date > $1.date }
+        return sections.map { PhotoSection(date: $0.key, assets: $0.value) }
     }
 }
 
@@ -112,13 +105,6 @@ private extension FoodPhotoFetcher {
             return (section.date, photos)
         }
 
-        // UI 표시용 썸네일 캐싱
-        let allAssets = results.flatMap { $0.1.map(\.imageAsset) }
-        imageCacheManager.startCaching(
-            assets: allAssets,
-            targetSize: thumbnailSize
-        )
-
         return Dictionary(uniqueKeysWithValues: results)
     }
 
@@ -130,7 +116,7 @@ private extension FoodPhotoFetcher {
     }
 
     func classifyAsset(_ asset: PHAsset) async throws -> FoodPhotoAsset {
-        let image = try await imageCacheManager.requestImage(
+        let image = try await imageLoader.loadImage(
             for: asset,
             targetSize: imageTargetSize
         )

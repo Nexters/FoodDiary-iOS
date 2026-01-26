@@ -12,11 +12,6 @@ final class MockFoodPhotoAlbumRepository: FoodPhotoRepository, @unchecked Sendab
     typealias Asset = MockImageAssetable
 
     var resultToReturn: [Date: [FoodPhoto<MockImageAssetable>]] = [:]
-    var authorizationStatus: PhotoAuthorizationStatus = .authorized
-
-    func requestAuthorization() async -> PhotoAuthorizationStatus {
-        authorizationStatus
-    }
 
     func fetchFoodPhotos(from startDate: Date, to endDate: Date?) async throws -> [Date: [FoodPhoto<MockImageAssetable>]] {
         resultToReturn

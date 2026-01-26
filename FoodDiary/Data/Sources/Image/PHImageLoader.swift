@@ -1,26 +1,21 @@
 //
-//  PHImageCache.swift
+//  PHImageLoader.swift
 //  Data
-//
-//  Created by Kai Lee on 1/23/26.
 //
 
 import Domain
 import Photos
 import UIKit
 
-/// PHAsset 이미지 로딩을 위한 캐싱 매니저
-public final class PHImageCache: ImageCacheManageable {
-    public typealias Asset = PHAsset
-
+/// PHAsset 기반 이미지 로더 (캐싱 포함)
+public final class PHImageLoader: ImageLoading {
     private let cachingManager = PHCachingImageManager()
 
     public init() {}
 
-    public func requestImage(
-        for asset: PHAsset,
-        targetSize: CGSize
-    ) async throws -> UIImage {
+    // MARK: - ImageLoading
+
+    public func loadImage(for asset: PHAsset, targetSize: CGSize) async throws -> UIImage {
         try await withCheckedThrowingContinuation { continuation in
             let options = PHImageRequestOptions()
             options.deliveryMode = .highQualityFormat
@@ -36,16 +31,15 @@ public final class PHImageCache: ImageCacheManageable {
                 if let image {
                     continuation.resume(returning: image)
                 } else {
-                    continuation.resume(throwing: PHImageCacheError.imageLoadFailed)
+                    continuation.resume(throwing: PHImageLoaderError.imageLoadFailed)
                 }
             }
         }
     }
 
-    public func startCaching(
-        assets: [PHAsset],
-        targetSize: CGSize
-    ) {
+    // MARK: - Prefetching (Internal)
+
+    func startPrefetching(assets: [PHAsset], targetSize: CGSize) {
         let options = PHImageRequestOptions()
         options.deliveryMode = .highQualityFormat
         options.isNetworkAccessAllowed = true
@@ -58,10 +52,7 @@ public final class PHImageCache: ImageCacheManageable {
         )
     }
 
-    public func stopCaching(
-        assets: [PHAsset],
-        targetSize: CGSize
-    ) {
+    func stopPrefetching(assets: [PHAsset], targetSize: CGSize) {
         let options = PHImageRequestOptions()
         options.deliveryMode = .highQualityFormat
         options.isNetworkAccessAllowed = true
@@ -74,12 +65,14 @@ public final class PHImageCache: ImageCacheManageable {
         )
     }
 
-    public func stopCachingAll() {
+    func stopAllPrefetching() {
         cachingManager.stopCachingImagesForAllAssets()
     }
 }
 
-public enum PHImageCacheError: LocalizedError {
+// MARK: - Error
+
+public enum PHImageLoaderError: LocalizedError {
     case imageLoadFailed
 
     public var errorDescription: String? {

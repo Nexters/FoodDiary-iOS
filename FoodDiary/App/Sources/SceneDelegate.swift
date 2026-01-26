@@ -23,14 +23,15 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let demoVC: UIViewController
         do {
             let classifier = try TFLiteFoodClassifier()
+            let imageLoader = PHImageLoader()
             let repository = FoodPhotoFetcher(
                 foodClassifier: classifier,
-                imageCacheManager: PHImageCache()
+                imageLoader: imageLoader
             )
             // FoodImagePicker 데모용 ViewController
             demoVC = ImagePickerDemoViewController(
                 repository: repository,
-                imageCache: PHImageCache()
+                imageLoader: imageLoader
             )
         } catch {
             demoVC = UIViewController()
