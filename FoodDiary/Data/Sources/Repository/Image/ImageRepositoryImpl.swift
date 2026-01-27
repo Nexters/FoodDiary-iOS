@@ -8,7 +8,7 @@ import Photos
 import UIKit
 
 /// PHImageLoader를 감싸는 Repository 구현체
-public final class ImageRepositoryImpl: ImageRepository {
+public struct ImageRepositoryImpl: ImageRepository {
     private let imageLoader: PHImageLoader
 
     public init(imageLoader: PHImageLoader) {

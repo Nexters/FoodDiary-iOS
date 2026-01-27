@@ -12,7 +12,7 @@ import UIKit
 /// 사진 라이브러리에서 음식 사진을 정확도 높은 순으로 정렬해서 가져오는 `Repository` 구현체
 ///
 /// PHAsset을 직접 반환하여 UI에서 이미지 로드 시 `PHCachingImageManager` 캐싱 활용
-public final class FoodPhotoFetcher<
+public struct FoodPhotoFetcher<
     FoodClassifier: FoodClassifierRepresentable,
     ImageRepo: ImageRepository
 >: FoodPhotoRepository where ImageRepo.Asset == PHAsset {
