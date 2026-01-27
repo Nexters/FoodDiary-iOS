@@ -40,7 +40,26 @@ private extension AppFlowController {
     }
     
     func createMainView() -> UIViewController {
-        MainViewController()
+//        MainViewController()
+        let demoVC: UIViewController
+        do {
+            let classifier = try TFLiteFoodClassifier()
+            let imageRepository = ImageRepositoryImpl(imageLoader: PHImageLoader())
+            let foodPhotoRepository = FoodPhotoFetcher(
+                foodClassifier: classifier,
+                imageRepository: imageRepository
+            )
+            // FoodImagePicker 데모용 ViewController
+            demoVC = ImagePickerDemoViewController(
+                foodPhotoRepository: foodPhotoRepository,
+                imageRepository: imageRepository
+            )
+        } catch {
+            demoVC = UIViewController()
+            print("❌ Failed to initialize: \(error)")
+        }
+
+        return demoVC
     }
     
     func createLoginView() -> UIViewController {

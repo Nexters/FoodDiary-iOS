@@ -22,26 +22,6 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = scene as? UIWindowScene else { return }
         window = UIWindow(windowScene: windowScene)
         window?.rootViewController = AppFlowController(container: container)
-
-        let demoVC: UIViewController
-        do {
-            let classifier = try TFLiteFoodClassifier()
-            let imageRepository = ImageRepositoryImpl(imageLoader: PHImageLoader())
-            let foodPhotoRepository = FoodPhotoFetcher(
-                foodClassifier: classifier,
-                imageRepository: imageRepository
-            )
-            // FoodImagePicker 데모용 ViewController
-            demoVC = ImagePickerDemoViewController(
-                foodPhotoRepository: foodPhotoRepository,
-                imageRepository: imageRepository
-            )
-        } catch {
-            demoVC = UIViewController()
-            print("❌ Failed to initialize: \(error)")
-        }
-
-        window?.rootViewController = demoVC
         window?.makeKeyAndVisible()
     }
 }
