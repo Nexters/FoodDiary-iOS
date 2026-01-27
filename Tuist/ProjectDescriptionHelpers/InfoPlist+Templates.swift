@@ -11,6 +11,7 @@ public extension InfoPlist {
     static func sceneDelegateApp() -> InfoPlist {
         .extendingDefault(
             with: [
+                "UILaunchStoryboardName": "LaunchScreen",
                 "UIApplicationSceneManifest": [
                     "UIApplicationSupportsMultipleScenes": false,
                     "UISceneConfigurations": [

@@ -52,4 +52,6 @@ fastlane/test_output/
 
 buildServer.json
 
+# AI tool rules
+.cursor/rules/
 .claude/

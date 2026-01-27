@@ -21,9 +21,11 @@ let project = Project(
             infoPlist: .sceneDelegateApp(),
             sources: ["Sources/**"],
             resources: ["Resources/**"],
+            entitlements: "App.entitlements",
             dependencies: [
                 .project(target: "Data", path: "../Data"),
                 .project(target: "DesignSystem", path: "../DesignSystem"),
+                .project(target: "DI", path: "../DI"),
                 .project(target: "Domain", path: "../Domain"),
                 .project(target: "Presentation", path: "../Presentation"),
             ]

@@ -9,16 +9,19 @@ import UIKit
 import Data
 import DesignSystem
 import Presentation
-import Photos
+import Domain
+import DI
+import Swinject
 
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
-
     var window: UIWindow?
+    private let container = DIContainer.shared
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
+        registerDependencies()
         guard let windowScene = scene as? UIWindowScene else { return }
-
         window = UIWindow(windowScene: windowScene)
+        window?.rootViewController = AppFlowController(container: container)
 
         let demoVC: UIViewController
         do {
@@ -41,26 +44,46 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.rootViewController = demoVC
         window?.makeKeyAndVisible()
     }
+}
+
+private extension SceneDelegate {
+    func registerDependencies() {
+        registerData()
+        registerDomain()
+        registerPresentation()
+    }
     
-    func sceneDidDisconnect(_ scene: UIScene) {
+    func registerData() {
+        container.register(TokenManager.self) { _ in
+            TokenManager(userDefaults: .standard)
+        }
         
+        container.register(TokenRepository.self) { resolver in
+            guard let manager = resolver.resolve(TokenManager.self) else {
+                fatalError("TokenManager not registered")
+            }
+            return TokenRepositoryImpl(tokenManager: manager)
+        }
     }
-
-    func sceneDidBecomeActive(_ scene: UIScene) {
-        
+    
+    func registerDomain() {
+        container.register(FinalizeAppleLoginUseCase.self) { resolver in
+            guard let repository = resolver.resolve(TokenRepository.self) else {
+                fatalError("TokenRepository not registered")
+            }
+            return FinalizeAppleLoginUseCase(tokenRepository: repository)
+        }
     }
-
-    func sceneWillResignActive(_ scene: UIScene) {
-
+    
+    func registerPresentation() {
+        container.register(LoginViewModel.self, scope: .transient) { resolver in
+            guard let useCase = resolver.resolve(FinalizeAppleLoginUseCase.self) else {
+                fatalError("FinalizeAppleLoginUseCase not registered")
+            }
+            return LoginViewModel(finalizeAppleLoginUseCase: useCase)
+        }
     }
-
-    func sceneWillEnterForeground(_ scene: UIScene) {
-
-    }
-
-    func sceneDidEnterBackground(_ scene: UIScene) {
-
-    }
+    
 }
 
 
