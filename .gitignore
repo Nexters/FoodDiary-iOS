@@ -51,3 +51,6 @@ fastlane/test_output/
 .vscode/
 
 buildServer.json
+
+# Cursor rules
+.cursor/rules/

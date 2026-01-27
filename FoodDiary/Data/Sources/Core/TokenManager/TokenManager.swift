@@ -1,18 +1,13 @@
 //
-//  TokenProviding.swift
-//  Domain
+//  TokenProvider.swift
+//  Data
 //
 //  Created by 강대훈 on 1/23/26.
 //
 
 import Foundation
+import Domain
 
-public protocol TokenManaging {
-    func getToken() -> String?
-    func setToken(_ token: String)
-}
-
-// TODO: Data로 이동
 public struct TokenManager: TokenManaging {
     let userDefault: UserDefaults
     

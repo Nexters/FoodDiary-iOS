@@ -7,6 +7,7 @@
 
 import Combine
 import UIKit
+import DI
 import Presentation
 import Domain
 import Data
@@ -15,7 +16,17 @@ final class AppFlowController: UIViewController {
     private var isLogin: Bool = false
     private var currentChild: UIViewController?
     private var cancellables = Set<AnyCancellable>()
-
+    private let container: DIContainer
+    
+    public init(container: DIContainer) {
+        self.container = container
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         routeToAppropriateScreen()
@@ -29,11 +40,15 @@ private extension AppFlowController {
     }
     
     func createMainView() -> UIViewController {
-        return MainViewController()
+        MainViewController()
     }
     
     func createLoginView() -> UIViewController {
-        let loginVC = LoginViewController()
+        guard let viewModel = try? container.resolve(LoginViewModel.self) else {
+            fatalError("LoginViewModel Failed Resolve")
+        }
+        
+        let loginVC = LoginViewController(viewModel: viewModel)
         
         loginVC.didLoginPublisher
             .receive(on: DispatchQueue.main)
@@ -41,7 +56,7 @@ private extension AppFlowController {
                 self?.handleLoginSuccess()
             }
             .store(in: &cancellables)
-        
+       
         return loginVC
     }
     

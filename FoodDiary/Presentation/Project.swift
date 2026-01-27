@@ -22,7 +22,7 @@ let project = Project(
             dependencies: [
                 .project(target: "Domain", path: "../Domain"),
                 .project(target: "DesignSystem", path: "../DesignSystem"),
-                .project(target: "Data", path: "../Data"),
+                .project(target: "DI", path: "../DI"),
             ]
         ),
         .target(

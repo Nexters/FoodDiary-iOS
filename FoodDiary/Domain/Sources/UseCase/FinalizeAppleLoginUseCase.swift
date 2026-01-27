@@ -10,7 +10,7 @@ import Foundation
 public struct FinalizeAppleLoginUseCase {
     private let tokenRepository: TokenRepository
     
-    public init(tokenRepository: TokenRepository = TokenRepositoryImpl()) {
+    public init(tokenRepository: TokenRepository) {
         self.tokenRepository = tokenRepository
     }
     
