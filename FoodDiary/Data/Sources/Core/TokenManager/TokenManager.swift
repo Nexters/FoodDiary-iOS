@@ -9,17 +9,34 @@ import Foundation
 import Domain
 
 public struct TokenManager: TokenManaging {
-    let userDefault: UserDefaults
+    private let keychainService: KeychainService
+    private let tokenKey = "access_token"
     
-    public init(userDefaults: UserDefaults = .standard) {
-        self.userDefault = userDefaults
+    public init(keychainService: KeychainService) {
+        self.keychainService = keychainService
     }
     
     public func get() -> String? {
-        userDefault.string(forKey: "token")
+        keychainService.load(key: tokenKey)
     }
     
-    public func set(_ token: String) {
-        userDefault.set(token, forKey: "token")
+    public func set(_ token: String) throws {
+        if !keychainService.save(key: tokenKey, value: token) {
+            throw AppleLoginError.tokenPersistenceFailed
+        }
+    }
+}
+
+public struct MockTokenManager: TokenManaging {
+    public init() {}
+    
+    public func get() -> String? {
+        print("Get Token")
+        return nil
+    }
+    
+    public func set(_ token: String) throws {
+        print("Set Token")
+        throw AppleLoginError.tokenPersistenceFailed
     }
 }

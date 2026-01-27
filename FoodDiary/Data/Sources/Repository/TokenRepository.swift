@@ -20,7 +20,7 @@ public struct TokenRepositoryImpl<Manager: TokenManaging>: TokenRepository {
     public func save(_ identityToken: Data) async throws -> LoginResult {
         if let token = String(data: identityToken, encoding: .utf8) {
             let response: AuthResponseDTO = try await httpClient.request(.login(idToken: token))
-            tokenManager.set(response.accessToken)
+            try tokenManager.set(response.accessToken)
             return LoginResult(isFirst: response.isFirst)
         } else {
             throw NSError(domain: "Invalid Token", code: 0, userInfo: nil)
@@ -32,6 +32,6 @@ public struct MockTokenRepository: TokenRepository {
     public init() {}
 
     public func save(_ identityToken: Data) async throws -> LoginResult {
-        return LoginResult.mock
+        throw AppleLoginError.tokenPersistenceFailed
     }
 }

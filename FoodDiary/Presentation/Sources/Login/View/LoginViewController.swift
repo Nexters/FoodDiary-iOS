@@ -9,6 +9,7 @@ import AuthenticationServices
 import Combine
 import UIKit
 import SnapKit
+import Domain
 
 final public class LoginViewController: UIViewController {
     private let didLoginSubject = PassthroughSubject<Void, Never>()

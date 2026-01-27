@@ -7,6 +7,10 @@
 
 import Foundation
 
+public enum AppleLoginError: Error {
+    case tokenPersistenceFailed
+}
+
 public struct FinalizeAppleLoginUseCase {
     private let tokenRepository: TokenRepository
     

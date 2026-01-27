@@ -117,6 +117,7 @@ private extension SceneDelegate {
             guard let repository = resolver.resolve(TokenRepository.self) else {
                 fatalError("TokenRepository not registered")
             }
+            
             return FinalizeAppleLoginUseCase(tokenRepository: repository)
         }
 
@@ -158,7 +159,23 @@ private extension SceneDelegate {
             guard let useCase = resolver.resolve(FinalizeAppleLoginUseCase.self) else {
                 fatalError("FinalizeAppleLoginUseCase not registered")
             }
+            
             return LoginViewModel(finalizeAppleLoginUseCase: useCase)
         }
+<<<<<<< HEAD
+=======
+        
+        container.register(LoginViewController.self, scope: .transient) { resolver in
+            guard let viewModel = resolver.resolve(LoginViewModel.self) else {
+                fatalError("LoginViewModel not registered")
+            }
+            
+            return LoginViewController(viewModel: viewModel)
+        }
+        
+        container.register(MainViewController.self, scope: .transient) { _ in
+            MainViewController()
+        }
+>>>>>>> 8215bbd (feat: 애플 로그인 토큰 저장 플로우 구현)
     }
 }
