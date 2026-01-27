@@ -40,31 +40,26 @@ private extension AppFlowController {
     }
     
     func createMainView() -> UIViewController {
-        do {
-            let mainVC = try container.resolve(MainViewController.self)
-            return mainVC
-        } catch {
-            print(error.localizedDescription)
-            return UIViewController()
+        guard let mainVC = try? container.resolve(MainViewController.self) else {
+            fatalError("MainVC Failed Resolve")
         }
+        
+        return mainVC
     }
     
     func createLoginView() -> UIViewController {
-        do {
-            let loginVC = try container.resolve(LoginViewController.self)
-            
-            loginVC.didLoginPublisher
-                .receive(on: DispatchQueue.main)
-                .sink { [weak self] _ in
-                    self?.handleLoginSuccess()
-                }
-                .store(in: &cancellables)
-            
-            return loginVC
-        } catch {
-            print(error.localizedDescription)
-            return UIViewController()
+        guard let loginVC = try? container.resolve(LoginViewController.self) else {
+            fatalError("LoginVC Failed Resolve")
         }
+        
+        loginVC.didLoginPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.handleLoginSuccess()
+            }
+            .store(in: &cancellables)
+       
+        return loginVC
     }
     
     func handleLoginSuccess() {
