@@ -32,12 +32,6 @@ private extension SceneDelegate {
         registerPresentation()
     }
     
-    func registerMockData() {
-         container.register(TokenRepository.self) { _ in
-             MockTokenRepository()
-         }
-    }
-    
     func registerData() {
         container.register(TokenManager.self) { _ in
             TokenManager(userDefaults: .standard)
