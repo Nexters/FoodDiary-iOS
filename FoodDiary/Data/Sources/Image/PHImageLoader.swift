@@ -3,12 +3,11 @@
 //  Data
 //
 
-import Domain
 import Photos
 import UIKit
 
 /// PHAsset 기반 이미지 로더 (캐싱 포함)
-public final class PHImageLoader: ImageLoading {
+public final class PHImageLoader: @unchecked Sendable {
     private let cachingManager = PHCachingImageManager()
 
     public init() {}

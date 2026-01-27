@@ -14,23 +14,23 @@ import UIKit
 /// PHAsset을 직접 반환하여 UI에서 이미지 로드 시 `PHCachingImageManager` 캐싱 활용
 public final class FoodPhotoFetcher<
     FoodClassifier: FoodClassifierRepresentable,
-    ImageLoader: ImageLoading
->: FoodPhotoRepository where ImageLoader.Asset == PHAsset {
+    ImageRepo: ImageRepository
+>: FoodPhotoRepository where ImageRepo.Asset == PHAsset {
     private let foodClassifier: FoodClassifier
-    private let imageLoader: ImageLoader
+    private let imageRepository: ImageRepo
     private let imageTargetSize: CGSize
 
     /// - Parameters:
     ///   - foodClassifier: 음식 분류기
-    ///   - imageLoader: 이미지 로더
+    ///   - imageRepository: 이미지 레파지토리
     ///   - imageTargetSize: ML 분류용 이미지 크기 (기본: 224x224)
     public init(
         foodClassifier: FoodClassifier,
-        imageLoader: ImageLoader,
+        imageRepository: ImageRepo,
         imageTargetSize: CGSize = CGSize(width: 224, height: 224)
     ) {
         self.foodClassifier = foodClassifier
-        self.imageLoader = imageLoader
+        self.imageRepository = imageRepository
         self.imageTargetSize = imageTargetSize
     }
 
@@ -116,7 +116,7 @@ private extension FoodPhotoFetcher {
     }
 
     func classifyAsset(_ asset: PHAsset) async throws -> FoodPhotoAsset {
-        let image = try await imageLoader.loadImage(
+        let image = try await imageRepository.loadImage(
             for: asset,
             targetSize: imageTargetSize
         )

@@ -15,8 +15,8 @@ import UIKit
 final class ImagePickerDemoViewController: UIViewController {
     // MARK: - Properties
 
-    private let repository: FoodPhotoFetcher<TFLiteFoodClassifier, PHImageLoader>
-    private let imageLoader: PHImageLoader
+    private let foodPhotoRepository: FoodPhotoFetcher<TFLiteFoodClassifier, ImageRepositoryImpl>
+    private let imageRepository: ImageRepositoryImpl
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - UI Components
@@ -69,9 +69,9 @@ final class ImagePickerDemoViewController: UIViewController {
 
     // MARK: - Initialization
 
-    init(repository: FoodPhotoFetcher<TFLiteFoodClassifier, PHImageLoader>, imageLoader: PHImageLoader) {
-        self.repository = repository
-        self.imageLoader = imageLoader
+    init(foodPhotoRepository: FoodPhotoFetcher<TFLiteFoodClassifier, ImageRepositoryImpl>, imageRepository: ImageRepositoryImpl) {
+        self.foodPhotoRepository = foodPhotoRepository
+        self.imageRepository = imageRepository
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -156,7 +156,7 @@ final class ImagePickerDemoViewController: UIViewController {
                 let endDate = Date()
                 let startDate = Calendar.current.date(byAdding: .day, value: -7, to: endDate)!
 
-                let result = try await repository.fetchFoodPhotos(from: startDate, to: endDate)
+                let result = try await foodPhotoRepository.fetchFoodPhotos(from: startDate, to: endDate)
 
                 // 날짜별 딕셔너리를 단일 배열로 평탄화 (음식 확률순)
                 let photos = result.values
@@ -197,7 +197,7 @@ final class ImagePickerDemoViewController: UIViewController {
 
         let picker = ImagePickerViewController(
             photos: assets,
-            imageProvider: imageLoader,
+            imageProvider: imageRepository,
             configuration: .default
         )
 
@@ -237,7 +237,7 @@ extension ImagePickerDemoViewController: UICollectionViewDataSource {
 
         Task {
             do {
-                let image = try await imageLoader.loadImage(
+                let image = try await imageRepository.loadImage(
                     for: photo,
                     targetSize: CGSize(width: 200, height: 200)
                 )

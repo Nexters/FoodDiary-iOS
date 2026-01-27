@@ -52,7 +52,7 @@ import UIKit
 ///
 public final class ImagePickerViewController<
     Asset: ImageAssetable,
-    ImageProvider: ImageLoading<Asset>
+    ImageProvider: ImageRepository<Asset>
 >:
     UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
 
