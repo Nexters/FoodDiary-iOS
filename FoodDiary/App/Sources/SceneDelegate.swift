@@ -67,17 +67,6 @@ private extension SceneDelegate {
             }
             return LoginViewModel(finalizeAppleLoginUseCase: useCase)
         }
-        
-        container.register(LoginViewController.self, scope: .transient) { resolver in
-            guard let viewModel = resolver.resolve(LoginViewModel.self) else {
-                fatalError("LoginViewModel not registered")
-            }
-            return LoginViewController(viewModel: viewModel)
-        }
-        
-        container.register(MainViewController.self, scope: .transient) { _ in
-            MainViewController()
-        }
     }
     
 }

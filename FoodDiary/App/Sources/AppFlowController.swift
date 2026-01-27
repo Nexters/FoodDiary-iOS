@@ -40,17 +40,15 @@ private extension AppFlowController {
     }
     
     func createMainView() -> UIViewController {
-        guard let mainVC = try? container.resolve(MainViewController.self) else {
-            fatalError("MainVC Failed Resolve")
-        }
-        
-        return mainVC
+        MainViewController()
     }
     
     func createLoginView() -> UIViewController {
-        guard let loginVC = try? container.resolve(LoginViewController.self) else {
-            fatalError("LoginVC Failed Resolve")
+        guard let viewModel = try? container.resolve(LoginViewModel.self) else {
+            fatalError("LoginViewModel Failed Resolve")
         }
+        
+        let loginVC = LoginViewController(viewModel: viewModel)
         
         loginVC.didLoginPublisher
             .receive(on: DispatchQueue.main)
