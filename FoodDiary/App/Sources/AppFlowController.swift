@@ -40,13 +40,18 @@ private extension AppFlowController {
     }
     
     func createMainView() -> UIViewController {
-        return MainViewController()
+        do {
+            let mainVC = try container.resolve(MainViewController.self)
+            return mainVC
+        } catch {
+            print(error.localizedDescription)
+            return UIViewController()
+        }
     }
     
     func createLoginView() -> UIViewController {
         do {
-            let viewModelFactory = try container.resolve(LoginViewModelFactory.self)
-            let loginVC = LoginViewController(viewModel: viewModelFactory.make())
+            let loginVC = try container.resolve(LoginViewController.self)
             
             loginVC.didLoginPublisher
                 .receive(on: DispatchQueue.main)

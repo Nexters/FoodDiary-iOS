@@ -16,8 +16,13 @@ public final class DIContainer {
         container = Container()
     }
     
-    public func register<Service>(_ serviceType: Service.Type, factory: @escaping (Resolver) -> Service) {
+    public func register<Service>(
+        _ serviceType: Service.Type,
+        scope: ObjectScope = .container,
+        factory: @escaping (Resolver) -> Service
+    ) {
         container.register(serviceType, factory: factory)
+            .inObjectScope(scope)
     }
     
     public func resolve<Service>(_ serviceType: Service.Type) throws -> Service {

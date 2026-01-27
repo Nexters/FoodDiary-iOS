@@ -10,6 +10,7 @@ import Data
 import Presentation
 import Domain
 import DI
+import Swinject
 
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
@@ -65,13 +66,25 @@ private extension SceneDelegate {
     }
     
     func registerPresentation() {
-        container.register(LoginViewModelFactory.self) { resolver in
+        container.register(LoginViewModel.self, scope: .transient) { resolver in
             guard let useCase = resolver.resolve(FinalizeAppleLoginUseCase.self) else {
                 fatalError("FinalizeAppleLoginUseCase not registered")
             }
-            return LoginViewModelFactory(finalizeAppleLoginUseCase: useCase)
+            return LoginViewModel(finalizeAppleLoginUseCase: useCase)
+        }
+        
+        container.register(LoginViewController.self, scope: .transient) { resolver in
+            guard let viewModel = resolver.resolve(LoginViewModel.self) else {
+                fatalError("LoginViewModel not registered")
+            }
+            return LoginViewController(viewModel: viewModel)
+        }
+        
+        container.register(MainViewController.self, scope: .transient) { _ in
+            MainViewController()
         }
     }
+    
 }
 
 
