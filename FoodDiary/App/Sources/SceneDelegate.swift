@@ -27,12 +27,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
 private extension SceneDelegate {
     func registerDependencies() {
-        #if DEBUG
-        registerMockData()
-        #else
         registerData()
-        #endif
-        
         registerDomain()
         registerPresentation()
     }
