@@ -13,7 +13,7 @@ import Domain
 import Data
 
 final class AppFlowController: UIViewController {
-    private var isLogin: Bool = false
+    private var isLogin: Bool = true
     private var currentChild: UIViewController?
     private var cancellables = Set<AnyCancellable>()
     private let container: DIContainer

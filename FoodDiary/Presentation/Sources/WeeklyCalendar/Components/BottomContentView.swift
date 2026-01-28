@@ -121,15 +121,16 @@ final class BottomContentView: UIView {
     // MARK: - Configuration
 
     func configure(hasRecords: Bool, records: [FoodRecord]) {
+        // 기록 여부와 관계없이 항상 + 버튼 표시
+        // 이미지 스택 기능은 추후 디자인 확정 후 구현
+        addButtonContainer.isHidden = false
+        placeholderLabel.isHidden = false
+        recordedImagesStackView.isHidden = true
+
         if hasRecords {
-            addButtonContainer.isHidden = true
-            placeholderLabel.isHidden = true
-            recordedImagesStackView.isHidden = false
-            updateRecordedImagesStack(with: records)
+            placeholderLabel.text = "사진을 더 추가해보세요."
         } else {
-            addButtonContainer.isHidden = false
-            placeholderLabel.isHidden = false
-            recordedImagesStackView.isHidden = true
+            placeholderLabel.text = "오늘의 음식 사진을 추가해보세요."
         }
     }
 
