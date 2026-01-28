@@ -41,8 +41,8 @@ private extension AppFlowController {
     
     func createMainView() -> UIViewController {
 //        MainViewController()
-        guard let foodImageAssetRepository = try? container.resolve(FoodImageAssetFetcher<TFLiteFoodClassifier, ImageRepositoryImpl>.self),
-              let imageRepository = try? container.resolve(ImageRepositoryImpl.self) else {
+        guard let foodImageAssetRepository = try? container.resolve(FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>.self),
+              let imageRepository = try? container.resolve(UIImageLoader.self) else {
             fatalError("FoodImageAssetFetcher or ImageRepositoryImpl not registered")
         }
 

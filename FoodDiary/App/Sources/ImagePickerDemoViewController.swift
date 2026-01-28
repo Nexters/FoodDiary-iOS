@@ -15,8 +15,8 @@ import UIKit
 final class ImagePickerDemoViewController: UIViewController {
     // MARK: - Properties
 
-    private let foodImageAssetRepository: FoodImageAssetFetcher<TFLiteFoodClassifier, ImageRepositoryImpl>
-    private let imageRepository: ImageRepositoryImpl
+    private let foodImageAssetRepository: FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>
+    private let uiImageLoader: UIImageLoader
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - UI Components
@@ -70,11 +70,11 @@ final class ImagePickerDemoViewController: UIViewController {
     // MARK: - Initialization
 
     init(
-        foodImageAssetRepository: FoodImageAssetFetcher<TFLiteFoodClassifier, ImageRepositoryImpl>,
-        imageRepository: ImageRepositoryImpl
+        foodImageAssetRepository: FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>,
+        imageRepository: UIImageLoader
     ) {
         self.foodImageAssetRepository = foodImageAssetRepository
-        self.imageRepository = imageRepository
+        self.uiImageLoader = imageRepository
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -200,7 +200,7 @@ final class ImagePickerDemoViewController: UIViewController {
 
         let picker = ImagePickerViewController(
             photos: assets,
-            imageProvider: imageRepository,
+            imageProvider: uiImageLoader,
             configuration: .default
         )
 
@@ -240,7 +240,7 @@ extension ImagePickerDemoViewController: UICollectionViewDataSource {
 
         Task {
             do {
-                let image = try await imageRepository.loadImage(
+                let image = try await uiImageLoader.loadImage(
                     for: photo,
                     targetSize: CGSize(width: 200, height: 200)
                 )

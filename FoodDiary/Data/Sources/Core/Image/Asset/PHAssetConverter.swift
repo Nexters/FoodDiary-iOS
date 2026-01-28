@@ -1,20 +1,17 @@
 //
-//  PHImageLoader.swift
+//  PHImageConverter.swift
 //  Data
 //
 
 import Photos
 import UIKit
 
-/// PHAsset 기반 이미지 로더 (캐싱 포함)
-public struct PHImageLoader {
+public final class PHAssetConverter: @unchecked Sendable {
     private let cachingManager = PHCachingImageManager()
 
     public init() {}
 
-    // MARK: - ImageLoading
-
-    public func loadImage(for asset: PHAsset, targetSize: CGSize) async throws -> UIImage {
+    public func convert(from asset: PHAsset, targetSize: CGSize) async throws -> UIImage {
         try await withCheckedThrowingContinuation { continuation in
             let options = PHImageRequestOptions()
             options.deliveryMode = .highQualityFormat

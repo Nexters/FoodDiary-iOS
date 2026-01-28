@@ -12,7 +12,7 @@ import UIKit
 /// 사진 라이브러리에서 음식 사진을 정확도 높은 순으로 정렬해서 가져오는 `Repository` 구현체
 public struct FoodImageAssetFetcher<
     FoodClassifier: FoodClassifierRepresentable,
-    ImageRepo: ImageRepository
+    ImageRepo: RenderableImageRepository
 >: FoodImageAssetRepository where ImageRepo.Asset == PHAsset {
     private let foodClassifier: FoodClassifier
     private let imageRepository: ImageRepo

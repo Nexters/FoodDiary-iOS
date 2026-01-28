@@ -45,15 +45,15 @@ private extension SceneDelegate {
             return TokenRepositoryImpl(tokenManager: manager)
         }
 
-        container.register(PHImageLoader.self) { _ in
-            PHImageLoader()
+        container.register(PHAssetConverter.self) { _ in
+            PHAssetConverter()
         }
 
-        container.register(ImageRepositoryImpl.self) { resolver in
-            guard let imageLoader = resolver.resolve(PHImageLoader.self) else {
+        container.register(UIImageLoader.self) { resolver in
+            guard let imageLoader = resolver.resolve(PHAssetConverter.self) else {
                 fatalError("PHImageLoader not registered")
             }
-            return ImageRepositoryImpl(imageLoader: imageLoader)
+            return UIImageLoader(imageLoader: imageLoader)
         }
 
         container.register(TFLiteFoodClassifier.self) { _ in
@@ -64,9 +64,9 @@ private extension SceneDelegate {
             }
         }
 
-        container.register(FoodImageAssetFetcher<TFLiteFoodClassifier, ImageRepositoryImpl>.self) { resolver in
+        container.register(FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>.self) { resolver in
             guard let classifier = resolver.resolve(TFLiteFoodClassifier.self),
-                  let imageRepository = resolver.resolve(ImageRepositoryImpl.self) else {
+                  let imageRepository = resolver.resolve(UIImageLoader.self) else {
                 fatalError("FoodImageAssetFetcher dependencies not registered")
             }
             return FoodImageAssetFetcher(
