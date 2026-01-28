@@ -8,9 +8,8 @@
 import Foundation
 
 /// 파일 기반 음식 분류 결과 캐시
-public final class ClassificationCacheManager: @unchecked Sendable {
+public actor ClassificationCacheManager {
     private var cache: [String: ClassificationCacheEntry] = [:]
-    private let lock = UnfairLock()
     private let fileURL: URL
 
     private var saveTask: Task<Void, Never>?
@@ -21,22 +20,19 @@ public final class ClassificationCacheManager: @unchecked Sendable {
         debounceInterval: Duration = .seconds(0.5)
     ) {
         let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-        self.fileURL = cacheDir.appendingPathComponent(fileName)
-        self.debounceInterval = debounceInterval
+        let fileURL = cacheDir.appendingPathComponent(fileName)
 
-        self.cache = loadFromDisk()
+        self.fileURL = fileURL
+        self.debounceInterval = debounceInterval
+        self.cache = Self.loadFromDisk(fileURL: fileURL)
     }
 
     public func get(_ identifier: String) -> ClassificationCacheEntry? {
-        lock.withLock {
-            cache[identifier]
-        }
+        cache[identifier]
     }
 
     public func set(_ entry: ClassificationCacheEntry) {
-        lock.withLock {
-            cache[entry.assetIdentifier] = entry
-        }
+        cache[entry.assetIdentifier] = entry
         scheduleSave()
     }
 
@@ -46,21 +42,21 @@ public final class ClassificationCacheManager: @unchecked Sendable {
     private func scheduleSave() {
         saveTask?.cancel()
         saveTask = Task { [weak self] in
-            guard let self else {
-                return
-            }
+            guard let self else { return }
 
             try? await Task.sleep(for: self.debounceInterval)
-            guard !Task.isCancelled else {
-                return
-            }
+            guard !Task.isCancelled else { return }
 
-            let snapshot = lock.withLock { self.cache }
-            saveToDisk(snapshot)
+            await self.saveToDisk(cache: self.cache, to: self.fileURL)
         }
     }
 
-    private func loadFromDisk() -> [String: ClassificationCacheEntry] {
+    private func saveToDisk(cache: [String: ClassificationCacheEntry], to fileURL: URL) {
+        guard let encoded = try? JSONEncoder().encode(cache) else { return }
+        try? encoded.write(to: fileURL, options: .atomic)
+    }
+
+    private static func loadFromDisk(fileURL: URL) -> [String: ClassificationCacheEntry] {
         guard let data = try? Data(contentsOf: fileURL),
             let decoded = try? JSONDecoder().decode(
                 [String: ClassificationCacheEntry].self, from: data)
@@ -68,10 +64,5 @@ public final class ClassificationCacheManager: @unchecked Sendable {
             return [:]
         }
         return decoded
-    }
-
-    private func saveToDisk(_ data: [String: ClassificationCacheEntry]) {
-        guard let encoded = try? JSONEncoder().encode(data) else { return }
-        try? encoded.write(to: fileURL, options: .atomic)
     }
 }
