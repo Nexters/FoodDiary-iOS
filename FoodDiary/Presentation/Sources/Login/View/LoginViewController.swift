@@ -38,12 +38,12 @@ final public class LoginViewController: UIViewController {
 
 private extension LoginViewController {
     func configureUI() {
-        view.backgroundColor = DesignSystem.basic
+        view.backgroundColor = DesignSystemAsset.background.color
         
-        let logoImageView = UIImageView(image: DesignSystemAsset.Asset.logo.image)
+        let logoImageView = UIImageView(image: DesignSystemAsset.logo.image)
         logoImageView.contentMode = .scaleAspectFill
         
-        let characterImageView = UIImageView(image: DesignSystemAsset.Asset.character.image)
+        let characterImageView = UIImageView(image: DesignSystemAsset.character.image)
         characterImageView.contentMode = .scaleAspectFit
         
         let appleLoginBtn = ASAuthorizationAppleIDButton(authorizationButtonType: .signIn, authorizationButtonStyle: .black)
