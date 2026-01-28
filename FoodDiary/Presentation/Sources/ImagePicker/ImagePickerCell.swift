@@ -115,7 +115,7 @@ public final class ImagePickerCell: UICollectionViewCell {
         } else {
             // 미선택
             selectionBorderView.isHidden = true
-            checkmarkImageView.image = DesignSystemAsset.checkmarkUnselected.image
+            checkmarkImageView.image = DesignSystemAsset.checkmarkUnSelected.image
         }
     }
 
