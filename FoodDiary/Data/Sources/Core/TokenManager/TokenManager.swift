@@ -25,18 +25,10 @@ public struct TokenManager: TokenManaging {
             throw AppleLoginError.tokenPersistenceFailed
         }
     }
-}
-
-public struct MockTokenManager: TokenManaging {
-    public init() {}
     
-    public func get() -> String? {
-        print("Get Token")
-        return nil
-    }
-    
-    public func set(_ token: String) throws {
-        print("Set Token")
-        throw AppleLoginError.tokenPersistenceFailed
+    public func clear() throws {
+        if !keychainService.delete(key: tokenKey) {
+            throw AppleLoginError.tokenPersistenceFailed
+        }
     }
 }

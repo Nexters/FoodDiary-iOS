@@ -23,15 +23,11 @@ public struct TokenRepositoryImpl<Manager: TokenManaging>: TokenRepository {
             try tokenManager.set(response.accessToken)
             return LoginResult(isFirst: response.isFirst)
         } else {
-            throw NSError(domain: "Invalid Token", code: 0, userInfo: nil)
+            throw AppleLoginError.tokenPersistenceFailed
         }
     }
-}
-
-public struct MockTokenRepository: TokenRepository {
-    public init() {}
-
-    public func save(_ identityToken: Data) async throws -> LoginResult {
-        throw AppleLoginError.tokenPersistenceFailed
+    
+    public func deleteToken() throws {
+        try tokenManager.clear()
     }
 }

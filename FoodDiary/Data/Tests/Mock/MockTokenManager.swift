@@ -11,6 +11,7 @@ import Domain
 final class MockTokenManager: TokenManaging {
     private(set) var setCallCount = 0
     private(set) var lastToken: String?
+    var shouldThrow: Bool = false
     
     func get() -> String? {
         return lastToken
@@ -19,5 +20,10 @@ final class MockTokenManager: TokenManaging {
     func set(_ token: String) throws {
         setCallCount += 1
         lastToken = token
+        
+        if shouldThrow {
+            lastToken = nil
+            throw AppleLoginError.tokenPersistenceFailed
+        }
     }
 }
