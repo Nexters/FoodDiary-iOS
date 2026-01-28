@@ -120,7 +120,7 @@ private extension FoodImageAssetFetcher {
     func classifyAsset(_ asset: PHAsset) async throws -> PHFoodImageAsset {
         let identifier = asset.localIdentifier
 
-        if let cached = cache.get(identifier) {
+        if let cached = await cache.get(identifier) {
             return FoodImageAsset(
                 imageAsset: asset,
                 foodProbability: cached.foodProbability
@@ -133,7 +133,7 @@ private extension FoodImageAssetFetcher {
         )
         let result = try foodClassifier.classify(image: image)
 
-        cache.set(.init(
+        await cache.set(.init(
             identifier: identifier,
             foodProbability: result.foodProbability
         ))
