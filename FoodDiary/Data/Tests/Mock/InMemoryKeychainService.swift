@@ -10,6 +10,7 @@
 final class InMemoryKeychainService: KeychainService {
     private var storage: [String: String] = [:]
     var shouldSaveSucceed: Bool = true
+    var shouldDeleteSucceed: Bool = true
     
     override func save(key: String, value: String) -> Bool {
         guard shouldSaveSucceed else {
@@ -22,5 +23,14 @@ final class InMemoryKeychainService: KeychainService {
     
     override func load(key: String) -> String? {
         storage[key]
+    }
+    
+    override func delete(key: String) -> Bool {
+        guard shouldDeleteSucceed else {
+            return false
+        }
+        
+        storage.removeValue(forKey: key)
+        return true
     }
 }
