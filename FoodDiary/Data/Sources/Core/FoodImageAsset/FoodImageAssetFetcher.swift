@@ -1,5 +1,5 @@
 //
-//  FoodPhotoAlbumFetcher.swift
+//  FoodImageAssetFetcher.swift
 //  Data
 //
 //  Created by Kai Lee on 1/23/26.
@@ -10,12 +10,10 @@ import Photos
 import UIKit
 
 /// 사진 라이브러리에서 음식 사진을 정확도 높은 순으로 정렬해서 가져오는 `Repository` 구현체
-///
-/// PHAsset을 직접 반환하여 UI에서 이미지 로드 시 `PHCachingImageManager` 캐싱 활용
-public struct FoodPhotoFetcher<
+public struct FoodImageAssetFetcher<
     FoodClassifier: FoodClassifierRepresentable,
     ImageRepo: ImageRepository
->: FoodPhotoRepository where ImageRepo.Asset == PHAsset {
+>: FoodImageAssetRepository where ImageRepo.Asset == PHAsset {
     private let foodClassifier: FoodClassifier
     private let imageRepository: ImageRepo
     private let imageTargetSize: CGSize
@@ -38,13 +36,13 @@ public struct FoodPhotoFetcher<
         await PHPhotoLibrary.requestAuthorization(for: .readWrite)
     }
 
-    public func fetchFoodPhotos(
+    public func fetchFoodImageAssets(
         from startDate: Date,
         to endDate: Date?
-    ) async throws -> [Date: [FoodPhoto<PHAsset>]] {
+    ) async throws -> [Date: [FoodImageAsset<PHAsset>]] {
         let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
         guard status == .authorized || status == .limited else {
-            throw FoodPhotoAlbumError.notAuthorized
+            throw FoodImageAssetError.notAuthorized
         }
 
         let sections = await fetchPhotoSections(from: startDate, to: endDate)
@@ -52,11 +50,11 @@ public struct FoodPhotoFetcher<
     }
 }
 
-public typealias FoodPhotoAsset = FoodPhoto<PHAsset>
+public typealias PHFoodImageAsset = FoodImageAsset<PHAsset>
 
 // MARK: - Photo Fetching
 
-private extension FoodPhotoFetcher {
+private extension FoodImageAssetFetcher {
     struct PhotoSection {
         let date: Date
         let assets: [PHAsset]
@@ -98,8 +96,8 @@ private extension FoodPhotoFetcher {
 
 // MARK: - Classification
 
-private extension FoodPhotoFetcher {
-    func classifyAllSections(_ sections: [PhotoSection]) async throws -> [Date: [FoodPhotoAsset]] {
+private extension FoodImageAssetFetcher {
+    func classifyAllSections(_ sections: [PhotoSection]) async throws -> [Date: [PHFoodImageAsset]] {
         let results = try await mapEach(sections) { section in
             let photos = try await self.classifyPhotosInSection(section)
             return (section.date, photos)
@@ -108,21 +106,21 @@ private extension FoodPhotoFetcher {
         return Dictionary(uniqueKeysWithValues: results)
     }
 
-    func classifyPhotosInSection(_ section: PhotoSection) async throws -> [FoodPhotoAsset] {
+    func classifyPhotosInSection(_ section: PhotoSection) async throws -> [PHFoodImageAsset] {
         try await mapEach(section.assets) { asset in
             try await self.classifyAsset(asset)
         }
         .sorted { $0.foodProbability > $1.foodProbability }
     }
 
-    func classifyAsset(_ asset: PHAsset) async throws -> FoodPhotoAsset {
+    func classifyAsset(_ asset: PHAsset) async throws -> PHFoodImageAsset {
         let image = try await imageRepository.loadImage(
             for: asset,
             targetSize: imageTargetSize
         )
         let result = try foodClassifier.classify(image: image)
 
-        return FoodPhoto(
+        return FoodImageAsset(
             imageAsset: asset,
             foodProbability: result.foodProbability
         )
@@ -148,7 +146,7 @@ private extension FoodPhotoFetcher {
 
 // MARK: - Error
 
-public enum FoodPhotoAlbumError: LocalizedError {
+public enum FoodImageAssetError: LocalizedError {
     case notAuthorized
     case imageLoadFailed
 

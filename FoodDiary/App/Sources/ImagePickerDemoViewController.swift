@@ -15,7 +15,7 @@ import UIKit
 final class ImagePickerDemoViewController: UIViewController {
     // MARK: - Properties
 
-    private let foodPhotoRepository: FoodPhotoFetcher<TFLiteFoodClassifier, ImageRepositoryImpl>
+    private let foodImageAssetRepository: FoodImageAssetFetcher<TFLiteFoodClassifier, ImageRepositoryImpl>
     private let imageRepository: ImageRepositoryImpl
     private var cancellables = Set<AnyCancellable>()
 
@@ -69,8 +69,11 @@ final class ImagePickerDemoViewController: UIViewController {
 
     // MARK: - Initialization
 
-    init(foodPhotoRepository: FoodPhotoFetcher<TFLiteFoodClassifier, ImageRepositoryImpl>, imageRepository: ImageRepositoryImpl) {
-        self.foodPhotoRepository = foodPhotoRepository
+    init(
+        foodImageAssetRepository: FoodImageAssetFetcher<TFLiteFoodClassifier, ImageRepositoryImpl>,
+        imageRepository: ImageRepositoryImpl
+    ) {
+        self.foodImageAssetRepository = foodImageAssetRepository
         self.imageRepository = imageRepository
         super.init(nibName: nil, bundle: nil)
     }
@@ -156,7 +159,7 @@ final class ImagePickerDemoViewController: UIViewController {
                 let endDate = Date()
                 let startDate = Calendar.current.date(byAdding: .day, value: -7, to: endDate)!
 
-                let result = try await foodPhotoRepository.fetchFoodPhotos(from: startDate, to: endDate)
+                let result = try await foodImageAssetRepository.fetchFoodImageAssets(from: startDate, to: endDate)
 
                 // 날짜별 딕셔너리를 단일 배열로 평탄화 (음식 확률순)
                 let photos = result.values
@@ -192,7 +195,7 @@ final class ImagePickerDemoViewController: UIViewController {
         }
     }
 
-    private func presentPicker(with photos: [FoodPhoto<PHAsset>]) {
+    private func presentPicker(with photos: [FoodImageAsset<PHAsset>]) {
         let assets = photos.map { $0.imageAsset }
 
         let picker = ImagePickerViewController(

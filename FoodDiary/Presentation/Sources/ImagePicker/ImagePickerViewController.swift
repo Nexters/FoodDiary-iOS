@@ -14,7 +14,7 @@ import UIKit
 /// 음식 사진을 선택할 수 있는 커스텀 이미지 피커 뷰 컨트롤러입니다.
 ///
 /// ## Overview
-/// `ImagePickerViewController`는 `FoodPhoto` 배열을 받아 그리드 형태로 표시하고,
+/// `ImagePickerViewController`는 `FoodImageAsset` 배열을 받아 그리드 형태로 표시하고,
 /// 사용자가 사진을 선택하면 `resultPublisher`를 통해 결과를 전달합니다.
 ///
 /// ## Usage

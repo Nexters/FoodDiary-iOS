@@ -37,12 +37,42 @@ private extension SceneDelegate {
         container.register(TokenManager.self) { _ in
             TokenManager(userDefaults: .standard)
         }
-        
+
         container.register(TokenRepository.self) { resolver in
             guard let manager = resolver.resolve(TokenManager.self) else {
                 fatalError("TokenManager not registered")
             }
             return TokenRepositoryImpl(tokenManager: manager)
+        }
+
+        container.register(PHImageLoader.self) { _ in
+            PHImageLoader()
+        }
+
+        container.register(ImageRepositoryImpl.self) { resolver in
+            guard let imageLoader = resolver.resolve(PHImageLoader.self) else {
+                fatalError("PHImageLoader not registered")
+            }
+            return ImageRepositoryImpl(imageLoader: imageLoader)
+        }
+
+        container.register(TFLiteFoodClassifier.self) { _ in
+            do {
+                return try TFLiteFoodClassifier()
+            } catch {
+                fatalError("TFLiteFoodClassifier init failed: \(error)")
+            }
+        }
+
+        container.register(FoodImageAssetFetcher<TFLiteFoodClassifier, ImageRepositoryImpl>.self) { resolver in
+            guard let classifier = resolver.resolve(TFLiteFoodClassifier.self),
+                  let imageRepository = resolver.resolve(ImageRepositoryImpl.self) else {
+                fatalError("FoodImageAssetFetcher dependencies not registered")
+            }
+            return FoodImageAssetFetcher(
+                foodClassifier: classifier,
+                imageRepository: imageRepository
+            )
         }
     }
     
