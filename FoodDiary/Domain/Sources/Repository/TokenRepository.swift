@@ -9,4 +9,5 @@ import Foundation
 
 public protocol TokenRepository {
     func save(_ identityToken: Data) async throws -> LoginResult
+    func deleteToken() throws
 }

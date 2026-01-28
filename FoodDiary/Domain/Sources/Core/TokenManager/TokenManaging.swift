@@ -10,5 +10,6 @@ import Foundation
 public protocol TokenManaging {
     func get() -> String?
     func set(_ token: String) throws
+    func clear() throws
 }
 
