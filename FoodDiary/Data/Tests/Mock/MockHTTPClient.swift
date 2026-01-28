@@ -10,6 +10,7 @@
 final class MockHTTPClient: HTTPClient<AuthEndpoint> {
     private(set) var callCount = 0
     var throwError: Bool
+    var stubResponse: AuthResponseDTO?
     
     init(throwError: Bool = false) {
         self.throwError = throwError
@@ -22,6 +23,10 @@ final class MockHTTPClient: HTTPClient<AuthEndpoint> {
             throw NetworkError.httpError(statusCode: 400, data: nil)
         }
         
-        fatalError("MockHTTPClient.request should not be called without configuring errorToThrow")
+        if let response = stubResponse as? T {
+            return response
+        }
+        
+        fatalError("MockHTTPClient.request should not be called without configuring stubAuthResponse")
     }
 }
