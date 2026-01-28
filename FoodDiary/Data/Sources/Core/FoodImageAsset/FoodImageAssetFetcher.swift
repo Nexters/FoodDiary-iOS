@@ -1,5 +1,5 @@
 //
-//  FoodPhotoAlbumFetcher.swift
+//  FoodImageAssetFetcher.swift
 //  Data
 //
 //  Created by Kai Lee on 1/23/26.
@@ -9,49 +9,40 @@ import Domain
 import Photos
 import UIKit
 
-/// 사진 라이브러리에서 음식 사진을 가져오는 Repository 구현체
-///
-/// PHAsset을 직접 반환하여 UI에서 이미지 로드 시 PHCachingImageManager 캐싱 활용
-public final class FoodPhotoFetcher<
+/// 사진 라이브러리에서 음식 사진을 정확도 높은 순으로 정렬해서 가져오는 `Repository` 구현체
+public struct FoodImageAssetFetcher<
     FoodClassifier: FoodClassifierRepresentable,
-    ImageCacheManager: ImageCacheManageable
->: FoodPhotoRepository where ImageCacheManager.Asset == PHAsset {
-    public typealias Asset = PHAsset
-    
+    ImageRepo: RenderableImageRepository
+>: FoodImageAssetRepository where ImageRepo.Asset == PHAsset {
     private let foodClassifier: FoodClassifier
-    private let imageCacheManager: ImageCacheManager
+    private let imageRepository: ImageRepo
     private let imageTargetSize: CGSize
-    private let thumbnailSize: CGSize
 
     /// - Parameters:
     ///   - foodClassifier: 음식 분류기
-    ///   - imageCacheManager: 이미지 캐시 매니저
+    ///   - imageRepository: 이미지 레파지토리
     ///   - imageTargetSize: ML 분류용 이미지 크기 (기본: 224x224)
-    ///   - thumbnailSize: UI 썸네일 캐싱 크기 (기본: 300x300)
     public init(
         foodClassifier: FoodClassifier,
-        imageCacheManager: ImageCacheManager,
-        imageTargetSize: CGSize = CGSize(width: 224, height: 224),
-        thumbnailSize: CGSize = CGSize(width: 300, height: 300)
+        imageRepository: ImageRepo,
+        imageTargetSize: CGSize = CGSize(width: 224, height: 224)
     ) {
         self.foodClassifier = foodClassifier
-        self.imageCacheManager = imageCacheManager
+        self.imageRepository = imageRepository
         self.imageTargetSize = imageTargetSize
-        self.thumbnailSize = thumbnailSize
     }
 
-    public func requestAuthorization() async -> PhotoAuthorizationStatus {
-        let status = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
-        return status.toDomain()
+    public func requestAuthorization() async -> PHAuthorizationStatus {
+        await PHPhotoLibrary.requestAuthorization(for: .readWrite)
     }
 
-    public func fetchFoodPhotos(
+    public func fetchFoodImageAssets(
         from startDate: Date,
         to endDate: Date?
-    ) async throws -> [Date: [FoodPhoto<PHAsset>]] {
+    ) async throws -> [Date: [FoodImageAsset<PHAsset>]] {
         let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
         guard status == .authorized || status == .limited else {
-            throw FoodPhotoAlbumError.notAuthorized
+            throw FoodImageAssetError.notAuthorized
         }
 
         let sections = await fetchPhotoSections(from: startDate, to: endDate)
@@ -59,11 +50,11 @@ public final class FoodPhotoFetcher<
     }
 }
 
-public typealias FoodPhotoAsset = FoodPhoto<PHAsset>
+public typealias PHFoodImageAsset = FoodImageAsset<PHAsset>
 
 // MARK: - Photo Fetching
 
-private extension FoodPhotoFetcher {
+private extension FoodImageAssetFetcher {
     struct PhotoSection {
         let date: Date
         let assets: [PHAsset]
@@ -82,6 +73,7 @@ private extension FoodPhotoFetcher {
         }
         options.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
 
+        // DB 쿼리, 캐싱 불필요함
         return await Task.detached(priority: .userInitiated) {
             let fetchResult = PHAsset.fetchAssets(with: options)
             return self.groupByDate(fetchResult)
@@ -98,46 +90,37 @@ private extension FoodPhotoFetcher {
             sections[dateKey, default: []].append(asset)
         }
 
-        return sections
-            .map { PhotoSection(date: $0.key, assets: $0.value) }
-            .sorted { $0.date > $1.date }
+        return sections.map { PhotoSection(date: $0.key, assets: $0.value) }
     }
 }
 
 // MARK: - Classification
 
-private extension FoodPhotoFetcher {
-    func classifyAllSections(_ sections: [PhotoSection]) async throws -> [Date: [FoodPhotoAsset]] {
+private extension FoodImageAssetFetcher {
+    func classifyAllSections(_ sections: [PhotoSection]) async throws -> [Date: [PHFoodImageAsset]] {
         let results = try await mapEach(sections) { section in
             let photos = try await self.classifyPhotosInSection(section)
             return (section.date, photos)
         }
 
-        // UI 표시용 썸네일 미리 캐싱
-        let allAssets = results.flatMap { $0.1.map(\.imageAsset) }
-        imageCacheManager.startCaching(
-            assets: allAssets,
-            targetSize: thumbnailSize
-        )
-
         return Dictionary(uniqueKeysWithValues: results)
     }
 
-    func classifyPhotosInSection(_ section: PhotoSection) async throws -> [FoodPhotoAsset] {
+    func classifyPhotosInSection(_ section: PhotoSection) async throws -> [PHFoodImageAsset] {
         try await mapEach(section.assets) { asset in
             try await self.classifyAsset(asset)
         }
         .sorted { $0.foodProbability > $1.foodProbability }
     }
 
-    func classifyAsset(_ asset: PHAsset) async throws -> FoodPhotoAsset {
-        let image = try await imageCacheManager.requestImage(
+    func classifyAsset(_ asset: PHAsset) async throws -> PHFoodImageAsset {
+        let image = try await imageRepository.loadImage(
             for: asset,
             targetSize: imageTargetSize
         )
         let result = try foodClassifier.classify(image: image)
 
-        return FoodPhoto(
+        return FoodImageAsset(
             imageAsset: asset,
             foodProbability: result.foodProbability
         )
@@ -163,7 +146,7 @@ private extension FoodPhotoFetcher {
 
 // MARK: - Error
 
-public enum FoodPhotoAlbumError: LocalizedError {
+public enum FoodImageAssetError: LocalizedError {
     case notAuthorized
     case imageLoadFailed
 
@@ -173,27 +156,6 @@ public enum FoodPhotoAlbumError: LocalizedError {
             return "사진 라이브러리 접근 권한이 없습니다."
         case .imageLoadFailed:
             return "이미지를 불러올 수 없습니다."
-        }
-    }
-}
-
-// MARK: - PHAuthorizationStatus Extension
-
-private extension PHAuthorizationStatus {
-    func toDomain() -> PhotoAuthorizationStatus {
-        switch self {
-        case .notDetermined:
-            return .notDetermined
-        case .restricted:
-            return .restricted
-        case .denied:
-            return .denied
-        case .authorized:
-            return .authorized
-        case .limited:
-            return .limited
-        @unknown default:
-            return .denied
         }
     }
 }

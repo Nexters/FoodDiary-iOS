@@ -1,5 +1,5 @@
 //
-//  FoodPhoto.swift
+//  FoodImageAsset.swift
 //  Domain
 //
 //  Created by Kai Lee on 1/20/26.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct FoodPhoto<ImageAsset: ImageAssetable>: Sendable {
+public struct FoodImageAsset<ImageAsset: ImageAssetable>: Sendable {
     public let imageAsset: ImageAsset
     /// 음식일 확률 (0.0 ~ 1.0)
     public let foodProbability: Float

@@ -7,6 +7,7 @@
 
 import UIKit
 import Data
+import DesignSystem
 import Presentation
 import Domain
 import DI
@@ -36,12 +37,42 @@ private extension SceneDelegate {
         container.register(TokenManager.self) { _ in
             TokenManager(userDefaults: .standard)
         }
-        
+
         container.register(TokenRepository.self) { resolver in
             guard let manager = resolver.resolve(TokenManager.self) else {
                 fatalError("TokenManager not registered")
             }
             return TokenRepositoryImpl(tokenManager: manager)
+        }
+
+        container.register(PHAssetConverter.self) { _ in
+            PHAssetConverter()
+        }
+
+        container.register(UIImageLoader.self) { resolver in
+            guard let imageLoader = resolver.resolve(PHAssetConverter.self) else {
+                fatalError("PHImageLoader not registered")
+            }
+            return UIImageLoader(imageLoader: imageLoader)
+        }
+
+        container.register(TFLiteFoodClassifier.self) { _ in
+            do {
+                return try TFLiteFoodClassifier()
+            } catch {
+                fatalError("TFLiteFoodClassifier init failed: \(error)")
+            }
+        }
+
+        container.register(FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>.self) { resolver in
+            guard let classifier = resolver.resolve(TFLiteFoodClassifier.self),
+                  let imageRepository = resolver.resolve(UIImageLoader.self) else {
+                fatalError("FoodImageAssetFetcher dependencies not registered")
+            }
+            return FoodImageAssetFetcher(
+                foodClassifier: classifier,
+                imageRepository: imageRepository
+            )
         }
     }
     
