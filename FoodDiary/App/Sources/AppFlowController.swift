@@ -107,7 +107,7 @@ private extension AppFlowController {
                 self.routeToAppropriateScreen()
             }
             .store(in: &cancellables)
-       
+
         return loginVC
     }
     
