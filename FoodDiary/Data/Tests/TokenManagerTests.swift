@@ -46,7 +46,7 @@ struct TokenManagerTests {
         #expect(loadedToken == token)
     }
     
-    @Test("Set 실패 시 AppleLoginError.tokenPersistenceFailed 에러를 던진다")
+    @Test("Set 실패 시 에러를 던진다")
     func setToken_failure_throwsTokenPersistenceFailed() {
         let keychainService = InMemoryKeychainService()
         keychainService.shouldSaveSucceed = false
@@ -55,6 +55,34 @@ struct TokenManagerTests {
         
         let error = #expect(throws: AppleLoginError.tokenPersistenceFailed) {
             try sut.set(token)
+        }
+        
+        #expect(error == .tokenPersistenceFailed)
+    }
+    
+    @Test("토큰 저장 후 Clear 시 토큰이 제대로 삭제된다")
+    func clearToken_success_tokenIsDeleted() throws {
+        let keychainService = InMemoryKeychainService()
+        let sut = TokenManager(keychainService: keychainService)
+        let token = "test_token_to_delete"
+        try sut.set(token)
+        
+        try sut.clear()
+        
+        let loadedToken = sut.get()
+        #expect(loadedToken == nil)
+    }
+    
+    @Test("토큰 저장 후 Clear 실패 시 에러를 던진다")
+    func clearToken_failure_throwsTokenPersistenceFailed() {
+        let keychainService = InMemoryKeychainService()
+        keychainService.shouldDeleteSucceed = false
+        let sut = TokenManager(keychainService: keychainService)
+        let token = "test_token"
+        try? sut.set(token)
+        
+        let error = #expect(throws: AppleLoginError.tokenPersistenceFailed) {
+            try sut.clear()
         }
         
         #expect(error == .tokenPersistenceFailed)
