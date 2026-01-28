@@ -41,16 +41,20 @@ public final class ClassificationCacheManager: @unchecked Sendable {
     }
 
     // MARK: - Private
-    
+
     /// Disk I/O 디바운스
     private func scheduleSave() {
         saveTask?.cancel()
         saveTask = Task { [weak self] in
-            try? await Task.sleep(for: self?.debounceInterval ?? .milliseconds(500))
-
-            guard !Task.isCancelled, let self else {
+            guard let self else {
                 return
             }
+
+            try? await Task.sleep(for: self.debounceInterval)
+            guard !Task.isCancelled else {
+                return
+            }
+
             let snapshot = lock.withLock { self.cache }
             saveToDisk(snapshot)
         }
