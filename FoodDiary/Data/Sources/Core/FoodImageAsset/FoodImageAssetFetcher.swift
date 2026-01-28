@@ -16,19 +16,23 @@ public struct FoodImageAssetFetcher<
 >: FoodImageAssetRepository where ImageRepo.Asset == PHAsset {
     private let foodClassifier: FoodClassifier
     private let imageRepository: ImageRepo
+    private let cache: ClassificationCacheManager
     private let imageTargetSize: CGSize
 
     /// - Parameters:
     ///   - foodClassifier: 음식 분류기
     ///   - imageRepository: 이미지 레파지토리
+    ///   - cache: 분류 결과 캐시
     ///   - imageTargetSize: ML 분류용 이미지 크기 (기본: 224x224)
     public init(
         foodClassifier: FoodClassifier,
         imageRepository: ImageRepo,
+        cache: ClassificationCacheManager,
         imageTargetSize: CGSize = CGSize(width: 224, height: 224)
     ) {
         self.foodClassifier = foodClassifier
         self.imageRepository = imageRepository
+        self.cache = cache
         self.imageTargetSize = imageTargetSize
     }
 
@@ -114,11 +118,25 @@ private extension FoodImageAssetFetcher {
     }
 
     func classifyAsset(_ asset: PHAsset) async throws -> PHFoodImageAsset {
+        let identifier = asset.localIdentifier
+
+        if let cached = cache.get(identifier) {
+            return FoodImageAsset(
+                imageAsset: asset,
+                foodProbability: cached.foodProbability
+            )
+        }
+
         let image = try await imageRepository.loadImage(
             for: asset,
             targetSize: imageTargetSize
         )
         let result = try foodClassifier.classify(image: image)
+
+        cache.set(.init(
+            identifier: identifier,
+            foodProbability: result.foodProbability
+        ))
 
         return FoodImageAsset(
             imageAsset: asset,

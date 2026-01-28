@@ -6,11 +6,11 @@
 //
 
 public struct ClassificationCacheEntry: Codable, Sendable {
-    public let identifier: String
+    public let assetIdentifier: String
     public let foodProbability: Float
 
     public init(identifier: String, foodProbability: Float) {
-        self.identifier = identifier
+        self.assetIdentifier = identifier
         self.foodProbability = foodProbability
     }
 }

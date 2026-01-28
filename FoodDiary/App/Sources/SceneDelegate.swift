@@ -64,14 +64,20 @@ private extension SceneDelegate {
             }
         }
 
+        container.register(ClassificationCacheManager.self) { _ in
+            ClassificationCacheManager()
+        }
+
         container.register(FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>.self) { resolver in
             guard let classifier = resolver.resolve(TFLiteFoodClassifier.self),
-                  let imageRepository = resolver.resolve(UIImageLoader.self) else {
+                  let imageRepository = resolver.resolve(UIImageLoader.self),
+                  let cache = resolver.resolve(ClassificationCacheManager.self) else {
                 fatalError("FoodImageAssetFetcher dependencies not registered")
             }
             return FoodImageAssetFetcher(
                 foodClassifier: classifier,
-                imageRepository: imageRepository
+                imageRepository: imageRepository,
+                cache: cache
             )
         }
     }
