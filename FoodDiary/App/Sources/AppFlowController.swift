@@ -40,16 +40,40 @@ private extension AppFlowController {
     }
     
     func createMainView() -> UIViewController {
-//        MainViewController()
-        guard let foodImageAssetRepository = try? container.resolve(FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>.self),
-              let imageRepository = try? container.resolve(UIImageLoader.self) else {
-            fatalError("FoodImageAssetFetcher or ImageRepositoryImpl not registered")
+        guard let weeklyCalendarUseCase = try? container.resolve(
+            FetchWeeklyCalendarUseCase<MockFoodRecordRepository>.self
+        ) else {
+            fatalError("FetchWeeklyCalendarUseCase not registered")
         }
 
-        return ImagePickerDemoViewController(
-            foodImageAssetRepository: foodImageAssetRepository,
-            imageRepository: imageRepository
+        guard let foodImageAssetFetchUseCase = try? container.resolve(
+            FoodImageAssetFetchUseCase<FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
+        ) else {
+            fatalError("FoodImageAssetFetchUseCase not registered")
+        }
+
+        guard let fetchFoodRecordsUseCase = try? container.resolve(
+            FetchFoodRecordsUseCase<MockFoodRecordRepository>.self
+        ) else {
+            fatalError("FetchFoodRecordsUseCase not registered")
+        }
+
+        guard let imageProvider = try? container.resolve(UIImageLoader.self) else {
+            fatalError("UIImageLoader not registered")
+        }
+
+        let viewModel = WeeklyCalendarViewModel(
+            fetchWeeklyCalendarUseCase: weeklyCalendarUseCase,
+            foodImageAssetFetchUseCase: foodImageAssetFetchUseCase,
+            fetchFoodRecordsUseCase: fetchFoodRecordsUseCase
         )
+
+        let weeklyCalendarVC = WeeklyCalendarViewController(
+            viewModel: viewModel,
+            imageProvider: imageProvider
+        )
+
+        return UINavigationController(rootViewController: weeklyCalendarVC)
     }
     
     func createLoginView() -> UIViewController {

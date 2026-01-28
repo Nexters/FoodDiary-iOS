@@ -80,6 +80,10 @@ private extension SceneDelegate {
                 cache: cache
             )
         }
+
+        container.register(MockFoodRecordRepository.self) { _ in
+            MockFoodRecordRepository()
+        }
     }
     
     func registerDomain() {
@@ -88,6 +92,29 @@ private extension SceneDelegate {
                 fatalError("TokenRepository not registered")
             }
             return FinalizeAppleLoginUseCase(tokenRepository: repository)
+        }
+
+        container.register(FetchWeeklyCalendarUseCase<MockFoodRecordRepository>.self) { resolver in
+            guard let repository = resolver.resolve(MockFoodRecordRepository.self) else {
+                fatalError("MockFoodRecordRepository not registered")
+            }
+            return FetchWeeklyCalendarUseCase(repository: repository)
+        }
+
+        container.register(FetchFoodRecordsUseCase<MockFoodRecordRepository>.self) { resolver in
+            guard let repository = resolver.resolve(MockFoodRecordRepository.self) else {
+                fatalError("MockFoodRecordRepository not registered")
+            }
+            return FetchFoodRecordsUseCase(repository: repository)
+        }
+
+        container.register(
+            FoodImageAssetFetchUseCase<FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
+        ) { resolver in
+            guard let repository = resolver.resolve(FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>.self) else {
+                fatalError("FoodImageAssetFetcher not registered")
+            }
+            return FoodImageAssetFetchUseCase(repository: repository)
         }
     }
     
