@@ -11,7 +11,7 @@ import Domain
 @testable import Data
 
 struct TokenRepositoryTests {
-    @Test("identityToken을 String으로 만들 수 없으면 AppleLoginError를 던지고, HTTPClient/TokenManager가 호출되지 않는다")
+    @Test("identityToken을 String으로 만들 수 없으면 에러를 던지고, HTTPClient와 TokenManager가 호출되지 않는다")
     func save_whenStringInitFails_throwsErrorAndDoesNotCallDependencies() async {
         let httpClient = MockHTTPClient()
         let tokenManager = MockTokenManager()
@@ -50,7 +50,7 @@ struct TokenRepositoryTests {
         }
     }
 
-    @Test("HTTP 요청은 성공하지만 TokenManager.set에서 AppleLoginError.tokenPersistenceFailed를 던지면 그대로 전파된다")
+    @Test("HTTP 요청은 성공하지만 TokenManager.set에서 에러를 던지면 그대로 전파된다")
     func save_whenTokenManagerSetFails_propagatesAppleLoginError() async {
         let httpClient = MockHTTPClient()
         let tokenManager = MockTokenManager()
@@ -94,6 +94,56 @@ struct TokenRepositoryTests {
         #expect(httpClient.callCount == 1)
         #expect(tokenManager.setCallCount == 1)
         #expect(tokenManager.lastToken == "saved_access_token")
+    }
+    
+    @Test("토큰 저장 후 삭제 시 토큰이 제대로 삭제된다")
+    func deleteToken_success_callsClearAndDeletesToken() async throws {
+        let httpClient = MockHTTPClient()
+        let tokenManager = MockTokenManager()
+        let sut = TokenRepositoryImpl(httpClient: httpClient, tokenManager: tokenManager)
+        
+        let identityTokenString = "valid_identity_token"
+        let identityTokenData = Data(identityTokenString.utf8)
+        httpClient.stubResponse = AuthResponseDTO(
+            accessToken: "saved_access_token",
+            id: "some_id",
+            isFirst: false
+        )
+        
+        let _ = try await sut.save(identityTokenData)
+        #expect(tokenManager.get() == "saved_access_token")
+        
+        try sut.deleteToken()
+        
+        #expect(tokenManager.clearCallCount == 1)
+        #expect(tokenManager.get() == nil)
+    }
+    
+    @Test("토큰 저장 후 삭제 실패 시 에러를 그대로 전파한다")
+    func deleteToken_failure_propagatesClearError() async throws {
+        let httpClient = MockHTTPClient()
+        let tokenManager = MockTokenManager()
+        tokenManager.shouldClearThrow = true
+        let sut = TokenRepositoryImpl(httpClient: httpClient, tokenManager: tokenManager)
+        
+        let identityTokenString = "valid_identity_token"
+        let identityTokenData = Data(identityTokenString.utf8)
+        httpClient.stubResponse = AuthResponseDTO(
+            accessToken: "saved_access_token",
+            id: "some_id",
+            isFirst: false
+        )
+        
+        let _ = try await sut.save(identityTokenData)
+        #expect(tokenManager.get() == "saved_access_token")
+        
+        let error = #expect(throws: AppleLoginError.tokenPersistenceFailed) {
+            try sut.deleteToken()
+        }
+        
+        #expect(error == .tokenPersistenceFailed)
+        #expect(tokenManager.clearCallCount == 1)
+        #expect(tokenManager.get() == nil)
     }
 }
 
