@@ -32,12 +32,6 @@ private extension SceneDelegate {
         registerPresentation()
     }
     
-    func registerMockData() {
-         container.register(TokenRepository.self) { _ in
-             MockTokenRepository()
-         }
-    }
-    
     func registerData() {
         container.register(KeychainService.self) { _ in
             KeychainService()
@@ -162,20 +156,5 @@ private extension SceneDelegate {
             
             return LoginViewModel(finalizeAppleLoginUseCase: useCase)
         }
-<<<<<<< HEAD
-=======
-        
-        container.register(LoginViewController.self, scope: .transient) { resolver in
-            guard let viewModel = resolver.resolve(LoginViewModel.self) else {
-                fatalError("LoginViewModel not registered")
-            }
-            
-            return LoginViewController(viewModel: viewModel)
-        }
-        
-        container.register(MainViewController.self, scope: .transient) { _ in
-            MainViewController()
-        }
->>>>>>> 8215bbd (feat: 애플 로그인 토큰 저장 플로우 구현)
     }
 }
