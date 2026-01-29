@@ -1,5 +1,5 @@
 //
-//  FileClassificationCacheTests.swift
+//  ClassificationCacheManagerTests.swift
 //  Data
 //
 //  Created by Kai Lee on 1/25/26.
@@ -9,17 +9,17 @@
 import Foundation
 import Testing
 
-@Suite("FileClassificationCache Tests")
-struct FileClassificationCacheTests {
+@Suite("ClassificationCacheManager Tests")
+struct ClassificationCacheManagerTests {
     private let testFileName = "test_classification_cache.json"
 
-    private func createCache() -> FileClassificationCache {
+    private func createCache() -> ClassificationCacheManager {
         // 테스트 전 기존 파일 삭제
         let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
         let fileURL = cacheDir.appendingPathComponent(testFileName)
         try? FileManager.default.removeItem(at: fileURL)
 
-        return FileClassificationCache(fileName: testFileName)
+        return ClassificationCacheManager(fileName: testFileName, debounceInterval: .zero)
     }
 
     private func cleanUp() {
@@ -31,32 +31,32 @@ struct FileClassificationCacheTests {
     // MARK: - get/set 테스트
 
     @Test("캐시에 없는 identifier는 nil 반환")
-    func testGetReturnsNilForMissingEntry() {
+    func testGetReturnsNilForMissingEntry() async {
         let cache = createCache()
         defer { cleanUp() }
 
-        let result = cache.get("non-existent-id")
+        let result = await cache.get("non-existent-id")
 
         #expect(result == nil)
     }
 
     @Test("set한 값을 get으로 조회")
-    func testSetAndGet() {
+    func testSetAndGet() async {
         let cache = createCache()
         defer { cleanUp() }
 
         let entry = ClassificationCacheEntry(identifier: "test-id", foodProbability: 0.85)
-        cache.set(entry)
+        await cache.set(entry)
 
-        let result = cache.get("test-id")
+        let result = await cache.get("test-id")
 
         #expect(result != nil)
-        #expect(result?.identifier == "test-id")
+        #expect(result?.assetIdentifier == "test-id")
         #expect(result?.foodProbability == 0.85)
     }
 
     @Test("여러 항목 저장 및 조회")
-    func testMultipleEntries() {
+    func testMultipleEntries() async {
         let cache = createCache()
         defer { cleanUp() }
 
@@ -64,45 +64,52 @@ struct FileClassificationCacheTests {
         let entry2 = ClassificationCacheEntry(identifier: "id-2", foodProbability: 0.3)
         let entry3 = ClassificationCacheEntry(identifier: "id-3", foodProbability: 0.7)
 
-        cache.set(entry1)
-        cache.set(entry2)
-        cache.set(entry3)
+        await cache.set(entry1)
+        await cache.set(entry2)
+        await cache.set(entry3)
 
-        #expect(cache.get("id-1")?.foodProbability == 0.9)
-        #expect(cache.get("id-2")?.foodProbability == 0.3)
-        #expect(cache.get("id-3")?.foodProbability == 0.7)
+        let result1 = await cache.get("id-1")
+        let result2 = await cache.get("id-2")
+        let result3 = await cache.get("id-3")
+
+        #expect(result1?.foodProbability == 0.9)
+        #expect(result2?.foodProbability == 0.3)
+        #expect(result3?.foodProbability == 0.7)
     }
 
     @Test("같은 identifier로 set하면 덮어쓰기")
-    func testOverwrite() {
+    func testOverwrite() async {
         let cache = createCache()
         defer { cleanUp() }
 
         let entry1 = ClassificationCacheEntry(identifier: "test-id", foodProbability: 0.5)
         let entry2 = ClassificationCacheEntry(identifier: "test-id", foodProbability: 0.9)
 
-        cache.set(entry1)
-        cache.set(entry2)
+        await cache.set(entry1)
+        await cache.set(entry2)
 
-        let result = cache.get("test-id")
+        let result = await cache.get("test-id")
         #expect(result?.foodProbability == 0.9)
     }
 
     // MARK: - 디스크 영속성 테스트
 
     @Test("캐시가 디스크에 저장되고 새 인스턴스에서 복원")
-    func testPersistence() {
+    func testPersistence() async throws {
         defer { cleanUp() }
 
         // 첫 번째 인스턴스에서 저장
         let cache1 = createCache()
         let entry = ClassificationCacheEntry(identifier: "persist-id", foodProbability: 0.75)
-        cache1.set(entry)
+        await cache1.set(entry)
+
+        // 디바운스 후 저장 완료 대기
+        try await Task.sleep(for: .seconds(1))
 
         // 새 인스턴스 생성 (디스크에서 로드)
-        let cache2 = FileClassificationCache(fileName: testFileName)
+        let cache2 = ClassificationCacheManager(fileName: testFileName, debounceInterval: .zero)
 
-        let result = cache2.get("persist-id")
+        let result = await cache2.get("persist-id")
         #expect(result != nil)
         #expect(result?.foodProbability == 0.75)
     }
