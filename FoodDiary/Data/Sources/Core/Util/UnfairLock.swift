@@ -17,4 +17,10 @@ final class UnfairLock: @unchecked Sendable {
     func unlock() {
         os_unfair_lock_unlock(&_lock)
     }
+
+    func withLock<T>(_ body: () throws -> T) rethrows -> T {
+        lock()
+        defer { unlock() }
+        return try body()
+    }
 }
