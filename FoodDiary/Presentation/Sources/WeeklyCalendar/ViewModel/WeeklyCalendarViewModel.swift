@@ -151,6 +151,9 @@ public final class WeeklyCalendarViewModel<
         state.isLoading = true
         defer { state.isLoading = false }
 
+        // 백그라운드에서 주간 사진 캐시 워밍
+        foodImageAssetFetchUseCase.prefetch(for: date)
+
         do {
             let weekDays = try await fetchWeeklyCalendarUseCase.execute(for: date)
             state.weekDays = weekDays

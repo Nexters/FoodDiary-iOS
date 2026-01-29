@@ -35,4 +35,8 @@ public protocol FoodImageAssetRepository: Sendable {
         from startDate: Date,
         to endDate: Date?
     ) async throws -> [Date: [FoodImageAsset<Asset>]]
+
+    /// 주간 사진 데이터를 미리 로드하여 캐시 워밍
+    /// - Parameter date: 주의 기준이 되는 날짜
+    func prefetchFoodImageAssets(forWeekContaining date: Date)
 }

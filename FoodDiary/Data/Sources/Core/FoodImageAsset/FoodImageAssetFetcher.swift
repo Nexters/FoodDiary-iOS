@@ -56,6 +56,20 @@ public struct FoodImageAssetFetcher<
         let sections = await fetchPhotoSections(from: startDate, to: endDate)
         return try await classifyAllSections(sections)
     }
+
+    public func prefetchFoodImageAssets(forWeekContaining date: Date) {
+        let calendar = Calendar.current
+        guard let startOfWeek = calendar.date(
+            from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+        ),
+        let endOfWeek = calendar.date(byAdding: .day, value: 7, to: startOfWeek) else {
+            return
+        }
+
+        Task(priority: .background) {
+            _ = try? await self.fetchFoodImageAssets(from: startOfWeek, to: endOfWeek)
+        }
+    }
 }
 
 public typealias PHFoodImageAsset = FoodImageAsset<PHAsset>
