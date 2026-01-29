@@ -9,10 +9,16 @@ import Foundation
 public struct FetchWeeklyCalendarUseCase<Repository: FoodRecordRepository>: Sendable {
     private let repository: Repository
     private let calendar: Calendar
+    private let locale: Locale
 
-    public init(repository: Repository, calendar: Calendar = .current) {
+    public init(
+        repository: Repository,
+        calendar: Calendar = .current,
+        locale: Locale = Locale(identifier: "ko_KR")
+    ) {
         self.repository = repository
         self.calendar = calendar
+        self.locale = locale
     }
 
     /// 특정 날짜가 포함된 주의 캘린더 데이터 반환
@@ -48,7 +54,7 @@ public struct FetchWeeklyCalendarUseCase<Repository: FoodRecordRepository>: Send
     /// 월 텍스트 포맷팅 (예: "1월")
     public func formatMonthText(for date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.locale = locale
         formatter.dateFormat = "M월"
         return formatter.string(from: date)
     }
@@ -74,7 +80,7 @@ public struct FetchWeeklyCalendarUseCase<Repository: FoodRecordRepository>: Send
 
     private func formatDayOfWeek(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.locale = locale
         formatter.dateFormat = "E"
         return formatter.string(from: date)
     }

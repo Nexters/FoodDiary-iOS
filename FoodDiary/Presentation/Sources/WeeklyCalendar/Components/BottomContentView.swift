@@ -31,12 +31,19 @@ final class BottomContentView: UIView {
         return view
     }()
 
+    private let addButtonOuterRing: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        view.layer.cornerRadius = 24
+        view.layer.borderWidth = 3
+        view.layer.borderColor = UIColor.white.cgColor
+        return view
+    }()
+
     private let addButtonContainer: UIView = {
         let view = UIView()
-        view.backgroundColor = .white
-        view.layer.cornerRadius = 36
-        view.layer.borderWidth = 4
-        view.layer.borderColor = DesignSystemAsset.primary.color.cgColor
+        view.backgroundColor = DesignSystemAsset.primary.color
+        view.layer.cornerRadius = 18
         return view
     }()
 
@@ -44,7 +51,7 @@ final class BottomContentView: UIView {
         let button = UIButton()
         let config = UIImage.SymbolConfiguration(pointSize: 24, weight: .medium)
         button.setImage(UIImage(systemName: "plus", withConfiguration: config), for: .normal)
-        button.tintColor = DesignSystemAsset.primary.color
+        button.tintColor = UIColor(red: 51/255, green: 51/255, blue: 51/255, alpha: 1)
         return button
     }()
 
@@ -83,7 +90,8 @@ final class BottomContentView: UIView {
 
     private func setupUI() {
         addSubview(containerView)
-        containerView.addSubview(addButtonContainer)
+        containerView.addSubview(addButtonOuterRing)
+        addButtonOuterRing.addSubview(addButtonContainer)
         addButtonContainer.addSubview(addButton)
         containerView.addSubview(placeholderLabel)
         containerView.addSubview(recordedImagesStackView)
@@ -94,9 +102,14 @@ final class BottomContentView: UIView {
             $0.edges.equalToSuperview().inset(UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16))
         }
 
+        addButtonOuterRing.snp.makeConstraints {
+            $0.center.equalToSuperview()
+            $0.size.equalTo(48)
+        }
+
         addButtonContainer.snp.makeConstraints {
             $0.center.equalToSuperview()
-            $0.size.equalTo(72)
+            $0.size.equalTo(36)
         }
 
         addButton.snp.makeConstraints {
@@ -105,7 +118,7 @@ final class BottomContentView: UIView {
 
         placeholderLabel.snp.makeConstraints {
             $0.centerX.equalToSuperview()
-            $0.top.equalTo(addButtonContainer.snp.bottom).offset(16)
+            $0.top.equalTo(addButtonOuterRing.snp.bottom).offset(16)
         }
 
         recordedImagesStackView.snp.makeConstraints {
@@ -123,7 +136,7 @@ final class BottomContentView: UIView {
     func configure(hasRecords: Bool, records: [FoodRecord]) {
         // 기록 여부와 관계없이 항상 + 버튼 표시
         // 이미지 스택 기능은 추후 디자인 확정 후 구현
-        addButtonContainer.isHidden = false
+        addButtonOuterRing.isHidden = false
         placeholderLabel.isHidden = false
         recordedImagesStackView.isHidden = true
 

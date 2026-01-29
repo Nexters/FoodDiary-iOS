@@ -62,10 +62,17 @@ private extension AppFlowController {
             fatalError("UIImageLoader not registered")
         }
 
+        guard let requestPhotoAuthorizationUseCase = try? container.resolve(
+            RequestPhotoAuthorizationUseCase<FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
+        ) else {
+            fatalError("RequestPhotoAuthorizationUseCase not registered")
+        }
+
         let viewModel = WeeklyCalendarViewModel(
             fetchWeeklyCalendarUseCase: weeklyCalendarUseCase,
             foodImageAssetFetchUseCase: foodImageAssetFetchUseCase,
-            fetchFoodRecordsUseCase: fetchFoodRecordsUseCase
+            fetchFoodRecordsUseCase: fetchFoodRecordsUseCase,
+            requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase
         )
 
         let weeklyCalendarVC = WeeklyCalendarViewController(

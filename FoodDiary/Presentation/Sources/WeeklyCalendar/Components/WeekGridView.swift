@@ -24,7 +24,7 @@ final class WeekGridView: UIView {
 
     private let containerView: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor.white.withAlphaComponent(0.1)
+        view.backgroundColor = UIColor.white.withAlphaComponent(0.05)
         view.layer.cornerRadius = 16
         return view
     }()

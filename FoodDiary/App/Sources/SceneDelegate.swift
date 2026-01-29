@@ -116,6 +116,15 @@ private extension SceneDelegate {
             }
             return FoodImageAssetFetchUseCase(repository: repository)
         }
+
+        container.register(
+            RequestPhotoAuthorizationUseCase<FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
+        ) { resolver in
+            guard let repository = resolver.resolve(FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>.self) else {
+                fatalError("FoodImageAssetFetcher not registered")
+            }
+            return RequestPhotoAuthorizationUseCase(repository: repository)
+        }
     }
     
     func registerPresentation() {

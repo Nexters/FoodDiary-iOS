@@ -69,20 +69,20 @@ final class DayCellView: UIView {
 
         containerView.snp.makeConstraints { $0.edges.equalToSuperview().inset(2) }
 
+        recordIndicator.snp.makeConstraints {
+            $0.top.equalToSuperview().offset(6)
+            $0.centerX.equalToSuperview()
+            $0.size.equalTo(6)
+        }
+
         dayOfWeekLabel.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(8)
+            $0.top.equalTo(recordIndicator.snp.bottom).offset(4)
             $0.centerX.equalToSuperview()
         }
 
         dayNumberLabel.snp.makeConstraints {
             $0.top.equalTo(dayOfWeekLabel.snp.bottom).offset(4)
             $0.centerX.equalToSuperview()
-        }
-
-        recordIndicator.snp.makeConstraints {
-            $0.top.equalTo(dayNumberLabel.snp.bottom).offset(4)
-            $0.centerX.equalToSuperview()
-            $0.size.equalTo(6)
         }
     }
 
@@ -103,18 +103,21 @@ final class DayCellView: UIView {
     }
 
     private func applyStyle(isToday: Bool, isSelected: Bool, hasRecord: Bool) {
-        if isToday {
+        if isSelected {
             containerView.backgroundColor = DesignSystemAsset.primary.color
+            containerView.layer.cornerRadius = 16
             dayOfWeekLabel.textColor = .white
             dayNumberLabel.textColor = .white
             recordIndicator.backgroundColor = .white
-        } else if isSelected {
+        } else if isToday {
             containerView.backgroundColor = DesignSystemAsset.primary.color.withAlphaComponent(0.2)
+            containerView.layer.cornerRadius = 12
             dayOfWeekLabel.textColor = .white
             dayNumberLabel.textColor = .white
             recordIndicator.backgroundColor = DesignSystemAsset.primary.color
         } else {
             containerView.backgroundColor = .clear
+            containerView.layer.cornerRadius = 12
             dayOfWeekLabel.textColor = UIColor.white.withAlphaComponent(0.6)
             dayNumberLabel.textColor = .white
             recordIndicator.backgroundColor = DesignSystemAsset.primary.color

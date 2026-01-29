@@ -78,7 +78,7 @@ public final class WeeklyCalendarViewController<
         setupConstraints()
         setupBindings()
 
-        viewModel.loadInitialData.send()
+        viewModel.input.send(.loadInitialData)
     }
 
     // MARK: - Setup
@@ -93,7 +93,7 @@ public final class WeeklyCalendarViewController<
         contentView.addSubview(titleLabel)
         contentView.addSubview(headerView)
         contentView.addSubview(weekGridView)
-        contentView.addSubview(bottomContentView)
+        view.addSubview(bottomContentView)
 
         // 사용자 이름 설정 (추후 실제 데이터로 교체)
         titleLabel.text = "길동님의 음식 기록,\n지금 바로 쓸 수 있어요"
@@ -129,73 +129,118 @@ public final class WeeklyCalendarViewController<
             $0.top.equalTo(headerView.snp.bottom).offset(16)
             $0.leading.trailing.equalToSuperview().inset(16)
             $0.height.equalTo(80)
+            $0.bottom.equalToSuperview()
         }
 
         bottomContentView.snp.makeConstraints {
             $0.top.equalTo(weekGridView.snp.bottom).offset(24)
             $0.leading.trailing.equalToSuperview()
-            $0.height.equalTo(300)
-            $0.bottom.equalToSuperview().offset(-24)
+            $0.bottom.equalTo(view.safeAreaLayoutGuide)
         }
     }
 
     private func setupBindings() {
         // Input: View → ViewModel
         headerView.previousTapPublisher
-            .subscribe(viewModel.goToPreviousWeek)
+            .sink { [weak self] in
+                self?.viewModel.input.send(.goToPreviousWeek)
+            }
             .store(in: &cancellables)
 
         headerView.nextTapPublisher
-            .subscribe(viewModel.goToNextWeek)
+            .sink { [weak self] in
+                self?.viewModel.input.send(.goToNextWeek)
+            }
             .store(in: &cancellables)
 
         weekGridView.dateTapPublisher
-            .subscribe(viewModel.selectDate)
+            .sink { [weak self] date in
+                self?.viewModel.input.send(.selectDate(date))
+            }
             .store(in: &cancellables)
 
-        // Output: ViewModel → View
-        viewModel.monthTextPublisher
+        // 하단 + 버튼 탭 → 권한 체크 후 이미지 피커 표시
+        bottomContentView.addButtonTapPublisher
+            .sink { [weak self] in
+                self?.handleAddButtonTap()
+            }
+            .store(in: &cancellables)
+
+        // Output: ViewModel → View (State 기반)
+        viewModel.statePublisher
+            .map(\.monthText)
+            .removeDuplicates()
             .receive(on: DispatchQueue.main)
             .sink { [weak self] text in
                 self?.headerView.setMonthText(text)
             }
             .store(in: &cancellables)
 
-        viewModel.weekDaysPublisher
-            .combineLatest(viewModel.selectedDatePublisher)
+        viewModel.statePublisher
+            .map { ($0.weekDays, $0.selectedDate) }
+            .removeDuplicates { prev, curr in
+                prev.0 == curr.0 && Calendar.current.isDate(prev.1, inSameDayAs: curr.1)
+            }
             .receive(on: DispatchQueue.main)
             .sink { [weak self] days, selectedDate in
                 self?.weekGridView.configure(with: days, selectedDate: selectedDate)
             }
             .store(in: &cancellables)
 
-        viewModel.selectedDateRecordsPublisher
+        viewModel.statePublisher
+            .map(\.selectedDateRecords)
+            .removeDuplicates()
             .receive(on: DispatchQueue.main)
             .sink { [weak self] records in
                 self?.bottomContentView.configure(hasRecords: !records.isEmpty, records: records)
             }
             .store(in: &cancellables)
 
-        // 하단 + 버튼 탭 → 이미지 피커 표시
-        bottomContentView.addButtonTapPublisher
-            .sink { [weak self] in
-                self?.presentImagePicker()
+        // Event: 권한 거부 시 설정 이동 안내 Alert 표시
+        viewModel.eventPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] event in
+                switch event {
+                case .photoAuthorizationDenied:
+                    self?.showPhotoAuthorizationDeniedAlert()
+                }
             }
             .store(in: &cancellables)
+    }
+
+    // MARK: - Actions
+
+    private func handleAddButtonTap() {
+        if viewModel.checkPhotoAuthorizationForAddingPhoto() {
+            presentImagePicker()
+        } else {
+            // 권한이 없으면 재요청 (notDetermined면 시스템 다이얼로그, 아니면 denied 이벤트 발생)
+            viewModel.input.send(.requestPhotoAuthorization)
+        }
+    }
+
+    private func showPhotoAuthorizationDeniedAlert() {
+        let alert = UIAlertController(
+            title: "사진 접근 권한 필요",
+            message: "음식 사진을 기록하려면 사진 라이브러리 접근 권한이 필요합니다. 설정에서 권한을 허용해 주세요.",
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { _ in
+            if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(settingsURL)
+            }
+        })
+
+        present(alert, animated: true)
     }
 
     // MARK: - Navigation
 
     private func presentImagePicker() {
         // 선택된 날짜의 사진들을 가져와서 ImagePicker에 전달
-        var selectedPhotos: [AssetRepo.Asset] = []
-
-        viewModel.selectedDatePhotosPublisher
-            .first()
-            .sink { photos in
-                selectedPhotos = photos.map { $0.imageAsset }
-            }
-            .store(in: &cancellables)
+        let selectedPhotos = viewModel.state.selectedDatePhotos.map { $0.imageAsset }
 
         let picker = ImagePickerViewController(
             photos: selectedPhotos,
