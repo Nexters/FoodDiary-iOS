@@ -41,13 +41,10 @@ public actor ClassificationCacheManager {
     /// Disk I/O 디바운스
     private func scheduleSave() {
         saveTask?.cancel()
-        saveTask = Task { [weak self] in
-            guard let self else { return }
-
+        saveTask = Task {
             try? await Task.sleep(for: self.debounceInterval)
             guard !Task.isCancelled else { return }
-
-            await self.saveToDisk(cache: self.cache, to: self.fileURL)
+            saveToDisk(cache: self.cache, to: self.fileURL)
         }
     }
 
