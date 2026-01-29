@@ -24,3 +24,5 @@ public struct FoodRecord: Sendable, Identifiable, Equatable {
         self.createdAt = createdAt
     }
 }
+
+extension Array: Equatable where Element == FoodRecord {}

@@ -177,9 +177,9 @@ public final class WeeklyCalendarViewController<
             .store(in: &cancellables)
 
         viewModel.statePublisher
-            .map { ($0.weekDays, $0.selectedDate) }
-            .removeDuplicates { prev, curr in
-                prev.0 == curr.0 && Calendar.current.isDate(prev.1, inSameDayAs: curr.1)
+            .map { (weekDays: $0.weekDays, selectedDate: $0.selectedDate) }
+            .removeDuplicates {
+                $0.weekDays == $1.weekDays && Calendar.current.isDate($0.selectedDate, inSameDayAs: $1.selectedDate)
             }
             .receive(on: DispatchQueue.main)
             .sink { [weak self] days, selectedDate in
@@ -188,11 +188,17 @@ public final class WeeklyCalendarViewController<
             .store(in: &cancellables)
 
         viewModel.statePublisher
-            .map(\.selectedDateRecords)
-            .removeDuplicates()
+            .map { (records: $0.selectedDateRecords, foodPhotoCount: $0.foodPhotoCount) }
+            .removeDuplicates {
+                $0.records == $1.records && $0.foodPhotoCount == $1.foodPhotoCount
+            }
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] records in
-                self?.bottomContentView.configure(hasRecords: !records.isEmpty, records: records)
+            .sink { [weak self] records, foodPhotoCount in
+                self?.bottomContentView.configure(
+                    hasRecords: !records.isEmpty,
+                    records: records,
+                    photoCount: foodPhotoCount
+                )
             }
             .store(in: &cancellables)
 
@@ -227,11 +233,12 @@ public final class WeeklyCalendarViewController<
         )
 
         alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-        alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { _ in
-            if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
-                UIApplication.shared.open(settingsURL)
-            }
-        })
+        alert.addAction(
+            UIAlertAction(title: "설정으로 이동", style: .default) { _ in
+                if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(settingsURL)
+                }
+            })
 
         present(alert, animated: true)
     }

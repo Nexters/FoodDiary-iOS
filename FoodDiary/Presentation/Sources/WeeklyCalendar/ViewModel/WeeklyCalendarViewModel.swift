@@ -10,12 +10,19 @@ import Foundation
 // MARK: - State
 
 public struct WeeklyCalendarState<Asset: ImageAssetable>: Equatable {
+    private static var foodProbabilityThreshold: Float { 0.6 }
+
     public internal(set) var weekDays: [WeeklyCalendarDay] = []
     public internal(set) var selectedDate: Date = Date()
     public internal(set) var monthText: String = ""
     public internal(set) var selectedDateRecords: [FoodRecord] = []
     public internal(set) var selectedDatePhotos: [FoodImageAsset<Asset>] = []
     public internal(set) var isLoading: Bool = false
+
+    /// 음식으로 판별된 사진 개수
+    public var foodPhotoCount: Int {
+        selectedDatePhotos.filter { $0.foodProbability >= Self.foodProbabilityThreshold }.count
+    }
 
     public static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.weekDays == rhs.weekDays &&
@@ -151,7 +158,7 @@ public final class WeeklyCalendarViewModel<
         state.isLoading = true
         defer { state.isLoading = false }
 
-        // 백그라운드에서 주간 사진 캐시 워밍
+        // 주간 사진 캐시 워밍
         foodImageAssetFetchUseCase.prefetch(for: date)
 
         do {

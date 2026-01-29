@@ -51,7 +51,7 @@ final class BottomContentView: UIView {
         let button = UIButton()
         let config = UIImage.SymbolConfiguration(pointSize: 24, weight: .medium)
         button.setImage(UIImage(systemName: "plus", withConfiguration: config), for: .normal)
-        button.tintColor = UIColor(red: 51/255, green: 51/255, blue: 51/255, alpha: 1)
+        button.tintColor = UIColor(red: 51 / 255, green: 51 / 255, blue: 51 / 255, alpha: 1)
         return button
     }()
 
@@ -60,6 +60,14 @@ final class BottomContentView: UIView {
         label.text = "오늘의 음식 사진을 추가해보세요."
         label.textColor = UIColor.white.withAlphaComponent(0.6)
         label.font = .systemFont(ofSize: 14)
+        label.textAlignment = .center
+        return label
+    }()
+
+    private let photoCountLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = UIColor.white.withAlphaComponent(0.8)
+        label.font = .systemFont(ofSize: 12)
         label.textAlignment = .center
         return label
     }()
@@ -94,6 +102,7 @@ final class BottomContentView: UIView {
         addButtonOuterRing.addSubview(addButtonContainer)
         addButtonContainer.addSubview(addButton)
         containerView.addSubview(placeholderLabel)
+        containerView.addSubview(photoCountLabel)
         containerView.addSubview(recordedImagesStackView)
     }
 
@@ -121,6 +130,11 @@ final class BottomContentView: UIView {
             $0.top.equalTo(addButtonOuterRing.snp.bottom).offset(16)
         }
 
+        photoCountLabel.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.top.equalTo(placeholderLabel.snp.bottom).offset(4)
+        }
+
         recordedImagesStackView.snp.makeConstraints {
             $0.center.equalToSuperview()
             $0.height.equalTo(80)
@@ -133,7 +147,7 @@ final class BottomContentView: UIView {
 
     // MARK: - Configuration
 
-    func configure(hasRecords: Bool, records: [FoodRecord]) {
+    func configure(hasRecords: Bool, records: [FoodRecord], photoCount: Int) {
         // 기록 여부와 관계없이 항상 + 버튼 표시
         // 이미지 스택 기능은 추후 디자인 확정 후 구현
         addButtonOuterRing.isHidden = false
@@ -144,6 +158,14 @@ final class BottomContentView: UIView {
             placeholderLabel.text = "사진을 더 추가해보세요."
         } else {
             placeholderLabel.text = "오늘의 음식 사진을 추가해보세요."
+        }
+
+        // 임시: 선택된 날짜의 음식 사진 개수 표시
+        if photoCount > 0 {
+            photoCountLabel.text = "올리지 않은 음식 사진 \(photoCount)장"
+            photoCountLabel.isHidden = false
+        } else {
+            photoCountLabel.isHidden = true
         }
     }
 
