@@ -16,8 +16,11 @@ public struct FoodImageAssetFetchUseCase<Repository: FoodImageAssetRepository> {
 
     public func execute(
         from startDate: Date,
-        to endDate: Date?
+        to endDate: Date?,
+        priority: TaskPriority = .utility
     ) async throws -> [Date: [FoodImageAsset<Repository.Asset>]] {
-        try await repository.fetchFoodImageAssets(from: startDate, to: endDate)
+        try await Task(priority: priority) {
+            try await repository.fetchFoodImageAssets(from: startDate, to: endDate)
+        }.value
     }
 }

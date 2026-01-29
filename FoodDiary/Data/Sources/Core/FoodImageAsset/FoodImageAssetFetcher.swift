@@ -81,11 +81,8 @@ private extension FoodImageAssetFetcher {
         }
         options.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
 
-        // DB 쿼리, 캐싱 불필요함
-        return await Task.detached(priority: .userInitiated) {
-            let fetchResult = PHAsset.fetchAssets(with: options)
-            return self.groupByDate(fetchResult)
-        }.value
+        let fetchResult = PHAsset.fetchAssets(with: options)
+        return groupByDate(fetchResult)
     }
 
     func groupByDate(_ fetchResult: PHFetchResult<PHAsset>) -> [PhotoSection] {

@@ -54,8 +54,9 @@ public final class WeeklyCalendarViewModel<
         stateSubject.eraseToAnyPublisher()
     }
 
-    public var state: WeeklyCalendarState<AssetRepo.Asset> {
-        stateSubject.value
+    public private(set) var state: WeeklyCalendarState<AssetRepo.Asset> {
+        get { stateSubject.value }
+        set { stateSubject.value = newValue }
     }
 
     public var eventPublisher: AnyPublisher<WeeklyCalendarEvent, Never> {
@@ -106,7 +107,9 @@ public final class WeeklyCalendarViewModel<
         input
             .sink { [weak self] action in
                 guard let self else { return }
-                Task { await self.handleInput(action) }
+                Task(priority: .userInitiated) {
+                    await self.handleInput(action)
+                }
             }
             .store(in: &cancellables)
     }
@@ -117,14 +120,14 @@ public final class WeeklyCalendarViewModel<
         case .loadInitialData:
             await requestPhotoAuthorizationIfNeeded()
             await loadWeekData(for: currentWeekBaseDate)
-            await loadSelectedDateData()
+            await loadDateData(of: state.selectedDate)
 
         case .requestPhotoAuthorization:
             let status = await requestPhotoAuthorizationUseCase.execute()
             if status == .denied || status == .restricted {
                 eventSubject.send(.photoAuthorizationDenied)
             } else {
-                await loadSelectedDateData()
+                await loadDateData(of: state.selectedDate)
             }
 
         case .goToPreviousWeek:
@@ -136,8 +139,8 @@ public final class WeeklyCalendarViewModel<
             await loadWeekData(for: currentWeekBaseDate)
 
         case .selectDate(let date):
-            stateSubject.value.selectedDate = date
-            await loadSelectedDateData()
+            state.selectedDate = date
+            await loadDateData(of: state.selectedDate)
         }
     }
 
@@ -145,21 +148,20 @@ public final class WeeklyCalendarViewModel<
 
     @MainActor
     private func loadWeekData(for date: Date) async {
-        stateSubject.value.isLoading = true
-        defer { stateSubject.value.isLoading = false }
+        state.isLoading = true
+        defer { state.isLoading = false }
 
         do {
             let weekDays = try await fetchWeeklyCalendarUseCase.execute(for: date)
-            stateSubject.value.weekDays = weekDays
-            stateSubject.value.monthText = fetchWeeklyCalendarUseCase.formatMonthText(for: date)
+            state.weekDays = weekDays
+            state.monthText = fetchWeeklyCalendarUseCase.formatMonthText(for: date)
         } catch {
             print("Failed to load week data: \(error)")
         }
     }
 
     @MainActor
-    private func loadSelectedDateData() async {
-        let selectedDate = stateSubject.value.selectedDate
+    private func loadDateData(of selectedDate: Date) async {
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: selectedDate)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)
@@ -169,10 +171,10 @@ public final class WeeklyCalendarViewModel<
                 from: startOfDay,
                 to: endOfDay
             )
-            stateSubject.value.selectedDatePhotos = photosByDate[startOfDay] ?? []
+            state.selectedDatePhotos = photosByDate[startOfDay] ?? []
 
             let records = try await fetchFoodRecordsUseCase.execute(for: selectedDate)
-            stateSubject.value.selectedDateRecords = records
+            state.selectedDateRecords = records
         } catch {
             print("Failed to load selected date data: \(error)")
         }
