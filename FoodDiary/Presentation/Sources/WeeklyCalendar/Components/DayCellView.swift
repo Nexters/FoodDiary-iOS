@@ -66,18 +66,19 @@ final class DayCellView: UIView {
         containerView.snp.makeConstraints { $0.edges.equalToSuperview().inset(2) }
 
         recordIndicator.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(6)
+            $0.top.equalToSuperview().offset(8)
             $0.centerX.equalToSuperview()
-            $0.size.equalTo(6)
+            $0.size.equalTo(4)
         }
 
         dayOfWeekLabel.snp.makeConstraints {
-            $0.top.equalTo(recordIndicator.snp.bottom).offset(4)
+            $0.top.equalTo(recordIndicator.snp.bottom).offset(8)
             $0.centerX.equalToSuperview()
         }
 
         dayNumberLabel.snp.makeConstraints {
             $0.top.equalTo(dayOfWeekLabel.snp.bottom).offset(4)
+            $0.bottom.equalToSuperview().offset(-8)
             $0.centerX.equalToSuperview()
         }
     }
@@ -105,19 +106,19 @@ final class DayCellView: UIView {
         if isSelected {
             containerView.backgroundColor = DesignSystemAsset.primary.color
             containerView.layer.cornerRadius = 8
-            dayOfWeekLabel.setText(dayOfWeek, style: .p12, color: DesignSystemAsset.gray300.color)
+            dayOfWeekLabel.setText(dayOfWeek, style: .p12, color: .white)
             dayNumberLabel.setText(dayNumber, style: .p12, color: .white)
             recordIndicator.backgroundColor = .white
         } else if isToday {
             containerView.backgroundColor = DesignSystemAsset.primary.color.withAlphaComponent(0.2)
             containerView.layer.cornerRadius = 8
-            dayOfWeekLabel.setText(dayOfWeek, style: .p12, color: DesignSystemAsset.gray300.color)
+            dayOfWeekLabel.setText(dayOfWeek, style: .p12, color: .gray300)
             dayNumberLabel.setText(dayNumber, style: .p12, color: .white)
             recordIndicator.backgroundColor = DesignSystemAsset.primary.color
         } else {
             containerView.backgroundColor = .clear
             containerView.layer.cornerRadius = 8
-            dayOfWeekLabel.setText(dayOfWeek, style: .p12, color: DesignSystemAsset.gray300.color)
+            dayOfWeekLabel.setText(dayOfWeek, style: .p12, color: .gray300)
             dayNumberLabel.setText(dayNumber, style: .p12, color: .white)
             recordIndicator.backgroundColor = DesignSystemAsset.primary.color
         }

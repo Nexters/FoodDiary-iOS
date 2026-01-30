@@ -35,14 +35,16 @@ final class WeeklyCalendarHeaderView: UIView {
 
     private let previousButton: UIButton = {
         let button = UIButton()
-        button.setImage(UIImage(systemName: "chevron.left"), for: .normal)
+        let config = UIImage.SymbolConfiguration(weight: .semibold)
+        button.setImage(UIImage(systemName: "chevron.left", withConfiguration: config), for: .normal)
         button.tintColor = .white
         return button
     }()
 
     private let nextButton: UIButton = {
         let button = UIButton()
-        button.setImage(UIImage(systemName: "chevron.right"), for: .normal)
+        let config = UIImage.SymbolConfiguration(weight: .semibold)
+        button.setImage(UIImage(systemName: "chevron.right", withConfiguration: config), for: .normal)
         button.tintColor = .white
         return button
     }()
@@ -89,11 +91,11 @@ final class WeeklyCalendarHeaderView: UIView {
         }
 
         previousButton.snp.makeConstraints {
-            $0.size.equalTo(24)
+            $0.size.equalTo(32)
         }
 
         nextButton.snp.makeConstraints {
-            $0.size.equalTo(24)
+            $0.size.equalTo(32)
         }
     }
 

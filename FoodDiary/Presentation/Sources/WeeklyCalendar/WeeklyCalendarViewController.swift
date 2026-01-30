@@ -104,18 +104,19 @@ public final class WeeklyCalendarViewController<
         }
 
         contentView.snp.makeConstraints {
-            $0.edges.equalToSuperview()
-            $0.width.equalToSuperview()
+            $0.verticalEdges.equalToSuperview()
+            $0.horizontalEdges.equalToSuperview().inset(16)
+            $0.width.equalToSuperview().offset(-32)
         }
 
         subtitleLabel.snp.makeConstraints {
             $0.top.equalToSuperview().offset(16)
-            $0.leading.equalToSuperview().offset(16)
+            $0.leading.equalToSuperview()
         }
 
         titleLabel.snp.makeConstraints {
             $0.top.equalTo(subtitleLabel.snp.bottom).offset(8)
-            $0.leading.trailing.equalToSuperview().inset(16)
+            $0.leading.trailing.equalToSuperview()
         }
 
         headerView.snp.makeConstraints {
@@ -125,14 +126,14 @@ public final class WeeklyCalendarViewController<
         }
 
         weekGridView.snp.makeConstraints {
-            $0.top.equalTo(headerView.snp.bottom).offset(16)
-            $0.leading.trailing.equalToSuperview().inset(16)
-            $0.height.equalTo(80)
+            $0.top.equalTo(headerView.snp.bottom).offset(12)
+            $0.leading.trailing.equalToSuperview()
+            // $0.height.equalTo(80)
             $0.bottom.equalToSuperview()
         }
 
         bottomContentView.snp.makeConstraints {
-            $0.top.equalTo(weekGridView.snp.bottom).offset(24)
+            $0.top.equalTo(weekGridView.snp.bottom).offset(18)
             $0.leading.trailing.equalToSuperview()
             $0.bottom.equalTo(view.safeAreaLayoutGuide)
         }

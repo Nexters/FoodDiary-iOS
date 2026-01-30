@@ -24,7 +24,8 @@ final class WeekGridView: UIView {
 
     private let containerView: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor.white.withAlphaComponent(0.05)
+        view.layer.borderColor = UIColor.gray900.cgColor
+        view.layer.borderWidth = 1
         view.layer.cornerRadius = 16
         return view
     }()
@@ -57,7 +58,9 @@ final class WeekGridView: UIView {
         addSubview(containerView)
         containerView.addSubview(stackView)
 
-        containerView.snp.makeConstraints { $0.edges.equalToSuperview() }
+        containerView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
         stackView.snp.makeConstraints {
             $0.edges.equalToSuperview().inset(12)
         }
