@@ -7,7 +7,9 @@
 
 @testable import Data
 
-final class MockHTTPClient: HTTPClient<AuthEndpoint> {
+final class MockHTTPClient: HTTPClienting {
+    typealias Target = AuthEndpoint
+    
     private(set) var callCount = 0
     var throwError: Bool
     var stubResponse: AuthResponseDTO?
@@ -16,7 +18,7 @@ final class MockHTTPClient: HTTPClient<AuthEndpoint> {
         self.throwError = throwError
     }
     
-    override func request<T: Decodable>(_ request: AuthEndpoint, accessToken: String? = nil) async throws -> T {
+    func request<T: Decodable>(_ request: AuthEndpoint, accessToken: String? = nil) async throws -> T {
         callCount += 1
         
         if throwError {

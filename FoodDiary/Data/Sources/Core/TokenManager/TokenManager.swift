@@ -8,11 +8,11 @@
 import Foundation
 import Domain
 
-public struct TokenManager: TokenManaging {
-    private let keychainService: KeychainService
+public struct TokenManager<Service: KeychainServicing>: TokenManaging {
+    private let keychainService: Service
     private let tokenKey = "access_token"
     
-    public init(keychainService: KeychainService) {
+    public init(keychainService: Service) {
         self.keychainService = keychainService
     }
     

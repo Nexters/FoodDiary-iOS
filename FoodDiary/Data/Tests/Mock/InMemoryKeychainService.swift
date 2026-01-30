@@ -7,12 +7,12 @@
 
 @testable import Data
 
-final class InMemoryKeychainService: KeychainService {
+final class InMemoryKeychainService: KeychainServicing {
     private var storage: [String: String] = [:]
     var shouldSaveSucceed: Bool = true
     var shouldDeleteSucceed: Bool = true
     
-    override func save(key: String, value: String) -> Bool {
+    func save(key: String, value: String) -> Bool {
         guard shouldSaveSucceed else {
             return false
         }
@@ -21,11 +21,11 @@ final class InMemoryKeychainService: KeychainService {
         return true
     }
     
-    override func load(key: String) -> String? {
+    func load(key: String) -> String? {
         storage[key]
     }
     
-    override func delete(key: String) -> Bool {
+    func delete(key: String) -> Bool {
         guard shouldDeleteSucceed else {
             return false
         }

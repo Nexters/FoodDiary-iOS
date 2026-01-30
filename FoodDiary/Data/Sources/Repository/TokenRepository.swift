@@ -8,11 +8,11 @@
 import Domain
 import Foundation
 
-public struct TokenRepositoryImpl<Manager: TokenManaging>: TokenRepository {
-    let httpClient: HTTPClient<AuthEndpoint>
+public struct TokenRepositoryImpl<Manager: TokenManaging, Client: HTTPClienting>: TokenRepository where Client.Target == AuthEndpoint {
+    let httpClient: Client
     let tokenManager: Manager
 
-    public init(httpClient: HTTPClient<AuthEndpoint>, tokenManager: Manager) {
+    public init(httpClient: Client, tokenManager: Manager) {
         self.httpClient = httpClient
         self.tokenManager = tokenManager
     }

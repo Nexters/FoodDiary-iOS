@@ -8,7 +8,7 @@
 import Foundation
 import Security
 
-public class KeychainService {
+public struct KeychainService: KeychainServicing {
     private let service: String = Bundle.main.bundleIdentifier ?? "defaultService"
     
     public init() {}

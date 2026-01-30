@@ -41,7 +41,7 @@ private extension SceneDelegate {
             HTTPClient()
         }
         
-        container.register(TokenManager.self) { resolver in
+        container.register(TokenManager<KeychainService>.self) { resolver in
             guard let service = resolver.resolve(KeychainService.self) else {
                 fatalError("KeychainService not registered")
             }
@@ -50,7 +50,7 @@ private extension SceneDelegate {
         }
         
         container.register(TokenRepository.self) { resolver in
-            guard let manager = resolver.resolve(TokenManager.self) else {
+            guard let manager = resolver.resolve(TokenManager<KeychainService>.self) else {
                 fatalError("TokenManager not registered")
             }
             

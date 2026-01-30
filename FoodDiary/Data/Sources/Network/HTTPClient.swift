@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class HTTPClient<Target: Requestable> {
+public struct HTTPClient<Target: Requestable>: HTTPClienting {
     private let session: URLSession
     private let decoder: JSONDecoder
     
