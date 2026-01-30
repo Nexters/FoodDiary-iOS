@@ -49,7 +49,7 @@ private extension SceneDelegate {
             return TokenManager(keychainService: service)
         }
         
-        container.register(TokenRepository.self) { resolver in
+        container.register(AuthRepository.self) { resolver in
             guard let manager = resolver.resolve(TokenManager<KeychainService>.self) else {
                 fatalError("TokenManager not registered")
             }
@@ -58,7 +58,7 @@ private extension SceneDelegate {
                 fatalError("HTTPClient not registered")
             }
             
-            return TokenRepositoryImpl(httpClient: client, tokenManager: manager)
+            return AuthRepositoryImpl(httpClient: client, tokenManager: manager)
         }
 
         container.register(PHAssetConverter.self) { _ in
@@ -108,11 +108,11 @@ private extension SceneDelegate {
     
     func registerDomain() {
         container.register(FinalizeAppleLoginUseCase.self) { resolver in
-            guard let repository = resolver.resolve(TokenRepository.self) else {
-                fatalError("TokenRepository not registered")
+            guard let repository = resolver.resolve(AuthRepository.self) else {
+                fatalError("AuthRepository not registered")
             }
             
-            return FinalizeAppleLoginUseCase(tokenRepository: repository)
+            return FinalizeAppleLoginUseCase(authRepository: repository)
         }
 
         container.register(FetchWeeklyCalendarUseCase<MockFoodRecordRepository>.self) { resolver in

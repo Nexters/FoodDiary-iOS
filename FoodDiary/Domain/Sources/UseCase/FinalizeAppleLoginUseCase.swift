@@ -13,13 +13,13 @@ public enum AppleLoginError: Error {
 }
 
 public struct FinalizeAppleLoginUseCase {
-    private let tokenRepository: TokenRepository
+    private let authRepository: AuthRepository
     
-    public init(tokenRepository: TokenRepository) {
-        self.tokenRepository = tokenRepository
+    public init(authRepository: AuthRepository) {
+        self.authRepository = authRepository
     }
     
     public func execute(_ token: Data) async throws -> LoginResult {
-        return try await tokenRepository.save(token)
+        return try await authRepository.login(token)
     }
 }

@@ -10,15 +10,15 @@ import Domain
 import UIKit
 
 public final class MainViewController: UIViewController {
-    private let tokenRepository: TokenRepository
+    private let authRepository: AuthRepository
     private let didLogoutSubject = PassthroughSubject<Void, Never>()
 
     public var didLogoutPublisher: AnyPublisher<Void, Never> {
         didLogoutSubject.eraseToAnyPublisher()
     }
 
-    public init(tokenRepository: TokenRepository) {
-        self.tokenRepository = tokenRepository
+    public init(authRepository: AuthRepository) {
+        self.authRepository = authRepository
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -62,11 +62,11 @@ private extension MainViewController {
     @objc
     func logoutButtonTapped() {
         do {
-            try tokenRepository.deleteToken()
+            try authRepository.logout()
             didLogoutSubject.send()
         } catch {
             // TODO: 에러 처리 전략 확정 후 구체적인 UI 처리
-            print("토큰 삭제 실패: \(error)")
+            print("로그아웃 실패: \(error)")
         }
     }
 }

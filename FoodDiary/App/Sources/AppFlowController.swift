@@ -41,7 +41,7 @@ private extension AppFlowController {
     }
     
     func updateLoginStateFromToken() {
-        guard let tokenManager = try? container.resolve(TokenManager.self) else {
+        guard let tokenManager = try? container.resolve(TokenManager<KeychainService>.self) else {
             fatalError("TokenManager Failed Resolve")
         }
         

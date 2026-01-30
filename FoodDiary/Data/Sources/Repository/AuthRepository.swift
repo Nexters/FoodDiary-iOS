@@ -1,5 +1,5 @@
 //
-//  TokenRepository.swift
+//  AuthRepository.swift
 //  Data
 //
 //  Created by 강대훈 on 1/26/26.
@@ -8,7 +8,7 @@
 import Domain
 import Foundation
 
-public struct TokenRepositoryImpl<Manager: TokenManaging, Client: HTTPClienting>: TokenRepository where Client.Target == AuthEndpoint {
+public struct AuthRepositoryImpl<Manager: TokenManaging, Client: HTTPClienting>: AuthRepository where Client.Target == AuthEndpoint {
     let httpClient: Client
     let tokenManager: Manager
 
@@ -17,7 +17,7 @@ public struct TokenRepositoryImpl<Manager: TokenManaging, Client: HTTPClienting>
         self.tokenManager = tokenManager
     }
 
-    public func save(_ identityToken: Data) async throws -> LoginResult {
+    public func login(_ identityToken: Data) async throws -> LoginResult {
         if let token = String(data: identityToken, encoding: .utf8) {
             let response: AuthResponseDTO = try await httpClient.request(.login(idToken: token))
             try tokenManager.set(response.accessToken)
@@ -27,7 +27,8 @@ public struct TokenRepositoryImpl<Manager: TokenManaging, Client: HTTPClienting>
         }
     }
     
-    public func deleteToken() throws {
+    public func logout() throws {
         try tokenManager.clear()
     }
 }
+
