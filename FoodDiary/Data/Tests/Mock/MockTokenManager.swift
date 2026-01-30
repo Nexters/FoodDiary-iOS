@@ -33,8 +33,7 @@ final class MockTokenManager: TokenManaging {
         clearCallCount += 1
         
         if shouldClearThrow {
-            lastToken = nil
-            throw AppleLoginError.tokenPersistenceFailed
+            throw AppleLoginError.tokenDecodingFailed
         }
         
         lastToken = nil

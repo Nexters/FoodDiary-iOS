@@ -28,7 +28,7 @@ public struct TokenManager: TokenManaging {
     
     public func clear() throws {
         if !keychainService.delete(key: tokenKey) {
-            throw AppleLoginError.tokenPersistenceFailed
+            throw AppleLoginError.tokenDecodingFailed
         }
     }
 }

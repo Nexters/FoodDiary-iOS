@@ -9,6 +9,7 @@ import Foundation
 
 public enum AppleLoginError: Error {
     case tokenPersistenceFailed
+    case tokenDecodingFailed
 }
 
 public struct FinalizeAppleLoginUseCase {

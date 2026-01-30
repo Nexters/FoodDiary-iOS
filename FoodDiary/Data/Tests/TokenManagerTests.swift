@@ -81,11 +81,9 @@ struct TokenManagerTests {
         let token = "test_token"
         try? sut.set(token)
         
-        let error = #expect(throws: AppleLoginError.tokenPersistenceFailed) {
+        let _ = #expect(throws: AppleLoginError.tokenDecodingFailed) {
             try sut.clear()
         }
-        
-        #expect(error == .tokenPersistenceFailed)
     }
 }
 

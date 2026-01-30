@@ -137,13 +137,12 @@ struct TokenRepositoryTests {
         let _ = try await sut.save(identityTokenData)
         #expect(tokenManager.get() == "saved_access_token")
         
-        let error = #expect(throws: AppleLoginError.tokenPersistenceFailed) {
+        let _ = #expect(throws: AppleLoginError.tokenDecodingFailed) {
             try sut.deleteToken()
         }
         
-        #expect(error == .tokenPersistenceFailed)
         #expect(tokenManager.clearCallCount == 1)
-        #expect(tokenManager.get() == nil)
+        #expect(tokenManager.get() == "saved_access_token")
     }
 }
 
