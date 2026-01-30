@@ -42,10 +42,11 @@ public enum Typography {
         -0.015 * font.pointSize
     }
 
-    public func styled(_ text: String) -> NSAttributedString {
+    public func styled(_ text: String, color: UIColor = .white) -> NSAttributedString {
         NSAttributedString(string: text, attributes: [
             .font: font,
-            .kern: letterSpacing
+            .kern: letterSpacing,
+            .foregroundColor: color
         ])
     }
 }
@@ -56,11 +57,13 @@ public extension UILabel {
     /// - Parameters:
     ///   - text: 표시할 텍스트
     ///   - style: 적용할 Typography 스타일
+    ///   - color: 텍스트 컬러 (기본값: .white)
     ///
     /// ```swift
     /// label.setText("뭐먹었지", style: .hd24)
+    /// label.setText("뭐먹었지", style: .hd24, color: .black)
     /// ```
-    func setText(_ text: String, style: Typography) {
-        self.attributedText = style.styled(text)
+    func setText(_ text: String, style: Typography, color: UIColor = .white) {
+        self.attributedText = style.styled(text, color: color)
     }
 }
