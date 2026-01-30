@@ -178,9 +178,7 @@ public final class WeeklyCalendarViewController<
 
         viewModel.statePublisher
             .map { (weekDays: $0.weekDays, selectedDate: $0.selectedDate) }
-            .removeDuplicates {
-                $0.weekDays == $1.weekDays && Calendar.current.isDate($0.selectedDate, inSameDayAs: $1.selectedDate)
-            }
+            .removeDuplicates(by: ==)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] days, selectedDate in
                 self?.weekGridView.configure(with: days, selectedDate: selectedDate)
@@ -189,9 +187,7 @@ public final class WeeklyCalendarViewController<
 
         viewModel.statePublisher
             .map { (records: $0.selectedDateRecords, foodPhotoCount: $0.foodPhotoCount) }
-            .removeDuplicates {
-                $0.records == $1.records && $0.foodPhotoCount == $1.foodPhotoCount
-            }
+            .removeDuplicates(by: ==)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] records, foodPhotoCount in
                 self?.bottomContentView.configure(
