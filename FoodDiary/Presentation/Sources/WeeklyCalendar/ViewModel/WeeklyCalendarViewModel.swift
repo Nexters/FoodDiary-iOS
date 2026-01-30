@@ -140,10 +140,14 @@ public final class WeeklyCalendarViewModel<
         case .goToPreviousWeek:
             currentWeekBaseDate = fetchWeeklyCalendarUseCase.previousWeek(from: currentWeekBaseDate)
             await loadWeekData(for: currentWeekBaseDate)
+            updateSelectedDateToSameWeekday(in: currentWeekBaseDate)
+            await loadDateData(of: state.selectedDate)
 
         case .goToNextWeek:
             currentWeekBaseDate = fetchWeeklyCalendarUseCase.nextWeek(from: currentWeekBaseDate)
             await loadWeekData(for: currentWeekBaseDate)
+            updateSelectedDateToSameWeekday(in: currentWeekBaseDate)
+            await loadDateData(of: state.selectedDate)
 
         case .selectDate(let date):
             state.selectedDate = date
@@ -187,6 +191,22 @@ public final class WeeklyCalendarViewModel<
             state.selectedDateRecords = records
         } catch {
             print("Failed to load selected date data: \(error)")
+        }
+    }
+
+    /// 주간 이동 시 같은 요일로 선택 날짜 업데이트
+    private func updateSelectedDateToSameWeekday(in weekBaseDate: Date) {
+        let calendar = Calendar.current
+        let currentWeekday = calendar.component(.weekday, from: state.selectedDate)
+
+        // 새 주의 시작일(일요일) 찾기
+        let weekStart = calendar.date(
+            from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: weekBaseDate)
+        ) ?? weekBaseDate
+
+        // 같은 요일로 이동 (weekday: 1=일, 2=월, ...)
+        if let newSelectedDate = calendar.date(byAdding: .day, value: currentWeekday - 1, to: weekStart) {
+            state.selectedDate = newSelectedDate
         }
     }
 
