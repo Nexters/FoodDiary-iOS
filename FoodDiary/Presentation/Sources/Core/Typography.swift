@@ -3,8 +3,8 @@
 //  Presentation
 //
 
-import UIKit
 import DesignSystem
+import UIKit
 
 /// 앱 전체 타이포그래피 스타일 정의
 ///
@@ -24,6 +24,8 @@ public enum Typography {
     case hd24
     /// Headline 20pt - Semibold, 130% line height
     case hd20
+    /// Headline 18pt - Semibold, 130% line height
+    case hd18
     /// Paragraph 12pt - Regular, 100% line height
     case p12
 
@@ -33,6 +35,8 @@ public enum Typography {
             return DesignSystemFontFamily.Pretendard.semiBold.font(size: 24)
         case .hd20:
             return DesignSystemFontFamily.Pretendard.semiBold.font(size: 20)
+        case .hd18:
+            return DesignSystemFontFamily.Pretendard.semiBold.font(size: 18)
         case .p12:
             return DesignSystemFontFamily.Pretendard.regular.font(size: 12)
         }
@@ -43,14 +47,16 @@ public enum Typography {
     }
 
     public func styled(_ text: String) -> NSAttributedString {
-        NSAttributedString(string: text, attributes: [
-            .font: font,
-            .kern: letterSpacing
-        ])
+        NSAttributedString(
+            string: text,
+            attributes: [
+                .font: font,
+                .kern: letterSpacing,
+            ])
     }
 }
 
-public extension UILabel {
+extension UILabel {
     /// Typography 스타일이 적용된 텍스트 설정
     ///
     /// - Parameters:
@@ -60,7 +66,7 @@ public extension UILabel {
     /// ```swift
     /// label.setText("뭐먹었지", style: .hd24)
     /// ```
-    func setText(_ text: String, style: Typography) {
+    public func setText(_ text: String, style: Typography) {
         self.attributedText = style.styled(text)
     }
 }

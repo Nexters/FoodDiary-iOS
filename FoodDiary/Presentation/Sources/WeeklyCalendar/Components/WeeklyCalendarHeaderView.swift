@@ -28,7 +28,6 @@ final class WeeklyCalendarHeaderView: UIView {
 
     private let monthLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 20, weight: .bold)
         label.textColor = .white
         label.textAlignment = .left
         return label
@@ -106,7 +105,7 @@ final class WeeklyCalendarHeaderView: UIView {
     // MARK: - Public Methods
 
     func setMonthText(_ text: String) {
-        monthLabel.text = text
+        monthLabel.setText(text, style: .hd18)
     }
 
     // MARK: - Actions

@@ -32,16 +32,15 @@ public final class WeeklyCalendarViewController<
 
     private let subtitleLabel: UILabel = {
         let label = UILabel()
-        label.text = "이번주 음식을 기록해 보세요"
-        label.font = .systemFont(ofSize: 14, weight: .regular)
-        label.textColor = UIColor.white.withAlphaComponent(0.6)
+        label.setText("이번주 음식을 기록해 보세요", style: .p12)
+        label.textColor = .white
         return label
     }()
 
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.numberOfLines = 2
-        label.font = .systemFont(ofSize: 24, weight: .bold)
+        label.setText("길동님의 음식 기록,\n지금 바로 쓸 수 있어요", style: .hd20)
         label.textColor = .white
         return label
     }()
@@ -96,7 +95,7 @@ public final class WeeklyCalendarViewController<
         view.addSubview(bottomContentView)
 
         // 사용자 이름 설정 (추후 실제 데이터로 교체)
-        titleLabel.text = "길동님의 음식 기록,\n지금 바로 쓸 수 있어요"
+        titleLabel.setText("길동님의 음식 기록,\n지금 바로 쓸 수 있어요", style: .hd20)
     }
 
     private func setupConstraints() {

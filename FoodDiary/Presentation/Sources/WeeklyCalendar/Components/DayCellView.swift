@@ -24,7 +24,7 @@ final class DayCellView: UIView {
 
     private let dayOfWeekLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 12, weight: .medium)
+        label.font = Typography.p12.font
         label.textAlignment = .center
         label.textColor = .secondaryLabel
         return label
@@ -32,7 +32,7 @@ final class DayCellView: UIView {
 
     private let dayNumberLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 18, weight: .semibold)
+        label.font = Typography.p12.font
         label.textAlignment = .center
         label.textColor = .white
         return label
