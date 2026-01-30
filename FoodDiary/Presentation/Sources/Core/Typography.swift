@@ -15,9 +15,6 @@ import DesignSystem
 ///
 /// // NSAttributedString 직접 사용
 /// label.attributedText = Typography.hd24.styled("뭐먹었지")
-///
-/// // UIFont만 사용 (letter spacing 미적용)
-/// label.font = Typography.hd24.font
 /// ```
 public enum Typography {
     /// Headline 24pt - Semibold, 130% line height
@@ -27,7 +24,8 @@ public enum Typography {
     /// Paragraph 12pt - Regular, 100% line height
     case p12
 
-    public var font: UIFont {
+    /// 직접사용 금지: line spacing 적용된 NSAttributedString 사용할 것
+    private var font: UIFont {
         switch self {
         case .hd24:
             return DesignSystemFontFamily.Pretendard.semiBold.font(size: 24)
