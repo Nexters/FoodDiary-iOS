@@ -59,7 +59,7 @@ final class WeekGridView: UIView {
 
         containerView.snp.makeConstraints { $0.edges.equalToSuperview() }
         stackView.snp.makeConstraints {
-            $0.edges.equalToSuperview().inset(8)
+            $0.edges.equalToSuperview().inset(12)
         }
 
         // 7개의 DayCell 생성

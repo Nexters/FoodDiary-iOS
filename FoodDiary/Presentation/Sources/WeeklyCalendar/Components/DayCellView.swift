@@ -24,17 +24,13 @@ final class DayCellView: UIView {
 
     private let dayOfWeekLabel: UILabel = {
         let label = UILabel()
-        label.font = Typography.p12.font
         label.textAlignment = .center
-        label.textColor = .secondaryLabel
         return label
     }()
 
     private let dayNumberLabel: UILabel = {
         let label = UILabel()
-        label.font = Typography.p12.font
         label.textAlignment = .center
-        label.textColor = .white
         return label
     }()
 
@@ -95,31 +91,34 @@ final class DayCellView: UIView {
 
     func configure(with dayData: WeeklyCalendarDay, isSelected: Bool) {
         self.date = dayData.date
-        dayOfWeekLabel.text = dayData.dayOfWeek
-        dayNumberLabel.text = dayData.dayNumber
         recordIndicator.isHidden = !dayData.hasRecord
 
-        applyStyle(isToday: dayData.isToday, isSelected: isSelected, hasRecord: dayData.hasRecord)
+        applyStyle(
+            dayOfWeek: dayData.dayOfWeek,
+            dayNumber: dayData.dayNumber,
+            isToday: dayData.isToday,
+            isSelected: isSelected
+        )
     }
 
-    private func applyStyle(isToday: Bool, isSelected: Bool, hasRecord: Bool) {
+    private func applyStyle(dayOfWeek: String, dayNumber: String, isToday: Bool, isSelected: Bool) {
         if isSelected {
             containerView.backgroundColor = DesignSystemAsset.primary.color
-            containerView.layer.cornerRadius = 16
-            dayOfWeekLabel.textColor = .white
-            dayNumberLabel.textColor = .white
+            containerView.layer.cornerRadius = 8
+            dayOfWeekLabel.setText(dayOfWeek, style: .p12, color: DesignSystemAsset.gray300.color)
+            dayNumberLabel.setText(dayNumber, style: .p12, color: .white)
             recordIndicator.backgroundColor = .white
         } else if isToday {
             containerView.backgroundColor = DesignSystemAsset.primary.color.withAlphaComponent(0.2)
-            containerView.layer.cornerRadius = 12
-            dayOfWeekLabel.textColor = .white
-            dayNumberLabel.textColor = .white
+            containerView.layer.cornerRadius = 8
+            dayOfWeekLabel.setText(dayOfWeek, style: .p12, color: DesignSystemAsset.gray300.color)
+            dayNumberLabel.setText(dayNumber, style: .p12, color: .white)
             recordIndicator.backgroundColor = DesignSystemAsset.primary.color
         } else {
             containerView.backgroundColor = .clear
-            containerView.layer.cornerRadius = 12
-            dayOfWeekLabel.textColor = UIColor.white.withAlphaComponent(0.6)
-            dayNumberLabel.textColor = .white
+            containerView.layer.cornerRadius = 8
+            dayOfWeekLabel.setText(dayOfWeek, style: .p12, color: DesignSystemAsset.gray300.color)
+            dayNumberLabel.setText(dayNumber, style: .p12, color: .white)
             recordIndicator.backgroundColor = DesignSystemAsset.primary.color
         }
     }
