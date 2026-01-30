@@ -80,11 +80,15 @@ public final class WeeklyCalendarViewController<
         viewModel.input.send(.loadInitialData)
     }
 
+    public override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: animated)
+    }
+
     // MARK: - Setup
 
     private func setupUI() {
         view.backgroundColor = DesignSystemAsset.background.color
-        navigationController?.setNavigationBarHidden(true, animated: false)
 
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
