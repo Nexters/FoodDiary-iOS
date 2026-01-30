@@ -14,7 +14,3 @@ public struct LoginResult {
         self.isFirst = isFirst
     }
 }
-
-extension LoginResult {
-    public static let mock = LoginResult(isFirst: true)
-}
