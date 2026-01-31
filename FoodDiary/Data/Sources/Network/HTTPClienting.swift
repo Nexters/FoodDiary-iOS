@@ -7,14 +7,12 @@
 
 import Foundation
 
-public protocol HTTPClienting<Target> {
-    associatedtype Target: Requestable
-    
-    func request<T: Decodable>(_ request: Target, accessToken: String?) async throws -> T
+public protocol HTTPClienting {
+    func request<T: Decodable>(_ request: Requestable, accessToken: String?) async throws -> T
 }
 
 public extension HTTPClienting {
-    func request<T: Decodable>(_ request: Target) async throws -> T {
+    func request<T: Decodable>(_ request: Requestable) async throws -> T {
         try await self.request(request, accessToken: nil)
     }
 }

@@ -37,7 +37,7 @@ private extension SceneDelegate {
             KeychainService()
         }
         
-        container.register(HTTPClient<AuthEndpoint>.self) { _ in
+        container.register(HTTPClient.self) { _ in
             HTTPClient()
         }
         
@@ -54,7 +54,7 @@ private extension SceneDelegate {
                 fatalError("TokenManager not registered")
             }
             
-            guard let client = resolver.resolve(HTTPClient<AuthEndpoint>.self) else {
+            guard let client = resolver.resolve(HTTPClient.self) else {
                 fatalError("HTTPClient not registered")
             }
             

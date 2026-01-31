@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct HTTPClient<Target: Requestable>: HTTPClienting {
+public struct HTTPClient: HTTPClienting {
     private let session: URLSession
     private let decoder: JSONDecoder
     
@@ -16,7 +16,7 @@ public struct HTTPClient<Target: Requestable>: HTTPClienting {
         self.decoder = decoder
     }
     
-    public func request<T: Decodable>(_ request: Target, accessToken: String? = nil) async throws -> T {
+    public func request<T: Decodable>(_ request: Requestable, accessToken: String? = nil) async throws -> T {
         var urlRequest = try request.makeURLRequest()
         applyAccessToken(accessToken, to: &urlRequest)
         let (data, response) = try await session.data(for: urlRequest)

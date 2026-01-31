@@ -8,7 +8,7 @@
 import Domain
 import Foundation
 
-public struct AuthRepositoryImpl<Manager: TokenManaging, Client: HTTPClienting>: AuthRepository where Client.Target == AuthEndpoint {
+public struct AuthRepositoryImpl<Manager: TokenManaging, Client: HTTPClienting>: AuthRepository {
     let httpClient: Client
     let tokenManager: Manager
 
@@ -19,7 +19,8 @@ public struct AuthRepositoryImpl<Manager: TokenManaging, Client: HTTPClienting>:
 
     public func login(_ identityToken: Data) async throws -> LoginResult {
         if let token = String(data: identityToken, encoding: .utf8) {
-            let response: AuthResponseDTO = try await httpClient.request(.login(idToken: token))
+            let endpoint = AuthEndpoint.login(idToken: token)
+            let response: AuthResponseDTO = try await httpClient.request(endpoint)
             try tokenManager.set(response.accessToken)
             return LoginResult(isFirst: response.isFirst)
         } else {
