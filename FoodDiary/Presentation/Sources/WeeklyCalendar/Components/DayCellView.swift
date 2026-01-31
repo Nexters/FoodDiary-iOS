@@ -92,7 +92,7 @@ final class DayCellView: UIView {
 
     func configure(with dayData: WeeklyCalendarDay, isSelected: Bool) {
         self.date = dayData.date
-        recordIndicator.isHidden = !dayData.hasRecord
+        recordIndicator.isHidden = dayData.records.isEmpty
 
         applyStyle(
             dayOfWeek: dayData.dayOfWeek,

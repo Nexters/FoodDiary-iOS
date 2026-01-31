@@ -7,15 +7,15 @@
 import Foundation
 
 final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Sendable {
-    var recordedDatesToReturn: Set<Date> = []
+    var recordsByDateToReturn: [Date: [FoodRecord]] = [:]
     var recordsToReturn: [FoodRecord] = []
     var shouldThrowError: Bool = false
 
-    func fetchRecordedDates(in dateRange: ClosedRange<Date>) async throws -> Set<Date> {
+    func fetchRecords(in dateRange: ClosedRange<Date>) async throws -> [Date: [FoodRecord]] {
         if shouldThrowError {
             throw MockError.testError
         }
-        return recordedDatesToReturn.filter { dateRange.contains($0) }
+        return recordsByDateToReturn.filter { dateRange.contains($0.key) }
     }
 
     func fetchRecords(for date: Date) async throws -> [FoodRecord] {

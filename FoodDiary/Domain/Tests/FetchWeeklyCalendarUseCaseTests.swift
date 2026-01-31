@@ -22,35 +22,36 @@ struct FetchWeeklyCalendarUseCaseTests {
         #expect(result.count == 7)
     }
 
-    @Test("기록된 날짜는 hasRecord가 true")
+    @Test("기록된 날짜는 records가 비어있지 않음")
     func testRecordedDatesMarkedCorrectly() async throws {
         let mockRepository = MockFoodRecordRepository()
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
 
-        mockRepository.recordedDatesToReturn = [today]
+        let mockRecord = FoodRecord(id: "1", date: today, imageURLs: [], createdAt: today)
+        mockRepository.recordsByDateToReturn = [today: [mockRecord]]
 
         let useCase = FetchWeeklyCalendarUseCase(repository: mockRepository)
         let result = try await useCase.execute(for: today)
 
         let todayData = result.first { calendar.isDate($0.date, inSameDayAs: today) }
-        #expect(todayData?.hasRecord == true)
+        #expect(todayData?.records.isEmpty == false)
     }
 
-    @Test("미기록 날짜는 hasRecord가 false")
+    @Test("미기록 날짜는 records가 비어있음")
     func testUnrecordedDatesMarkedCorrectly() async throws {
         let mockRepository = MockFoodRecordRepository()
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
 
         // 빈 기록
-        mockRepository.recordedDatesToReturn = []
+        mockRepository.recordsByDateToReturn = [:]
 
         let useCase = FetchWeeklyCalendarUseCase(repository: mockRepository)
         let result = try await useCase.execute(for: today)
 
-        let allHasRecordFalse = result.allSatisfy { !$0.hasRecord }
-        #expect(allHasRecordFalse)
+        let allRecordsEmpty = result.allSatisfy { $0.records.isEmpty }
+        #expect(allRecordsEmpty)
     }
 
     @Test("오늘 날짜는 isToday가 true")

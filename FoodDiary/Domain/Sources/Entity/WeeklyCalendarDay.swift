@@ -11,19 +11,19 @@ public struct WeeklyCalendarDay: Sendable, Equatable {
     public let dayOfWeek: String
     public let dayNumber: String
     public let isToday: Bool
-    public let hasRecord: Bool
+    public let records: [FoodRecord]
 
     public init(
         date: Date,
         dayOfWeek: String,
         dayNumber: String,
         isToday: Bool,
-        hasRecord: Bool
+        records: [FoodRecord]
     ) {
         self.date = date
         self.dayOfWeek = dayOfWeek
         self.dayNumber = dayNumber
         self.isToday = isToday
-        self.hasRecord = hasRecord
+        self.records = records
     }
 }
