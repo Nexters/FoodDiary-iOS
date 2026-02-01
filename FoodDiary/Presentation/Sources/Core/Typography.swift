@@ -20,6 +20,8 @@ public enum Typography {
     // MARK: - Headline (Bold, 130% line height)
     /// 페이지 헤드라인 - 24pt Bold
     case hd24
+    /// 페이지 타이틀 - 20pt Bold
+    case hd20
     /// 페이지 서브 타이틀 - 18pt Bold
     case hd18
     /// 페이지 서브 타이틀 2nd - 16pt Bold
@@ -40,6 +42,8 @@ public enum Typography {
         switch self {
         case .hd24:
             return DesignSystemFontFamily.Pretendard.bold.font(size: 24)
+        case .hd20:
+            return DesignSystemFontFamily.Pretendard.bold.font(size: 20)
         case .hd18:
             return DesignSystemFontFamily.Pretendard.bold.font(size: 18)
         case .hd16:
@@ -57,7 +61,7 @@ public enum Typography {
 
     private var lineHeightMultiple: CGFloat {
         switch self {
-        case .hd24, .hd18, .hd16:
+        case .hd24, .hd20, .hd18, .hd16:
             return 1.3
         case .p18, .p15, .p14, .p12:
             return 1.0
