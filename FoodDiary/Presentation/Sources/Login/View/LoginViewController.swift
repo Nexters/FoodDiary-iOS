@@ -38,7 +38,7 @@ final public class LoginViewController: UIViewController {
 
 private extension LoginViewController {
     func configureUI() {
-        view.backgroundColor = DesignSystemAsset.background.color
+        view.backgroundColor = DesignSystemAsset.sdBase.color
         
         let logoImageView = UIImageView(image: DesignSystemAsset.logo.image)
         logoImageView.contentMode = .scaleAspectFill

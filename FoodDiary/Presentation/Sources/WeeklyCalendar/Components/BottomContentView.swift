@@ -175,7 +175,7 @@ final class BottomContentView: UIView {
         let maxDisplayCount = min(records.count, 3)
         (0..<maxDisplayCount).forEach { index in
             let imageView = UIImageView()
-            imageView.backgroundColor = DesignSystemAsset.disabled.color
+            imageView.backgroundColor = DesignSystemAsset.gray400.color
             imageView.layer.cornerRadius = 8
             imageView.layer.borderWidth = 2
             imageView.layer.borderColor = UIColor.white.cgColor

@@ -161,7 +161,7 @@ public final class ImagePickerViewController<
     // MARK: - Setup
 
     private func setupUI() {
-        view.backgroundColor = DesignSystemAsset.background.color
+        view.backgroundColor = DesignSystemAsset.sdBase.color
 
         view.addSubview(collectionView)
         view.addSubview(emptyView)
