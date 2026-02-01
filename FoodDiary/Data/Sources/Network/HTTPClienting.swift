@@ -8,11 +8,11 @@
 import Foundation
 
 public protocol HTTPClienting {
-    func request<T: Decodable>(_ request: Requestable, accessToken: String?) async throws -> T
+    func request<T: Decodable>(_ request: some Requestable, accessToken: String?) async throws -> T
 }
 
 public extension HTTPClienting {
-    func request<T: Decodable>(_ request: Requestable) async throws -> T {
+    func request<T: Decodable>(_ request: some Requestable) async throws -> T {
         try await self.request(request, accessToken: nil)
     }
 }

@@ -16,7 +16,7 @@ final class MockHTTPClient: HTTPClienting {
         self.throwError = throwError
     }
     
-    func request<T: Decodable>(_ request: Requestable, accessToken: String? = nil) async throws -> T {
+    func request<T: Decodable>(_ request: some Requestable, accessToken: String? = nil) async throws -> T {
         callCount += 1
         
         if throwError {
