@@ -7,48 +7,6 @@ import Combine
 import Domain
 import Foundation
 
-// MARK: - State
-
-public struct WeeklyCalendarState<Asset: ImageAssetable>: Equatable {
-    private static var foodProbabilityThreshold: Float { 0.6 }
-
-    public internal(set) var weekDays: [WeeklyCalendarDay] = []
-    public internal(set) var selectedDate: Date = Date()
-    public internal(set) var monthText: String = ""
-    public internal(set) var selectedDateRecords: [FoodRecord] = []
-    public internal(set) var selectedDatePhotos: [FoodImageAsset<Asset>] = []
-    public internal(set) var isLoading: Bool = false
-
-    /// 음식으로 판별된 사진 개수
-    public var foodPhotoCount: Int {
-        selectedDatePhotos.filter { $0.foodProbability >= Self.foodProbabilityThreshold }.count
-    }
-
-    public static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.weekDays == rhs.weekDays &&
-        Calendar.current.isDate(lhs.selectedDate, inSameDayAs: rhs.selectedDate) &&
-        lhs.monthText == rhs.monthText &&
-        lhs.selectedDateRecords == rhs.selectedDateRecords &&
-        lhs.isLoading == rhs.isLoading
-    }
-}
-
-// MARK: - Input
-
-public enum WeeklyCalendarInput {
-    case loadInitialData
-    case requestPhotoAuthorization
-    case goToPreviousWeek
-    case goToNextWeek
-    case selectDate(Date)
-}
-
-// MARK: - Event (one-shot)
-
-public enum WeeklyCalendarEvent {
-    case photoAuthorizationDenied
-}
-
 // MARK: - ViewModel
 
 public final class WeeklyCalendarViewModel<
@@ -57,28 +15,28 @@ public final class WeeklyCalendarViewModel<
 > {
     // MARK: - Output
 
-    public var statePublisher: AnyPublisher<WeeklyCalendarState<AssetRepo.Asset>, Never> {
+    public var statePublisher: AnyPublisher<State, Never> {
         stateSubject.eraseToAnyPublisher()
     }
 
-    public private(set) var state: WeeklyCalendarState<AssetRepo.Asset> {
+    public private(set) var state: State {
         get { stateSubject.value }
         set { stateSubject.value = newValue }
     }
 
-    public var eventPublisher: AnyPublisher<WeeklyCalendarEvent, Never> {
+    public var eventPublisher: AnyPublisher<Event, Never> {
         eventSubject.eraseToAnyPublisher()
     }
 
     // MARK: - Input
 
-    public let input = PassthroughSubject<WeeklyCalendarInput, Never>()
+    public let input = PassthroughSubject<Input, Never>()
 
     // MARK: - Private
 
     private let calendar: Calendar
-    private let stateSubject: CurrentValueSubject<WeeklyCalendarState<AssetRepo.Asset>, Never>
-    private let eventSubject = PassthroughSubject<WeeklyCalendarEvent, Never>()
+    private let stateSubject: CurrentValueSubject<State, Never>
+    private let eventSubject = PassthroughSubject<Event, Never>()
     private var currentWeekBaseDate: Date
     private var cancellables = Set<AnyCancellable>()
 
@@ -103,10 +61,10 @@ public final class WeeklyCalendarViewModel<
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
 
         self.calendar = Calendar.current
-        
+
         let today = calendar.startOfDay(for: Date())
         self.currentWeekBaseDate = today
-        self.stateSubject = CurrentValueSubject(WeeklyCalendarState(selectedDate: today))
+        self.stateSubject = CurrentValueSubject(State(selectedDate: today))
 
         setupBindings()
     }
@@ -125,7 +83,7 @@ public final class WeeklyCalendarViewModel<
     }
 
     @MainActor
-    private func handleInput(_ action: WeeklyCalendarInput) async {
+    private func handleInput(_ action: Input) async {
         switch action {
         case .loadInitialData:
             await requestPhotoAuthorizationIfNeeded()
@@ -201,12 +159,16 @@ public final class WeeklyCalendarViewModel<
         let currentWeekday = calendar.component(.weekday, from: state.selectedDate)
 
         // 새 주의 시작일(일요일) 찾기
-        let weekStart = calendar.date(
-            from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: weekBaseDate)
-        ) ?? weekBaseDate
+        let weekStart =
+            calendar.date(
+                from: calendar.dateComponents(
+                    [.yearForWeekOfYear, .weekOfYear], from: weekBaseDate)
+            ) ?? weekBaseDate
 
         // 같은 요일로 이동 (weekday: 1=일, 2=월, ...)
-        if let newSelectedDate = calendar.date(byAdding: .day, value: currentWeekday - 1, to: weekStart) {
+        if let newSelectedDate = calendar.date(
+            byAdding: .day, value: currentWeekday - 1, to: weekStart)
+        {
             state.selectedDate = newSelectedDate
         }
     }
@@ -221,5 +183,45 @@ public final class WeeklyCalendarViewModel<
     /// 사진 추가 전 권한 체크
     public func checkPhotoAuthorizationForAddingPhoto() -> Bool {
         requestPhotoAuthorizationUseCase.isAuthorized()
+    }
+}
+
+// MARK: - State
+
+extension WeeklyCalendarViewModel {
+    public struct State: Equatable {
+        private static var foodProbabilityThreshold: Float { 0.6 }
+
+        public internal(set) var weekDays: [WeeklyCalendarDay] = []
+        public internal(set) var selectedDate: Date = Date()
+        public internal(set) var monthText: String = ""
+        public internal(set) var selectedDateRecords: [FoodRecord] = []
+        public internal(set) var selectedDatePhotos: [FoodImageAsset<AssetRepo.Asset>] = []
+        public internal(set) var isLoading: Bool = false
+
+        /// 음식으로 판별된 사진 개수
+        public var foodPhotoCount: Int {
+            selectedDatePhotos.filter { $0.foodProbability >= Self.foodProbabilityThreshold }.count
+        }
+
+        public static func == (lhs: Self, rhs: Self) -> Bool {
+            lhs.weekDays == rhs.weekDays
+                && Calendar.current.isDate(lhs.selectedDate, inSameDayAs: rhs.selectedDate)
+                && lhs.monthText == rhs.monthText
+                && lhs.selectedDateRecords == rhs.selectedDateRecords
+                && lhs.isLoading == rhs.isLoading
+        }
+    }
+
+    public enum Input {
+        case loadInitialData
+        case requestPhotoAuthorization
+        case goToPreviousWeek
+        case goToNextWeek
+        case selectDate(Date)
+    }
+
+    public enum Event {
+        case photoAuthorizationDenied
     }
 }
