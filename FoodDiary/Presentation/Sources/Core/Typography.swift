@@ -66,7 +66,7 @@ public enum Typography {
     private var lineHeightMultiple: CGFloat {
         switch self {
         case .hd24, .hd20, .hd18, .hd16:
-            return 1.3
+            return 1.0
         case .p18, .p15, .p14, .p12, .p10:
             return 1.0
         }

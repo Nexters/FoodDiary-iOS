@@ -1,5 +1,5 @@
 //
-//  MealTypeBadgeView.swift
+//  BadgeView.swift
 //  Presentation
 //
 
@@ -8,8 +8,8 @@ import Domain
 import SnapKit
 import UIKit
 
-/// 식사 타입 배지 (중식, 석식 등)
-final class MealTypeBadgeView: UIView {
+/// 범용 배지 뷰
+final class BadgeView: UIView {
 
     // MARK: - UI Components
 
@@ -21,10 +21,16 @@ final class MealTypeBadgeView: UIView {
 
     // MARK: - Init
 
-    override init(frame: CGRect) {
-        super.init(frame: frame)
+    init(text: String, backgroundColor: UIColor, textColor: UIColor = .white) {
+        super.init(frame: .zero)
         setupUI()
         setupConstraints()
+        self.backgroundColor = backgroundColor
+        label.setText(text, style: .p10, color: textColor)
+    }
+
+    convenience init(genre: FoodGenre) {
+        self.init(text: genre.displayName, backgroundColor: DesignSystemAsset.primary.color)
     }
 
     @available(*, unavailable)
@@ -35,7 +41,6 @@ final class MealTypeBadgeView: UIView {
     // MARK: - Setup
 
     private func setupUI() {
-        backgroundColor = UIColor.black.withAlphaComponent(0.6)
         layer.cornerRadius = 12
         clipsToBounds = true
         addSubview(label)
@@ -47,9 +52,4 @@ final class MealTypeBadgeView: UIView {
         }
     }
 
-    // MARK: - Configuration
-
-    func configure(with mealType: MealType) {
-        label.setText(mealType.displayName, style: .p12, color: .white)
-    }
 }

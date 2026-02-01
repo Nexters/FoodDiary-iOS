@@ -27,8 +27,16 @@ public extension UIColor {
     static let rn200 = DesignSystemAsset.rn200.color
     static let rn100 = DesignSystemAsset.rn100.color
 
+    // MARK: - SD
+
+    static let sdBase = DesignSystemAsset.sdBase.color
+    static let sd900 = DesignSystemAsset.sd900.color
+    static let sd800 = DesignSystemAsset.sd800.color
+    static let sd600 = DesignSystemAsset.sd600.color
+
     // MARK: - Grayscale
 
+    static let white = DesignSystemAsset.white.color
     static let grayBase = DesignSystemAsset.grayBase.color
     static let grayBasic = DesignSystemAsset.grayBasic.color
     static let gray900 = DesignSystemAsset.gray900.color

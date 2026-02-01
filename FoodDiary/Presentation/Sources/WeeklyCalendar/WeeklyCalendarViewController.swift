@@ -89,7 +89,7 @@ public final class WeeklyCalendarViewController<
     // MARK: - Setup
 
     private func setupUI() {
-        view.backgroundColor = DesignSystemAsset.sdBase.color
+        view.backgroundColor = .sdBase
 
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)

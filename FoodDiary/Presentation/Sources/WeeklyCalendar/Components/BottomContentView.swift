@@ -185,8 +185,8 @@ final class BottomContentView: UIView {
 
         newCardStackView.snp.makeConstraints {
             $0.center.equalToSuperview()
-            $0.width.equalTo(280)
-            $0.height.equalTo(320)
+            $0.horizontalEdges.equalToSuperview().inset(60)
+            $0.height.equalTo(newCardStackView.snp.width).multipliedBy(1.15)
         }
 
         // Publisher 바인딩

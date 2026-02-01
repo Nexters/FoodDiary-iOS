@@ -6,10 +6,11 @@
 import Foundation
 
 /// 서버에서 받아온 음식 기록 정보
-public struct FoodRecord: Sendable, Identifiable, Equatable {
+public struct FoodRecord: Identifiable, Equatable {
     public let id: String
     public let date: Date
     public let mealType: MealType
+    public let genre: FoodGenre
     public let imageURLs: [URL]
     public let restaurantName: String?
     public let address: String?
@@ -20,6 +21,7 @@ public struct FoodRecord: Sendable, Identifiable, Equatable {
         id: String,
         date: Date,
         mealType: MealType,
+        genre: FoodGenre,
         imageURLs: [URL],
         restaurantName: String? = nil,
         address: String? = nil,
@@ -29,6 +31,7 @@ public struct FoodRecord: Sendable, Identifiable, Equatable {
         self.id = id
         self.date = date
         self.mealType = mealType
+        self.genre = genre
         self.imageURLs = imageURLs
         self.restaurantName = restaurantName
         self.address = address

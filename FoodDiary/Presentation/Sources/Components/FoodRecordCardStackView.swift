@@ -23,23 +23,21 @@ public final class FoodRecordCardStackView: UIView {
         static let baseShadowOpacity: Float = 0.2
     }
 
+    // MARK: - UI Components
+
+    private let frontCardView: FoodRecordCardView
+    private var backgroundCards: [UIView] = []
+
     // MARK: - Publishers
 
-    private let copyTapSubject = PassthroughSubject<String, Never>()
     public var copyTapPublisher: AnyPublisher<String, Never> {
-        copyTapSubject.eraseToAnyPublisher()
+        frontCardView.copyTapPublisher
     }
 
     private let cardTapSubject = PassthroughSubject<FoodRecord, Never>()
     public var cardTapPublisher: AnyPublisher<FoodRecord, Never> {
         cardTapSubject.eraseToAnyPublisher()
     }
-
-    // MARK: - State
-
-    private var frontCardView: FoodRecordCardView?
-    private var backgroundCards: [(card: UIView, reverseIndex: Int)] = []
-    private var cancellables = Set<AnyCancellable>()
 
     // MARK: - UI Components
 
@@ -59,6 +57,8 @@ public final class FoodRecordCardStackView: UIView {
     public init(record: FoodRecord, totalCount: Int) {
         self.record = record
         self.totalCount = totalCount
+        self.frontCardView = FoodRecordCardView(record: record)
+        
         super.init(frame: .zero)
         setupUI()
         setupConstraints()
@@ -99,13 +99,11 @@ public final class FoodRecordCardStackView: UIView {
         addBackgroundCards(count: visibleCount - 1)
 
         // 맨 앞 실제 카드 추가
-        addFrontCard(record: record)
+        setupFrontCard()
     }
 
     private func addBackgroundCards(count: Int) {
-        for i in 0..<count {
-            let reverseIndex = count - i // 뒤에서부터 1, 2, ...
-
+        for _ in 0..<count {
             let card = UIView()
             card.backgroundColor = .white
             card.layer.cornerRadius = 20
@@ -117,7 +115,7 @@ public final class FoodRecordCardStackView: UIView {
             card.isUserInteractionEnabled = false
 
             stackContainer.addSubview(card)
-            backgroundCards.append((card: card, reverseIndex: reverseIndex))
+            backgroundCards.append(card)
         }
     }
 
@@ -125,8 +123,8 @@ public final class FoodRecordCardStackView: UIView {
         let containerBounds = stackContainer.bounds
         guard !containerBounds.isEmpty else { return }
 
-        for (card, reverseIndex) in backgroundCards {
-            let offset = CGFloat(reverseIndex) * Constants.cardOffset
+        for (index, card) in backgroundCards.enumerated() {
+            let reverseIndex = backgroundCards.count - index
             let rotation = CGFloat(reverseIndex) * Constants.rotationAngle * .pi / 180
             let direction: CGFloat = reverseIndex % 2 == 0 ? 1 : -1
 
@@ -134,14 +132,15 @@ public final class FoodRecordCardStackView: UIView {
             card.frame = containerBounds
             card.center = CGPoint(
                 x: containerBounds.midX,
-                y: containerBounds.midY + offset
+                y: containerBounds.midY
             )
 
             // Shadow path + depth alpha
-            card.layer.shadowPath = UIBezierPath(
-                roundedRect: card.bounds,
-                cornerRadius: card.layer.cornerRadius
-            ).cgPath
+            card.layer.shadowPath =
+                UIBezierPath(
+                    roundedRect: card.bounds,
+                    cornerRadius: card.layer.cornerRadius
+                ).cgPath
             card.alpha = backgroundAlpha(for: reverseIndex)
 
             // 회전 효과가 보이도록 살짝 아래로 빼고 회전 적용
@@ -158,28 +157,18 @@ public final class FoodRecordCardStackView: UIView {
         return max(minAlpha, min(maxAlpha, alpha))
     }
 
-    private func addFrontCard(record: FoodRecord) {
-        let cardView = FoodRecordCardView(record: record)
-
-        cardView.copyTapPublisher
-            .sink { [weak self] address in
-                self?.copyTapSubject.send(address)
-            }
-            .store(in: &cancellables)
-
+    private func setupFrontCard() {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(frontCardTapped))
-        cardView.addGestureRecognizer(tapGesture)
+        frontCardView.addGestureRecognizer(tapGesture)
 
-        stackContainer.addSubview(cardView)
-        frontCardView = cardView
+        stackContainer.addSubview(frontCardView)
 
-        cardView.snp.makeConstraints {
+        frontCardView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
     }
 
     @objc private func frontCardTapped() {
-        guard let record = frontCardView?.record else { return }
-        cardTapSubject.send(record)
+        cardTapSubject.send(frontCardView.record)
     }
 }
