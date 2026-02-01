@@ -21,6 +21,8 @@ public enum Typography {
     case hd24
     /// Headline 20pt - Semibold, 130% line height
     case hd20
+    /// Headline 18pt - Semibold, 130% line height
+    case hd18
     /// Paragraph 12pt - Regular, 100% line height
     case p12
 
@@ -31,6 +33,8 @@ public enum Typography {
             return DesignSystemFontFamily.Pretendard.semiBold.font(size: 24)
         case .hd20:
             return DesignSystemFontFamily.Pretendard.semiBold.font(size: 20)
+        case .hd18:
+            return DesignSystemFontFamily.Pretendard.semiBold.font(size: 18)
         case .p12:
             return DesignSystemFontFamily.Pretendard.regular.font(size: 12)
         }

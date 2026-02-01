@@ -16,4 +16,8 @@ final class MockFoodImageAssetRepository: FoodImageAssetRepository, @unchecked S
     func fetchFoodImageAssets(from startDate: Date, to endDate: Date?) async throws -> [Date: [FoodImageAsset<MockImageAssetable>]] {
         resultToReturn
     }
+
+    func prefetchFoodImageAssets(forWeekContaining date: Date) {
+        // Mock에서는 아무 동작도 하지 않음
+    }
 }

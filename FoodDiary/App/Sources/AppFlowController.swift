@@ -13,7 +13,7 @@ import Domain
 import Data
 
 final class AppFlowController: UIViewController {
-    private var isLogin: Bool = false
+    private var isLogin: Bool = true
     private var currentChild: UIViewController?
     private var cancellables = Set<AnyCancellable>()
     private let container: DIContainer
@@ -40,16 +40,47 @@ private extension AppFlowController {
     }
     
     func createMainView() -> UIViewController {
-//        MainViewController()
-        guard let foodImageAssetRepository = try? container.resolve(FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>.self),
-              let imageRepository = try? container.resolve(UIImageLoader.self) else {
-            fatalError("FoodImageAssetFetcher or ImageRepositoryImpl not registered")
+        guard let weeklyCalendarUseCase = try? container.resolve(
+            FetchWeeklyCalendarUseCase<MockFoodRecordRepository>.self
+        ) else {
+            fatalError("FetchWeeklyCalendarUseCase not registered")
         }
 
-        return ImagePickerDemoViewController(
-            foodImageAssetRepository: foodImageAssetRepository,
-            imageRepository: imageRepository
+        guard let fetchFoodImageAssetUseCase = try? container.resolve(
+            FetchFoodImageAssetUseCase<FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
+        ) else {
+            fatalError("FetchFoodImageAssetUseCase not registered")
+        }
+
+        guard let fetchFoodRecordsUseCase = try? container.resolve(
+            FetchFoodRecordsUseCase<MockFoodRecordRepository>.self
+        ) else {
+            fatalError("FetchFoodRecordsUseCase not registered")
+        }
+
+        guard let imageProvider = try? container.resolve(UIImageLoader.self) else {
+            fatalError("UIImageLoader not registered")
+        }
+
+        guard let requestPhotoAuthorizationUseCase = try? container.resolve(
+            RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>.self
+        ) else {
+            fatalError("RequestPhotoAuthorizationUseCase not registered")
+        }
+
+        let viewModel = WeeklyCalendarViewModel(
+            fetchWeeklyCalendarUseCase: weeklyCalendarUseCase,
+            fetchFoodImageAssetUseCase: fetchFoodImageAssetUseCase,
+            fetchFoodRecordsUseCase: fetchFoodRecordsUseCase,
+            requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase
         )
+
+        let weeklyCalendarVC = WeeklyCalendarViewController(
+            viewModel: viewModel,
+            imageProvider: imageProvider
+        )
+
+        return UINavigationController(rootViewController: weeklyCalendarVC)
     }
     
     func createLoginView() -> UIViewController {

@@ -80,6 +80,14 @@ private extension SceneDelegate {
                 cache: cache
             )
         }
+
+        container.register(MockFoodRecordRepository.self) { _ in
+            MockFoodRecordRepository()
+        }
+
+        container.register(PhotoAuthorizationFetcher.self) { _ in
+            PhotoAuthorizationFetcher()
+        }
     }
     
     func registerDomain() {
@@ -88,6 +96,38 @@ private extension SceneDelegate {
                 fatalError("TokenRepository not registered")
             }
             return FinalizeAppleLoginUseCase(tokenRepository: repository)
+        }
+
+        container.register(FetchWeeklyCalendarUseCase<MockFoodRecordRepository>.self) { resolver in
+            guard let repository = resolver.resolve(MockFoodRecordRepository.self) else {
+                fatalError("MockFoodRecordRepository not registered")
+            }
+            return FetchWeeklyCalendarUseCase(repository: repository)
+        }
+
+        container.register(FetchFoodRecordsUseCase<MockFoodRecordRepository>.self) { resolver in
+            guard let repository = resolver.resolve(MockFoodRecordRepository.self) else {
+                fatalError("MockFoodRecordRepository not registered")
+            }
+            return FetchFoodRecordsUseCase(repository: repository)
+        }
+
+        container.register(
+            FetchFoodImageAssetUseCase<FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
+        ) { resolver in
+            guard let repository = resolver.resolve(FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>.self) else {
+                fatalError("FoodImageAssetFetcher not registered")
+            }
+            return FetchFoodImageAssetUseCase(repository: repository)
+        }
+
+        container.register(
+            RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>.self
+        ) { resolver in
+            guard let repository = resolver.resolve(PhotoAuthorizationFetcher.self) else {
+                fatalError("PhotoAuthorizationFetcher not registered")
+            }
+            return RequestPhotoAuthorizationUseCase(repository: repository)
         }
     }
     

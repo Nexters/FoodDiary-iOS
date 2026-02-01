@@ -1,5 +1,5 @@
 //
-//  FoodImageAssetFetchUseCaseTests.swift
+//  FetchFoodImageAssetUseCaseTests.swift
 //  Domain
 //
 //  Created by Kai Lee on 1/21/26.
@@ -9,12 +9,12 @@
 import Foundation
 import Testing
 
-@Suite("FoodImageAssetFetchUseCase Tests")
-struct FoodImageAssetFetchUseCaseTests {
+@Suite("FetchFoodImageAssetUseCase Tests")
+struct FetchFoodImageAssetUseCaseTests {
     @Test("빈 결과 반환")
     func testEmptyResultReturnsEmpty() async throws {
         let mockRepository = MockFoodImageAssetRepository()
-        let useCase = FoodImageAssetFetchUseCase(repository: mockRepository)
+        let useCase = FetchFoodImageAssetUseCase(repository: mockRepository)
 
         let result = try await useCase.execute(
             from: Date(),
@@ -32,7 +32,7 @@ struct FoodImageAssetFetchUseCaseTests {
         let assets = createMockFoodImageAssets(count: 4, probabilities: [0.95, 0.51, 0.49, 0.05])
         mockRepository.resultToReturn = [today: assets]
 
-        let useCase = FoodImageAssetFetchUseCase(repository: mockRepository)
+        let useCase = FetchFoodImageAssetUseCase(repository: mockRepository)
 
         let result = try await useCase.execute(from: today, to: nil)
 
@@ -52,7 +52,7 @@ struct FoodImageAssetFetchUseCaseTests {
             yesterday: createMockFoodImageAssets(startIndex: 2, count: 2, probabilities: [0.95, 0.8])
         ]
 
-        let useCase = FoodImageAssetFetchUseCase(repository: mockRepository)
+        let useCase = FetchFoodImageAssetUseCase(repository: mockRepository)
 
         let result = try await useCase.execute(from: yesterday, to: today)
 

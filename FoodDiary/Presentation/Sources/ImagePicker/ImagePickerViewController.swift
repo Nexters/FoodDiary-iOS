@@ -78,8 +78,6 @@ public final class ImagePickerViewController<
 
     // MARK: - UI Components
 
-    private let navigationBar = ImagePickerNavigationBar()
-
     private lazy var collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.minimumInteritemSpacing = 8
@@ -111,6 +109,23 @@ public final class ImagePickerViewController<
         return button
     }()
 
+    private let emptyView: UIView = {
+        let container = UIView()
+        container.isHidden = true
+
+        let label = UILabel()
+        label.setText("이 날짜에 찍은 사진이 없어요", style: .hd18, color: .gray400)
+        label.textColor = .gray400
+        label.textAlignment = .center
+
+        container.addSubview(label)
+        label.snp.makeConstraints {
+            $0.center.equalToSuperview()
+        }
+
+        return container
+    }()
+
     // MARK: - Initialization
 
     public init(
@@ -123,8 +138,6 @@ public final class ImagePickerViewController<
         self.configuration = configuration
         super.init(nibName: nil, bundle: nil)
 
-        modalPresentationStyle = .fullScreen
-        modalTransitionStyle = .coverVertical
     }
 
     @available(*, unavailable)
@@ -138,28 +151,35 @@ public final class ImagePickerViewController<
         super.viewDidLoad()
         setupUI()
         setupConstraints()
-        setupBindings()
+    }
+
+    public override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: animated)
     }
 
     // MARK: - Setup
 
     private func setupUI() {
         view.backgroundColor = DesignSystemAsset.background.color
-        
-        view.addSubview(navigationBar)
+
         view.addSubview(collectionView)
+        view.addSubview(emptyView)
         view.addSubview(confirmButton)
+
+        emptyView.isHidden = !photos.isEmpty
+        collectionView.isHidden = photos.isEmpty
     }
 
     private func setupConstraints() {
-        navigationBar.snp.makeConstraints {
+        collectionView.snp.makeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide)
             $0.leading.trailing.equalToSuperview()
-            $0.height.equalTo(44)
+            $0.bottom.equalTo(confirmButton.snp.top).offset(-16)
         }
 
-        collectionView.snp.makeConstraints {
-            $0.top.equalTo(navigationBar.snp.bottom)
+        emptyView.snp.makeConstraints {
+            $0.top.equalTo(view.safeAreaLayoutGuide)
             $0.leading.trailing.equalToSuperview()
             $0.bottom.equalTo(confirmButton.snp.top).offset(-16)
         }
@@ -169,14 +189,6 @@ public final class ImagePickerViewController<
             $0.bottom.equalTo(view.safeAreaLayoutGuide).inset(16)
             $0.height.equalTo(50)
         }
-    }
-
-    private func setupBindings() {
-        navigationBar.closeTapPublisher
-            .sink { [weak self] in
-                self?.handleCancel()
-            }
-            .store(in: &cancellables)
     }
 
     // MARK: - Selection

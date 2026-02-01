@@ -36,10 +36,6 @@ public struct FoodImageAssetFetcher<
         self.imageTargetSize = imageTargetSize
     }
 
-    public func requestAuthorization() async -> PHAuthorizationStatus {
-        await PHPhotoLibrary.requestAuthorization(for: .readWrite)
-    }
-
     public func fetchFoodImageAssets(
         from startDate: Date,
         to endDate: Date?
@@ -51,6 +47,20 @@ public struct FoodImageAssetFetcher<
 
         let sections = await fetchPhotoSections(from: startDate, to: endDate)
         return try await classifyAllSections(sections)
+    }
+
+    public func prefetchFoodImageAssets(forWeekContaining date: Date) {
+        let calendar = Calendar.current
+        guard let startOfWeek = calendar.date(
+            from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+        ),
+        let endOfWeek = calendar.date(byAdding: .day, value: 7, to: startOfWeek) else {
+            return
+        }
+
+        Task(priority: .background) {
+            _ = try? await self.fetchFoodImageAssets(from: startOfWeek, to: endOfWeek)
+        }
     }
 }
 
@@ -77,11 +87,8 @@ private extension FoodImageAssetFetcher {
         }
         options.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
 
-        // DB 쿼리, 캐싱 불필요함
-        return await Task.detached(priority: .userInitiated) {
-            let fetchResult = PHAsset.fetchAssets(with: options)
-            return self.groupByDate(fetchResult)
-        }.value
+        let fetchResult = PHAsset.fetchAssets(with: options)
+        return groupByDate(fetchResult)
     }
 
     func groupByDate(_ fetchResult: PHFetchResult<PHAsset>) -> [PhotoSection] {
@@ -177,3 +184,4 @@ public enum FoodImageAssetError: LocalizedError {
         }
     }
 }
+
