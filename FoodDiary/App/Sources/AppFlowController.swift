@@ -46,10 +46,10 @@ private extension AppFlowController {
             fatalError("FetchWeeklyCalendarUseCase not registered")
         }
 
-        guard let foodImageAssetFetchUseCase = try? container.resolve(
-            FoodImageAssetFetchUseCase<FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
+        guard let fetchFoodImageAssetUseCase = try? container.resolve(
+            FetchFoodImageAssetUseCase<FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
         ) else {
-            fatalError("FoodImageAssetFetchUseCase not registered")
+            fatalError("FetchFoodImageAssetUseCase not registered")
         }
 
         guard let fetchFoodRecordsUseCase = try? container.resolve(
@@ -70,7 +70,7 @@ private extension AppFlowController {
 
         let viewModel = WeeklyCalendarViewModel(
             fetchWeeklyCalendarUseCase: weeklyCalendarUseCase,
-            foodImageAssetFetchUseCase: foodImageAssetFetchUseCase,
+            fetchFoodImageAssetUseCase: fetchFoodImageAssetUseCase,
             fetchFoodRecordsUseCase: fetchFoodRecordsUseCase,
             requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase
         )

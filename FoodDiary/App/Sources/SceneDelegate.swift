@@ -109,12 +109,12 @@ private extension SceneDelegate {
         }
 
         container.register(
-            FoodImageAssetFetchUseCase<FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
+            FetchFoodImageAssetUseCase<FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
         ) { resolver in
             guard let repository = resolver.resolve(FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>.self) else {
                 fatalError("FoodImageAssetFetcher not registered")
             }
-            return FoodImageAssetFetchUseCase(repository: repository)
+            return FetchFoodImageAssetUseCase(repository: repository)
         }
 
         container.register(

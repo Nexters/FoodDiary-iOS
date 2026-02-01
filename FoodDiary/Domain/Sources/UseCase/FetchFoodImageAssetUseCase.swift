@@ -1,5 +1,5 @@
 //
-//  FoodImageAssetFetchUseCase.swift
+//  FetchFoodImageAssetUseCase.swift
 //  Domain
 //
 //  Created by Kai Lee on 1/20/26.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct FoodImageAssetFetchUseCase<Repository: FoodImageAssetRepository> {
+public struct FetchFoodImageAssetUseCase<Repository: FoodImageAssetRepository> {
     private let repository: Repository
 
     public init(repository: Repository) {

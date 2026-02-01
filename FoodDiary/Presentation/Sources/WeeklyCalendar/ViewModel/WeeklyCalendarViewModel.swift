@@ -43,7 +43,7 @@ public final class WeeklyCalendarViewModel<
     // MARK: - Dependencies
 
     private let fetchWeeklyCalendarUseCase: FetchWeeklyCalendarUseCase<RecordRepo>
-    private let foodImageAssetFetchUseCase: FoodImageAssetFetchUseCase<AssetRepo>
+    private let fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase<AssetRepo>
     private let fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
     private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AssetRepo>
 
@@ -51,12 +51,12 @@ public final class WeeklyCalendarViewModel<
 
     public init(
         fetchWeeklyCalendarUseCase: FetchWeeklyCalendarUseCase<RecordRepo>,
-        foodImageAssetFetchUseCase: FoodImageAssetFetchUseCase<AssetRepo>,
+        fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase<AssetRepo>,
         fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>,
         requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AssetRepo>
     ) {
         self.fetchWeeklyCalendarUseCase = fetchWeeklyCalendarUseCase
-        self.foodImageAssetFetchUseCase = foodImageAssetFetchUseCase
+        self.fetchFoodImageAssetUseCase = fetchFoodImageAssetUseCase
         self.fetchFoodRecordsUseCase = fetchFoodRecordsUseCase
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
 
@@ -124,7 +124,7 @@ public final class WeeklyCalendarViewModel<
         defer { state.isLoading = false }
 
         // 주간 사진 캐시 워밍
-        foodImageAssetFetchUseCase.prefetch(for: date)
+        fetchFoodImageAssetUseCase.prefetch(for: date)
 
         do {
             let weekDays = try await fetchWeeklyCalendarUseCase.execute(for: date)
@@ -141,7 +141,7 @@ public final class WeeklyCalendarViewModel<
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)
 
         do {
-            let photosByDate = try await foodImageAssetFetchUseCase.execute(
+            let photosByDate = try await fetchFoodImageAssetUseCase.execute(
                 from: startOfDay,
                 to: endOfDay
             )
