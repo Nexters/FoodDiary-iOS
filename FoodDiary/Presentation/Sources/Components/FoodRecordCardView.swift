@@ -6,6 +6,7 @@
 import Combine
 import DesignSystem
 import Domain
+import Kingfisher
 import SnapKit
 import UIKit
 
@@ -198,10 +199,24 @@ public final class FoodRecordCardView: UIView {
             addressLabel.isHidden = true
             copyButtonContainer.isHidden = true
         }
+
+        // 첫 번째 이미지 URL로 이미지 로드
+        setImageURL(record.imageURLs.first)
     }
 
     public func setImage(_ image: UIImage?) {
         foodImageView.image = image
+    }
+
+    public func setImageURL(_ url: URL?) {
+        foodImageView.kf.setImage(
+            with: url,
+            placeholder: nil,
+            options: [
+                .transition(.fade(0.25)),
+                .cacheOriginalImage
+            ]
+        )
     }
 
     // MARK: - Actions

@@ -26,6 +26,8 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
 
     // MARK: - Mock Data Setup
 
+    private static let mockImageURL = URL(string: "https://mblogthumb-phinf.pstatic.net/MjAyNDExMjBfNzgg/MDAxNzMyMTAyNjU2Nzc5.-_dSylVBQ7k5rG6AxtNZ2H8_tAh2kOTjNsU1Ef2xQHog.v80D1-aXmFLEFMCz6vr_Vgao2AnJgPucdfGMI4dGAvwg.JPEG/IMG_7463.JPG?type=w800")!
+
     private func setupMockData() {
         let today = calendar.startOfDay(for: Date())
 
@@ -37,7 +39,7 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
                     id: UUID().uuidString,
                     date: today,
                     mealType: .lunch,
-                    imageURLs: [],
+                    imageURLs: [Self.mockImageURL],
                     restaurantName: "맛있는 중화요리",
                     address: "서울시 강남구 테헤란로 123",
                     hashtags: ["양장피", "짜장면", "탕수육"],
@@ -47,7 +49,7 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
                     id: UUID().uuidString,
                     date: today,
                     mealType: .dinner,
-                    imageURLs: [],
+                    imageURLs: [Self.mockImageURL],
                     restaurantName: "스시오마카세",
                     address: "서울시 강남구 압구정로 456",
                     hashtags: ["오마카세", "스시", "사케"],
@@ -64,7 +66,7 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
                     id: UUID().uuidString,
                     date: yesterday,
                     mealType: .lunch,
-                    imageURLs: [],
+                    imageURLs: [Self.mockImageURL],
                     restaurantName: "할머니 손칼국수",
                     address: "서울시 종로구 인사동길 12",
                     hashtags: ["칼국수", "만두", "김치"],
@@ -82,7 +84,7 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
                     id: UUID().uuidString,
                     date: threeDaysAgo,
                     mealType: .breakfast,
-                    imageURLs: [],
+                    imageURLs: [Self.mockImageURL],
                     restaurantName: "브런치 카페",
                     address: "서울시 마포구 연남동 123-45",
                     hashtags: ["브런치", "에그베네딕트", "아메리카노"],
@@ -92,7 +94,7 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
                     id: UUID().uuidString,
                     date: threeDaysAgo,
                     mealType: .lateNight,
-                    imageURLs: [],
+                    imageURLs: [Self.mockImageURL],
                     restaurantName: "포장마차",
                     address: "서울시 마포구 홍대입구역",
                     hashtags: ["떡볶이", "순대", "오뎅"],
