@@ -89,16 +89,14 @@ struct FetchWeeklyCalendarUseCaseTests {
         #expect(allTwoDigits)
     }
 
-    // MARK: - previousWeek() / nextWeek() Tests
+    // MARK: - Calendar Extension Tests
 
     @Test("이전 주는 7일 전")
     func testPreviousWeekIsSevenDaysBefore() {
-        let mockRepository = MockFoodRecordRepository()
-        let useCase = FetchWeeklyCalendarUseCase(repository: mockRepository)
         let calendar = Calendar.current
 
         let today = Date()
-        let previousWeek = useCase.previousWeek(from: today)
+        let previousWeek = calendar.previousWeek(from: today)
 
         let daysDifference = calendar.dateComponents([.day], from: previousWeek, to: today).day
         #expect(daysDifference == 7)
@@ -106,24 +104,19 @@ struct FetchWeeklyCalendarUseCaseTests {
 
     @Test("다음 주는 7일 후")
     func testNextWeekIsSevenDaysAfter() {
-        let mockRepository = MockFoodRecordRepository()
-        let useCase = FetchWeeklyCalendarUseCase(repository: mockRepository)
         let calendar = Calendar.current
 
         let today = Date()
-        let nextWeek = useCase.nextWeek(from: today)
+        let nextWeek = calendar.nextWeek(from: today)
 
         let daysDifference = calendar.dateComponents([.day], from: today, to: nextWeek).day
         #expect(daysDifference == 7)
     }
 
-    // MARK: - formatMonthText() Tests
+    // MARK: - Date Extension Tests
 
     @Test("월 텍스트 포맷이 올바름")
     func testMonthTextFormat() {
-        let mockRepository = MockFoodRecordRepository()
-        let useCase = FetchWeeklyCalendarUseCase(repository: mockRepository)
-
         // 1월 날짜 생성
         var components = DateComponents()
         components.year = 2026
@@ -131,7 +124,7 @@ struct FetchWeeklyCalendarUseCaseTests {
         components.day = 15
         let januaryDate = Calendar.current.date(from: components)!
 
-        let monthText = useCase.formatMonthText(for: januaryDate)
+        let monthText = januaryDate.formatMonthText()
         #expect(monthText == "1월")
     }
 }

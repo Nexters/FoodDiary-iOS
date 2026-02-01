@@ -76,6 +76,7 @@ public final class WeeklyCalendarViewModel<
 
     // MARK: - Private
 
+    private let calendar: Calendar
     private let stateSubject: CurrentValueSubject<WeeklyCalendarState<AssetRepo.Asset>, Never>
     private let eventSubject = PassthroughSubject<WeeklyCalendarEvent, Never>()
     private var currentWeekBaseDate: Date
@@ -101,7 +102,9 @@ public final class WeeklyCalendarViewModel<
         self.fetchFoodRecordsUseCase = fetchFoodRecordsUseCase
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
 
-        let today = Date()
+        self.calendar = Calendar.current
+        
+        let today = calendar.startOfDay(for: Date())
         self.currentWeekBaseDate = today
         self.stateSubject = CurrentValueSubject(WeeklyCalendarState(selectedDate: today))
 
@@ -138,13 +141,13 @@ public final class WeeklyCalendarViewModel<
             }
 
         case .goToPreviousWeek:
-            currentWeekBaseDate = fetchWeeklyCalendarUseCase.previousWeek(from: currentWeekBaseDate)
+            currentWeekBaseDate = calendar.previousWeek(from: currentWeekBaseDate)
             await loadWeekData(for: currentWeekBaseDate)
             updateSelectedDateToSameWeekday(in: currentWeekBaseDate)
             await loadDateData(of: state.selectedDate)
 
         case .goToNextWeek:
-            currentWeekBaseDate = fetchWeeklyCalendarUseCase.nextWeek(from: currentWeekBaseDate)
+            currentWeekBaseDate = calendar.nextWeek(from: currentWeekBaseDate)
             await loadWeekData(for: currentWeekBaseDate)
             updateSelectedDateToSameWeekday(in: currentWeekBaseDate)
             await loadDateData(of: state.selectedDate)
@@ -168,7 +171,7 @@ public final class WeeklyCalendarViewModel<
         do {
             let weekDays = try await fetchWeeklyCalendarUseCase.execute(for: date)
             state.weekDays = weekDays
-            state.monthText = fetchWeeklyCalendarUseCase.formatMonthText(for: date)
+            state.monthText = date.formatMonthText()
         } catch {
             print("Failed to load week data: \(error)")
         }
@@ -176,7 +179,6 @@ public final class WeeklyCalendarViewModel<
 
     @MainActor
     private func loadDateData(of selectedDate: Date) async {
-        let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: selectedDate)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)
 
@@ -196,7 +198,6 @@ public final class WeeklyCalendarViewModel<
 
     /// 주간 이동 시 같은 요일로 선택 날짜 업데이트
     private func updateSelectedDateToSameWeekday(in weekBaseDate: Date) {
-        let calendar = Calendar.current
         let currentWeekday = calendar.component(.weekday, from: state.selectedDate)
 
         // 새 주의 시작일(일요일) 찾기

@@ -9,83 +9,37 @@ import Foundation
 public struct FetchWeeklyCalendarUseCase<Repository: FoodRecordRepository>: Sendable {
     private let repository: Repository
     private let calendar: Calendar
-    private let locale: Locale
 
     public init(
         repository: Repository,
-        calendar: Calendar = .current,
-        locale: Locale = Locale(identifier: "ko_KR")
+        calendar: Calendar = .current
     ) {
         self.repository = repository
         self.calendar = calendar
-        self.locale = locale
     }
 
     /// 특정 날짜가 포함된 주의 캘린더 데이터 반환
-    /// - Parameter date: 기준 날짜
+    /// - Parameters:
+    ///   - date: 기준 날짜
+    ///   - locale: 요일 포맷팅에 사용할 로케일
     /// - Returns: 7일간의 WeeklyCalendarDay 배열
-    public func execute(for date: Date) async throws -> [WeeklyCalendarDay] {
-        let (weekStart, weekEnd) = calculateWeekRange(for: date)
-        let weekDates = generateWeekDates(from: weekStart)
+    public func execute(
+        for date: Date,
+        locale: Locale = Locale(identifier: "ko_KR")
+    ) async throws -> [WeeklyCalendarDay] {
+        let (weekStart, weekEnd) = calendar.weekRange(for: date)
+        let weekDates = calendar.weekDates(from: weekStart)
         let recordsByDate = try await repository.fetchRecords(in: weekStart...weekEnd)
 
         return weekDates.map { dayDate in
             let startOfDay = calendar.startOfDay(for: dayDate)
             return WeeklyCalendarDay(
                 date: dayDate,
-                dayOfWeek: formatDayOfWeek(dayDate),
-                dayNumber: formatDayNumber(dayDate),
+                dayOfWeek: dayDate.formatDayOfWeek(locale: locale),
+                dayNumber: dayDate.formatDayNumber(calendar: calendar),
                 isToday: calendar.isDateInToday(dayDate),
                 records: recordsByDate[startOfDay] ?? []
             )
         }
-    }
-
-    /// 이전 주 날짜 계산
-    public func previousWeek(from date: Date) -> Date {
-        calendar.date(byAdding: .weekOfYear, value: -1, to: date) ?? date
-    }
-
-    /// 다음 주 날짜 계산
-    public func nextWeek(from date: Date) -> Date {
-        calendar.date(byAdding: .weekOfYear, value: 1, to: date) ?? date
-    }
-
-    /// 월 텍스트 포맷팅 (예: "1월")
-    public func formatMonthText(for date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = locale
-        formatter.dateFormat = "M월"
-        return formatter.string(from: date)
-    }
-
-    // MARK: - Private Helpers
-
-    private func calculateWeekRange(for date: Date) -> (start: Date, end: Date) {
-        // 일요일 시작 기준
-        let weekday = calendar.component(.weekday, from: date)
-        let daysToSubtract = weekday - 1
-        let weekStart = calendar.date(
-            byAdding: .day,
-            value: -daysToSubtract,
-            to: calendar.startOfDay(for: date)
-        )!
-        let weekEnd = calendar.date(byAdding: .day, value: 6, to: weekStart)!
-        return (weekStart, weekEnd)
-    }
-
-    private func generateWeekDates(from weekStart: Date) -> [Date] {
-        (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: weekStart) }
-    }
-
-    private func formatDayOfWeek(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = locale
-        formatter.dateFormat = "E"
-        return formatter.string(from: date)
-    }
-
-    private func formatDayNumber(_ date: Date) -> String {
-        String(format: "%02d", calendar.component(.day, from: date))
     }
 }
