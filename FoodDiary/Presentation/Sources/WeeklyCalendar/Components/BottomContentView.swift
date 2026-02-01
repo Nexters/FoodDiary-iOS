@@ -9,16 +9,27 @@ import Domain
 import SnapKit
 import UIKit
 
-/// 하단 영역 (+버튼 또는 기록된 이미지 스택)
+/// 하단 영역 (+버튼 또는 기록된 카드 스택)
 final class BottomContentView: UIView {
 
-    // MARK: - Publisher
+    // MARK: - Publishers
 
     var addButtonTapPublisher: AnyPublisher<Void, Never> {
         addButtonTapSubject.eraseToAnyPublisher()
     }
 
+    var cardStackTapPublisher: AnyPublisher<FoodRecord, Never> {
+        cardStackTapSubject.eraseToAnyPublisher()
+    }
+
+    var copyTapPublisher: AnyPublisher<String, Never> {
+        copyTapSubject.eraseToAnyPublisher()
+    }
+
     private let addButtonTapSubject = PassthroughSubject<Void, Never>()
+    private let cardStackTapSubject = PassthroughSubject<FoodRecord, Never>()
+    private let copyTapSubject = PassthroughSubject<String, Never>()
+    private var cancellables = Set<AnyCancellable>()
 
     // MARK: - UI Components
 
@@ -28,6 +39,12 @@ final class BottomContentView: UIView {
         view.layer.cornerRadius = 24
         view.layer.borderWidth = 1
         view.layer.borderColor = UIColor.white.withAlphaComponent(0.1).cgColor
+        return view
+    }()
+
+    // Empty State UI (when no records)
+    private let emptyStateView: UIView = {
+        let view = UIView()
         return view
     }()
 
@@ -54,13 +71,15 @@ final class BottomContentView: UIView {
         return label
     }()
 
-    private let recordedImagesStackView: UIStackView = {
-        let sv = UIStackView()
-        sv.axis = .horizontal
-        sv.spacing = -20
-        sv.isHidden = true
-        return sv
+    // Card Stack UI (when records exist)
+    private let cardStackStateView: UIView = {
+        let view = UIView()
+        view.isHidden = true
+        view.clipsToBounds = false
+        return view
     }()
+
+    private var cardStackView: FoodRecordCardStackView?
 
     // MARK: - Init
 
@@ -80,15 +99,25 @@ final class BottomContentView: UIView {
 
     private func setupUI() {
         addSubview(containerView)
-        containerView.addSubview(addButton)
-        containerView.addSubview(placeholderLabel)
-        containerView.addSubview(photoCountLabel)
-        containerView.addSubview(recordedImagesStackView)
+
+        // Empty State
+        containerView.addSubview(emptyStateView)
+        emptyStateView.addSubview(addButton)
+        emptyStateView.addSubview(placeholderLabel)
+        emptyStateView.addSubview(photoCountLabel)
+
+        // Card Stack State
+        containerView.addSubview(cardStackStateView)
     }
 
     private func setupConstraints() {
         containerView.snp.makeConstraints {
             $0.edges.equalToSuperview().inset(UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16))
+        }
+
+        // Empty State Constraints
+        emptyStateView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
         }
 
         addButton.snp.makeConstraints {
@@ -107,9 +136,9 @@ final class BottomContentView: UIView {
             $0.top.equalTo(placeholderLabel.snp.bottom).offset(4)
         }
 
-        recordedImagesStackView.snp.makeConstraints {
-            $0.center.equalToSuperview()
-            $0.height.equalTo(80)
+        // Card Stack State Constraints
+        cardStackStateView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
         }
     }
 
@@ -120,44 +149,58 @@ final class BottomContentView: UIView {
     // MARK: - Configuration
 
     func configure(hasRecords: Bool, records: [FoodRecord], photoCount: Int) {
-        // 기록 여부와 관계없이 항상 + 버튼 표시
-        // 이미지 스택 기능은 추후 디자인 확정 후 구현
-        addButton.isHidden = false
-        placeholderLabel.isHidden = false
-        recordedImagesStackView.isHidden = true
-
-        if hasRecords {
-            placeholderLabel.text = "사진을 더 추가해보세요."
+        if hasRecords, let firstRecord = records.first {
+            showCardStackState(record: firstRecord, totalCount: records.count)
         } else {
-            placeholderLabel.text = "오늘의 음식 사진을 추가해보세요."
+            showEmptyState(photoCount: photoCount)
         }
+    }
 
-        // 임시: 선택된 날짜의 음식 사진 개수 표시
+    private func showEmptyState(photoCount: Int) {
+        emptyStateView.isHidden = false
+        cardStackStateView.isHidden = true
+
         if photoCount > 0 {
+            placeholderLabel.text = "음식 사진을 추가해보세요."
             photoCountLabel.text = "올리지 않은 음식 사진 \(photoCount)장"
             photoCountLabel.isHidden = false
         } else {
+            placeholderLabel.text = "오늘의 음식 사진을 추가해보세요."
             photoCountLabel.isHidden = true
         }
     }
 
-    private func updateRecordedImagesStack(with records: [FoodRecord]) {
-        recordedImagesStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+    private func showCardStackState(record: FoodRecord, totalCount: Int) {
+        emptyStateView.isHidden = true
+        cardStackStateView.isHidden = false
 
-        let maxDisplayCount = min(records.count, 3)
-        (0..<maxDisplayCount).forEach { index in
-            let imageView = UIImageView()
-            imageView.backgroundColor = DesignSystemAsset.gray400.color
-            imageView.layer.cornerRadius = 8
-            imageView.layer.borderWidth = 2
-            imageView.layer.borderColor = UIColor.white.cgColor
-            imageView.clipsToBounds = true
-            imageView.snp.makeConstraints { $0.size.equalTo(CGSize(width: 60, height: 80)) }
+        // 기존 카드스택뷰 제거
+        cardStackView?.removeFromSuperview()
+        cancellables.removeAll()
 
-            // 스택 효과를 위해 zPosition 조절
-            imageView.layer.zPosition = CGFloat(maxDisplayCount - index)
-            recordedImagesStackView.addArrangedSubview(imageView)
+        // 새로 생성
+        let newCardStackView = FoodRecordCardStackView(record: record, totalCount: totalCount)
+        cardStackStateView.addSubview(newCardStackView)
+        cardStackView = newCardStackView
+
+        newCardStackView.snp.makeConstraints {
+            $0.center.equalToSuperview()
+            $0.width.equalTo(280)
+            $0.height.equalTo(320)
         }
+
+        // Publisher 바인딩
+        newCardStackView.cardTapPublisher
+            .sink { [weak self] record in
+                self?.cardStackTapSubject.send(record)
+            }
+            .store(in: &cancellables)
+
+        newCardStackView.copyTapPublisher
+            .sink { [weak self] address in
+                self?.copyTapSubject.send(address)
+            }
+            .store(in: &cancellables)
     }
 
     // MARK: - Actions
