@@ -11,7 +11,6 @@ import DesignSystem
 import Presentation
 import Domain
 import DI
-import Swinject
 
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
@@ -34,15 +33,32 @@ private extension SceneDelegate {
     }
     
     func registerData() {
-        container.register(TokenManager.self) { _ in
-            TokenManager(userDefaults: .standard)
+        container.register(KeychainService.self) { _ in
+            KeychainService()
         }
-
-        container.register(TokenRepository.self) { resolver in
-            guard let manager = resolver.resolve(TokenManager.self) else {
+        
+        container.register(HTTPClient.self) { _ in
+            HTTPClient()
+        }
+        
+        container.register(TokenManager<KeychainService>.self) { resolver in
+            guard let service = resolver.resolve(KeychainService.self) else {
+                fatalError("KeychainService not registered")
+            }
+            
+            return TokenManager(keychainService: service)
+        }
+        
+        container.register(AuthRepository.self) { resolver in
+            guard let manager = resolver.resolve(TokenManager<KeychainService>.self) else {
                 fatalError("TokenManager not registered")
             }
-            return TokenRepositoryImpl(tokenManager: manager)
+            
+            guard let client = resolver.resolve(HTTPClient.self) else {
+                fatalError("HTTPClient not registered")
+            }
+            
+            return AuthRepositoryImpl(httpClient: client, tokenManager: manager)
         }
 
         container.register(PHAssetConverter.self) { _ in
@@ -92,10 +108,11 @@ private extension SceneDelegate {
     
     func registerDomain() {
         container.register(FinalizeAppleLoginUseCase.self) { resolver in
-            guard let repository = resolver.resolve(TokenRepository.self) else {
-                fatalError("TokenRepository not registered")
+            guard let repository = resolver.resolve(AuthRepository.self) else {
+                fatalError("AuthRepository not registered")
             }
-            return FinalizeAppleLoginUseCase(tokenRepository: repository)
+            
+            return FinalizeAppleLoginUseCase(authRepository: repository)
         }
 
         container.register(FetchWeeklyCalendarUseCase<MockFoodRecordRepository>.self) { resolver in
@@ -136,10 +153,8 @@ private extension SceneDelegate {
             guard let useCase = resolver.resolve(FinalizeAppleLoginUseCase.self) else {
                 fatalError("FinalizeAppleLoginUseCase not registered")
             }
+            
             return LoginViewModel(finalizeAppleLoginUseCase: useCase)
         }
     }
-    
 }
-
-

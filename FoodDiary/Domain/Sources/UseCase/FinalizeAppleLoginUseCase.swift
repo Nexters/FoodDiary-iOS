@@ -7,14 +7,19 @@
 
 import Foundation
 
+public enum AppleLoginError: Error {
+    case tokenPersistenceFailed
+    case tokenDecodingFailed
+}
+
 public struct FinalizeAppleLoginUseCase {
-    private let tokenRepository: TokenRepository
+    private let authRepository: AuthRepository
     
-    public init(tokenRepository: TokenRepository) {
-        self.tokenRepository = tokenRepository
+    public init(authRepository: AuthRepository) {
+        self.authRepository = authRepository
     }
     
-    public func execute(_ token: Data) async throws {
-        try await tokenRepository.save(token)
+    public func execute(_ token: Data) async throws -> LoginResult {
+        return try await authRepository.login(token)
     }
 }

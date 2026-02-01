@@ -31,6 +31,10 @@ public extension InfoPlist {
                 "UIAppFonts": [
                     "Pretendard-Regular.otf",
                     "Pretendard-SemiBold.otf"
+                ],
+                "BASE_URL": "$(BASE_URL)",
+                "NSAppTransportSecurity": [
+                    "NSAllowsArbitraryLoads": true
                 ]
             ]
         )

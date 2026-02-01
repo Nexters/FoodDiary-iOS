@@ -9,6 +9,8 @@ import AuthenticationServices
 import Combine
 import UIKit
 import SnapKit
+import DesignSystem
+import Domain
 
 final public class LoginViewController: UIViewController {
     private let didLoginSubject = PassthroughSubject<Void, Never>()
@@ -36,14 +38,35 @@ final public class LoginViewController: UIViewController {
 
 private extension LoginViewController {
     func configureUI() {
-        view.backgroundColor = .gray
+        view.backgroundColor = DesignSystemAsset.background.color
         
-        let appleLoginBtn = ASAuthorizationAppleIDButton(authorizationButtonType: .continue, authorizationButtonStyle: .black)
+        let logoImageView = UIImageView(image: DesignSystemAsset.logo.image)
+        logoImageView.contentMode = .scaleAspectFill
+        
+        let characterImageView = UIImageView(image: DesignSystemAsset.character.image)
+        characterImageView.contentMode = .scaleAspectFit
+        
+        let appleLoginBtn = ASAuthorizationAppleIDButton(authorizationButtonType: .signIn, authorizationButtonStyle: .black)
         appleLoginBtn.clipsToBounds = true
         appleLoginBtn.layer.cornerRadius = 10
         appleLoginBtn.addTarget(self, action: #selector(loginButtonTapped), for: .touchUpInside)
         
+        view.addSubview(logoImageView)
+        view.addSubview(characterImageView)
         view.addSubview(appleLoginBtn)
+        
+        logoImageView.snp.makeConstraints {
+            $0.centerX.equalTo(view.snp.centerX)
+            $0.width.equalTo(215)
+            $0.height.equalTo(58)
+            $0.bottom.equalTo(characterImageView.snp.top).inset(-27)
+        }
+        
+        characterImageView.snp.makeConstraints {
+            $0.width.equalTo(175)
+            $0.height.equalTo(145)
+            $0.center.equalTo(view.center)
+        }
         
         appleLoginBtn.snp.makeConstraints {
             $0.leading.trailing.equalTo(view.safeAreaLayoutGuide).inset(16)

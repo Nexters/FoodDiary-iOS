@@ -28,7 +28,13 @@ let project = Project(
                 .project(target: "DI", path: "../DI"),
                 .project(target: "Domain", path: "../Domain"),
                 .project(target: "Presentation", path: "../Presentation"),
-            ]
+            ],
+            settings: .settings(
+                base: [
+                    "BASE_URL": "$(BASE_URL)"
+                ],
+                configurations: []
+            )
         )
     ],
     schemes: Scheme.makeSchemes()

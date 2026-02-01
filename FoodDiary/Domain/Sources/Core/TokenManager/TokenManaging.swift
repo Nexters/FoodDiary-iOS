@@ -8,7 +8,8 @@
 import Foundation
 
 public protocol TokenManaging {
-    func getToken() -> String?
-    func setToken(_ token: String)
+    func get() -> String?
+    func set(_ token: String) throws
+    func clear() throws
 }
 

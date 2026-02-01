@@ -8,18 +8,27 @@
 import Foundation
 import Domain
 
-public struct TokenManager: TokenManaging {
-    let userDefault: UserDefaults
+public struct TokenManager<Service: KeychainServicing>: TokenManaging {
+    private let keychainService: Service
+    private let tokenKey = "access_token"
     
-    public init(userDefaults: UserDefaults = .standard) {
-        self.userDefault = userDefaults
+    public init(keychainService: Service) {
+        self.keychainService = keychainService
     }
     
-    public func getToken() -> String? {
-        userDefault.string(forKey: "token")
+    public func get() -> String? {
+        keychainService.load(key: tokenKey)
     }
     
-    public func setToken(_ token: String) {
-        userDefault.set(token, forKey: "token")
+    public func set(_ token: String) throws {
+        if !keychainService.save(key: tokenKey, value: token) {
+            throw AppleLoginError.tokenPersistenceFailed
+        }
+    }
+    
+    public func clear() throws {
+        if !keychainService.delete(key: tokenKey) {
+            throw AppleLoginError.tokenDecodingFailed
+        }
     }
 }
