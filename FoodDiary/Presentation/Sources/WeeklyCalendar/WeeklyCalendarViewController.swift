@@ -12,12 +12,13 @@ import UIKit
 public final class WeeklyCalendarViewController<
     RecordRepo: FoodRecordRepository,
     AssetRepo: FoodImageAssetRepository,
+    AuthRepo: PhotoAuthorizationRepository,
     ImageProvider: RenderableImageRepository
 >: UIViewController where ImageProvider.Asset == AssetRepo.Asset {
 
     // MARK: - Dependencies
 
-    private let viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo>
+    private let viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo>
     private let imageProvider: ImageProvider
 
     // MARK: - UI Components
@@ -56,7 +57,7 @@ public final class WeeklyCalendarViewController<
     // MARK: - Init
 
     public init(
-        viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo>,
+        viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo>,
         imageProvider: ImageProvider
     ) {
         self.viewModel = viewModel

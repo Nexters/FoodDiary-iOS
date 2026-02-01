@@ -5,7 +5,7 @@
 
 import Foundation
 
-public struct RequestPhotoAuthorizationUseCase<Repository: FoodImageAssetRepository> {
+public struct RequestPhotoAuthorizationUseCase<Repository: PhotoAuthorizationRepository> {
     private let repository: Repository
 
     public init(repository: Repository) {

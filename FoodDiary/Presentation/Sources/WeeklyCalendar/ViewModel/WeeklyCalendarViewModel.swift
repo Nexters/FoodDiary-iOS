@@ -11,7 +11,8 @@ import Foundation
 
 public final class WeeklyCalendarViewModel<
     RecordRepo: FoodRecordRepository,
-    AssetRepo: FoodImageAssetRepository
+    AssetRepo: FoodImageAssetRepository,
+    AuthRepo: PhotoAuthorizationRepository
 > {
     // MARK: - Output
 
@@ -45,7 +46,7 @@ public final class WeeklyCalendarViewModel<
     private let fetchWeeklyCalendarUseCase: FetchWeeklyCalendarUseCase<RecordRepo>
     private let fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase<AssetRepo>
     private let fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
-    private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AssetRepo>
+    private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>
 
     // MARK: - Init
 
@@ -53,7 +54,7 @@ public final class WeeklyCalendarViewModel<
         fetchWeeklyCalendarUseCase: FetchWeeklyCalendarUseCase<RecordRepo>,
         fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase<AssetRepo>,
         fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>,
-        requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AssetRepo>
+        requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>
     ) {
         self.fetchWeeklyCalendarUseCase = fetchWeeklyCalendarUseCase
         self.fetchFoodImageAssetUseCase = fetchFoodImageAssetUseCase

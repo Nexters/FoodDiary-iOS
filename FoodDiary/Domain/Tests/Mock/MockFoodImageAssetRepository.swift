@@ -12,15 +12,6 @@ final class MockFoodImageAssetRepository: FoodImageAssetRepository, @unchecked S
     typealias Asset = MockImageAssetable
 
     var resultToReturn: [Date: [FoodImageAsset<MockImageAssetable>]] = [:]
-    var authorizationStatusToReturn: PhotoAuthorizationStatus = .authorized
-
-    func authorizationStatus() -> PhotoAuthorizationStatus {
-        authorizationStatusToReturn
-    }
-
-    func requestAuthorization() async -> PhotoAuthorizationStatus {
-        authorizationStatusToReturn
-    }
 
     func fetchFoodImageAssets(from startDate: Date, to endDate: Date?) async throws -> [Date: [FoodImageAsset<MockImageAssetable>]] {
         resultToReturn

@@ -84,6 +84,10 @@ private extension SceneDelegate {
         container.register(MockFoodRecordRepository.self) { _ in
             MockFoodRecordRepository()
         }
+
+        container.register(PhotoAuthorizationFetcher.self) { _ in
+            PhotoAuthorizationFetcher()
+        }
     }
     
     func registerDomain() {
@@ -118,10 +122,10 @@ private extension SceneDelegate {
         }
 
         container.register(
-            RequestPhotoAuthorizationUseCase<FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
+            RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>.self
         ) { resolver in
-            guard let repository = resolver.resolve(FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>.self) else {
-                fatalError("FoodImageAssetFetcher not registered")
+            guard let repository = resolver.resolve(PhotoAuthorizationFetcher.self) else {
+                fatalError("PhotoAuthorizationFetcher not registered")
             }
             return RequestPhotoAuthorizationUseCase(repository: repository)
         }

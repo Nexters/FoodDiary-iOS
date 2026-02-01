@@ -7,24 +7,8 @@
 
 import Foundation
 
-/// 사진 라이브러리 권한 상태
-public enum PhotoAuthorizationStatus: Sendable {
-    case notDetermined
-    case restricted
-    case denied
-    case authorized
-    case limited
-}
-
 public protocol FoodImageAssetRepository: Sendable {
     associatedtype Asset: ImageAssetable
-
-    /// 현재 사진 라이브러리 권한 상태 조회
-    func authorizationStatus() -> PhotoAuthorizationStatus
-
-    /// 사진 라이브러리 권한 요청
-    /// - Returns: 권한 요청 결과
-    func requestAuthorization() async -> PhotoAuthorizationStatus
 
     /// 날짜별 음식 사진 조회 (음식 확률 순 정렬)
     /// - Parameters:

@@ -36,14 +36,6 @@ public struct FoodImageAssetFetcher<
         self.imageTargetSize = imageTargetSize
     }
 
-    public func authorizationStatus() -> PhotoAuthorizationStatus {
-        PHPhotoLibrary.authorizationStatus(for: .readWrite).toDomain()
-    }
-
-    public func requestAuthorization() async -> PhotoAuthorizationStatus {
-        await PHPhotoLibrary.requestAuthorization(for: .readWrite).toDomain()
-    }
-
     public func fetchFoodImageAssets(
         from startDate: Date,
         to endDate: Date?
@@ -193,23 +185,3 @@ public enum FoodImageAssetError: LocalizedError {
     }
 }
 
-// MARK: - PHAuthorizationStatus Extension
-
-extension PHAuthorizationStatus {
-    func toDomain() -> PhotoAuthorizationStatus {
-        switch self {
-        case .notDetermined:
-            return .notDetermined
-        case .restricted:
-            return .restricted
-        case .denied:
-            return .denied
-        case .authorized:
-            return .authorized
-        case .limited:
-            return .limited
-        @unknown default:
-            return .denied
-        }
-    }
-}

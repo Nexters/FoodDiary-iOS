@@ -63,7 +63,7 @@ private extension AppFlowController {
         }
 
         guard let requestPhotoAuthorizationUseCase = try? container.resolve(
-            RequestPhotoAuthorizationUseCase<FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
+            RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>.self
         ) else {
             fatalError("RequestPhotoAuthorizationUseCase not registered")
         }
