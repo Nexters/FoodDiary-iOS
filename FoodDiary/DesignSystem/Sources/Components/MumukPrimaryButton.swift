@@ -11,7 +11,7 @@ public final class MumukPrimaryButton: UIButton {
 
     private var primaryColor: UIColor = DesignSystemAsset.primary.color
     private var buttonTextColor: UIColor = .white
-    private var buttonDisabledColor: UIColor = DesignSystemAsset.disabled.color
+    private var buttonDisabledColor: UIColor = DesignSystemAsset.gray400.color
 
     // MARK: - Initialization
 
@@ -44,7 +44,7 @@ public final class MumukPrimaryButton: UIButton {
         title: String,
         primaryColor: UIColor = DesignSystemAsset.primary.color,
         buttonTextColor: UIColor = .white,
-        buttonDisabledColor: UIColor = DesignSystemAsset.disabled.color
+        buttonDisabledColor: UIColor = DesignSystemAsset.gray400.color
     ) {
         self.primaryColor = primaryColor
         self.buttonTextColor = buttonTextColor

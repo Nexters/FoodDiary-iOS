@@ -17,26 +17,54 @@ import DesignSystem
 /// label.attributedText = Typography.hd24.styled("뭐먹었지")
 /// ```
 public enum Typography {
-    /// Headline 24pt - Semibold, 130% line height
+    // MARK: - Headline (Bold, 130% line height)
+    /// 페이지 헤드라인 - 24pt Bold
     case hd24
-    /// Headline 20pt - Semibold, 130% line height
+    /// 페이지 타이틀 - 20pt Bold
     case hd20
-    /// Headline 18pt - Semibold, 130% line height
+    /// 페이지 서브 타이틀 - 18pt Bold
     case hd18
-    /// Paragraph 12pt - Regular, 100% line height
+    /// 페이지 서브 타이틀 2nd - 16pt Bold
+    case hd16
+
+    // MARK: - Paragraph (Regular, 100% line height)
+    /// 본문 - 18pt Regular
+    case p18
+    /// 캡션 - 15pt Regular
+    case p15
+    /// 플래그명 (예: 중식, 한식, 양식 등) - 14pt Regular
+    case p14
+    /// 아이콘 + - 12pt Regular
     case p12
 
     /// 직접사용 금지: line spacing 적용된 NSAttributedString 사용할 것
     private var font: UIFont {
         switch self {
         case .hd24:
-            return DesignSystemFontFamily.Pretendard.semiBold.font(size: 24)
+            return DesignSystemFontFamily.Pretendard.bold.font(size: 24)
         case .hd20:
-            return DesignSystemFontFamily.Pretendard.semiBold.font(size: 20)
+            return DesignSystemFontFamily.Pretendard.bold.font(size: 20)
         case .hd18:
-            return DesignSystemFontFamily.Pretendard.semiBold.font(size: 18)
+            return DesignSystemFontFamily.Pretendard.bold.font(size: 18)
+        case .hd16:
+            return DesignSystemFontFamily.Pretendard.bold.font(size: 16)
+        case .p18:
+            return DesignSystemFontFamily.Pretendard.regular.font(size: 18)
+        case .p15:
+            return DesignSystemFontFamily.Pretendard.regular.font(size: 15)
+        case .p14:
+            return DesignSystemFontFamily.Pretendard.regular.font(size: 14)
         case .p12:
             return DesignSystemFontFamily.Pretendard.regular.font(size: 12)
+        }
+    }
+
+    private var lineHeightMultiple: CGFloat {
+        switch self {
+        case .hd24, .hd20, .hd18, .hd16:
+            return 1.3
+        case .p18, .p15, .p14, .p12:
+            return 1.0
         }
     }
 
@@ -45,10 +73,14 @@ public enum Typography {
     }
 
     public func styled(_ text: String, color: UIColor = .white) -> NSAttributedString {
-        NSAttributedString(string: text, attributes: [
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineHeightMultiple = lineHeightMultiple
+
+        return NSAttributedString(string: text, attributes: [
             .font: font,
             .kern: letterSpacing,
-            .foregroundColor: color
+            .foregroundColor: color,
+            .paragraphStyle: paragraphStyle
         ])
     }
 }

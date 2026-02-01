@@ -31,7 +31,7 @@ public struct ImagePickerConfiguration: Sendable {
     public static let `default` = ImagePickerConfiguration(
         primaryColor: DesignSystemAsset.primary.color,
         buttonTextColor: .white,
-        buttonDisabledColor: DesignSystemAsset.disabled.color,
+        buttonDisabledColor: DesignSystemAsset.gray400.color,
         maxSelectionCount: nil,
         confirmButtonTitle: "추가하기"
     )
