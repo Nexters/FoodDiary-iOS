@@ -3,8 +3,8 @@
 //  Presentation
 //
 
-import DesignSystem
 import UIKit
+import DesignSystem
 
 /// 앱 전체 타이포그래피 스타일 정의
 ///
@@ -53,7 +53,7 @@ public enum Typography {
     }
 }
 
-extension UILabel {
+public extension UILabel {
     /// Typography 스타일이 적용된 텍스트 설정
     ///
     /// - Parameters:
