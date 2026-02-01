@@ -21,6 +21,7 @@ let project = Project(
             dependencies: [
                 .project(target: "Domain", path: "../Domain"),
                 .external(name: "TensorFlowLiteSwift"),
+                .external(name: "Logging"),
             ]
         ),
         .target(
