@@ -31,6 +31,7 @@ public struct FetchWeeklyCalendarUseCase<Repository: FoodRecordRepository>: Send
         let weekDates = calendar.weekDates(from: weekStart)
         let recordsByDate = try await repository.fetchRecords(in: weekStart...weekEnd)
 
+        let today = calendar.startOfDay(for: Date())
         return weekDates.map { dayDate in
             let startOfDay = calendar.startOfDay(for: dayDate)
             return WeeklyCalendarDay(
@@ -38,6 +39,7 @@ public struct FetchWeeklyCalendarUseCase<Repository: FoodRecordRepository>: Send
                 dayOfWeek: dayDate.formatDayOfWeek(locale: locale),
                 dayNumber: dayDate.formatDayNumber(calendar: calendar),
                 isToday: calendar.isDateInToday(dayDate),
+                isFuture: startOfDay > today,
                 records: recordsByDate[startOfDay] ?? []
             )
         }
