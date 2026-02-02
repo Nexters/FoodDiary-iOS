@@ -62,7 +62,7 @@ extension UIView {
 // MARK: - GradientBorderView
 
 /// 위에서 아래로 페이드되는 그라디언트 보더 뷰
-public final class GradientBorderView: UIView {
+fileprivate final class GradientBorderView: UIView {
 
     private let gradientLayer = CAGradientLayer()
     private let shapeLayer = CAShapeLayer()
