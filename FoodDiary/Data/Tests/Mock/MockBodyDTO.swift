@@ -11,3 +11,8 @@ struct MockBodyDTO: Encodable {
     let name: String
     let age: Int
 }
+
+struct MockResponseDTO: Codable, Equatable {
+    let id: String
+    let message: String
+}
