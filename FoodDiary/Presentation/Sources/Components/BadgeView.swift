@@ -11,6 +11,14 @@ import UIKit
 /// 범용 배지 뷰
 final class BadgeView: UIView {
 
+    // MARK: - Constants
+
+    private enum Constants {
+        static let cornerRadius: CGFloat = 12
+        static let verticalInset: CGFloat = 4
+        static let horizontalInset: CGFloat = 8
+    }
+
     // MARK: - UI Components
 
     private let label: UILabel = {
@@ -41,14 +49,19 @@ final class BadgeView: UIView {
     // MARK: - Setup
 
     private func setupUI() {
-        layer.cornerRadius = 12
+        layer.cornerRadius = Constants.cornerRadius
         clipsToBounds = true
         addSubview(label)
     }
 
     private func setupConstraints() {
         label.snp.makeConstraints {
-            $0.edges.equalToSuperview().inset(UIEdgeInsets(top: 6, left: 12, bottom: 6, right: 12))
+            $0.edges.equalToSuperview().inset(UIEdgeInsets(
+                top: Constants.verticalInset,
+                left: Constants.horizontalInset,
+                bottom: Constants.verticalInset,
+                right: Constants.horizontalInset
+            ))
         }
     }
 
