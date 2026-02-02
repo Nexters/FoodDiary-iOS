@@ -11,6 +11,11 @@ import UIKit
 /// 주간 캘린더의 개별 날짜 셀
 final class DayCellView: UIView {
 
+    private enum Constants {
+        static let cornerRadius: CGFloat = 8
+        static let borderWidth: CGFloat = 2
+    }
+
     var tapHandler: ((Date) -> Void)?
     private var date: Date?
 
@@ -105,19 +110,26 @@ final class DayCellView: UIView {
     private func applyStyle(dayOfWeek: String, dayNumber: String, isToday: Bool, isSelected: Bool) {
         if isSelected {
             containerView.backgroundColor = DesignSystemAsset.primary.color
-            containerView.layer.cornerRadius = 8
+            containerView.layer.cornerRadius = Constants.cornerRadius
+            containerView.applyGlow(
+                glowColor: .primary,
+                borderColor: UIColor.white.withAlphaComponent(0.3),
+                cornerRadius: Constants.cornerRadius
+            )
             dayOfWeekLabel.setText(dayOfWeek, style: .p12, color: .white)
             dayNumberLabel.setText(dayNumber, style: .p12, color: .white)
             recordIndicator.backgroundColor = .white
         } else if isToday {
             containerView.backgroundColor = DesignSystemAsset.primary.color.withAlphaComponent(0.2)
-            containerView.layer.cornerRadius = 8
+            containerView.layer.cornerRadius = Constants.cornerRadius
+            containerView.removeGlow()
             dayOfWeekLabel.setText(dayOfWeek, style: .p12, color: .gray300)
             dayNumberLabel.setText(dayNumber, style: .p12, color: .white)
             recordIndicator.backgroundColor = DesignSystemAsset.primary.color
         } else {
             containerView.backgroundColor = .clear
-            containerView.layer.cornerRadius = 8
+            containerView.layer.cornerRadius = Constants.cornerRadius
+            containerView.removeGlow()
             dayOfWeekLabel.setText(dayOfWeek, style: .p12, color: .gray300)
             dayNumberLabel.setText(dayNumber, style: .p12, color: .white)
             recordIndicator.backgroundColor = DesignSystemAsset.primary.color

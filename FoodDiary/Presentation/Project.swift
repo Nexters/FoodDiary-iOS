@@ -23,6 +23,7 @@ let project = Project(
                 .project(target: "Domain", path: "../Domain"),
                 .project(target: "DesignSystem", path: "../DesignSystem"),
                 .project(target: "DI", path: "../DI"),
+                .external(name: "Kingfisher"),
             ]
         ),
         .target(

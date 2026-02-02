@@ -36,6 +36,8 @@ public enum Typography {
     case p14
     /// 아이콘 + - 12pt Regular
     case p12
+    /// 소형 텍스트 - 10pt Regular
+    case p10
 
     /// 직접사용 금지: line spacing 적용된 NSAttributedString 사용할 것
     private var font: UIFont {
@@ -56,14 +58,16 @@ public enum Typography {
             return DesignSystemFontFamily.Pretendard.regular.font(size: 14)
         case .p12:
             return DesignSystemFontFamily.Pretendard.regular.font(size: 12)
+        case .p10:
+            return DesignSystemFontFamily.Pretendard.regular.font(size: 10)
         }
     }
 
     private var lineHeightMultiple: CGFloat {
         switch self {
         case .hd24, .hd20, .hd18, .hd16:
-            return 1.3
-        case .p18, .p15, .p14, .p12:
+            return 1.0
+        case .p18, .p15, .p14, .p12, .p10:
             return 1.0
         }
     }
