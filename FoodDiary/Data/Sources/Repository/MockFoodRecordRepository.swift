@@ -25,7 +25,9 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
     }
 
     public func saveRecord(_ request: CreateFoodRecordRequest) async throws -> FoodRecord {
-        // 서버 응답 시뮬레이션 (실제로는 서버가 AI 분석 후 응답)
+        // 서버 AI 분석 딜레이 시뮬레이션 (3초)
+        try await Task.sleep(for: .seconds(3))
+
         let dateKey = calendar.startOfDay(for: request.date)
         let hour = calendar.component(.hour, from: Date())
 

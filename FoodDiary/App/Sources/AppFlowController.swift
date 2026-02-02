@@ -88,7 +88,8 @@ private extension AppFlowController {
             fetchFoodImageAssetUseCase: fetchFoodImageAssetUseCase,
             fetchFoodRecordsUseCase: fetchFoodRecordsUseCase,
             saveFoodRecordUseCase: saveFoodRecordUseCase,
-            requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase
+            requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase,
+            imageProvider: imageProvider
         )
 
         let weeklyCalendarVC = WeeklyCalendarViewController(

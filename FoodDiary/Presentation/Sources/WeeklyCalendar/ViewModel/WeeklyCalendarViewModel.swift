@@ -6,14 +6,16 @@
 import Combine
 import Domain
 import Foundation
+import UIKit
 
 // MARK: - ViewModel
 
 public final class WeeklyCalendarViewModel<
     RecordRepo: FoodRecordRepository,
     AssetRepo: FoodImageAssetRepository,
-    AuthRepo: PhotoAuthorizationRepository
-> {
+    AuthRepo: PhotoAuthorizationRepository,
+    ImageProvider: RenderableImageRepository
+> where ImageProvider.Asset == AssetRepo.Asset {
     // MARK: - Output
 
     public var statePublisher: AnyPublisher<State, Never> {
@@ -48,6 +50,7 @@ public final class WeeklyCalendarViewModel<
     private let fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
     private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>
     private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>
+    private let imageProvider: ImageProvider
 
     // MARK: - Init
 
@@ -56,13 +59,15 @@ public final class WeeklyCalendarViewModel<
         fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase<AssetRepo>,
         fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>,
         saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>,
-        requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>
+        requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>,
+        imageProvider: ImageProvider
     ) {
         self.fetchWeeklyCalendarUseCase = fetchWeeklyCalendarUseCase
         self.fetchFoodImageAssetUseCase = fetchFoodImageAssetUseCase
         self.fetchFoodRecordsUseCase = fetchFoodRecordsUseCase
         self.saveFoodRecordUseCase = saveFoodRecordUseCase
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
+        self.imageProvider = imageProvider
 
         self.calendar = Calendar.current
 
@@ -163,19 +168,44 @@ public final class WeeklyCalendarViewModel<
 
     @MainActor
     private func savePhotosAsRecord(_ assets: [AssetRepo.Asset]) async {
-        state.isSaving = true
-        defer { state.isSaving = false }
+        guard let firstAsset = assets.first else { return }
 
+        let localIdentifiers = assets.map { $0.id }
+
+        // 1. 대표 이미지 로드 후 PendingFoodRecord 생성
+        let representativeImage: UIImage
+        do {
+            representativeImage = try await imageProvider.loadImage(
+                for: firstAsset,
+                targetSize: CGSize(width: 600, height: 600)
+            )
+        } catch {
+            eventSubject.send(.saveFailed(error))
+            return
+        }
+
+        let pendingRecord = PendingFoodRecord(
+            date: state.selectedDate,
+            representativeImage: representativeImage
+        )
+        state.pendingRecords.insert(pendingRecord, at: 0)
+
+        // 2. 백그라운드에서 서버 저장
         let request = CreateFoodRecordRequest(
             date: state.selectedDate,
-            localImageIdentifiers: assets.map { $0.id }
+            localImageIdentifiers: localIdentifiers
         )
 
         do {
             let savedRecord = try await saveFoodRecordUseCase.execute(request)
+
+            // 3. 완료: pending 제거, 실제 record 추가
+            state.pendingRecords.removeAll { $0.id == pendingRecord.id }
             state.selectedDateRecords.insert(savedRecord, at: 0)
             eventSubject.send(.saveCompleted(savedRecord))
         } catch {
+            // 4. 실패: pending 제거, 에러 이벤트
+            state.pendingRecords.removeAll { $0.id == pendingRecord.id }
             eventSubject.send(.saveFailed(error))
         }
     }
@@ -222,6 +252,7 @@ extension WeeklyCalendarViewModel {
         public internal(set) var selectedDate: Date = Date()
         public internal(set) var monthText: String = ""
         public internal(set) var selectedDateRecords: [FoodRecord] = []
+        public internal(set) var pendingRecords: [PendingFoodRecord] = []
         public internal(set) var selectedDatePhotos: [FoodImageAsset<AssetRepo.Asset>] = []
         public internal(set) var isLoading: Bool = false
         public internal(set) var isSaving: Bool = false
@@ -236,6 +267,7 @@ extension WeeklyCalendarViewModel {
                 && Calendar.current.isDate(lhs.selectedDate, inSameDayAs: rhs.selectedDate)
                 && lhs.monthText == rhs.monthText
                 && lhs.selectedDateRecords == rhs.selectedDateRecords
+                && lhs.pendingRecords == rhs.pendingRecords
                 && lhs.isLoading == rhs.isLoading
                 && lhs.isSaving == rhs.isSaving
         }

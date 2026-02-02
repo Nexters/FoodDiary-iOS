@@ -6,6 +6,7 @@
 import Combine
 import DesignSystem
 import Domain
+import Photos
 import SnapKit
 import UIKit
 
@@ -18,7 +19,7 @@ public final class WeeklyCalendarViewController<
 
     // MARK: - Dependencies
 
-    private let viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo>
+    private let viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo, ImageProvider>
     private let imageProvider: ImageProvider
 
     // MARK: - UI Components
@@ -57,7 +58,7 @@ public final class WeeklyCalendarViewController<
     // MARK: - Init
 
     public init(
-        viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo>,
+        viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo, ImageProvider>,
         imageProvider: ImageProvider
     ) {
         self.viewModel = viewModel
@@ -191,15 +192,19 @@ public final class WeeklyCalendarViewController<
             .store(in: &cancellables)
 
         viewModel.statePublisher
-            .map { (records: $0.selectedDateRecords, foodPhotoCount: $0.foodPhotoCount, isSaving: $0.isSaving) }
+            .map {
+                (
+                    records: $0.selectedDateRecords, pendingRecords: $0.pendingRecords,
+                    foodPhotoCount: $0.foodPhotoCount
+                )
+            }
             .removeDuplicates(by: ==)
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] records, foodPhotoCount, isSaving in
+            .sink { [weak self] records, pendingRecords, foodPhotoCount in
                 self?.bottomContentView.configure(
-                    hasRecords: !records.isEmpty,
                     records: records,
-                    photoCount: foodPhotoCount,
-                    isSaving: isSaving
+                    pendingRecords: pendingRecords,
+                    photoCount: foodPhotoCount
                 )
             }
             .store(in: &cancellables)
