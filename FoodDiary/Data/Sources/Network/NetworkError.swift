@@ -9,8 +9,10 @@ import Foundation
 
 public enum NetworkError: Error {
     case invalidURL
+    case requestFailed
     case encodingError
     case decodingError
     case invalidResponse
     case httpError(statusCode: Int, data: Data?)
+    case unknown
 }

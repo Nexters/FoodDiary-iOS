@@ -10,22 +10,50 @@ import Foundation
 public struct HTTPClient: HTTPClienting {
     private let session: URLSession
     private let decoder: JSONDecoder
+    private let logger: HTTPLogger
     
-    public init(session: URLSession = .shared, decoder: JSONDecoder = .init()) {
+    public init(
+        session: URLSession = .shared,
+        decoder: JSONDecoder = .init(),
+        logger: HTTPLogger = HTTPLogger()
+    ) {
         self.session = session
         self.decoder = decoder
+        self.logger = logger
     }
-    
+
     public func request<T: Decodable>(_ request: some Requestable, accessToken: String? = nil) async throws -> T {
-        var urlRequest = try request.makeURLRequest()
-        applyAccessToken(accessToken, to: &urlRequest)
-        let (data, response) = try await session.data(for: urlRequest)
-        try checkResponse(data, response)
-        
         do {
-            return try decoder.decode(T.self, from: data)
+            var urlRequest = try request.makeURLRequest()
+            applyAccessToken(accessToken, to: &urlRequest)
+
+            logger.logRequest(urlRequest)
+
+            let (data, response) = try await session.data(for: urlRequest)
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                logger.logError(NetworkError.invalidResponse, context: "Network error")
+                throw NetworkError.invalidResponse
+            }
+
+            logger.logResponse(response, statusCode: httpResponse.statusCode)
+
+            try checkResponse(data, httpResponse)
+
+            do {
+                let model = try decoder.decode(T.self, from: data)
+                logger.logDecodedModel(model)
+                return model
+            } catch {
+                logger.logError(error, context: "Decoding error")
+                throw NetworkError.decodingError
+            }
+        } catch let error as NetworkError {
+            logger.logError(error, context: "Network error")
+            throw error
         } catch {
-            throw NetworkError.decodingError
+            logger.logError(error, context: "Request error")
+            throw NetworkError.requestFailed
         }
     }
 }
@@ -36,18 +64,13 @@ private extension HTTPClient {
         guard let accessToken else { return }
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
     }
-    
-    func checkResponse(_ data: Data, _ response: URLResponse) throws {
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NetworkError.invalidResponse
-        }
-        
-        // TODO: 네트워크 에러 핸들링 정의되고 나서 로직 재구현 예정.
-        switch httpResponse.statusCode {
+
+    func checkResponse(_ data: Data, _ response: HTTPURLResponse) throws {
+        switch response.statusCode {
         case 200..<300:
             return
         default:
-            throw NetworkError.httpError(statusCode: httpResponse.statusCode, data: data)
+            throw NetworkError.httpError(statusCode: response.statusCode, data: data)
         }
     }
 }
