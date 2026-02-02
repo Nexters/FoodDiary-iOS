@@ -24,6 +24,27 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
         return mockRecords[startOfDay] ?? []
     }
 
+    public func saveRecord(_ request: CreateFoodRecordRequest) async throws -> FoodRecord {
+        // 서버 응답 시뮬레이션 (실제로는 서버가 AI 분석 후 응답)
+        let dateKey = calendar.startOfDay(for: request.date)
+        let hour = calendar.component(.hour, from: Date())
+
+        let newRecord = FoodRecord(
+            id: UUID().uuidString,
+            date: dateKey,
+            mealType: MealType.classify(from: hour),
+            genre: FoodGenre.allCases.randomElement() ?? .etc,
+            imageURLs: request.localImageIdentifiers.map { _ in Self.mockImageURL },
+            restaurantName: "새로운 맛집",
+            address: "서울시 강남구 어딘가",
+            hashtags: ["맛있다", "추천"],
+            createdAt: Date()
+        )
+
+        mockRecords[dateKey, default: []].insert(newRecord, at: 0)
+        return newRecord
+    }
+
     // MARK: - Mock Data Setup
 
     private static let mockImageURL = URL(string: "https://mblogthumb-phinf.pstatic.net/MjAyNDExMjBfNzgg/MDAxNzMyMTAyNjU2Nzc5.-_dSylVBQ7k5rG6AxtNZ2H8_tAh2kOTjNsU1Ef2xQHog.v80D1-aXmFLEFMCz6vr_Vgao2AnJgPucdfGMI4dGAvwg.JPEG/IMG_7463.JPG?type=w800")!
