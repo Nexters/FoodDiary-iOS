@@ -253,10 +253,19 @@ public final class WeeklyCalendarViewController<
 
     private func presentImagePicker() {
         // 선택된 날짜의 사진들을 가져와서 ImagePicker에 전달
-        let selectedPhotos = viewModel.state.selectedDatePhotos.map { $0.imageAsset }
+        let foodImageAssets = viewModel.state.selectedDatePhotos
+        let selectedPhotos = foodImageAssets.map { $0.imageAsset }
+
+        // 음식 확률 0.6 이상인 사진 ID를 미리 선택
+        let preselectedIds = Set(
+            foodImageAssets
+                .filter { $0.foodProbability >= 0.6 }
+                .map { $0.id }
+        )
 
         let picker = ImagePickerViewController(
             photos: selectedPhotos,
+            preselectedIds: preselectedIds,
             imageProvider: imageProvider,
             configuration: .default
         )
