@@ -81,6 +81,28 @@ final class BottomContentView: UIView {
 
     private var cardStackView: FoodRecordCardStackView?
 
+    // Loading State UI
+    private let loadingStateView: UIView = {
+        let view = UIView()
+        view.isHidden = true
+        return view
+    }()
+
+    private let activityIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .large)
+        indicator.color = .white
+        return indicator
+    }()
+
+    private let loadingLabel: UILabel = {
+        let label = UILabel()
+        label.text = "기록 저장 중..."
+        label.textColor = UIColor.white.withAlphaComponent(0.8)
+        label.font = .systemFont(ofSize: 14)
+        label.textAlignment = .center
+        return label
+    }()
+
     // MARK: - Init
 
     override init(frame: CGRect) {
@@ -108,6 +130,11 @@ final class BottomContentView: UIView {
 
         // Card Stack State
         containerView.addSubview(cardStackStateView)
+
+        // Loading State
+        containerView.addSubview(loadingStateView)
+        loadingStateView.addSubview(activityIndicator)
+        loadingStateView.addSubview(loadingLabel)
     }
 
     private func setupConstraints() {
@@ -140,6 +167,21 @@ final class BottomContentView: UIView {
         cardStackStateView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
+
+        // Loading State Constraints
+        loadingStateView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
+
+        activityIndicator.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.centerY.equalToSuperview().offset(-20)
+        }
+
+        loadingLabel.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.top.equalTo(activityIndicator.snp.bottom).offset(16)
+        }
     }
 
     private func setupActions() {
@@ -148,17 +190,28 @@ final class BottomContentView: UIView {
 
     // MARK: - Configuration
 
-    func configure(hasRecords: Bool, records: [FoodRecord], photoCount: Int) {
-        if hasRecords, let firstRecord = records.first {
+    func configure(hasRecords: Bool, records: [FoodRecord], photoCount: Int, isSaving: Bool = false) {
+        if isSaving {
+            showLoadingState()
+        } else if hasRecords, let firstRecord = records.first {
             showCardStackState(record: firstRecord, totalCount: records.count)
         } else {
             showEmptyState(photoCount: photoCount)
         }
     }
 
+    private func showLoadingState() {
+        emptyStateView.isHidden = true
+        cardStackStateView.isHidden = true
+        loadingStateView.isHidden = false
+        activityIndicator.startAnimating()
+    }
+
     private func showEmptyState(photoCount: Int) {
         emptyStateView.isHidden = false
         cardStackStateView.isHidden = true
+        loadingStateView.isHidden = true
+        activityIndicator.stopAnimating()
 
         if photoCount > 0 {
             placeholderLabel.text = "음식 사진을 추가해보세요."
@@ -173,6 +226,8 @@ final class BottomContentView: UIView {
     private func showCardStackState(record: FoodRecord, totalCount: Int) {
         emptyStateView.isHidden = true
         cardStackStateView.isHidden = false
+        loadingStateView.isHidden = true
+        activityIndicator.stopAnimating()
 
         // 기존 카드스택뷰 제거
         cardStackView?.removeFromSuperview()

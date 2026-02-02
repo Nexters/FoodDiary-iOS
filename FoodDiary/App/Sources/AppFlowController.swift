@@ -67,6 +67,12 @@ private extension AppFlowController {
             fatalError("FetchFoodRecordsUseCase not registered")
         }
 
+        guard let saveFoodRecordUseCase = try? container.resolve(
+            SaveFoodRecordUseCase<MockFoodRecordRepository>.self
+        ) else {
+            fatalError("SaveFoodRecordUseCase not registered")
+        }
+
         guard let imageProvider = try? container.resolve(UIImageLoader.self) else {
             fatalError("UIImageLoader not registered")
         }
@@ -81,6 +87,7 @@ private extension AppFlowController {
             fetchWeeklyCalendarUseCase: weeklyCalendarUseCase,
             fetchFoodImageAssetUseCase: fetchFoodImageAssetUseCase,
             fetchFoodRecordsUseCase: fetchFoodRecordsUseCase,
+            saveFoodRecordUseCase: saveFoodRecordUseCase,
             requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase
         )
 

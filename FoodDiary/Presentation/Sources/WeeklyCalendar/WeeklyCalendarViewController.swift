@@ -191,25 +191,30 @@ public final class WeeklyCalendarViewController<
             .store(in: &cancellables)
 
         viewModel.statePublisher
-            .map { (records: $0.selectedDateRecords, foodPhotoCount: $0.foodPhotoCount) }
+            .map { (records: $0.selectedDateRecords, foodPhotoCount: $0.foodPhotoCount, isSaving: $0.isSaving) }
             .removeDuplicates(by: ==)
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] records, foodPhotoCount in
+            .sink { [weak self] records, foodPhotoCount, isSaving in
                 self?.bottomContentView.configure(
                     hasRecords: !records.isEmpty,
                     records: records,
-                    photoCount: foodPhotoCount
+                    photoCount: foodPhotoCount,
+                    isSaving: isSaving
                 )
             }
             .store(in: &cancellables)
 
-        // Event: 권한 거부 시 설정 이동 안내 Alert 표시
+        // Event: 권한 거부 시 설정 이동 안내 Alert 표시 및 저장 결과 처리
         viewModel.eventPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] event in
                 switch event {
                 case .photoAuthorizationDenied:
                     self?.showPhotoAuthorizationDeniedAlert()
+                case .saveCompleted:
+                    break
+                case .saveFailed(let error):
+                    self?.showSaveErrorAlert(error)
                 }
             }
             .store(in: &cancellables)
@@ -269,10 +274,19 @@ public final class WeeklyCalendarViewController<
         switch result {
         case .selected(let assets):
             navigationController?.popViewController(animated: true)
-            // TODO: AI 분석 로딩 화면으로 이동
-            print("Selected \(assets.count) photos for AI analysis")
+            viewModel.input.send(.saveSelectedPhotos(assets))
         case .cancelled:
             navigationController?.popViewController(animated: true)
         }
+    }
+
+    private func showSaveErrorAlert(_ error: Error) {
+        let alert = UIAlertController(
+            title: "저장 실패",
+            message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
     }
 }

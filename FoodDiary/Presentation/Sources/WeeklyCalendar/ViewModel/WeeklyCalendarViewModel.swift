@@ -46,6 +46,7 @@ public final class WeeklyCalendarViewModel<
     private let fetchWeeklyCalendarUseCase: FetchWeeklyCalendarUseCase<RecordRepo>
     private let fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase<AssetRepo>
     private let fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
+    private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>
     private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>
 
     // MARK: - Init
@@ -54,11 +55,13 @@ public final class WeeklyCalendarViewModel<
         fetchWeeklyCalendarUseCase: FetchWeeklyCalendarUseCase<RecordRepo>,
         fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase<AssetRepo>,
         fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>,
+        saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>,
         requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>
     ) {
         self.fetchWeeklyCalendarUseCase = fetchWeeklyCalendarUseCase
         self.fetchFoodImageAssetUseCase = fetchFoodImageAssetUseCase
         self.fetchFoodRecordsUseCase = fetchFoodRecordsUseCase
+        self.saveFoodRecordUseCase = saveFoodRecordUseCase
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
 
         self.calendar = Calendar.current
@@ -114,6 +117,9 @@ public final class WeeklyCalendarViewModel<
         case .selectDate(let date):
             state.selectedDate = date
             await loadDateData(of: state.selectedDate)
+
+        case .saveSelectedPhotos(let assets):
+            await savePhotosAsRecord(assets)
         }
     }
 
@@ -152,6 +158,25 @@ public final class WeeklyCalendarViewModel<
             state.selectedDateRecords = records
         } catch {
             print("Failed to load selected date data: \(error)")
+        }
+    }
+
+    @MainActor
+    private func savePhotosAsRecord(_ assets: [AssetRepo.Asset]) async {
+        state.isSaving = true
+        defer { state.isSaving = false }
+
+        let request = CreateFoodRecordRequest(
+            date: state.selectedDate,
+            localImageIdentifiers: assets.map { $0.id }
+        )
+
+        do {
+            let savedRecord = try await saveFoodRecordUseCase.execute(request)
+            state.selectedDateRecords.insert(savedRecord, at: 0)
+            eventSubject.send(.saveCompleted(savedRecord))
+        } catch {
+            eventSubject.send(.saveFailed(error))
         }
     }
 
@@ -199,6 +224,7 @@ extension WeeklyCalendarViewModel {
         public internal(set) var selectedDateRecords: [FoodRecord] = []
         public internal(set) var selectedDatePhotos: [FoodImageAsset<AssetRepo.Asset>] = []
         public internal(set) var isLoading: Bool = false
+        public internal(set) var isSaving: Bool = false
 
         /// 음식으로 판별된 사진 개수
         public var foodPhotoCount: Int {
@@ -211,6 +237,7 @@ extension WeeklyCalendarViewModel {
                 && lhs.monthText == rhs.monthText
                 && lhs.selectedDateRecords == rhs.selectedDateRecords
                 && lhs.isLoading == rhs.isLoading
+                && lhs.isSaving == rhs.isSaving
         }
     }
 
@@ -220,9 +247,12 @@ extension WeeklyCalendarViewModel {
         case goToPreviousWeek
         case goToNextWeek
         case selectDate(Date)
+        case saveSelectedPhotos([AssetRepo.Asset])
     }
 
     public enum Event {
         case photoAuthorizationDenied
+        case saveCompleted(FoodRecord)
+        case saveFailed(Error)
     }
 }
