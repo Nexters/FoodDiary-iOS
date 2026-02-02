@@ -166,47 +166,63 @@ public final class WeeklyCalendarViewModel<
         }
     }
 
-    @MainActor
     private func savePhotosAsRecord(_ assets: [AssetRepo.Asset]) async {
-        guard let firstAsset = assets.first else { return }
+        guard !assets.isEmpty else { return }
 
-        let localIdentifiers = assets.map { $0.id }
-
-        // 1. 대표 이미지 로드 후 PendingFoodRecord 생성
-        let representativeImage: UIImage
+        // 1. 백그라운드에서 모든 이미지 로드
+        let images: [UIImage]
         do {
-            representativeImage = try await imageProvider.loadImage(
-                for: firstAsset,
-                targetSize: CGSize(width: 600, height: 600)
-            )
+            images = try await loadImages(from: assets)
         } catch {
             eventSubject.send(.saveFailed(error))
             return
         }
 
+        // 2. 대표 이미지로 PendingFoodRecord 생성
         let pendingRecord = PendingFoodRecord(
             date: state.selectedDate,
-            representativeImage: representativeImage
+            representativeImage: images[0]
         )
         state.pendingRecords.insert(pendingRecord, at: 0)
 
-        // 2. 백그라운드에서 서버 저장
+        // 3. 백그라운드에서 서버 저장
         let request = CreateFoodRecordRequest(
             date: state.selectedDate,
-            localImageIdentifiers: localIdentifiers
+            images: images
         )
 
         do {
             let savedRecord = try await saveFoodRecordUseCase.execute(request)
 
-            // 3. 완료: pending 제거, 실제 record 추가
+            // 4. 완료: pending 제거, 실제 record 추가
             state.pendingRecords.removeAll { $0.id == pendingRecord.id }
             state.selectedDateRecords.insert(savedRecord, at: 0)
             eventSubject.send(.saveCompleted(savedRecord))
         } catch {
-            // 4. 실패: pending 제거, 에러 이벤트
+            // 5. 실패: pending 제거, 에러 이벤트
             state.pendingRecords.removeAll { $0.id == pendingRecord.id }
             eventSubject.send(.saveFailed(error))
+        }
+    }
+
+    /// 여러 asset을 병렬로 로드하여 UIImage 배열로 반환
+    private func loadImages(from assets: [AssetRepo.Asset]) async throws -> [UIImage] {
+        try await withThrowingTaskGroup(of: (Int, UIImage).self) { group in
+            for (index, asset) in assets.enumerated() {
+                group.addTask {
+                    let image = try await self.imageProvider.loadImage(
+                        for: asset,
+                        targetSize: CGSize(width: 1200, height: 1200)
+                    )
+                    return (index, image)
+                }
+            }
+
+            var results: [(Int, UIImage)] = []
+            for try await result in group {
+                results.append(result)
+            }
+            return results.sorted(by: { $0.0 < $1.0 }).map { $0.1 }
         }
     }
 

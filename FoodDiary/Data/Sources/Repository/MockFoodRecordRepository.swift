@@ -31,12 +31,17 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
         let dateKey = calendar.startOfDay(for: request.date)
         let hour = calendar.component(.hour, from: Date())
 
+        // 실제 구현에서는 request.images를 multipart/form-data로 서버에 업로드하고
+        // 서버에서 반환된 이미지 URL을 사용합니다.
+        // Mock에서는 이미지 개수만큼 mock URL을 생성합니다.
+        let mockImageURLs = request.images.map { _ in Self.mockImageURL }
+
         let newRecord = FoodRecord(
             id: UUID().uuidString,
             date: dateKey,
             mealType: MealType.classify(from: hour),
             genre: FoodGenre.allCases.randomElement() ?? .etc,
-            imageURLs: request.localImageIdentifiers.map { _ in Self.mockImageURL },
+            imageURLs: mockImageURLs,
             restaurantName: "새로운 맛집",
             address: "서울시 강남구 어딘가",
             hashtags: ["맛있다", "추천"],
