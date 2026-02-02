@@ -16,8 +16,8 @@ struct FetchFoodRecordsUseCaseTests {
         let today = Date()
 
         let records = [
-            FoodRecord(id: "1", date: today, imageURLs: [], createdAt: today),
-            FoodRecord(id: "2", date: today, imageURLs: [], createdAt: today)
+            FoodRecord(id: "1", date: today, mealType: .lunch, genre: .korean, imageURLs: [], createdAt: today),
+            FoodRecord(id: "2", date: today, mealType: .dinner, genre: .western, imageURLs: [], createdAt: today)
         ]
         mockRepository.recordsToReturn = records
 

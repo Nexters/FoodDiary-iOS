@@ -28,7 +28,7 @@ struct FetchWeeklyCalendarUseCaseTests {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
 
-        let mockRecord = FoodRecord(id: "1", date: today, imageURLs: [], createdAt: today)
+        let mockRecord = FoodRecord(id: "1", date: today, mealType: .lunch, genre: .korean, imageURLs: [], createdAt: today)
         mockRepository.recordsByDateToReturn = [today: [mockRecord]]
 
         let useCase = FetchWeeklyCalendarUseCase(repository: mockRepository)
