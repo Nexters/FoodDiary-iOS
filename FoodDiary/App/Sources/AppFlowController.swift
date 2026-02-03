@@ -49,8 +49,8 @@ private extension AppFlowController {
     }
     
     func createMainView() -> UIViewController {
-        guard let weeklyCalendarUseCase = try? container.resolve(
-            FetchWeeklyCalendarUseCase<MockFoodRecordRepository>.self
+        guard let foodRecordRepository = try? container.resolve(
+            MockFoodRecordRepository.self
         ) else {
             fatalError("FetchWeeklyCalendarUseCase not registered")
         }
@@ -92,12 +92,8 @@ private extension AppFlowController {
             imageProvider: imageProvider
         )
 
-        let weeklyCalendarVC = WeeklyCalendarViewController(
-            viewModel: viewModel,
-            imageProvider: imageProvider
-        )
-
-        return UINavigationController(rootViewController: weeklyCalendarVC)
+        let monthlyCalendarVC = MonthlyCalendarViewController(viewModel: viewModel)
+        return UINavigationController(rootViewController: monthlyCalendarVC)
     }
     
     func createLoginView() -> UIViewController {
