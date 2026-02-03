@@ -9,10 +9,28 @@ import Domain
 import SnapKit
 import UIKit
 
+private enum MonthlyCalendarConstants {
+    static let containerCornerRadius: CGFloat = 16
+    static let containerBorderWidth: CGFloat = 1
+    static let subtitleTopOffset: CGFloat = 130
+    static let titleTopSpacing: CGFloat = 8
+    static let horizontalInset: CGFloat = 16
+    static let headerTopSpacing: CGFloat = 36
+    static let headerHorizontalInset: CGFloat = 20
+    static let containerTopSpacing: CGFloat = 24
+    static let containerHorizontalInset: CGFloat = 20
+    static let containerBottomInset: CGFloat = 100
+    static let stackTopInset: CGFloat = 24
+    static let stackHorizontalInset: CGFloat = 14
+    static let stackBottomInset: CGFloat = 18
+}
+
 public final class MonthlyCalendarViewController<
     RecordRepo: FoodRecordRepository,
     AuthRepo: PhotoAuthorizationRepository
 >: UIViewController {
+
+    private typealias Constants = MonthlyCalendarConstants
 
     private enum Section: Hashable {
         case calendar
@@ -55,11 +73,11 @@ public final class MonthlyCalendarViewController<
         let v = UIView()
         v.layer.borderColor = DesignSystemAsset.sd800.color.cgColor
         v.backgroundColor = DesignSystemAsset.sd900.color
-        v.layer.borderWidth = 1
-        v.layer.cornerRadius = 16
+        v.layer.borderWidth = Constants.containerBorderWidth
+        v.layer.cornerRadius = Constants.containerCornerRadius
         return v
     }()
-    
+
     private lazy var stackView: UIStackView = {
         let sv = UIStackView(arrangedSubviews: [weekdayHeaderView, collectionView])
         sv.axis = .vertical
@@ -145,31 +163,31 @@ public final class MonthlyCalendarViewController<
         }
 
         subtitleLabel.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(130)
-            $0.leading.equalToSuperview().inset(16)
+            $0.top.equalToSuperview().offset(Constants.subtitleTopOffset)
+            $0.leading.equalToSuperview().inset(Constants.horizontalInset)
         }
 
         titleLabel.snp.makeConstraints {
-            $0.top.equalTo(subtitleLabel.snp.bottom).offset(8)
-            $0.leading.trailing.equalToSuperview().inset(16)
+            $0.top.equalTo(subtitleLabel.snp.bottom).offset(Constants.titleTopSpacing)
+            $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
         }
 
         monthYearHeaderView.snp.makeConstraints {
-            $0.top.equalTo(titleLabel.snp.bottom).offset(36)
-            $0.leading.trailing.equalToSuperview().inset(20)
+            $0.top.equalTo(titleLabel.snp.bottom).offset(Constants.headerTopSpacing)
+            $0.leading.trailing.equalToSuperview().inset(Constants.headerHorizontalInset)
             $0.height.equalTo(32)
         }
 
         containerView.snp.makeConstraints {
-            $0.top.equalTo(monthYearHeaderView.snp.bottom).offset(24)
-            $0.leading.trailing.equalToSuperview().inset(20)
-            $0.bottom.equalToSuperview().inset(100)
+            $0.top.equalTo(monthYearHeaderView.snp.bottom).offset(Constants.containerTopSpacing)
+            $0.leading.trailing.equalToSuperview().inset(Constants.containerHorizontalInset)
+            $0.bottom.equalToSuperview().inset(Constants.containerBottomInset)
         }
 
         stackView.snp.makeConstraints {
-            $0.top.equalToSuperview().inset(24)
-            $0.leading.trailing.equalToSuperview().inset(14)
-            $0.bottom.equalToSuperview().inset(18)
+            $0.top.equalToSuperview().inset(Constants.stackTopInset)
+            $0.leading.trailing.equalToSuperview().inset(Constants.stackHorizontalInset)
+            $0.bottom.equalToSuperview().inset(Constants.stackBottomInset)
         }
 
         collectionView.snp.makeConstraints {
@@ -248,7 +266,7 @@ public final class MonthlyCalendarViewController<
     }
 
     private func updateCollectionViewHeight() {
-        let availableWidth = view.bounds.width - 40 - 28
+        let availableWidth = view.bounds.width - Constants.containerHorizontalInset * 2 - Constants.stackHorizontalInset * 2
         let cellWidth = availableWidth / 7
 
         let rowHeight = cellWidth + 28
