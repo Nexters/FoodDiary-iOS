@@ -24,6 +24,34 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
         return mockRecords[startOfDay] ?? []
     }
 
+    public func saveRecord(_ request: CreateFoodRecordRequest) async throws -> FoodRecord {
+        // 서버 AI 분석 딜레이 시뮬레이션 (3초)
+        try await Task.sleep(for: .seconds(3))
+
+        let dateKey = calendar.startOfDay(for: request.date)
+        let hour = calendar.component(.hour, from: Date())
+
+        // 실제 구현에서는 request.images를 multipart/form-data로 서버에 업로드하고
+        // 서버에서 반환된 이미지 URL을 사용합니다.
+        // Mock에서는 이미지 개수만큼 mock URL을 생성합니다.
+        let mockImageURLs = request.images.map { _ in Self.mockImageURL }
+
+        let newRecord = FoodRecord(
+            id: UUID().uuidString,
+            date: dateKey,
+            mealType: MealType.classify(from: hour),
+            genre: FoodGenre.allCases.randomElement() ?? .etc,
+            imageURLs: mockImageURLs,
+            restaurantName: "새로운 맛집",
+            address: "서울시 강남구 어딘가",
+            hashtags: ["맛있다", "추천"],
+            createdAt: Date()
+        )
+
+        mockRecords[dateKey, default: []].insert(newRecord, at: 0)
+        return newRecord
+    }
+
     // MARK: - Mock Data Setup
 
     private static let mockImageURL = URL(string: "https://mblogthumb-phinf.pstatic.net/MjAyNDExMjBfNzgg/MDAxNzMyMTAyNjU2Nzc5.-_dSylVBQ7k5rG6AxtNZ2H8_tAh2kOTjNsU1Ef2xQHog.v80D1-aXmFLEFMCz6vr_Vgao2AnJgPucdfGMI4dGAvwg.JPEG/IMG_7463.JPG?type=w800")!

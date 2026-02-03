@@ -81,6 +81,16 @@ final class BottomContentView: UIView {
 
     private var cardStackView: FoodRecordCardStackView?
 
+    // Pending State UI
+    private let pendingStateView: UIView = {
+        let view = UIView()
+        view.isHidden = true
+        view.clipsToBounds = false
+        return view
+    }()
+
+    private var pendingCardView: PendingFoodRecordCardView?
+
     // MARK: - Init
 
     override init(frame: CGRect) {
@@ -108,6 +118,9 @@ final class BottomContentView: UIView {
 
         // Card Stack State
         containerView.addSubview(cardStackStateView)
+
+        // Pending State
+        containerView.addSubview(pendingStateView)
     }
 
     private func setupConstraints() {
@@ -140,6 +153,11 @@ final class BottomContentView: UIView {
         cardStackStateView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
+
+        // Pending State Constraints
+        pendingStateView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
     }
 
     private func setupActions() {
@@ -148,17 +166,44 @@ final class BottomContentView: UIView {
 
     // MARK: - Configuration
 
-    func configure(hasRecords: Bool, records: [FoodRecord], photoCount: Int) {
-        if hasRecords, let firstRecord = records.first {
+    func configure(
+        records: [FoodRecord],
+        pendingRecords: [PendingFoodRecord],
+        photoCount: Int
+    ) {
+        if let firstPending = pendingRecords.first {
+            showPendingState(record: firstPending)
+        } else if let firstRecord = records.first {
             showCardStackState(record: firstRecord, totalCount: records.count)
         } else {
             showEmptyState(photoCount: photoCount)
         }
     }
 
+    private func showPendingState(record: PendingFoodRecord) {
+        emptyStateView.isHidden = true
+        cardStackStateView.isHidden = true
+        pendingStateView.isHidden = false
+
+        // 기존 pending 카드 제거
+        pendingCardView?.removeFromSuperview()
+
+        // 새로 생성
+        let newPendingCardView = PendingFoodRecordCardView(record: record)
+        pendingStateView.addSubview(newPendingCardView)
+        pendingCardView = newPendingCardView
+
+        newPendingCardView.snp.makeConstraints {
+            $0.center.equalToSuperview()
+            $0.horizontalEdges.equalToSuperview().inset(60)
+            $0.height.equalTo(newPendingCardView.snp.width).multipliedBy(1.15)
+        }
+    }
+
     private func showEmptyState(photoCount: Int) {
         emptyStateView.isHidden = false
         cardStackStateView.isHidden = true
+        pendingStateView.isHidden = true
 
         if photoCount > 0 {
             placeholderLabel.text = "음식 사진을 추가해보세요."
@@ -173,6 +218,8 @@ final class BottomContentView: UIView {
     private func showCardStackState(record: FoodRecord, totalCount: Int) {
         emptyStateView.isHidden = true
         cardStackStateView.isHidden = false
+        pendingStateView.isHidden = true
+        pendingCardView?.removeFromSuperview()
 
         // 기존 카드스택뷰 제거
         cardStackView?.removeFromSuperview()

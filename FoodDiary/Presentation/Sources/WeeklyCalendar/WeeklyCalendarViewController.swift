@@ -6,6 +6,7 @@
 import Combine
 import DesignSystem
 import Domain
+import Photos
 import SnapKit
 import UIKit
 
@@ -18,7 +19,7 @@ public final class WeeklyCalendarViewController<
 
     // MARK: - Dependencies
 
-    private let viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo>
+    private let viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo, ImageProvider>
     private let imageProvider: ImageProvider
 
     // MARK: - UI Components
@@ -57,7 +58,7 @@ public final class WeeklyCalendarViewController<
     // MARK: - Init
 
     public init(
-        viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo>,
+        viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo, ImageProvider>,
         imageProvider: ImageProvider
     ) {
         self.viewModel = viewModel
@@ -191,25 +192,34 @@ public final class WeeklyCalendarViewController<
             .store(in: &cancellables)
 
         viewModel.statePublisher
-            .map { (records: $0.selectedDateRecords, foodPhotoCount: $0.foodPhotoCount) }
+            .map {
+                (
+                    records: $0.selectedDateRecords, pendingRecords: $0.pendingRecords,
+                    foodPhotoCount: $0.foodPhotoCount
+                )
+            }
             .removeDuplicates(by: ==)
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] records, foodPhotoCount in
+            .sink { [weak self] records, pendingRecords, foodPhotoCount in
                 self?.bottomContentView.configure(
-                    hasRecords: !records.isEmpty,
                     records: records,
+                    pendingRecords: pendingRecords,
                     photoCount: foodPhotoCount
                 )
             }
             .store(in: &cancellables)
 
-        // Event: 권한 거부 시 설정 이동 안내 Alert 표시
+        // Event: 권한 거부 시 설정 이동 안내 Alert 표시 및 저장 결과 처리
         viewModel.eventPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] event in
                 switch event {
                 case .photoAuthorizationDenied:
                     self?.showPhotoAuthorizationDeniedAlert()
+                case .saveCompleted:
+                    break
+                case .saveFailed(let error):
+                    self?.showSaveErrorAlert(error)
                 }
             }
             .store(in: &cancellables)
@@ -248,10 +258,19 @@ public final class WeeklyCalendarViewController<
 
     private func presentImagePicker() {
         // 선택된 날짜의 사진들을 가져와서 ImagePicker에 전달
-        let selectedPhotos = viewModel.state.selectedDatePhotos.map { $0.imageAsset }
+        let foodImageAssets = viewModel.state.selectedDatePhotos
+        let selectedPhotos = foodImageAssets.map { $0.imageAsset }
+
+        // 음식 확률 0.6 이상인 사진 ID를 미리 선택
+        let preselectedIds = Set(
+            foodImageAssets
+                .filter { $0.foodProbability >= 0.6 }
+                .map { $0.id }
+        )
 
         let picker = ImagePickerViewController(
             photos: selectedPhotos,
+            preselectedIds: preselectedIds,
             imageProvider: imageProvider,
             configuration: .default
         )
@@ -269,10 +288,19 @@ public final class WeeklyCalendarViewController<
         switch result {
         case .selected(let assets):
             navigationController?.popViewController(animated: true)
-            // TODO: AI 분석 로딩 화면으로 이동
-            print("Selected \(assets.count) photos for AI analysis")
+            viewModel.input.send(.saveSelectedPhotos(assets))
         case .cancelled:
             navigationController?.popViewController(animated: true)
         }
+    }
+
+    private func showSaveErrorAlert(_ error: Error) {
+        let alert = UIAlertController(
+            title: "저장 실패",
+            message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
     }
 }

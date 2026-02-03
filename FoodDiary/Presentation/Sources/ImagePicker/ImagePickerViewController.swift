@@ -69,6 +69,7 @@ public final class ImagePickerViewController<
     private var cancellables = Set<AnyCancellable>()
 
     private let photos: [Asset]
+    private let preselectedIds: Set<String>
     private let imageProvider: ImageProvider
     private let configuration: ImagePickerConfiguration
 
@@ -128,16 +129,23 @@ public final class ImagePickerViewController<
 
     // MARK: - Initialization
 
+    /// 이미지 피커 초기화
+    /// - Parameters:
+    ///   - photos: 표시할 사진 목록
+    ///   - preselectedIds: 미리 선택될 사진 ID 집합
+    ///   - imageProvider: 이미지 로딩 제공자
+    ///   - configuration: 피커 설정
     public init(
         photos: [Asset],
+        preselectedIds: Set<String> = [],
         imageProvider: ImageProvider,
         configuration: ImagePickerConfiguration = .default
     ) {
         self.photos = photos
+        self.preselectedIds = preselectedIds
         self.imageProvider = imageProvider
         self.configuration = configuration
         super.init(nibName: nil, bundle: nil)
-
     }
 
     @available(*, unavailable)
@@ -151,6 +159,7 @@ public final class ImagePickerViewController<
         super.viewDidLoad()
         setupUI()
         setupConstraints()
+        applyPreselection()
     }
 
     public override func viewWillAppear(_ animated: Bool) {
@@ -189,6 +198,18 @@ public final class ImagePickerViewController<
             $0.bottom.equalTo(view.safeAreaLayoutGuide).inset(16)
             $0.height.equalTo(50)
         }
+    }
+
+    private func applyPreselection() {
+        for photo in photos where preselectedIds.contains(photo.id) {
+            // 최대 선택 수 확인
+            if let maxCount = configuration.maxSelectionCount,
+               selectedPhotoIds.count >= maxCount {
+                break
+            }
+            selectedPhotoIds.insert(photo.id)
+        }
+        updateConfirmButton()
     }
 
     // MARK: - Selection

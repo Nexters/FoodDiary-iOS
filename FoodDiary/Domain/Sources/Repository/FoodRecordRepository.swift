@@ -5,7 +5,7 @@
 
 import Foundation
 
-/// 음식 기록 조회 Repository 프로토콜 (서버 API)
+/// 음식 기록 Repository 프로토콜 (서버 API)
 public protocol FoodRecordRepository: Sendable {
     /// 특정 날짜 범위 내의 기록 조회
     /// - Parameter dateRange: 조회할 날짜 범위
@@ -16,4 +16,9 @@ public protocol FoodRecordRepository: Sendable {
     /// - Parameter date: 조회할 날짜
     /// - Returns: 해당 날짜의 음식 기록 배열
     func fetchRecords(for date: Date) async throws -> [FoodRecord]
+
+    /// 음식 기록 저장 (서버 업로드 → AI 분석 → FoodRecord 응답)
+    /// - Parameter request: 생성 요청 데이터
+    /// - Returns: 서버에서 생성된 FoodRecord
+    func saveRecord(_ request: CreateFoodRecordRequest) async throws -> FoodRecord
 }
