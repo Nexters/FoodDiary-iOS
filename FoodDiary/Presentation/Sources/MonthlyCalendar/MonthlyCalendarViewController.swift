@@ -83,6 +83,7 @@ public final class MonthlyCalendarViewController<
 
     private var dataSource: UICollectionViewDiffableDataSource<Section, MonthlyCalendarDay>?
     private var cancellables = Set<AnyCancellable>()
+    private var monthPickerCancellable: AnyCancellable?
     private var numberOfWeeks: Int = 5
     private var collectionViewHeightConstraint: Constraint?
 
@@ -274,11 +275,11 @@ public final class MonthlyCalendarViewController<
             sheet.detents = [.custom { context in context.maximumDetentValue * 0.4 }]
         }
 
-        picker.selectedMonthPublisher
+        monthPickerCancellable = picker.selectedMonthPublisher
             .sink { [weak self] date in
                 self?.viewModel.input.send(.selectMonth(date))
+                self?.monthPickerCancellable = nil
             }
-            .store(in: &cancellables)
 
         present(picker, animated: true)
     }
