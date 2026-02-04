@@ -119,10 +119,12 @@ extension MonthPickerBottomSheetViewController: UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(
+        guard let cell = tableView.dequeueReusableCell(
             withIdentifier: MonthPickerCell.reuseIdentifier,
             for: indexPath
-        ) as! MonthPickerCell
+        ) as? MonthPickerCell else {
+            return UITableViewCell()
+        }
 
         let month = months[indexPath.row]
         let calendar = Calendar.current
