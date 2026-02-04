@@ -220,10 +220,12 @@ public final class MonthlyCalendarViewController<
 
     private func setupDataSource() {
         dataSource = UICollectionViewDiffableDataSource<Section, MonthlyCalendarDay>(collectionView: collectionView) { collectionView, indexPath, day in
-            let cell = collectionView.dequeueReusableCell(
+            guard let cell = collectionView.dequeueReusableCell(
                 withReuseIdentifier: MonthlyCalendarDayCell.reuseIdentifier,
                 for: indexPath
-            ) as! MonthlyCalendarDayCell
+            ) as? MonthlyCalendarDayCell else {
+                return UICollectionViewCell()
+            }
 
             cell.configure(with: day, isSelected: false)
             return cell
