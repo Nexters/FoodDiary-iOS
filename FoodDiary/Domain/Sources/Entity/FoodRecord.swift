@@ -6,7 +6,7 @@
 import Foundation
 
 /// 서버에서 받아온 음식 기록 정보
-public struct FoodRecord: Identifiable, Equatable {
+public struct FoodRecord: Identifiable, Equatable, Sendable {
     public let id: String
     public let date: Date
     public let mealType: MealType
