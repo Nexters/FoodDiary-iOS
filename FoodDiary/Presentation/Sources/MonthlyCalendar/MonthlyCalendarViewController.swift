@@ -9,28 +9,10 @@ import Domain
 import SnapKit
 import UIKit
 
-private enum MonthlyCalendarConstants {
-    static let containerCornerRadius: CGFloat = 16
-    static let containerBorderWidth: CGFloat = 1
-    static let subtitleTopOffset: CGFloat = 130
-    static let titleTopSpacing: CGFloat = 8
-    static let horizontalInset: CGFloat = 16
-    static let headerTopSpacing: CGFloat = 36
-    static let headerHorizontalInset: CGFloat = 20
-    static let containerTopSpacing: CGFloat = 24
-    static let containerHorizontalInset: CGFloat = 20
-    static let containerBottomInset: CGFloat = 100
-    static let stackTopInset: CGFloat = 24
-    static let stackHorizontalInset: CGFloat = 14
-    static let stackBottomInset: CGFloat = 18
-}
-
 public final class MonthlyCalendarViewController<
     RecordRepo: FoodRecordRepository,
     AuthRepo: PhotoAuthorizationRepository
 >: UIViewController {
-
-    private typealias Constants = MonthlyCalendarConstants
 
     private enum Section: Hashable {
         case calendar
@@ -299,5 +281,25 @@ public final class MonthlyCalendarViewController<
             .store(in: &cancellables)
 
         present(picker, animated: true)
+    }
+}
+
+// MARK: - Constants
+
+extension MonthlyCalendarViewController {
+    enum Constants {
+        static var containerCornerRadius: CGFloat { 16 }
+        static var containerBorderWidth: CGFloat { 1 }
+        static var subtitleTopOffset: CGFloat { 130 }
+        static var titleTopSpacing: CGFloat { 8 }
+        static var horizontalInset: CGFloat { 16 }
+        static var headerTopSpacing: CGFloat { 36 }
+        static var headerHorizontalInset: CGFloat { 20 }
+        static var containerTopSpacing: CGFloat { 24 }
+        static var containerHorizontalInset: CGFloat { 20 }
+        static var containerBottomInset: CGFloat { 100 }
+        static var stackTopInset: CGFloat { 24 }
+        static var stackHorizontalInset: CGFloat { 14 }
+        static var stackBottomInset: CGFloat { 18 }
     }
 }
