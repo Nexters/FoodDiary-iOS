@@ -96,7 +96,7 @@ private extension AppFlowController {
             viewModel: viewModel,
             imageProvider: imageProvider
         )
-
+        
         return UINavigationController(rootViewController: weeklyCalendarVC)
     }
     
