@@ -9,14 +9,14 @@ import Foundation
 public struct MonthlyCalendarDay: Sendable, Equatable, Hashable {
     public let id: String
     public let date: Date
-    public let dayNumber: String
+    public let dayNumber: Int
     public let isCurrentMonth: Bool
     public let isToday: Bool
     public let records: [FoodRecord]
 
     public init(
         date: Date,
-        dayNumber: String,
+        dayNumber: Int,
         isCurrentMonth: Bool,
         isToday: Bool,
         records: [FoodRecord]

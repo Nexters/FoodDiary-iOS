@@ -95,7 +95,7 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
 
     private func setupConstraints() {
         containerView.snp.makeConstraints {
-            $0.leading.trailing.top.bottom.equalToSuperview()
+            $0.edges.equalToSuperview()
         }
         
         stackView.snp.makeConstraints {
@@ -157,15 +157,16 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
     }
 
     private func applyDayNumberStyle(
-        dayNumber: String,
+        dayNumber: Int,
         isCurrentMonth: Bool,
         isToday: Bool,
         isSelected: Bool
     ) {
+        let formattedDayNumber = String(format: "%02d", dayNumber)
         if isCurrentMonth {
-            dayNumberLabel.setText(dayNumber, style: .p12, color: .white)
+            dayNumberLabel.setText(formattedDayNumber, style: .p12, color: .white)
         } else {
-            dayNumberLabel.setText(dayNumber, style: .p12, color: DesignSystemAsset.gray700.color)
+            dayNumberLabel.setText(formattedDayNumber, style: .p12, color: DesignSystemAsset.gray700.color)
         }
     }
 }

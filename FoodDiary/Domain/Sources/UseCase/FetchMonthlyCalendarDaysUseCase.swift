@@ -53,7 +53,7 @@ public struct FetchMonthlyCalendarDaysUseCase<Repository: FoodRecordRepository>:
             let isCurrentMonth = currentMonthInterval?.contains(currentDate) ?? false
             days.append(MonthlyCalendarDay(
                 date: currentDate,
-                dayNumber: String(format: "%02d", calendar.component(.day, from: currentDate)),
+                dayNumber: calendar.component(.day, from: currentDate),
                 isCurrentMonth: isCurrentMonth,
                 isToday: calendar.isDate(currentDate, inSameDayAs: today),
                 records: []
