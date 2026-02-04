@@ -49,14 +49,10 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
 
     private let dashedBorderView = DashedBorderView()
 
-    private let foodImageView: UIImageView = {
-        let imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFill
-        imageView.clipsToBounds = true
-        imageView.layer.cornerRadius = Constants.cornerRadius
-        imageView.image = DesignSystemAsset.tempImage.image
-        imageView.isHidden = true
-        return imageView
+    private let polaroidImageCardsView: PolaroidImageCardsView = {
+        let view = PolaroidImageCardsView()
+        view.isHidden = true
+        return view
     }()
 
     // MARK: - Init
@@ -90,7 +86,7 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
 
         contentView.addSubview(containerView)
         containerView.addSubview(stackView)
-        stackView.addArrangedSubview(foodImageView)
+        stackView.addArrangedSubview(polaroidImageCardsView)
     }
 
     private func setupConstraints() {
@@ -108,8 +104,8 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
             $0.height.equalTo(dashedBorderView.snp.width)
         }
 
-        foodImageView.snp.makeConstraints {
-            $0.height.equalTo(foodImageView.snp.width)
+        polaroidImageCardsView.snp.makeConstraints {
+            $0.height.equalTo(polaroidImageCardsView.snp.width)
         }
     }
 
@@ -118,7 +114,14 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
     func configure(with day: MonthlyCalendarDay, isSelected: Bool) {
         let hasRecord = !day.records.isEmpty
         dashedBorderView.isHidden = hasRecord
-        foodImageView.isHidden = !hasRecord
+        polaroidImageCardsView.isHidden = !hasRecord
+
+        if hasRecord {
+            polaroidImageCardsView.configure(
+                backImage: DesignSystemAsset.foodPlaceholder.image,
+                frontImage: DesignSystemAsset.foodPlaceholder.image
+            )
+        }
 
         applyDayNumberStyle(
             dayNumber: day.dayNumber,
@@ -140,7 +143,7 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
         containerView.layer.borderColor = UIColor.clear.cgColor
         stackView.backgroundColor = .clear
         dashedBorderView.isHidden = false
-        foodImageView.isHidden = true
+        polaroidImageCardsView.isHidden = true
     }
 
     private func applyTodayStyle() {
