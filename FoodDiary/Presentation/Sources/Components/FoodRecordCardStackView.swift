@@ -30,10 +30,6 @@ public final class FoodRecordCardStackView: UIView {
 
     // MARK: - Publishers
 
-    public var copyTapPublisher: AnyPublisher<String, Never> {
-        frontCardView.copyTapPublisher
-    }
-
     private let cardTapSubject = PassthroughSubject<FoodRecord, Never>()
     public var cardTapPublisher: AnyPublisher<FoodRecord, Never> {
         cardTapSubject.eraseToAnyPublisher()

@@ -199,6 +199,8 @@ public final class WeeklyCalendarViewModel<
                 try await saveFoodRecordUseCase.execute(request)
             }
 
+            // 4. 성공: pending 제거, records에 추가
+            state.pendingRecords.removeAll { $0.id == pendingRecord.id }
             state.selectedDateRecords.insert(savedRecord, at: 0)
             eventSubject.send(.saveCompleted(savedRecord))
 
@@ -291,6 +293,13 @@ extension WeeklyCalendarViewModel {
         /// 음식으로 판별된 사진 개수
         public var foodPhotoCount: Int {
             selectedDatePhotos.filter { $0.foodProbability >= Self.foodProbabilityThreshold }.count
+        }
+
+        /// 선택된 날짜의 대기 중인 기록
+        public var selectedDatePendingRecords: [PendingFoodRecord] {
+            pendingRecords.filter {
+                Calendar.current.isDate($0.date, inSameDayAs: selectedDate)
+            }
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {

@@ -46,4 +46,27 @@ public struct FoodRecord: Identifiable, Equatable, Sendable {
         formatter.dateFormat = "a h시 m분"
         return formatter.string(from: createdAt)
     }
+
+    /// 짧은 포맷 시간 (예: "07:00")
+    public var formattedShortTime: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: createdAt)
+    }
+
+    /// 주소에서 구 정보 추출 (예: "마포구")
+    public var district: String? {
+        guard let address else { return nil }
+        let pattern = "([가-힣]+구)"
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(
+                  in: address,
+                  range: NSRange(address.startIndex..., in: address)
+              ),
+              let range = Range(match.range(at: 1), in: address)
+        else {
+            return nil
+        }
+        return String(address[range])
+    }
 }

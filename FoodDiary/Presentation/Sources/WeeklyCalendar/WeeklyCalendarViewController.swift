@@ -194,7 +194,7 @@ public final class WeeklyCalendarViewController<
         viewModel.statePublisher
             .map {
                 (
-                    records: $0.selectedDateRecords, pendingRecords: $0.pendingRecords,
+                    records: $0.selectedDateRecords, pendingRecords: $0.selectedDatePendingRecords,
                     foodPhotoCount: $0.foodPhotoCount
                 )
             }
