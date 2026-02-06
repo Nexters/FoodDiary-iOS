@@ -207,23 +207,11 @@ public final class WeeklyCalendarViewModel<
             state.selectedDateRecords.insert(savedRecord, at: 0)
             updateWeekDayRecords(for: state.selectedDate, records: state.selectedDateRecords)
             eventSubject.send(.saveCompleted(savedRecord))
-
-            // 백그라운드 상태면 푸시 알림 발송
-            if UIApplication.shared.applicationState != .active {
-                LocalNotificationService().sendRecordSavedNotification(
-                    restaurantName: savedRecord.restaurantName
-                )
-            }
         } catch {
             // 5. 실패: pending 제거, 에러 이벤트
             state.pendingRecords.removeAll { $0.id == pendingRecord.id }
             refreshDerivedState()
             eventSubject.send(.saveFailed(error))
-
-            // 백그라운드 상태면 실패 푸시 알림
-            if UIApplication.shared.applicationState != .active {
-                LocalNotificationService().sendRecordFailedNotification()
-            }
         }
     }
 
