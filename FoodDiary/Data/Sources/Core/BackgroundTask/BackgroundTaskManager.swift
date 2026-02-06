@@ -5,7 +5,7 @@
 
 import UIKit
 
-public final class BackgroundTaskManager: @unchecked Sendable {
+public struct BackgroundTaskManager {
     public static let shared = BackgroundTaskManager()
 
     private init() {}
