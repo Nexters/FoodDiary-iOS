@@ -137,6 +137,7 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
     }
 
     private func applyTodayStyle() {
+        containerView.backgroundColor = .primary
         containerView.applyPrimaryGradient(cornerRadius: Constants.cornerRadius)
         containerView.layer.borderWidth = Constants.todayBorderWidth
         containerView.layer.borderColor = UIColor.white.withAlphaComponent(0.3).cgColor
