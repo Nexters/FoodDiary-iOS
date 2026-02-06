@@ -4,6 +4,7 @@
 //
 
 import Combine
+import Data
 import Domain
 import Foundation
 import UIKit
@@ -192,16 +193,30 @@ public final class WeeklyCalendarViewModel<
         )
 
         do {
-            let savedRecord = try await saveFoodRecordUseCase.execute(request)
+            let savedRecord = try await BackgroundTaskManager.shared.performBackgroundTask(
+                named: "SaveFoodRecord"
+            ) { [saveFoodRecordUseCase] in
+                try await saveFoodRecordUseCase.execute(request)
+            }
 
-            // 4. 완료: pending 제거, 실제 record 추가
-            state.pendingRecords.removeAll { $0.id == pendingRecord.id }
             state.selectedDateRecords.insert(savedRecord, at: 0)
             eventSubject.send(.saveCompleted(savedRecord))
+
+            // 백그라운드 상태면 푸시 알림 발송
+            if UIApplication.shared.applicationState != .active {
+                LocalNotificationService().sendRecordSavedNotification(
+                    restaurantName: savedRecord.restaurantName
+                )
+            }
         } catch {
             // 5. 실패: pending 제거, 에러 이벤트
             state.pendingRecords.removeAll { $0.id == pendingRecord.id }
             eventSubject.send(.saveFailed(error))
+
+            // 백그라운드 상태면 실패 푸시 알림
+            if UIApplication.shared.applicationState != .active {
+                LocalNotificationService().sendRecordFailedNotification()
+            }
         }
     }
 
