@@ -4,7 +4,6 @@
 //
 
 import Combine
-import Data
 import Domain
 import Foundation
 import UIKit
@@ -15,7 +14,8 @@ public final class WeeklyCalendarViewModel<
     RecordRepo: FoodRecordRepository,
     AssetRepo: FoodImageAssetRepository,
     AuthRepo: PhotoAuthorizationRepository,
-    ImageProvider: RenderableImageRepository
+    ImageProvider: RenderableImageRepository,
+    BackgroundTask: BackgroundTaskPerforming
 > where ImageProvider.Asset == AssetRepo.Asset {
     // MARK: - Output
 
@@ -50,7 +50,7 @@ public final class WeeklyCalendarViewModel<
 
     private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>
     private let dataLoader: WeeklyCalendarDataLoader<RecordRepo, AssetRepo>
-    private let saveHandler: SaveFoodRecordHandler<RecordRepo, AssetRepo, ImageProvider>
+    private let saveHandler: SaveFoodRecordHandler<RecordRepo, AssetRepo, ImageProvider, BackgroundTask>
 
     // MARK: - Init
 
@@ -60,7 +60,8 @@ public final class WeeklyCalendarViewModel<
         fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>,
         saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>,
         requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>,
-        imageProvider: ImageProvider
+        imageProvider: ImageProvider,
+        backgroundTaskPerformer: BackgroundTask
     ) {
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
 
@@ -77,7 +78,8 @@ public final class WeeklyCalendarViewModel<
         )
         self.saveHandler = SaveFoodRecordHandler(
             saveFoodRecordUseCase: saveFoodRecordUseCase,
-            imageProvider: imageProvider
+            imageProvider: imageProvider,
+            backgroundTaskPerformer: backgroundTaskPerformer
         )
 
         setupBindings()
@@ -178,7 +180,7 @@ public final class WeeklyCalendarViewModel<
         guard !assets.isEmpty else { return }
 
         // 1. 백그라운드에서 모든 이미지 로드
-        let preparation: SaveFoodRecordHandler<RecordRepo, AssetRepo, ImageProvider>.PendingPreparation
+        let preparation: SaveFoodRecordHandler<RecordRepo, AssetRepo, ImageProvider, BackgroundTask>.PendingPreparation
         do {
             preparation = try await saveHandler.preparePendingRecord(
                 from: assets,

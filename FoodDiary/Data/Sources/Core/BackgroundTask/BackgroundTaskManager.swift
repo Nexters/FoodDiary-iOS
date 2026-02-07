@@ -3,12 +3,11 @@
 //  Data
 //
 
+import Domain
 import UIKit
 
-public struct BackgroundTaskManager {
-    public static let shared = BackgroundTaskManager()
-
-    private init() {}
+public struct BackgroundTaskManager: BackgroundTaskPerforming {
+    public init() {}
 
     /// 백그라운드 작업 수행
     /// - Parameters:

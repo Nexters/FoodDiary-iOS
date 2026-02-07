@@ -3,7 +3,6 @@
 //  Presentation
 //
 
-import Data
 import Domain
 import Foundation
 import UIKit
@@ -11,7 +10,8 @@ import UIKit
 struct SaveFoodRecordHandler<
     RecordRepo: FoodRecordRepository,
     AssetRepo: FoodImageAssetRepository,
-    ImageProvider: RenderableImageRepository
+    ImageProvider: RenderableImageRepository,
+    BackgroundTask: BackgroundTaskPerforming
 > where ImageProvider.Asset == AssetRepo.Asset {
     struct PendingPreparation {
         let pendingRecord: PendingFoodRecord
@@ -20,13 +20,16 @@ struct SaveFoodRecordHandler<
 
     private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>
     private let imageProvider: ImageProvider
+    private let backgroundTaskPerformer: BackgroundTask
 
     init(
         saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>,
-        imageProvider: ImageProvider
+        imageProvider: ImageProvider,
+        backgroundTaskPerformer: BackgroundTask
     ) {
         self.saveFoodRecordUseCase = saveFoodRecordUseCase
         self.imageProvider = imageProvider
+        self.backgroundTaskPerformer = backgroundTaskPerformer
     }
 
     func preparePendingRecord(from assets: [AssetRepo.Asset], date: Date) async throws -> PendingPreparation {
@@ -44,7 +47,7 @@ struct SaveFoodRecordHandler<
             images: images
         )
 
-        return try await BackgroundTaskManager.shared.performBackgroundTask(
+        return try await backgroundTaskPerformer.performBackgroundTask(
             named: "SaveFoodRecord"
         ) { [saveFoodRecordUseCase] in
             try await saveFoodRecordUseCase.execute(request)

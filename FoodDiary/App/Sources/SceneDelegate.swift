@@ -104,6 +104,10 @@ private extension SceneDelegate {
         container.register(PhotoAuthorizationFetcher.self) { _ in
             PhotoAuthorizationFetcher()
         }
+
+        container.register(BackgroundTaskManager.self) { _ in
+            BackgroundTaskManager()
+        }
     }
     
     func registerDomain() {
