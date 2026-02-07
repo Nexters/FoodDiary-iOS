@@ -153,6 +153,13 @@ private extension SceneDelegate {
             }
             return RequestPhotoAuthorizationUseCase(repository: repository)
         }
+
+        container.register(FetchMonthlyCalendarDaysUseCase<MockFoodRecordRepository>.self) { resolver in
+            guard let repository = resolver.resolve(MockFoodRecordRepository.self) else {
+                fatalError("MockFoodRecordRepository not registered")
+            }
+            return FetchMonthlyCalendarDaysUseCase(repository: repository)
+        }
     }
     
     func registerPresentation() {
