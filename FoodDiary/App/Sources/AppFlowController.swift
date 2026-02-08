@@ -69,11 +69,21 @@ private extension AppFlowController {
             fatalError("RequestPhotoAuthorizationUseCase not registered")
         }
 
-        let viewModel = WeeklyCalendarViewModel(
-            fetchFoodImageAssetUseCase: fetchFoodImageAssetUseCase,
-            foodRecordRepository: foodRecordRepository,
-            requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase,
+        let loadWeeklyCalendarDataUseCase = LoadWeeklyRecordUseCase(
+            calendar: .current,
+            recordRepository: foodRecordRepository,
+            fetchFoodImageAssetUseCase: fetchFoodImageAssetUseCase
+        )
+
+        let saveFoodRecordUseCase = SaveFoodRecordUseCase(
+            repository: foodRecordRepository,
             imageProvider: imageProvider
+        )
+
+        let viewModel = WeeklyCalendarViewModel(
+            requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase,
+            loadWeeklyCalendarDataUseCase: loadWeeklyCalendarDataUseCase,
+            saveFoodRecordUseCase: saveFoodRecordUseCase
         )
 
         let weeklyCalendarVC = WeeklyCalendarViewController(

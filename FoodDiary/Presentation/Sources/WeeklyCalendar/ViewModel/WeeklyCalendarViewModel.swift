@@ -54,27 +54,19 @@ public final class WeeklyCalendarViewModel<
     // MARK: - Init
 
     public init(
-        fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase<AssetRepo>,
-        foodRecordRepository: RecordRepo,
         requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>,
-        imageProvider: ImageProvider
+        loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase<RecordRepo, AssetRepo>,
+        saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, ImageProvider>
     ) {
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
+        self.loadWeeklyCalendarDataUseCase = loadWeeklyCalendarDataUseCase
+        self.saveFoodRecordUseCase = saveFoodRecordUseCase
 
         self.calendar = Calendar.current
 
         let today = calendar.startOfDay(for: Date())
         self.currentWeekBaseDate = today
         self.stateSubject = CurrentValueSubject(State(selectedDate: today))
-        self.loadWeeklyCalendarDataUseCase = LoadWeeklyRecordUseCase(
-            calendar: calendar,
-            recordRepository: foodRecordRepository,
-            fetchFoodImageAssetUseCase: fetchFoodImageAssetUseCase
-        )
-        self.saveFoodRecordUseCase = SaveFoodRecordUseCase(
-            repository: foodRecordRepository,
-            imageProvider: imageProvider
-        )
 
         setupBindings()
     }
