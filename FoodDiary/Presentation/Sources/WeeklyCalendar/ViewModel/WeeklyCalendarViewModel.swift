@@ -42,7 +42,6 @@ public final class WeeklyCalendarViewModel<
     private let eventSubject = PassthroughSubject<Event, Never>()
     private var currentWeekBaseDate: Date
     private var lastLoadedDate: Date?
-    private var weekDayIndexByDate: [Date: Int] = [:]
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Dependencies
@@ -118,7 +117,6 @@ public final class WeeklyCalendarViewModel<
         case .selectDate(let date):
             if !calendar.isDate(state.selectedDate, inSameDayAs: date) {
                 state.selectedDate = date
-                refreshDerivedState()
                 await loadDateData(of: state.selectedDate)
             }
 
@@ -137,10 +135,9 @@ public final class WeeklyCalendarViewModel<
         do {
             let weekData = try await loadWeeklyCalendarDataUseCase.loadWeekData(for: date)
             state.weekDays = weekData.weekDays
-            rebuildWeekDayIndex()
             state.monthText = weekData.monthText
         } catch {
-            print("Failed to load week data: \(error)")
+            eventSubject.send(.loadFailed(error))
         }
     }
 
@@ -155,12 +152,10 @@ public final class WeeklyCalendarViewModel<
         do {
             let dateData = try await loadWeeklyCalendarDataUseCase.loadDateData(for: selectedDate)
             state.selectedDatePhotos = dateData.photos
-            refreshDerivedState()
-
             state.selectedDateRecords = dateData.records
             lastLoadedDate = dateData.startOfDay
         } catch {
-            print("Failed to load selected date data: \(error)")
+            eventSubject.send(.loadFailed(error))
         }
     }
 
@@ -173,8 +168,8 @@ public final class WeeklyCalendarViewModel<
                 from: assets,
                 date: state.selectedDate
             )
-            state.pendingRecords.insert(pendingRecord, at: 0)
-            refreshDerivedState()
+            let dateKey = calendar.startOfDay(for: pendingRecord.date)
+            state.pendingRecordsByDate[dateKey, default: []].insert(pendingRecord, at: 0)
             eventSubject.send(.uploadCompleted(pendingRecord))
         } catch {
             eventSubject.send(.saveFailed(error))
@@ -197,7 +192,6 @@ public final class WeeklyCalendarViewModel<
             byAdding: .day, value: currentWeekday - 1, to: weekStart)
         {
             state.selectedDate = newSelectedDate
-            refreshDerivedState()
         }
     }
 
@@ -208,39 +202,6 @@ public final class WeeklyCalendarViewModel<
         }
     }
 
-    /// weekDays 내 특정 날짜의 records를 업데이트
-    private func updateWeekDayRecords(for date: Date, records: [FoodRecord]) {
-        let normalizedDate = calendar.startOfDay(for: date)
-        guard let index = weekDayIndexByDate[normalizedDate] else { return }
-
-        let existingDay = state.weekDays[index]
-        state.weekDays[index] = WeeklyCalendarDay(
-            date: existingDay.date,
-            dayOfWeek: existingDay.dayOfWeek,
-            dayNumber: existingDay.dayNumber,
-            isToday: existingDay.isToday,
-            isFuture: existingDay.isFuture,
-            records: records
-        )
-    }
-
-    private func rebuildWeekDayIndex() {
-        weekDayIndexByDate = Dictionary(
-            uniqueKeysWithValues: state.weekDays.enumerated().map { index, day in
-                (calendar.startOfDay(for: day.date), index)
-            }
-        )
-    }
-
-    private func refreshDerivedState() {
-        state.foodPhotoCountCache =
-            state.selectedDatePhotos.filter {
-                $0.foodProbability >= State.foodProbabilityThreshold
-            }.count
-        state.selectedDatePendingRecordsCache = state.pendingRecords.filter {
-            calendar.isDate($0.date, inSameDayAs: state.selectedDate)
-        }
-    }
 
     /// 사진 추가 전 권한 체크
     public func checkPhotoAuthorizationForAddingPhoto() -> Bool {
@@ -258,21 +219,19 @@ extension WeeklyCalendarViewModel {
         public internal(set) var selectedDate: Date = Date()
         public internal(set) var monthText: String = ""
         public internal(set) var selectedDateRecords: [FoodRecord] = []
-        public internal(set) var pendingRecords: [PendingFoodRecord] = []
+        public internal(set) var pendingRecordsByDate: [Date: [PendingFoodRecord]] = [:]
         public internal(set) var selectedDatePhotos: [FoodImageAsset<AssetRepo.Asset>] = []
         public internal(set) var isLoading: Bool = false
-        public internal(set) var isSaving: Bool = false
-        public internal(set) var foodPhotoCountCache: Int = 0
-        public internal(set) var selectedDatePendingRecordsCache: [PendingFoodRecord] = []
 
         /// 음식으로 판별된 사진 개수
         public var foodPhotoCount: Int {
-            foodPhotoCountCache
+            selectedDatePhotos.filter { $0.foodProbability >= Self.foodProbabilityThreshold }.count
         }
 
         /// 선택된 날짜의 대기 중인 기록
         public var selectedDatePendingRecords: [PendingFoodRecord] {
-            selectedDatePendingRecordsCache
+            let dateKey = Calendar.current.startOfDay(for: selectedDate)
+            return pendingRecordsByDate[dateKey] ?? []
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {
@@ -280,9 +239,8 @@ extension WeeklyCalendarViewModel {
                 && Calendar.current.isDate(lhs.selectedDate, inSameDayAs: rhs.selectedDate)
                 && lhs.monthText == rhs.monthText
                 && lhs.selectedDateRecords == rhs.selectedDateRecords
-                && lhs.pendingRecords == rhs.pendingRecords
+                && lhs.pendingRecordsByDate == rhs.pendingRecordsByDate
                 && lhs.isLoading == rhs.isLoading
-                && lhs.isSaving == rhs.isSaving
         }
     }
 
@@ -299,5 +257,6 @@ extension WeeklyCalendarViewModel {
         case photoAuthorizationDenied
         case uploadCompleted(PendingFoodRecord)
         case saveFailed(Error)
+        case loadFailed(Error)
     }
 }
