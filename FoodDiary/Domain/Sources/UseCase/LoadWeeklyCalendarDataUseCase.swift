@@ -1,25 +1,35 @@
 //
-//  WeeklyCalendarDataLoader.swift
-//  Presentation
+//  LoadWeeklyCalendarDataUseCase.swift
+//  Domain
 //
 
-import Data
-import Domain
 import Foundation
 
-struct WeeklyCalendarDataLoader<
+/// 주간 캘린더 데이터 로딩을 담당하는 UseCase
+public struct LoadWeeklyCalendarDataUseCase<
     RecordRepo: FoodRecordRepository,
     AssetRepo: FoodImageAssetRepository
-> {
-    struct WeekData {
-        let weekDays: [WeeklyCalendarDay]
-        let monthText: String
+>: Sendable {
+    public struct WeekData: Sendable {
+        public let weekDays: [WeeklyCalendarDay]
+        public let monthText: String
+
+        public init(weekDays: [WeeklyCalendarDay], monthText: String) {
+            self.weekDays = weekDays
+            self.monthText = monthText
+        }
     }
 
-    struct DateData {
-        let photos: [FoodImageAsset<AssetRepo.Asset>]
-        let records: [FoodRecord]
-        let startOfDay: Date
+    public struct DateData: Sendable {
+        public let photos: [FoodImageAsset<AssetRepo.Asset>]
+        public let records: [FoodRecord]
+        public let startOfDay: Date
+
+        public init(photos: [FoodImageAsset<AssetRepo.Asset>], records: [FoodRecord], startOfDay: Date) {
+            self.photos = photos
+            self.records = records
+            self.startOfDay = startOfDay
+        }
     }
 
     private let calendar: Calendar
@@ -27,7 +37,7 @@ struct WeeklyCalendarDataLoader<
     private let fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase<AssetRepo>
     private let fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
 
-    init(
+    public init(
         calendar: Calendar,
         fetchWeeklyCalendarUseCase: FetchWeeklyCalendarUseCase<RecordRepo>,
         fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase<AssetRepo>,
@@ -39,14 +49,16 @@ struct WeeklyCalendarDataLoader<
         self.fetchFoodRecordsUseCase = fetchFoodRecordsUseCase
     }
 
-    func loadWeekData(for date: Date) async throws -> WeekData {
+    /// 주간 데이터 로드
+    public func loadWeekData(for date: Date) async throws -> WeekData {
         fetchFoodImageAssetUseCase.prefetch(for: date)
         let weekDays = try await fetchWeeklyCalendarUseCase.execute(for: date)
         let monthText = date.formatMonthText()
         return WeekData(weekDays: weekDays, monthText: monthText)
     }
 
-    func loadDateData(for date: Date) async throws -> DateData {
+    /// 특정 날짜 데이터 로드
+    public func loadDateData(for date: Date) async throws -> DateData {
         let startOfDay = calendar.startOfDay(for: date)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)
 

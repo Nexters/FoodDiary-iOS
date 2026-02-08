@@ -1,28 +1,23 @@
 //
-//  SaveFoodRecordHandler.swift
-//  Presentation
+//  SavePendingFoodRecordUseCase.swift
+//  Domain
 //
 
-import Domain
 import Foundation
 import UIKit
 
-struct SaveFoodRecordHandler<
+/// 이미지 로드 후 서버에 업로드하고 PendingFoodRecord를 반환하는 UseCase
+/// 분석 결과는 Remote Push로 수신
+public struct SavePendingFoodRecordUseCase<
     RecordRepo: FoodRecordRepository,
-    AssetRepo: FoodImageAssetRepository,
     ImageProvider: RenderableImageRepository,
     BackgroundTask: BackgroundTaskPerforming
-> where ImageProvider.Asset == AssetRepo.Asset {
-    struct PendingPreparation {
-        let pendingRecord: PendingFoodRecord
-        let images: [UIImage]
-    }
-
+>: Sendable {
     private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>
     private let imageProvider: ImageProvider
     private let backgroundTaskPerformer: BackgroundTask
 
-    init(
+    public init(
         saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>,
         imageProvider: ImageProvider,
         backgroundTaskPerformer: BackgroundTask
@@ -32,29 +27,29 @@ struct SaveFoodRecordHandler<
         self.backgroundTaskPerformer = backgroundTaskPerformer
     }
 
-    func preparePendingRecord(from assets: [AssetRepo.Asset], date: Date) async throws -> PendingPreparation {
+    /// 이미지 로드 → 서버 업로드 → PendingFoodRecord 반환
+    /// 분석 완료 시 Remote Push로 결과 수신
+    public func execute(
+        from assets: [ImageProvider.Asset],
+        date: Date
+    ) async throws -> PendingFoodRecord {
         let images = try await loadImages(from: assets)
         let pendingRecord = PendingFoodRecord(
             date: date,
             representativeImage: images[0]
         )
-        return PendingPreparation(pendingRecord: pendingRecord, images: images)
-    }
 
-    func saveRecord(date: Date, images: [UIImage]) async throws -> FoodRecord {
-        let request = CreateFoodRecordRequest(
-            date: date,
-            images: images
-        )
-
-        return try await backgroundTaskPerformer.performBackgroundTask(
+        let request = CreateFoodRecordRequest(date: date, images: images)
+        try await backgroundTaskPerformer.performBackgroundTask(
             named: "SaveFoodRecord"
         ) { [saveFoodRecordUseCase] in
-            try await saveFoodRecordUseCase.execute(request)
+            _ = try await saveFoodRecordUseCase.execute(request)
         }
+
+        return pendingRecord
     }
 
-    private func loadImages(from assets: [AssetRepo.Asset]) async throws -> [UIImage] {
+    private func loadImages(from assets: [ImageProvider.Asset]) async throws -> [UIImage] {
         try await withThrowingTaskGroup(of: (Int, UIImage).self) { group in
             for (index, asset) in assets.enumerated() {
                 group.addTask {

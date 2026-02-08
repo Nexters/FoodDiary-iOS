@@ -217,7 +217,7 @@ public final class WeeklyCalendarViewController<
                 switch event {
                 case .photoAuthorizationDenied:
                     self?.showPhotoAuthorizationDeniedAlert()
-                case .saveCompleted:
+                case .uploadCompleted:
                     break
                 case .saveFailed(let error):
                     self?.showSaveErrorAlert(error)

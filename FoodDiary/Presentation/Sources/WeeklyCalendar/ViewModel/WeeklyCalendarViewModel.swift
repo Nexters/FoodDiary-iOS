@@ -49,8 +49,9 @@ public final class WeeklyCalendarViewModel<
     // MARK: - Dependencies
 
     private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>
-    private let dataLoader: WeeklyCalendarDataLoader<RecordRepo, AssetRepo>
-    private let saveHandler: SaveFoodRecordHandler<RecordRepo, AssetRepo, ImageProvider, BackgroundTask>
+    private let loadWeeklyCalendarDataUseCase: LoadWeeklyCalendarDataUseCase<RecordRepo, AssetRepo>
+    private let savePendingFoodRecordUseCase:
+        SavePendingFoodRecordUseCase<RecordRepo, ImageProvider, BackgroundTask>
 
     // MARK: - Init
 
@@ -70,13 +71,13 @@ public final class WeeklyCalendarViewModel<
         let today = calendar.startOfDay(for: Date())
         self.currentWeekBaseDate = today
         self.stateSubject = CurrentValueSubject(State(selectedDate: today))
-        self.dataLoader = WeeklyCalendarDataLoader(
+        self.loadWeeklyCalendarDataUseCase = LoadWeeklyCalendarDataUseCase(
             calendar: calendar,
             fetchWeeklyCalendarUseCase: fetchWeeklyCalendarUseCase,
             fetchFoodImageAssetUseCase: fetchFoodImageAssetUseCase,
             fetchFoodRecordsUseCase: fetchFoodRecordsUseCase
         )
-        self.saveHandler = SaveFoodRecordHandler(
+        self.savePendingFoodRecordUseCase = SavePendingFoodRecordUseCase(
             saveFoodRecordUseCase: saveFoodRecordUseCase,
             imageProvider: imageProvider,
             backgroundTaskPerformer: backgroundTaskPerformer
@@ -149,7 +150,7 @@ public final class WeeklyCalendarViewModel<
         defer { state.isLoading = false }
 
         do {
-            let weekData = try await dataLoader.loadWeekData(for: date)
+            let weekData = try await loadWeeklyCalendarDataUseCase.loadWeekData(for: date)
             state.weekDays = weekData.weekDays
             rebuildWeekDayIndex()
             state.monthText = weekData.monthText
@@ -161,11 +162,13 @@ public final class WeeklyCalendarViewModel<
     @MainActor
     private func loadDateData(of selectedDate: Date, forceReload: Bool = false) async {
         let startOfDay = calendar.startOfDay(for: selectedDate)
-        if !forceReload, let lastLoadedDate, calendar.isDate(lastLoadedDate, inSameDayAs: startOfDay) {
+        if !forceReload, let lastLoadedDate,
+            calendar.isDate(lastLoadedDate, inSameDayAs: startOfDay)
+        {
             return
         }
         do {
-            let dateData = try await dataLoader.loadDateData(for: selectedDate)
+            let dateData = try await loadWeeklyCalendarDataUseCase.loadDateData(for: selectedDate)
             state.selectedDatePhotos = dateData.photos
             refreshDerivedState()
 
@@ -179,40 +182,16 @@ public final class WeeklyCalendarViewModel<
     private func savePhotosAsRecord(_ assets: [AssetRepo.Asset]) async {
         guard !assets.isEmpty else { return }
 
-        // 1. 백그라운드에서 모든 이미지 로드
-        let preparation: SaveFoodRecordHandler<RecordRepo, AssetRepo, ImageProvider, BackgroundTask>.PendingPreparation
         do {
-            preparation = try await saveHandler.preparePendingRecord(
+            // 이미지 로드 → 서버 업로드 → PendingRecord 반환
+            let pendingRecord = try await savePendingFoodRecordUseCase.execute(
                 from: assets,
                 date: state.selectedDate
             )
-        } catch {
-            eventSubject.send(.saveFailed(error))
-            return
-        }
-
-        // 2. 대표 이미지로 PendingFoodRecord 생성
-        let pendingRecord = preparation.pendingRecord
-        state.pendingRecords.insert(pendingRecord, at: 0)
-        refreshDerivedState()
-
-        // 3. 백그라운드에서 서버 저장
-        do {
-            let savedRecord = try await saveHandler.saveRecord(
-                date: state.selectedDate,
-                images: preparation.images
-            )
-
-            // 4. 성공: pending 제거, records에 추가
-            state.pendingRecords.removeAll { $0.id == pendingRecord.id }
+            state.pendingRecords.insert(pendingRecord, at: 0)
             refreshDerivedState()
-            state.selectedDateRecords.insert(savedRecord, at: 0)
-            updateWeekDayRecords(for: state.selectedDate, records: state.selectedDateRecords)
-            eventSubject.send(.saveCompleted(savedRecord))
+            eventSubject.send(.uploadCompleted(pendingRecord))
         } catch {
-            // 5. 실패: pending 제거, 에러 이벤트
-            state.pendingRecords.removeAll { $0.id == pendingRecord.id }
-            refreshDerivedState()
             eventSubject.send(.saveFailed(error))
         }
     }
@@ -269,9 +248,10 @@ public final class WeeklyCalendarViewModel<
     }
 
     private func refreshDerivedState() {
-        state.foodPhotoCountCache = state.selectedDatePhotos.filter {
-            $0.foodProbability >= State.foodProbabilityThreshold
-        }.count
+        state.foodPhotoCountCache =
+            state.selectedDatePhotos.filter {
+                $0.foodProbability >= State.foodProbabilityThreshold
+            }.count
         state.selectedDatePendingRecordsCache = state.pendingRecords.filter {
             calendar.isDate($0.date, inSameDayAs: state.selectedDate)
         }
@@ -332,7 +312,7 @@ extension WeeklyCalendarViewModel {
 
     public enum Event {
         case photoAuthorizationDenied
-        case saveCompleted(FoodRecord)
+        case uploadCompleted(PendingFoodRecord)
         case saveFailed(Error)
     }
 }
