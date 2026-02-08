@@ -10,21 +10,17 @@ import UIKit
 /// 분석 결과는 Remote Push로 수신
 public struct SavePendingFoodRecordUseCase<
     RecordRepo: FoodRecordRepository,
-    ImageProvider: RenderableImageRepository,
-    BackgroundTask: BackgroundTaskPerforming
+    ImageProvider: RenderableImageRepository
 >: Sendable {
     private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>
     private let imageProvider: ImageProvider
-    private let backgroundTaskPerformer: BackgroundTask
 
     public init(
         saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>,
-        imageProvider: ImageProvider,
-        backgroundTaskPerformer: BackgroundTask
+        imageProvider: ImageProvider
     ) {
         self.saveFoodRecordUseCase = saveFoodRecordUseCase
         self.imageProvider = imageProvider
-        self.backgroundTaskPerformer = backgroundTaskPerformer
     }
 
     /// 이미지 로드 → 서버 업로드 → PendingFoodRecord 반환
@@ -34,19 +30,15 @@ public struct SavePendingFoodRecordUseCase<
         date: Date
     ) async throws -> PendingFoodRecord {
         let images = try await loadImages(from: assets)
-        let pendingRecord = PendingFoodRecord(
+
+        let request = CreateFoodRecordRequest(date: date, images: images)
+        let uploadId = try await saveFoodRecordUseCase.execute(request)
+
+        return PendingFoodRecord(
+            uploadId: uploadId,
             date: date,
             representativeImage: images[0]
         )
-
-        let request = CreateFoodRecordRequest(date: date, images: images)
-        try await backgroundTaskPerformer.performBackgroundTask(
-            named: "SaveFoodRecord"
-        ) { [saveFoodRecordUseCase] in
-            _ = try await saveFoodRecordUseCase.execute(request)
-        }
-
-        return pendingRecord
     }
 
     private func loadImages(from assets: [ImageProvider.Asset]) async throws -> [UIImage] {

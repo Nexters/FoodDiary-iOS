@@ -24,58 +24,21 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
         return mockRecords[startOfDay] ?? []
     }
 
-    public func saveRecord(_ request: CreateFoodRecordRequest) async throws -> FoodRecord {
+    public func uploadRecord(_ request: CreateFoodRecordRequest) async throws -> String {
         let imageCount = request.images.count
         print("[MockFoodRecordRepository] 📤 업로드 시작 - 이미지 \(imageCount)장")
 
         // 이미지 업로드 시뮬레이션
         for i in 1...imageCount {
-            try await Task.sleep(for: .seconds(2))
+            try await Task.sleep(for: .seconds(1))
             print("[MockFoodRecordRepository] 📤 이미지 업로드 중... (\(i)/\(imageCount))")
         }
 
-        // AI 분석 시뮬레이션
-        print("[MockFoodRecordRepository] 🤖 AI 분석 시작...")
-        try await Task.sleep(for: .seconds(3))
-        print("[MockFoodRecordRepository] 🤖 음식 분류 완료")
-        try await Task.sleep(for: .seconds(2))
-        print("[MockFoodRecordRepository] 🤖 메타데이터 추출 완료")
+        let uploadId = UUID().uuidString
+        print("[MockFoodRecordRepository] ✅ 업로드 완료! uploadId: \(uploadId)")
+        print("[MockFoodRecordRepository] 🤖 AI 분석은 서버에서 비동기로 진행됩니다. Remote Push로 결과 수신 예정.")
 
-        var tick = 0
-        try await Task {
-            while tick < 10 {
-                try await Task.sleep(for: .seconds(1))
-                print("[MockFoodRecordRepository] 💾 저장 중...", tick)
-
-                tick += 1
-            }
-        }.value
-
-        print("[MockFoodRecordRepository] ✅ 저장 완료!")
-
-        // 서버 응답 시뮬레이션 (실제로는 서버가 AI 분석 후 응답)
-        let dateKey = calendar.startOfDay(for: request.date)
-        let hour = calendar.component(.hour, from: Date())
-
-        // 실제 구현에서는 request.images를 multipart/form-data로 서버에 업로드하고
-        // 서버에서 반환된 이미지 URL을 사용합니다.
-        // Mock에서는 이미지 개수만큼 mock URL을 생성합니다.
-        let mockImageURLs = request.images.map { _ in Self.mockImageURL }
-
-        let newRecord = FoodRecord(
-            id: UUID().uuidString,
-            date: dateKey,
-            mealType: MealType.classify(from: hour),
-            genre: FoodGenre.allCases.randomElement() ?? .etc,
-            imageURLs: mockImageURLs,
-            restaurantName: "새로운 맛집",
-            address: "서울시 강남구 어딘가",
-            hashtags: ["맛있다", "추천"],
-            createdAt: Date()
-        )
-
-        mockRecords[dateKey, default: []].insert(newRecord, at: 0)
-        return newRecord
+        return uploadId
     }
 
     // MARK: - Mock Data Setup

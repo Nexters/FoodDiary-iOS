@@ -83,18 +83,13 @@ private extension AppFlowController {
             fatalError("RequestPhotoAuthorizationUseCase not registered")
         }
 
-        guard let backgroundTaskPerformer = try? container.resolve(BackgroundTaskManager.self) else {
-            fatalError("BackgroundTaskManager not registered")
-        }
-
         let viewModel = WeeklyCalendarViewModel(
             fetchWeeklyCalendarUseCase: weeklyCalendarUseCase,
             fetchFoodImageAssetUseCase: fetchFoodImageAssetUseCase,
             fetchFoodRecordsUseCase: fetchFoodRecordsUseCase,
             saveFoodRecordUseCase: saveFoodRecordUseCase,
             requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase,
-            imageProvider: imageProvider,
-            backgroundTaskPerformer: backgroundTaskPerformer
+            imageProvider: imageProvider
         )
 
         let weeklyCalendarVC = WeeklyCalendarViewController(

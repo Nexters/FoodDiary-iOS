@@ -14,8 +14,7 @@ public final class WeeklyCalendarViewModel<
     RecordRepo: FoodRecordRepository,
     AssetRepo: FoodImageAssetRepository,
     AuthRepo: PhotoAuthorizationRepository,
-    ImageProvider: RenderableImageRepository,
-    BackgroundTask: BackgroundTaskPerforming
+    ImageProvider: RenderableImageRepository
 > where ImageProvider.Asset == AssetRepo.Asset {
     // MARK: - Output
 
@@ -50,8 +49,7 @@ public final class WeeklyCalendarViewModel<
 
     private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>
     private let loadWeeklyCalendarDataUseCase: LoadWeeklyCalendarDataUseCase<RecordRepo, AssetRepo>
-    private let savePendingFoodRecordUseCase:
-        SavePendingFoodRecordUseCase<RecordRepo, ImageProvider, BackgroundTask>
+    private let savePendingFoodRecordUseCase: SavePendingFoodRecordUseCase<RecordRepo, ImageProvider>
 
     // MARK: - Init
 
@@ -61,8 +59,7 @@ public final class WeeklyCalendarViewModel<
         fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>,
         saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>,
         requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>,
-        imageProvider: ImageProvider,
-        backgroundTaskPerformer: BackgroundTask
+        imageProvider: ImageProvider
     ) {
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
 
@@ -79,8 +76,7 @@ public final class WeeklyCalendarViewModel<
         )
         self.savePendingFoodRecordUseCase = SavePendingFoodRecordUseCase(
             saveFoodRecordUseCase: saveFoodRecordUseCase,
-            imageProvider: imageProvider,
-            backgroundTaskPerformer: backgroundTaskPerformer
+            imageProvider: imageProvider
         )
 
         setupBindings()

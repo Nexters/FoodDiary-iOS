@@ -14,13 +14,12 @@ public final class WeeklyCalendarViewController<
     RecordRepo: FoodRecordRepository,
     AssetRepo: FoodImageAssetRepository,
     AuthRepo: PhotoAuthorizationRepository,
-    ImageProvider: RenderableImageRepository,
-    BackgroundTask: BackgroundTaskPerforming
+    ImageProvider: RenderableImageRepository
 >: UIViewController where ImageProvider.Asset == AssetRepo.Asset {
 
     // MARK: - Dependencies
 
-    private let viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo, ImageProvider, BackgroundTask>
+    private let viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo, ImageProvider>
     private let imageProvider: ImageProvider
 
     // MARK: - UI Components
@@ -59,7 +58,7 @@ public final class WeeklyCalendarViewController<
     // MARK: - Init
 
     public init(
-        viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo, ImageProvider, BackgroundTask>,
+        viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo, ImageProvider>,
         imageProvider: ImageProvider
     ) {
         self.viewModel = viewModel
