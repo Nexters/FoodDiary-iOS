@@ -115,27 +115,6 @@ private extension SceneDelegate {
             return FinalizeAppleLoginUseCase(authRepository: repository)
         }
 
-        container.register(FetchWeeklyCalendarUseCase<MockFoodRecordRepository>.self) { resolver in
-            guard let repository = resolver.resolve(MockFoodRecordRepository.self) else {
-                fatalError("MockFoodRecordRepository not registered")
-            }
-            return FetchWeeklyCalendarUseCase(repository: repository)
-        }
-
-        container.register(FetchFoodRecordsUseCase<MockFoodRecordRepository>.self) { resolver in
-            guard let repository = resolver.resolve(MockFoodRecordRepository.self) else {
-                fatalError("MockFoodRecordRepository not registered")
-            }
-            return FetchFoodRecordsUseCase(repository: repository)
-        }
-
-        container.register(SaveFoodRecordUseCase<MockFoodRecordRepository>.self) { resolver in
-            guard let repository = resolver.resolve(MockFoodRecordRepository.self) else {
-                fatalError("MockFoodRecordRepository not registered")
-            }
-            return SaveFoodRecordUseCase(repository: repository)
-        }
-
         container.register(
             FetchFoodImageAssetUseCase<FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
         ) { resolver in

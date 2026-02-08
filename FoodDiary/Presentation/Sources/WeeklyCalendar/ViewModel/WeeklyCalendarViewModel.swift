@@ -48,16 +48,14 @@ public final class WeeklyCalendarViewModel<
     // MARK: - Dependencies
 
     private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>
-    private let loadWeeklyCalendarDataUseCase: LoadWeeklyCalendarDataUseCase<RecordRepo, AssetRepo>
-    private let savePendingFoodRecordUseCase: SavePendingFoodRecordUseCase<RecordRepo, ImageProvider>
+    private let loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase<RecordRepo, AssetRepo>
+    private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, ImageProvider>
 
     // MARK: - Init
 
     public init(
-        fetchWeeklyCalendarUseCase: FetchWeeklyCalendarUseCase<RecordRepo>,
         fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase<AssetRepo>,
-        fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>,
-        saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>,
+        foodRecordRepository: RecordRepo,
         requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>,
         imageProvider: ImageProvider
     ) {
@@ -68,14 +66,13 @@ public final class WeeklyCalendarViewModel<
         let today = calendar.startOfDay(for: Date())
         self.currentWeekBaseDate = today
         self.stateSubject = CurrentValueSubject(State(selectedDate: today))
-        self.loadWeeklyCalendarDataUseCase = LoadWeeklyCalendarDataUseCase(
+        self.loadWeeklyCalendarDataUseCase = LoadWeeklyRecordUseCase(
             calendar: calendar,
-            fetchWeeklyCalendarUseCase: fetchWeeklyCalendarUseCase,
-            fetchFoodImageAssetUseCase: fetchFoodImageAssetUseCase,
-            fetchFoodRecordsUseCase: fetchFoodRecordsUseCase
+            recordRepository: foodRecordRepository,
+            fetchFoodImageAssetUseCase: fetchFoodImageAssetUseCase
         )
-        self.savePendingFoodRecordUseCase = SavePendingFoodRecordUseCase(
-            saveFoodRecordUseCase: saveFoodRecordUseCase,
+        self.saveFoodRecordUseCase = SaveFoodRecordUseCase(
+            repository: foodRecordRepository,
             imageProvider: imageProvider
         )
 
@@ -180,7 +177,7 @@ public final class WeeklyCalendarViewModel<
 
         do {
             // 이미지 로드 → 서버 업로드 → PendingRecord 반환
-            let pendingRecord = try await savePendingFoodRecordUseCase.execute(
+            let pendingRecord = try await saveFoodRecordUseCase.execute(
                 from: assets,
                 date: state.selectedDate
             )

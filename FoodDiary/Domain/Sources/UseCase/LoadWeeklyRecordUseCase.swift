@@ -1,12 +1,12 @@
 //
-//  LoadWeeklyCalendarDataUseCase.swift
+//  LoadWeeklyRecordUseCase.swift
 //  Domain
 //
 
 import Foundation
 
 /// 주간 캘린더 데이터 로딩을 담당하는 UseCase
-public struct LoadWeeklyCalendarDataUseCase<
+public struct LoadWeeklyRecordUseCase<
     RecordRepo: FoodRecordRepository,
     AssetRepo: FoodImageAssetRepository
 >: Sendable {
@@ -25,9 +25,7 @@ public struct LoadWeeklyCalendarDataUseCase<
         public let records: [FoodRecord]
         public let startOfDay: Date
 
-        public init(
-            photos: [FoodImageAsset<AssetRepo.Asset>], records: [FoodRecord], startOfDay: Date
-        ) {
+        public init(photos: [FoodImageAsset<AssetRepo.Asset>], records: [FoodRecord], startOfDay: Date) {
             self.photos = photos
             self.records = records
             self.startOfDay = startOfDay
