@@ -213,7 +213,6 @@ public final class WeeklyCalendarViewModel<
 }
 
 // MARK: - State
-
 extension WeeklyCalendarViewModel {
     public struct State: Equatable {
         fileprivate static var foodProbabilityThreshold: Float { 0.6 }
@@ -225,17 +224,6 @@ extension WeeklyCalendarViewModel {
         public internal(set) var pendingRecordsByDate: [Date: [PendingFoodRecord]] = [:]
         public internal(set) var selectedDatePhotos: [FoodImageAsset<AssetRepo.Asset>] = []
         public internal(set) var isLoading: Bool = false
-
-        /// 음식으로 판별된 사진 개수
-        public var foodPhotoCount: Int {
-            selectedDatePhotos.filter { $0.foodProbability >= Self.foodProbabilityThreshold }.count
-        }
-
-        /// 선택된 날짜의 대기 중인 기록
-        public var selectedDatePendingRecords: [PendingFoodRecord] {
-            let dateKey = Calendar.current.startOfDay(for: selectedDate)
-            return pendingRecordsByDate[dateKey] ?? []
-        }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.weekDays == rhs.weekDays
@@ -261,5 +249,28 @@ extension WeeklyCalendarViewModel {
         case uploadCompleted(PendingFoodRecord)
         case saveFailed(Error)
         case loadFailed(Error)
+    }
+}
+
+// MARK: - Public Methods
+
+extension WeeklyCalendarViewModel {
+    /// 특정 사진 배열의 음식 사진 개수
+    public func foodPhotoCount(for photos: [FoodImageAsset<AssetRepo.Asset>]) -> Int {
+        photos.filter { $0.foodProbability >= State.foodProbabilityThreshold }.count
+    }
+
+    /// 특정 날짜의 대기 중인 기록
+    public func pendingRecords(for date: Date) -> [PendingFoodRecord] {
+        let dateKey = Calendar.current.startOfDay(for: date)
+        return state.pendingRecordsByDate[dateKey] ?? []
+    }
+
+    /// 다음 주로 이동 가능 여부
+    public func canGoToNextWeek(from date: Date) -> Bool {
+        let calendar = Calendar.current
+        let nextWeek = calendar.date(byAdding: .weekOfYear, value: 1, to: date) ?? date
+        let today = calendar.startOfDay(for: Date())
+        return calendar.startOfDay(for: nextWeek) <= today
     }
 }

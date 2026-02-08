@@ -192,10 +192,14 @@ public final class WeeklyCalendarViewController<
             .store(in: &cancellables)
 
         viewModel.statePublisher
-            .map {
-                (
-                    records: $0.selectedDateRecords, pendingRecords: $0.selectedDatePendingRecords,
-                    foodPhotoCount: $0.foodPhotoCount
+            .map { [weak self] state -> (records: [FoodRecord], pendingRecords: [PendingFoodRecord], foodPhotoCount: Int) in
+                guard let self else {
+                    return ([], [], 0)
+                }
+                return (
+                    records: state.selectedDateRecords,
+                    pendingRecords: self.viewModel.pendingRecords(for: state.selectedDate),
+                    foodPhotoCount: self.viewModel.foodPhotoCount(for: state.selectedDatePhotos)
                 )
             }
             .removeDuplicates(by: ==)
