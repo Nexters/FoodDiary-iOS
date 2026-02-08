@@ -220,6 +220,8 @@ public final class WeeklyCalendarViewController<
                     break
                 case .saveFailed(let error):
                     self?.showSaveErrorAlert(error)
+                case .loadFailed:
+                    break
                 }
             }
             .store(in: &cancellables)

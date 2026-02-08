@@ -88,8 +88,8 @@ public final class WeeklyCalendarViewModel<
         switch action {
         case .loadInitialData:
             await requestPhotoAuthorizationIfNeeded()
-            async let weekLoad = loadWeekData(for: currentWeekBaseDate)
-            async let dateLoad = loadDateData(of: state.selectedDate, forceReload: true)
+            async let weekLoad: Void = loadWeekData(for: currentWeekBaseDate)
+            async let dateLoad: Void = loadDateData(of: state.selectedDate, forceReload: true)
             _ = await (weekLoad, dateLoad)
 
         case .requestPhotoAuthorization:
@@ -103,15 +103,19 @@ public final class WeeklyCalendarViewModel<
         case .goToPreviousWeek:
             currentWeekBaseDate = calendar.previousWeek(from: currentWeekBaseDate)
             updateSelectedDateToSameWeekday(in: currentWeekBaseDate)
-            async let weekLoad = loadWeekData(for: currentWeekBaseDate)
-            async let dateLoad = loadDateData(of: state.selectedDate)
+            async let weekLoad: Void = loadWeekData(for: currentWeekBaseDate)
+            async let dateLoad: Void = loadDateData(of: state.selectedDate)
             _ = await (weekLoad, dateLoad)
 
         case .goToNextWeek:
-            currentWeekBaseDate = calendar.nextWeek(from: currentWeekBaseDate)
+            let nextWeek = calendar.nextWeek(from: currentWeekBaseDate)
+            let today = calendar.startOfDay(for: Date())
+            guard nextWeek <= today else { return }
+
+            currentWeekBaseDate = nextWeek
             updateSelectedDateToSameWeekday(in: currentWeekBaseDate)
-            async let weekLoad = loadWeekData(for: currentWeekBaseDate)
-            async let dateLoad = loadDateData(of: state.selectedDate)
+            async let weekLoad: Void = loadWeekData(for: currentWeekBaseDate)
+            async let dateLoad: Void = loadDateData(of: state.selectedDate)
             _ = await (weekLoad, dateLoad)
 
         case .selectDate(let date):
@@ -201,7 +205,6 @@ public final class WeeklyCalendarViewModel<
             _ = await requestPhotoAuthorizationUseCase.execute()
         }
     }
-
 
     /// 사진 추가 전 권한 체크
     public func checkPhotoAuthorizationForAddingPhoto() -> Bool {
