@@ -68,7 +68,7 @@ private extension AppFlowController {
         ) else {
             fatalError("RequestPhotoAuthorizationUseCase not registered")
         }
-
+      
         let loadWeeklyCalendarDataUseCase = LoadWeeklyRecordUseCase(
             calendar: .current,
             recordRepository: foodRecordRepository,
@@ -85,13 +85,21 @@ private extension AppFlowController {
             loadWeeklyCalendarDataUseCase: loadWeeklyCalendarDataUseCase,
             saveFoodRecordUseCase: saveFoodRecordUseCase
         )
+      
+        guard let fetchMonthlyCalendarDaysUseCase = try? container.resolve(
+            FetchMonthlyCalendarDaysUseCase<MockFoodRecordRepository>.self
+        ) else {
+            fatalError("FetchMonthlyCalendarDaysUseCase not registered")
+        }
 
-        let weeklyCalendarVC = WeeklyCalendarViewController(
-            viewModel: viewModel,
-            imageProvider: imageProvider
+        let monthlyViewModel = MonthlyCalendarViewModel(
+            fetchMonthlyCalendarDaysUseCase: fetchMonthlyCalendarDaysUseCase,
+            requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase
         )
-        
-        return UINavigationController(rootViewController: weeklyCalendarVC)
+
+        let monthlyCalendarVC = MonthlyCalendarViewController(viewModel: monthlyViewModel)
+
+        return UINavigationController(rootViewController: monthlyCalendarVC)
     }
     
     func createLoginView() -> UIViewController {

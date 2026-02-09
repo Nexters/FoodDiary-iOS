@@ -31,7 +31,7 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
     }()
 
     private lazy var stackView: UIStackView = {
-        let view = UIStackView(arrangedSubviews: [dayNumberLabel, dashedBorderView])
+        let view = UIStackView(arrangedSubviews: [dayNumberLabel, dashedBorderView, polaroidImageCardsView])
         view.backgroundColor = .clear
         view.axis = .vertical
         view.alignment = .center
@@ -49,14 +49,10 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
 
     private let dashedBorderView = DashedBorderView()
 
-    private let foodImageView: UIImageView = {
-        let imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFill
-        imageView.clipsToBounds = true
-        imageView.layer.cornerRadius = Constants.cornerRadius
-        imageView.image = DesignSystemAsset.tempImage.image
-        imageView.isHidden = true
-        return imageView
+    private let polaroidImageCardsView: PolaroidImageCardsView = {
+        let view = PolaroidImageCardsView()
+        view.isHidden = true
+        return view
     }()
 
     // MARK: - Init
@@ -90,7 +86,6 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
 
         contentView.addSubview(containerView)
         containerView.addSubview(stackView)
-        stackView.addArrangedSubview(foodImageView)
     }
 
     private func setupConstraints() {
@@ -108,18 +103,16 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
             $0.height.equalTo(dashedBorderView.snp.width)
         }
 
-        foodImageView.snp.makeConstraints {
-            $0.height.equalTo(foodImageView.snp.width)
+        polaroidImageCardsView.snp.makeConstraints {
+            $0.height.equalTo(polaroidImageCardsView.snp.width)
         }
     }
 
     // MARK: - Configuration
 
     func configure(with day: MonthlyCalendarDay, isSelected: Bool) {
-        let hasRecord = !day.records.isEmpty
-        dashedBorderView.isHidden = hasRecord
-        foodImageView.isHidden = !hasRecord
-
+        applyRecordStyle(hasRecord: !day.records.isEmpty)
+        
         applyDayNumberStyle(
             dayNumber: day.dayNumber,
             isCurrentMonth: day.isCurrentMonth,
@@ -140,10 +133,11 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
         containerView.layer.borderColor = UIColor.clear.cgColor
         stackView.backgroundColor = .clear
         dashedBorderView.isHidden = false
-        foodImageView.isHidden = true
+        polaroidImageCardsView.isHidden = true
     }
 
     private func applyTodayStyle() {
+        containerView.backgroundColor = .primary
         containerView.applyPrimaryGradient(cornerRadius: Constants.cornerRadius)
         containerView.layer.borderWidth = Constants.todayBorderWidth
         containerView.layer.borderColor = UIColor.white.withAlphaComponent(0.3).cgColor
@@ -154,6 +148,20 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
         )
         dashedBorderView.backgroundColor = .white.withAlphaComponent(0.2)
         dashedBorderView.layer.borderColor = DesignSystemAsset.sd800.color.cgColor
+    }
+
+    private func applyRecordStyle(hasRecord: Bool) {
+        dashedBorderView.isHidden = hasRecord
+        polaroidImageCardsView.isHidden = !hasRecord
+
+        // 기록이 있다면 PolaroidImageCardView 보여주기
+        // TODO: 기록 1 or 2개에 따라서 분기가 필요함.
+        if hasRecord {
+            polaroidImageCardsView.configure(
+                backImage: DesignSystemAsset.foodPlaceholder.image,
+                frontImage: DesignSystemAsset.foodPlaceholder.image
+            )
+        }
     }
 
     private func applyDayNumberStyle(
