@@ -50,6 +50,9 @@ fastlane/test_output/
 .idea/
 .vscode/
 
+# Firebase
+GoogleService-Info.plist
+
 buildServer.json
 
 # AI tool rules
