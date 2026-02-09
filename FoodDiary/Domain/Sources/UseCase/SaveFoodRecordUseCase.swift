@@ -10,20 +10,24 @@ import UIKit
 /// 분석 결과는 Remote Push로 수신
 public struct SaveFoodRecordUseCase<
     RecordRepo: FoodRecordRepository,
-    ImageProvider: RenderableImageRepository
+    ImageProvider: RenderableImageRepository,
+    PendingRepo: PendingFoodRecordRepository
 >: Sendable {
     private let repository: RecordRepo
     private let imageProvider: ImageProvider
+    private let pendingRepository: PendingRepo
 
     public init(
         repository: RecordRepo,
-        imageProvider: ImageProvider
+        imageProvider: ImageProvider,
+        pendingRepository: PendingRepo
     ) {
         self.repository = repository
         self.imageProvider = imageProvider
+        self.pendingRepository = pendingRepository
     }
 
-    /// 이미지 로드 → 서버 업로드 → PendingFoodRecord 반환
+    /// 이미지 로드 → 서버 업로드 → 로컬 저장 → PendingFoodRecord 반환
     /// 분석 완료 시 Remote Push로 결과 수신
     public func execute(
         from assets: [ImageProvider.Asset],
@@ -34,11 +38,16 @@ public struct SaveFoodRecordUseCase<
         let request = CreateFoodRecordRequest(date: date, images: images)
         let uploadId = try await repository.uploadRecord(request)
 
-        return PendingFoodRecord(
+        let pendingRecord = PendingFoodRecord(
             uploadId: uploadId,
             date: date,
             representativeImage: images[0]
         )
+
+        // 로컬에 저장해서 앱 재시작 시 복원 가능하도록 함
+        try await pendingRepository.save(pendingRecord)
+
+        return pendingRecord
     }
 
     private func loadImages(from assets: [ImageProvider.Asset]) async throws -> [UIImage] {
