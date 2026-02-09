@@ -35,6 +35,9 @@ public extension InfoPlist {
                 "BASE_URL": "$(BASE_URL)",
                 "NSAppTransportSecurity": [
                     "NSAllowsArbitraryLoads": true
+                ],
+                "UIBackgroundModes": [
+                    "remote-notification"
                 ]
             ]
         )
