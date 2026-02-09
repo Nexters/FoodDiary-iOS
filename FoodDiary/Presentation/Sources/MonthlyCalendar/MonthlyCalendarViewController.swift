@@ -12,7 +12,7 @@ import UIKit
 public final class MonthlyCalendarViewController<
     RecordRepo: FoodRecordRepository,
     AuthRepo: PhotoAuthorizationRepository
->: UIViewController {
+>: UIViewController, UIAdaptivePresentationControllerDelegate, UICollectionViewDelegate {
 
     private enum Section: Hashable {
         case calendar
@@ -23,15 +23,6 @@ public final class MonthlyCalendarViewController<
     private let viewModel: MonthlyCalendarViewModel<RecordRepo, AuthRepo>
 
     // MARK: - UI Components
-    
-    private let scrollView: UIScrollView = {
-        let sv = UIScrollView()
-        sv.showsVerticalScrollIndicator = false
-        sv.alwaysBounceVertical = true
-        return sv
-    }()
-
-    private let scrollContentView = UIView()
 
     private let subtitleLabel: UILabel = {
         let label = UILabel()
@@ -108,6 +99,8 @@ public final class MonthlyCalendarViewController<
         setupDataSource()
         setupBindings()
 
+        collectionView.delegate = self
+
         viewModel.input.send(.loadInitialData)
     }
 
@@ -125,28 +118,16 @@ public final class MonthlyCalendarViewController<
 
     private func setupUI() {
         view.backgroundColor = DesignSystemAsset.sdBase.color
-        view.addSubview(scrollView)
-        scrollView.addSubview(scrollContentView)
-        scrollContentView.addSubview(subtitleLabel)
-        scrollContentView.addSubview(titleLabel)
-        scrollContentView.addSubview(monthYearHeaderView)
-        scrollContentView.addSubview(containerView)
+        view.addSubview(subtitleLabel)
+        view.addSubview(titleLabel)
+        view.addSubview(monthYearHeaderView)
+        view.addSubview(containerView)
         containerView.addSubview(stackView)
     }
 
     private func setupConstraints() {
-        scrollView.snp.makeConstraints {
-            $0.top.equalToSuperview()
-            $0.leading.trailing.bottom.equalToSuperview()
-        }
-
-        scrollContentView.snp.makeConstraints {
-            $0.edges.equalToSuperview()
-            $0.width.equalTo(scrollView.snp.width)
-        }
-
         subtitleLabel.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(Constants.subtitleTopOffset)
+            $0.top.equalTo(view.safeAreaLayoutGuide).offset(Constants.subtitleTopOffset)
             $0.leading.equalToSuperview().inset(Constants.horizontalInset)
         }
 
@@ -164,7 +145,7 @@ public final class MonthlyCalendarViewController<
         containerView.snp.makeConstraints {
             $0.top.equalTo(monthYearHeaderView.snp.bottom).offset(Constants.containerTopSpacing)
             $0.leading.trailing.equalToSuperview().inset(Constants.containerHorizontalInset)
-            $0.bottom.equalToSuperview().inset(Constants.containerBottomInset)
+            $0.bottom.equalTo(view.safeAreaLayoutGuide).inset(Constants.containerBottomInset)
         }
 
         stackView.snp.makeConstraints {
@@ -272,8 +253,10 @@ public final class MonthlyCalendarViewController<
         )
 
         if let sheet = picker.sheetPresentationController {
-            sheet.detents = [.custom { context in context.maximumDetentValue * 0.4 }]
+            sheet.detents = [.custom { context in context.maximumDetentValue * 0.45 }]
         }
+
+        picker.presentationController?.delegate = self
 
         monthPickerCancellable = picker.selectedMonthPublisher
             .sink { [weak self] date in
@@ -282,6 +265,22 @@ public final class MonthlyCalendarViewController<
             }
 
         present(picker, animated: true)
+    }
+
+    // MARK: - UIAdaptivePresentationControllerDelegate
+
+    public func presentationControllerWillDismiss(_ presentationController: UIPresentationController) {
+        monthYearHeaderView.resetChevron()
+    }
+
+    // MARK: - UICollectionViewDelegate
+
+    public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        guard let day = dataSource?.itemIdentifier(for: indexPath) else { return }
+
+        let detailVC = FoodRecordDetailViewController(records: day.records, date: day.date)
+        detailVC.modalPresentationStyle = .pageSheet
+        present(detailVC, animated: true)
     }
 }
 
