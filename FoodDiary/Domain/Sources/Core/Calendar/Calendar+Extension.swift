@@ -6,6 +6,13 @@
 import Foundation
 
 public extension Calendar {
+    /// 서울 시간대로 설정된 Calendar
+    static var seoul: Calendar {
+        var calendar = Calendar.current
+        calendar.timeZone = TimeZone(identifier: "Asia/Seoul") ?? TimeZone.current
+        return calendar
+    }
+    
     /// 이전 주 날짜 계산
     func previousWeek(from date: Date) -> Date {
         self.date(byAdding: .weekOfYear, value: -1, to: date) ?? date

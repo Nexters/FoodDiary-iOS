@@ -14,8 +14,7 @@ public struct FetchMonthlyCalendarDaysUseCase<Repository: FoodRecordRepository>:
     }
 
     public func execute(for period: DateInterval, currentMonth: Date) async throws -> [MonthlyCalendarDay] {
-        var calendar = Calendar.current
-        calendar.timeZone = TimeZone(identifier: "Asia/Seoul") ?? TimeZone.current
+        let calendar = Calendar.seoul
 
         // 음식 기록 조회
         let recordsByDate = try await repository.fetchRecords(in: period.start...period.end)
