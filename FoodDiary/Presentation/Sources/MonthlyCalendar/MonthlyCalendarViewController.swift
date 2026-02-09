@@ -12,7 +12,7 @@ import UIKit
 public final class MonthlyCalendarViewController<
     RecordRepo: FoodRecordRepository,
     AuthRepo: PhotoAuthorizationRepository
->: UIViewController, UIAdaptivePresentationControllerDelegate, UICollectionViewDelegate {
+>: UIViewController, UICollectionViewDelegate {
 
     private enum Section: Hashable {
         case calendar
@@ -60,7 +60,7 @@ public final class MonthlyCalendarViewController<
 
     private var dataSource: UICollectionViewDiffableDataSource<Section, MonthlyCalendarDay>?
     private var cancellables = Set<AnyCancellable>()
-    private var monthPickerCancellable: AnyCancellable?
+    private var monthPickerCancellables = Set<AnyCancellable>()
     private var numberOfWeeks: Int = 5
     private var collectionViewHeightConstraint: Constraint?
 
@@ -235,22 +235,19 @@ public final class MonthlyCalendarViewController<
         if let sheet = picker.sheetPresentationController {
             sheet.detents = [.custom { context in context.maximumDetentValue * 0.45 }]
         }
-
-        picker.presentationController?.delegate = self
-
-        monthPickerCancellable = picker.selectedMonthPublisher
+        
+        picker.selectedMonthPublisher
             .sink { [weak self] date in
                 self?.viewModel.input.send(.selectMonth(date))
-                self?.monthPickerCancellable = nil
-            }
+            }.store(in: &monthPickerCancellables)
+        
+        picker.dismissPublisher
+            .sink { [weak self] in
+                self?.monthYearHeaderView.resetChevron()
+                self?.monthPickerCancellables.removeAll()
+            }.store(in: &monthPickerCancellables)
 
         present(picker, animated: true)
-    }
-
-    // MARK: - UIAdaptivePresentationControllerDelegate
-
-    public func presentationControllerWillDismiss(_ presentationController: UIPresentationController) {
-        monthYearHeaderView.resetChevron()
     }
 
     // MARK: - UICollectionViewDelegate

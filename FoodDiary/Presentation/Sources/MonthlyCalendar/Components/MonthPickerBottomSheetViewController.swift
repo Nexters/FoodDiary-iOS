@@ -29,8 +29,15 @@ final class MonthPickerBottomSheetViewController: UIViewController {
     // MARK: - Publishers
 
     private let selectedMonthSubject = PassthroughSubject<Date, Never>()
+    
     var selectedMonthPublisher: AnyPublisher<Date, Never> {
         selectedMonthSubject.eraseToAnyPublisher()
+    }
+    
+    private let dismissSubject = PassthroughSubject<Void, Never>()
+    
+    var dismissPublisher: AnyPublisher<Void, Never> {
+        dismissSubject.eraseToAnyPublisher()
     }
 
     // MARK: - Properties
@@ -88,6 +95,11 @@ final class MonthPickerBottomSheetViewController: UIViewController {
         setupUI()
         setupConstraints()
         setupPickerView()
+    }
+    
+    public override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        dismissSubject.send()
     }
 
     // MARK: - Setup
