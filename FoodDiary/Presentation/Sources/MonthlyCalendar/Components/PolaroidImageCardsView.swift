@@ -67,15 +67,13 @@ final class PolaroidImageCardsView: UIView {
         )
 
         if backCardView.isHidden {
-            // 이미지가 1장일 때: 중앙에 단일 카드 배치
+            // 이미지가 1장일 때: 중앙에 단일 카드 배치 (회전 없이 똑바로)
             frontCardView.bounds = CGRect(origin: .zero, size: cardSize)
             frontCardView.center = CGPoint(
                 x: bounds.width * Constants.singleCardCenterXRatio,
                 y: bounds.height * Constants.singleCardCenterYRatio
             )
-            frontCardView.transform = CGAffineTransform(
-                rotationAngle: Constants.singleCardRotationDegrees * .pi / 180
-            )
+            frontCardView.transform = .identity
         } else {
             // 이미지가 2장 이상일 때: 겹쳐진 카드 배치
             // 뒷쪽 카드 위치 (왼쪽으로 치우침)
