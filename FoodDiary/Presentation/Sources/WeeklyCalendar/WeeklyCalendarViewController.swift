@@ -192,24 +192,17 @@ public final class WeeklyCalendarViewController<
             .store(in: &cancellables)
 
         viewModel.statePublisher
-            .map { [weak self] state -> (records: [FoodRecord], pendingRecords: [PendingFoodRecord], foodPhotoCount: Int) in
-                guard let self else {
-                    return ([], [], 0)
-                }
-                return (
-                    records: state.selectedDateRecords,
-                    pendingRecords: self.viewModel.pendingRecords(for: state.selectedDate),
-                    foodPhotoCount: self.viewModel.foodPhotoCount(for: state.selectedDatePhotos)
-                )
+            .map { ($0.selectedDate, $0.pendingRecordsByDate) }
+            .removeDuplicates { lhs, rhs in
+                Calendar.current.isDate(lhs.0, inSameDayAs: rhs.0)
+                    && lhs.1 == rhs.1
             }
-            .removeDuplicates(by: ==)
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] records, pendingRecords, foodPhotoCount in
-                self?.bottomContentView.configure(
-                    records: records,
-                    pendingRecords: pendingRecords,
-                    photoCount: foodPhotoCount
-                )
+            .sink { [weak self] selectedDate, _ in
+                guard let self else { return }
+                Task {
+                    await self.loadDateData(for: selectedDate)
+                }
             }
             .store(in: &cancellables)
 
@@ -233,9 +226,25 @@ public final class WeeklyCalendarViewController<
 
     // MARK: - Actions
 
+    @MainActor
+    private func loadDateData(for date: Date) async {
+        do {
+            let content = try await viewModel.loadDateContent(for: date)
+            bottomContentView.configure(
+                records: content.records,
+                pendingRecords: content.pendingRecords,
+                photoCount: content.foodPhotoCount
+            )
+        } catch {
+            // 에러 처리는 ViewModel의 loadFailed 이벤트로 위임 가능
+        }
+    }
+
     private func handleAddButtonTap() {
         if viewModel.checkPhotoAuthorizationForAddingPhoto() {
-            presentImagePicker()
+            Task {
+                await presentImagePicker()
+            }
         } else {
             // 권한이 없으면 재요청 (notDetermined면 시스템 다이얼로그, 아니면 denied 이벤트 발생)
             viewModel.input.send(.requestPhotoAuthorization)
@@ -262,32 +271,38 @@ public final class WeeklyCalendarViewController<
 
     // MARK: - Navigation
 
-    private func presentImagePicker() {
-        // 선택된 날짜의 사진들을 가져와서 ImagePicker에 전달
-        let foodImageAssets = viewModel.state.selectedDatePhotos
-        let selectedPhotos = foodImageAssets.map { $0.imageAsset }
+    @MainActor
+    private func presentImagePicker() async {
+        let selectedDate = viewModel.state.selectedDate
 
-        // 음식 확률 0.6 이상인 사진 ID를 미리 선택
-        let preselectedIds = Set(
-            foodImageAssets
-                .filter { $0.foodProbability >= 0.6 }
-                .map { $0.id }
-        )
+        do {
+            let foodImageAssets = try await viewModel.photos(for: selectedDate)
+            let selectedPhotos = foodImageAssets.map { $0.imageAsset }
 
-        let picker = ImagePickerViewController(
-            photos: selectedPhotos,
-            preselectedIds: preselectedIds,
-            imageProvider: imageProvider,
-            configuration: .default
-        )
+            // 음식 확률 0.6 이상인 사진 ID를 미리 선택
+            let preselectedIds = Set(
+                foodImageAssets
+                    .filter { $0.foodProbability >= 0.6 }
+                    .map { $0.id }
+            )
 
-        picker.resultPublisher
-            .sink { [weak self] result in
-                self?.handleImagePickerResult(result)
-            }
-            .store(in: &cancellables)
+            let picker = ImagePickerViewController(
+                photos: selectedPhotos,
+                preselectedIds: preselectedIds,
+                imageProvider: imageProvider,
+                configuration: .default
+            )
 
-        navigationController?.pushViewController(picker, animated: true)
+            picker.resultPublisher
+                .sink { [weak self] result in
+                    self?.handleImagePickerResult(result)
+                }
+                .store(in: &cancellables)
+
+            navigationController?.pushViewController(picker, animated: true)
+        } catch {
+            // 에러 처리
+        }
     }
 
     private func handleImagePickerResult(_ result: ImagePickerResult<AssetRepo.Asset>) {
