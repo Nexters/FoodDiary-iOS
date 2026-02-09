@@ -68,7 +68,15 @@ private extension AppFlowController {
         ) else {
             fatalError("RequestPhotoAuthorizationUseCase not registered")
         }
-      
+
+        guard let pendingRepository = try? container.resolve(PendingFoodRecordStorage.self) else {
+            fatalError("PendingFoodRecordStorage not registered")
+        }
+
+        guard let analysisRepository = try? container.resolve(MockAnalysisResultRepository.self) else {
+            fatalError("MockAnalysisResultRepository not registered")
+        }
+
         let loadWeeklyCalendarDataUseCase = LoadWeeklyRecordUseCase(
             calendar: .current,
             recordRepository: foodRecordRepository,
@@ -77,13 +85,25 @@ private extension AppFlowController {
 
         let saveFoodRecordUseCase = SaveFoodRecordUseCase(
             repository: foodRecordRepository,
-            imageProvider: imageProvider
+            imageProvider: imageProvider,
+            pendingRepository: pendingRepository
+        )
+
+        let restorePendingRecordsUseCase = RestorePendingRecordsUseCase(
+            repository: pendingRepository
+        )
+
+        let checkPendingAnalysisUseCase = CheckPendingAnalysisUseCase(
+            pendingRepository: pendingRepository,
+            analysisRepository: analysisRepository
         )
 
         let viewModel = WeeklyCalendarViewModel(
             requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase,
             loadWeeklyCalendarDataUseCase: loadWeeklyCalendarDataUseCase,
-            saveFoodRecordUseCase: saveFoodRecordUseCase
+            saveFoodRecordUseCase: saveFoodRecordUseCase,
+            restorePendingRecordsUseCase: restorePendingRecordsUseCase,
+            checkPendingAnalysisUseCase: checkPendingAnalysisUseCase
         )
       
         guard let fetchMonthlyCalendarDaysUseCase = try? container.resolve(
@@ -99,7 +119,7 @@ private extension AppFlowController {
 
         let monthlyCalendarVC = MonthlyCalendarViewController(viewModel: monthlyViewModel)
 
-        return UINavigationController(rootViewController: monthlyCalendarVC)
+        return UINavigationController(rootViewController: weeklyCalendarVC)
     }
     
     func createLoginView() -> UIViewController {

@@ -23,6 +23,10 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.rootViewController = AppFlowController(container: container)
         window?.makeKeyAndVisible()
     }
+
+    func sceneWillEnterForeground(_ scene: UIScene) {
+        NotificationCenter.default.post(name: .appWillEnterForeground, object: nil)
+    }
 }
 
 private extension SceneDelegate {
@@ -104,6 +108,14 @@ private extension SceneDelegate {
         container.register(PhotoAuthorizationFetcher.self) { _ in
             PhotoAuthorizationFetcher()
         }
+
+        container.register(PendingFoodRecordStorage.self) { _ in
+            PendingFoodRecordStorage()
+        }
+
+        container.register(MockAnalysisResultRepository.self) { _ in
+            MockAnalysisResultRepository()
+        }
     }
     
     func registerDomain() {
@@ -131,6 +143,43 @@ private extension SceneDelegate {
                 fatalError("PhotoAuthorizationFetcher not registered")
             }
             return RequestPhotoAuthorizationUseCase(repository: repository)
+        }
+
+        container.register(
+            RestorePendingRecordsUseCase<PendingFoodRecordStorage>.self
+        ) { resolver in
+            guard let repository = resolver.resolve(PendingFoodRecordStorage.self) else {
+                fatalError("PendingFoodRecordStorage not registered")
+            }
+            return RestorePendingRecordsUseCase(repository: repository)
+        }
+
+        container.register(
+            CheckPendingAnalysisUseCase<PendingFoodRecordStorage, MockAnalysisResultRepository>.self
+        ) { resolver in
+            guard let pendingRepo = resolver.resolve(PendingFoodRecordStorage.self),
+                  let analysisRepo = resolver.resolve(MockAnalysisResultRepository.self) else {
+                fatalError("Pending analysis dependencies not registered")
+            }
+            return CheckPendingAnalysisUseCase(
+                pendingRepository: pendingRepo,
+                analysisRepository: analysisRepo
+            )
+        }
+
+        container.register(
+            SaveFoodRecordUseCase<MockFoodRecordRepository, UIImageLoader, PendingFoodRecordStorage>.self
+        ) { resolver in
+            guard let recordRepo = resolver.resolve(MockFoodRecordRepository.self),
+                  let imageLoader = resolver.resolve(UIImageLoader.self),
+                  let pendingRepo = resolver.resolve(PendingFoodRecordStorage.self) else {
+                fatalError("SaveFoodRecordUseCase dependencies not registered")
+            }
+            return SaveFoodRecordUseCase(
+                repository: recordRepo,
+                imageProvider: imageLoader,
+                pendingRepository: pendingRepo
+            )
         }
 
         container.register(FetchMonthlyCalendarDaysUseCase<MockFoodRecordRepository>.self) { resolver in

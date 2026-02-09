@@ -14,12 +14,14 @@ public final class WeeklyCalendarViewController<
     RecordRepo: FoodRecordRepository,
     AssetRepo: FoodImageAssetRepository,
     AuthRepo: PhotoAuthorizationRepository,
-    ImageProvider: RenderableImageRepository
+    ImageProvider: RenderableImageRepository,
+    PendingRepo: PendingFoodRecordRepository,
+    AnalysisRepo: AnalysisResultRepository
 >: UIViewController where ImageProvider.Asset == AssetRepo.Asset {
 
     // MARK: - Dependencies
 
-    private let viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo, ImageProvider>
+    private let viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, AnalysisRepo>
     private let imageProvider: ImageProvider
 
     // MARK: - UI Components
@@ -58,7 +60,7 @@ public final class WeeklyCalendarViewController<
     // MARK: - Init
 
     public init(
-        viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo, ImageProvider>,
+        viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, AnalysisRepo>,
         imageProvider: ImageProvider
     ) {
         self.viewModel = viewModel
@@ -219,6 +221,13 @@ public final class WeeklyCalendarViewController<
                     self?.showSaveErrorAlert(error)
                 case .loadFailed:
                     break
+                case .analysisCompleted:
+                    Task { [weak self] in
+                        guard let self else { return }
+                        await self.loadDateData(for: self.viewModel.state.selectedDate)
+                    }
+                case .analysisFailed(_, let reason):
+                    self?.showAnalysisFailedAlert(reason: reason)
                 }
             }
             .store(in: &cancellables)
@@ -319,6 +328,16 @@ public final class WeeklyCalendarViewController<
         let alert = UIAlertController(
             title: "저장 실패",
             message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
+    }
+
+    private func showAnalysisFailedAlert(reason: String) {
+        let alert = UIAlertController(
+            title: "분석 실패",
+            message: reason,
             preferredStyle: .alert
         )
         alert.addAction(UIAlertAction(title: "확인", style: .default))
