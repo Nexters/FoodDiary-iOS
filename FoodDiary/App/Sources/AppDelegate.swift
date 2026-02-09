@@ -7,10 +7,16 @@
 
 import UIKit
 import UserNotifications
+import FirebaseCore
+import FirebaseMessaging
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        print("[AppDelegate] didFinishLaunchingWithOptions")
+        FirebaseApp.configure()
+        print("[AppDelegate] Firebase configured")
+        Messaging.messaging().delegate = self
         setupAppearance()
         registerForRemoteNotifications(application)
         return true
@@ -22,7 +28,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     private func registerForRemoteNotifications(_ application: UIApplication) {
         UNUserNotificationCenter.current().delegate = self
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
+            print("[AppDelegate] Push authorization granted: \(granted), error: \(String(describing: error))")
             guard granted else { return }
             DispatchQueue.main.async {
                 application.registerForRemoteNotifications()
@@ -39,9 +46,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        let token = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
-        print("[AppDelegate] Device Token: \(token)")
-        // TODO: 서버 API로 토큰 전송
+        // APNs 토큰을 FCM에 전달
+        Messaging.messaging().apnsToken = deviceToken
+
+        let apnsToken = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
+        print("[AppDelegate] APNs Token: \(apnsToken)")
     }
 
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
@@ -77,6 +86,26 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
             object: nil,
             userInfo: ["uploadId": uploadId]
         )
+    }
+}
+
+// MARK: - MessagingDelegate
+
+extension AppDelegate: MessagingDelegate {
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        guard let fcmToken else {
+            print("[AppDelegate] FCM Token is nil")
+            return
+        }
+
+        let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? "unknown"
+
+        print("[AppDelegate] ========== FCM Token Info ==========")
+        print("[AppDelegate] FCM Token: \(fcmToken)")
+        print("[AppDelegate] Device ID: \(deviceId)")
+        print("[AppDelegate] =====================================")
+
+        // TODO: 서버 API로 deviceId, fcmToken 전송
     }
 }
 

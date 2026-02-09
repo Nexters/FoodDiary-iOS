@@ -28,6 +28,8 @@ let project = Project(
                 .project(target: "DI", path: "../DI"),
                 .project(target: "Domain", path: "../Domain"),
                 .project(target: "Presentation", path: "../Presentation"),
+                .external(name: "FirebaseCore"),
+                .external(name: "FirebaseMessaging"),
             ],
             settings: .settings(
                 base: [
