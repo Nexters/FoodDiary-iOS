@@ -45,29 +45,20 @@ public final class WeeklyCalendarViewModel<
 
     // MARK: - Dependencies
 
-    private let fetchWeeklyCalendarUseCase: FetchWeeklyCalendarUseCase<RecordRepo>
-    private let fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase<AssetRepo>
-    private let fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
-    private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>
     private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>
-    private let imageProvider: ImageProvider
+    private let loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase<RecordRepo, AssetRepo>
+    private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, ImageProvider>
 
     // MARK: - Init
 
     public init(
-        fetchWeeklyCalendarUseCase: FetchWeeklyCalendarUseCase<RecordRepo>,
-        fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase<AssetRepo>,
-        fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>,
-        saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>,
         requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>,
-        imageProvider: ImageProvider
+        loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase<RecordRepo, AssetRepo>,
+        saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, ImageProvider>
     ) {
-        self.fetchWeeklyCalendarUseCase = fetchWeeklyCalendarUseCase
-        self.fetchFoodImageAssetUseCase = fetchFoodImageAssetUseCase
-        self.fetchFoodRecordsUseCase = fetchFoodRecordsUseCase
-        self.saveFoodRecordUseCase = saveFoodRecordUseCase
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
-        self.imageProvider = imageProvider
+        self.loadWeeklyCalendarDataUseCase = loadWeeklyCalendarDataUseCase
+        self.saveFoodRecordUseCase = saveFoodRecordUseCase
 
         self.calendar = Calendar.current
 
@@ -97,31 +88,31 @@ public final class WeeklyCalendarViewModel<
         case .loadInitialData:
             await requestPhotoAuthorizationIfNeeded()
             await loadWeekData(for: currentWeekBaseDate)
-            await loadDateData(of: state.selectedDate)
 
         case .requestPhotoAuthorization:
             let status = await requestPhotoAuthorizationUseCase.execute()
             if status == .denied || status == .restricted {
                 eventSubject.send(.photoAuthorizationDenied)
-            } else {
-                await loadDateData(of: state.selectedDate)
             }
 
         case .goToPreviousWeek:
             currentWeekBaseDate = calendar.previousWeek(from: currentWeekBaseDate)
-            await loadWeekData(for: currentWeekBaseDate)
             updateSelectedDateToSameWeekday(in: currentWeekBaseDate)
-            await loadDateData(of: state.selectedDate)
+            await loadWeekData(for: currentWeekBaseDate)
 
         case .goToNextWeek:
-            currentWeekBaseDate = calendar.nextWeek(from: currentWeekBaseDate)
-            await loadWeekData(for: currentWeekBaseDate)
+            let nextWeek = calendar.nextWeek(from: currentWeekBaseDate)
+            let today = calendar.startOfDay(for: Date())
+            guard nextWeek <= today else { return }
+
+            currentWeekBaseDate = nextWeek
             updateSelectedDateToSameWeekday(in: currentWeekBaseDate)
-            await loadDateData(of: state.selectedDate)
+            await loadWeekData(for: currentWeekBaseDate)
 
         case .selectDate(let date):
-            state.selectedDate = date
-            await loadDateData(of: state.selectedDate)
+            if !calendar.isDate(state.selectedDate, inSameDayAs: date) {
+                state.selectedDate = date
+            }
 
         case .saveSelectedPhotos(let assets):
             await savePhotosAsRecord(assets)
@@ -135,94 +126,30 @@ public final class WeeklyCalendarViewModel<
         state.isLoading = true
         defer { state.isLoading = false }
 
-        // 주간 사진 캐시 워밍
-        fetchFoodImageAssetUseCase.prefetch(for: date)
-
         do {
-            let weekDays = try await fetchWeeklyCalendarUseCase.execute(for: date)
-            state.weekDays = weekDays
-            state.monthText = date.formatMonthText()
+            let weekData = try await loadWeeklyCalendarDataUseCase.loadWeekData(for: date)
+            state.weekDays = weekData.weekDays
+            state.monthText = weekData.monthText
         } catch {
-            print("Failed to load week data: \(error)")
+            eventSubject.send(.loadFailed(error))
         }
     }
 
-    @MainActor
-    private func loadDateData(of selectedDate: Date) async {
-        let startOfDay = calendar.startOfDay(for: selectedDate)
-        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)
-
-        do {
-            let photosByDate = try await fetchFoodImageAssetUseCase.execute(
-                from: startOfDay,
-                to: endOfDay
-            )
-            state.selectedDatePhotos = photosByDate[startOfDay] ?? []
-
-            let records = try await fetchFoodRecordsUseCase.execute(for: selectedDate)
-            state.selectedDateRecords = records
-        } catch {
-            print("Failed to load selected date data: \(error)")
-        }
-    }
 
     private func savePhotosAsRecord(_ assets: [AssetRepo.Asset]) async {
         guard !assets.isEmpty else { return }
 
-        // 1. 백그라운드에서 모든 이미지 로드
-        let images: [UIImage]
         do {
-            images = try await loadImages(from: assets)
+            // 이미지 로드 → 서버 업로드 → PendingRecord 반환
+            let pendingRecord = try await saveFoodRecordUseCase.execute(
+                from: assets,
+                date: state.selectedDate
+            )
+            let dateKey = calendar.startOfDay(for: pendingRecord.date)
+            state.pendingRecordsByDate[dateKey, default: []].insert(pendingRecord, at: 0)
+            eventSubject.send(.uploadCompleted(pendingRecord))
         } catch {
             eventSubject.send(.saveFailed(error))
-            return
-        }
-
-        // 2. 대표 이미지로 PendingFoodRecord 생성
-        let pendingRecord = PendingFoodRecord(
-            date: state.selectedDate,
-            representativeImage: images[0]
-        )
-        state.pendingRecords.insert(pendingRecord, at: 0)
-
-        // 3. 백그라운드에서 서버 저장
-        let request = CreateFoodRecordRequest(
-            date: state.selectedDate,
-            images: images
-        )
-
-        do {
-            let savedRecord = try await saveFoodRecordUseCase.execute(request)
-
-            // 4. 완료: pending 제거, 실제 record 추가
-            state.pendingRecords.removeAll { $0.id == pendingRecord.id }
-            state.selectedDateRecords.insert(savedRecord, at: 0)
-            eventSubject.send(.saveCompleted(savedRecord))
-        } catch {
-            // 5. 실패: pending 제거, 에러 이벤트
-            state.pendingRecords.removeAll { $0.id == pendingRecord.id }
-            eventSubject.send(.saveFailed(error))
-        }
-    }
-
-    /// 여러 asset을 병렬로 로드하여 UIImage 배열로 반환
-    private func loadImages(from assets: [AssetRepo.Asset]) async throws -> [UIImage] {
-        try await withThrowingTaskGroup(of: (Int, UIImage).self) { group in
-            for (index, asset) in assets.enumerated() {
-                group.addTask {
-                    let image = try await self.imageProvider.loadImage(
-                        for: asset,
-                        targetSize: CGSize(width: 1200, height: 1200)
-                    )
-                    return (index, image)
-                }
-            }
-
-            var results: [(Int, UIImage)] = []
-            for try await result in group {
-                results.append(result)
-            }
-            return results.sorted(by: { $0.0 < $1.0 }).map { $0.1 }
         }
     }
 
@@ -259,34 +186,15 @@ public final class WeeklyCalendarViewModel<
 }
 
 // MARK: - State
-
 extension WeeklyCalendarViewModel {
     public struct State: Equatable {
-        private static var foodProbabilityThreshold: Float { 0.6 }
+        fileprivate static var foodProbabilityThreshold: Float { 0.6 }
 
         public internal(set) var weekDays: [WeeklyCalendarDay] = []
         public internal(set) var selectedDate: Date = Date()
         public internal(set) var monthText: String = ""
-        public internal(set) var selectedDateRecords: [FoodRecord] = []
-        public internal(set) var pendingRecords: [PendingFoodRecord] = []
-        public internal(set) var selectedDatePhotos: [FoodImageAsset<AssetRepo.Asset>] = []
+        public internal(set) var pendingRecordsByDate: [Date: [PendingFoodRecord]] = [:]
         public internal(set) var isLoading: Bool = false
-        public internal(set) var isSaving: Bool = false
-
-        /// 음식으로 판별된 사진 개수
-        public var foodPhotoCount: Int {
-            selectedDatePhotos.filter { $0.foodProbability >= Self.foodProbabilityThreshold }.count
-        }
-
-        public static func == (lhs: Self, rhs: Self) -> Bool {
-            lhs.weekDays == rhs.weekDays
-                && Calendar.current.isDate(lhs.selectedDate, inSameDayAs: rhs.selectedDate)
-                && lhs.monthText == rhs.monthText
-                && lhs.selectedDateRecords == rhs.selectedDateRecords
-                && lhs.pendingRecords == rhs.pendingRecords
-                && lhs.isLoading == rhs.isLoading
-                && lhs.isSaving == rhs.isSaving
-        }
     }
 
     public enum Input {
@@ -300,7 +208,60 @@ extension WeeklyCalendarViewModel {
 
     public enum Event {
         case photoAuthorizationDenied
-        case saveCompleted(FoodRecord)
+        case uploadCompleted(PendingFoodRecord)
         case saveFailed(Error)
+        case loadFailed(Error)
+    }
+}
+
+// MARK: - DateContent
+
+extension WeeklyCalendarViewModel {
+    public struct DateContent {
+        public let records: [FoodRecord]
+        public let pendingRecords: [PendingFoodRecord]
+        public let foodPhotoCount: Int
+    }
+}
+
+// MARK: - Public Methods
+
+extension WeeklyCalendarViewModel {
+    /// 특정 날짜의 콘텐츠 로드 (기록, 대기중 기록, 음식 사진 개수)
+    public func loadDateContent(for date: Date) async throws -> DateContent {
+        let dateData = try await loadWeeklyCalendarDataUseCase.loadDateData(for: date)
+
+        return DateContent(
+            records: dateData.records,
+            pendingRecords: pendingRecords(for: date),
+            foodPhotoCount: countFoodPhotos(in: dateData.photos)
+        )
+    }
+
+    /// 다음 주로 이동 가능 여부
+    public func canGoToNextWeek(from date: Date) -> Bool {
+        let calendar = Calendar.current
+        let nextWeek = calendar.date(byAdding: .weekOfYear, value: 1, to: date) ?? date
+        let today = calendar.startOfDay(for: Date())
+        return calendar.startOfDay(for: nextWeek) <= today
+    }
+
+    /// 특정 날짜의 사진 로드
+    public func photos(for date: Date) async throws -> [FoodImageAsset<AssetRepo.Asset>] {
+        let dateData = try await loadWeeklyCalendarDataUseCase.loadDateData(for: date)
+        return dateData.photos
+    }
+
+    // MARK: - Private Helpers
+
+    /// 특정 날짜의 대기 중인 기록
+    private func pendingRecords(for date: Date) -> [PendingFoodRecord] {
+        let dateKey = Calendar.current.startOfDay(for: date)
+        return state.pendingRecordsByDate[dateKey] ?? []
+    }
+
+    /// 특정 사진 배열의 음식 사진 개수
+    private func countFoodPhotos(in photos: [FoodImageAsset<AssetRepo.Asset>]) -> Int {
+        photos.filter { $0.foodProbability >= State.foodProbabilityThreshold }.count
     }
 }

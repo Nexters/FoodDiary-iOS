@@ -17,24 +17,12 @@ public final class FoodRecordCardView: UIView {
 
     private enum Constants {
         static let cornerRadius: CGFloat = 20
-        static let imageInset: CGFloat = 5
-        static let imageAspectRatio: CGFloat = 0.90
-        static let badgeLeadingOffset: CGFloat = 18
-        static let infoHorizontalPadding: CGFloat = 18
-        static let infoVerticalPadding: CGFloat = 16
-        static let labelSpacing: CGFloat = 4
-        static let infoStackSpacing: CGFloat = 12
-        static let copyButtonWidth: CGFloat = 24
-        static let copyIconSize: CGFloat = 18
-        static let copyLabelTopSpacing: CGFloat = 2
+        static let imageInset: CGFloat = 4
+        static let badgeTopInset: CGFloat = 16
+        static let badgeLeadingInset: CGFloat = 16
+        static let badgeSpacing: CGFloat = 4
+        static let badgeHeight: CGFloat = 18
         static let fadeTransitionDuration: Double = 0.25
-    }
-
-    // MARK: - Publishers
-
-    private let copyTapSubject = PassthroughSubject<String, Never>()
-    public var copyTapPublisher: AnyPublisher<String, Never> {
-        copyTapSubject.eraseToAnyPublisher()
     }
 
     // MARK: - State
@@ -55,71 +43,31 @@ public final class FoodRecordCardView: UIView {
         let iv = UIImageView()
         iv.contentMode = .scaleAspectFill
         iv.clipsToBounds = true
-        iv.layer.cornerRadius = Constants.cornerRadius
-        iv.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        iv.layer.cornerRadius = Constants.cornerRadius - Constants.imageInset
         iv.backgroundColor = .gray300
         return iv
     }()
 
-    private let genreBadge: BadgeView
-
-    private let infoStackView: UIStackView = {
+    private let badgeStackView: UIStackView = {
         let stack = UIStackView()
         stack.axis = .horizontal
+        stack.spacing = Constants.badgeSpacing
         stack.alignment = .center
-        stack.spacing = Constants.infoStackSpacing
-        stack.backgroundColor = .white
         return stack
     }()
 
-    private let labelStackView: UIStackView = {
-        let stack = UIStackView()
-        stack.axis = .vertical
-        stack.spacing = Constants.labelSpacing
-        return stack
-    }()
-
-    private let restaurantNameLabel: UILabel = {
-        let label = UILabel()
-        label.numberOfLines = 1
-        return label
-    }()
-
-    private let addressLabel: UILabel = {
-        let label = UILabel()
-        label.numberOfLines = 1
-        return label
-    }()
-
-    private let copyButtonContainer: UIView = {
-        let view = UIView()
-        return view
-    }()
-
-    private let copyIconImageView: UIImageView = {
-        let iv = UIImageView()
-        iv.image = DesignSystemAsset.iconCopy.image
-        iv.tintColor = .gray500
-        iv.contentMode = .scaleAspectFit
-        return iv
-    }()
-
-    private let copyLabel: UILabel = {
-        let label = UILabel()
-        label.setText("복사", style: .p10, color: .grayBase)
-        label.textAlignment = .center
-        return label
-    }()
+    private let timeBadge: PillBadgeView
+    private let locationBadge: PillBadgeView?
 
     // MARK: - Init
 
     public init(record: FoodRecord) {
         self.record = record
-        self.genreBadge = BadgeView(genre: record.genre)
+        self.timeBadge = PillBadgeView(text: record.formattedShortTime)
+        self.locationBadge = record.district.map { PillBadgeView(text: $0) }
         super.init(frame: .zero)
         setupUI()
         setupConstraints()
-        setupActions()
         configure()
     }
 
@@ -132,22 +80,13 @@ public final class FoodRecordCardView: UIView {
 
     private func setupUI() {
         addSubview(containerView)
-
-        // 이미지 영역
         containerView.addSubview(foodImageView)
-        containerView.addSubview(genreBadge)
+        containerView.addSubview(badgeStackView)
 
-        // 정보 영역
-        containerView.addSubview(infoStackView)
-
-        labelStackView.addArrangedSubview(restaurantNameLabel)
-        labelStackView.addArrangedSubview(addressLabel)
-
-        infoStackView.addArrangedSubview(labelStackView)
-        infoStackView.addArrangedSubview(copyButtonContainer)
-
-        copyButtonContainer.addSubview(copyIconImageView)
-        copyButtonContainer.addSubview(copyLabel)
+        badgeStackView.addArrangedSubview(timeBadge)
+        if let locationBadge {
+            badgeStackView.addArrangedSubview(locationBadge)
+        }
     }
 
     private func setupConstraints() {
@@ -155,68 +94,19 @@ public final class FoodRecordCardView: UIView {
             $0.edges.equalToSuperview()
         }
 
-        // 이미지 영역 - 상단
         foodImageView.snp.makeConstraints {
-            $0.top.leading.trailing.equalToSuperview().inset(Constants.imageInset)
-            $0.height.equalTo(foodImageView.snp.width).multipliedBy(Constants.imageAspectRatio).priority(.high)
+            $0.edges.equalToSuperview().inset(Constants.imageInset)
         }
 
-        genreBadge.snp.makeConstraints {
-            $0.leading.equalTo(foodImageView).offset(Constants.badgeLeadingOffset)
-            $0.centerY.equalTo(foodImageView.snp.bottom)
+        badgeStackView.snp.makeConstraints {
+            $0.top.equalTo(foodImageView).offset(Constants.badgeTopInset)
+            $0.leading.equalTo(foodImageView).offset(Constants.badgeLeadingInset)
         }
-
-        // 정보 영역 - 하단
-        infoStackView.snp.makeConstraints {
-            $0.top.greaterThanOrEqualTo(foodImageView.snp.bottom).offset(Constants.infoVerticalPadding)
-            $0.leading.trailing.equalToSuperview().inset(Constants.infoHorizontalPadding)
-            $0.bottom.equalToSuperview().inset(Constants.infoVerticalPadding)
-        }
-
-        copyButtonContainer.snp.makeConstraints {
-            $0.width.equalTo(Constants.copyButtonWidth)
-        }
-
-        copyIconImageView.snp.makeConstraints {
-            $0.top.equalToSuperview()
-            $0.centerX.equalToSuperview()
-            $0.size.equalTo(Constants.copyIconSize)
-        }
-
-        copyLabel.snp.makeConstraints {
-            $0.top.equalTo(copyIconImageView.snp.bottom).offset(Constants.copyLabelTopSpacing)
-            $0.centerX.equalToSuperview()
-            $0.bottom.equalToSuperview()
-        }
-    }
-
-    private func setupActions() {
-        let copyTapGesture = UITapGestureRecognizer(
-            target: self, action: #selector(copyButtonTapped))
-        copyButtonContainer.addGestureRecognizer(copyTapGesture)
-        copyButtonContainer.isUserInteractionEnabled = true
     }
 
     // MARK: - Configuration
 
     private func configure() {
-        if let name = record.restaurantName {
-            restaurantNameLabel.setText(name, style: .hd16, color: .gray900)
-            restaurantNameLabel.isHidden = false
-        } else {
-            restaurantNameLabel.isHidden = true
-        }
-
-        if let address = record.address {
-            addressLabel.setText(address, style: .p10, color: .gray500)
-            addressLabel.isHidden = false
-            copyButtonContainer.isHidden = false
-        } else {
-            addressLabel.isHidden = true
-            copyButtonContainer.isHidden = true
-        }
-
-        // 첫 번째 이미지 URL로 이미지 로드
         setImageURL(record.imageURLs.first)
     }
 
@@ -233,12 +123,5 @@ public final class FoodRecordCardView: UIView {
                 .cacheOriginalImage,
             ]
         )
-    }
-
-    // MARK: - Actions
-
-    @objc private func copyButtonTapped() {
-        guard let address = record.address else { return }
-        copyTapSubject.send(address)
     }
 }

@@ -22,13 +22,8 @@ final class BottomContentView: UIView {
         cardStackTapSubject.eraseToAnyPublisher()
     }
 
-    var copyTapPublisher: AnyPublisher<String, Never> {
-        copyTapSubject.eraseToAnyPublisher()
-    }
-
     private let addButtonTapSubject = PassthroughSubject<Void, Never>()
     private let cardStackTapSubject = PassthroughSubject<FoodRecord, Never>()
-    private let copyTapSubject = PassthroughSubject<String, Never>()
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - UI Components
@@ -240,12 +235,6 @@ final class BottomContentView: UIView {
         newCardStackView.cardTapPublisher
             .sink { [weak self] record in
                 self?.cardStackTapSubject.send(record)
-            }
-            .store(in: &cancellables)
-
-        newCardStackView.copyTapPublisher
-            .sink { [weak self] address in
-                self?.copyTapSubject.send(address)
             }
             .store(in: &cancellables)
     }

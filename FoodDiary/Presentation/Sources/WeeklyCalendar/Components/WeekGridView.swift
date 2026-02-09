@@ -39,6 +39,7 @@ final class WeekGridView: UIView {
     }()
 
     private var dayCells: [DayCellView] = []
+    private var days: [WeeklyCalendarDay] = []
 
     // MARK: - Init
 
@@ -66,10 +67,11 @@ final class WeekGridView: UIView {
         }
 
         // 7개의 DayCell 생성
-        (0..<7).forEach { _ in
+        (0..<7).forEach { index in
             let cell = DayCellView()
             cell.tapHandler = { [weak self] date in
-                self?.dateTapSubject.send(date)
+                guard let self, !self.days[index].isFuture else { return }
+                self.dateTapSubject.send(date)
             }
             dayCells.append(cell)
             stackView.addArrangedSubview(cell)
@@ -80,6 +82,7 @@ final class WeekGridView: UIView {
 
     func configure(with days: [WeeklyCalendarDay], selectedDate: Date) {
         guard days.count == 7 else { return }
+        self.days = days
         let calendar = Calendar.current
 
         zip(dayCells, days).forEach { cell, dayData in

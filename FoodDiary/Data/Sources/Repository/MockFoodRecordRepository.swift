@@ -24,45 +24,38 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
         return mockRecords[startOfDay] ?? []
     }
 
-    public func saveRecord(_ request: CreateFoodRecordRequest) async throws -> FoodRecord {
-        // 서버 AI 분석 딜레이 시뮬레이션 (3초)
-        try await Task.sleep(for: .seconds(3))
+    public func uploadRecord(_ request: CreateFoodRecordRequest) async throws -> String {
+        let imageCount = request.images.count
+        print("[MockFoodRecordRepository] 📤 업로드 시작 - 이미지 \(imageCount)장")
 
-        let dateKey = calendar.startOfDay(for: request.date)
-        let hour = calendar.component(.hour, from: Date())
+        // 이미지 업로드 시뮬레이션
+        for i in 1...imageCount {
+            try await Task.sleep(for: .seconds(1))
+            print("[MockFoodRecordRepository] 📤 이미지 업로드 중... (\(i)/\(imageCount))")
+        }
 
-        // 실제 구현에서는 request.images를 multipart/form-data로 서버에 업로드하고
-        // 서버에서 반환된 이미지 URL을 사용합니다.
-        // Mock에서는 이미지 개수만큼 mock URL을 생성합니다.
-        let mockImageURLs = request.images.map { _ in Self.mockImageURL }
+        let uploadId = UUID().uuidString
+        print("[MockFoodRecordRepository] ✅ 업로드 완료! uploadId: \(uploadId)")
+        print("[MockFoodRecordRepository] 🤖 AI 분석은 서버에서 비동기로 진행됩니다. Remote Push로 결과 수신 예정.")
 
-        let newRecord = FoodRecord(
-            id: UUID().uuidString,
-            date: dateKey,
-            mealType: MealType.classify(from: hour),
-            genre: FoodGenre.allCases.randomElement() ?? .etc,
-            imageURLs: mockImageURLs,
-            restaurantName: "새로운 맛집",
-            address: "서울시 강남구 어딘가",
-            hashtags: ["맛있다", "추천"],
-            createdAt: Date()
-        )
-
-        mockRecords[dateKey, default: []].insert(newRecord, at: 0)
-        return newRecord
+        return uploadId
     }
 
     // MARK: - Mock Data Setup
 
-    private static let mockImageURL = URL(string: "https://mblogthumb-phinf.pstatic.net/MjAyNDExMjBfNzgg/MDAxNzMyMTAyNjU2Nzc5.-_dSylVBQ7k5rG6AxtNZ2H8_tAh2kOTjNsU1Ef2xQHog.v80D1-aXmFLEFMCz6vr_Vgao2AnJgPucdfGMI4dGAvwg.JPEG/IMG_7463.JPG?type=w800")!
+    private static let mockImageURL = URL(
+        string:
+            "https://mblogthumb-phinf.pstatic.net/MjAyNDExMjBfNzgg/MDAxNzMyMTAyNjU2Nzc5.-_dSylVBQ7k5rG6AxtNZ2H8_tAh2kOTjNsU1Ef2xQHog.v80D1-aXmFLEFMCz6vr_Vgao2AnJgPucdfGMI4dGAvwg.JPEG/IMG_7463.JPG?type=w800"
+    )!
 
     private func setupMockData() {
         let today = calendar.startOfDay(for: Date())
 
         // 오늘 기록
         if let todayBreakfast = calendar.date(bySettingHour: 8, minute: 0, second: 0, of: today),
-           let todayLunch = calendar.date(bySettingHour: 12, minute: 30, second: 0, of: today),
-           let todayDinner = calendar.date(bySettingHour: 19, minute: 0, second: 0, of: today) {
+            let todayLunch = calendar.date(bySettingHour: 12, minute: 30, second: 0, of: today),
+            let todayDinner = calendar.date(bySettingHour: 19, minute: 0, second: 0, of: today)
+        {
             mockRecords[today] = [
                 FoodRecord(
                     id: UUID().uuidString,
@@ -96,13 +89,15 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
                     address: "서울시 강남구 압구정로 456",
                     hashtags: ["오마카세", "스시", "사케"],
                     createdAt: todayDinner
-                )
+                ),
             ]
         }
 
         // 어제 기록
         if let yesterday = calendar.date(byAdding: .day, value: -1, to: today),
-           let yesterdayLunch = calendar.date(bySettingHour: 13, minute: 0, second: 0, of: yesterday) {
+            let yesterdayLunch = calendar.date(
+                bySettingHour: 13, minute: 0, second: 0, of: yesterday)
+        {
             mockRecords[yesterday] = [
                 FoodRecord(
                     id: UUID().uuidString,
@@ -120,8 +115,11 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
 
         // 3일 전 기록
         if let threeDaysAgo = calendar.date(byAdding: .day, value: -3, to: today),
-           let breakfastTime = calendar.date(bySettingHour: 8, minute: 30, second: 0, of: threeDaysAgo),
-           let lateNightTime = calendar.date(bySettingHour: 23, minute: 30, second: 0, of: threeDaysAgo) {
+            let breakfastTime = calendar.date(
+                bySettingHour: 8, minute: 30, second: 0, of: threeDaysAgo),
+            let lateNightTime = calendar.date(
+                bySettingHour: 23, minute: 30, second: 0, of: threeDaysAgo)
+        {
             mockRecords[threeDaysAgo] = [
                 FoodRecord(
                     id: UUID().uuidString,
@@ -144,7 +142,7 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
                     address: "서울시 마포구 홍대입구역",
                     hashtags: ["떡볶이", "순대", "오뎅"],
                     createdAt: lateNightTime
-                )
+                ),
             ]
         }
     }

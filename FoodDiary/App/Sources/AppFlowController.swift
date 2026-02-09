@@ -49,28 +49,14 @@ private extension AppFlowController {
     }
     
     func createMainView() -> UIViewController {
-        guard let weeklyCalendarUseCase = try? container.resolve(
-            FetchWeeklyCalendarUseCase<MockFoodRecordRepository>.self
-        ) else {
-            fatalError("FetchWeeklyCalendarUseCase not registered")
-        }
-
         guard let fetchFoodImageAssetUseCase = try? container.resolve(
             FetchFoodImageAssetUseCase<FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
         ) else {
             fatalError("FetchFoodImageAssetUseCase not registered")
         }
 
-        guard let fetchFoodRecordsUseCase = try? container.resolve(
-            FetchFoodRecordsUseCase<MockFoodRecordRepository>.self
-        ) else {
-            fatalError("FetchFoodRecordsUseCase not registered")
-        }
-
-        guard let saveFoodRecordUseCase = try? container.resolve(
-            SaveFoodRecordUseCase<MockFoodRecordRepository>.self
-        ) else {
-            fatalError("SaveFoodRecordUseCase not registered")
+        guard let foodRecordRepository = try? container.resolve(MockFoodRecordRepository.self) else {
+            fatalError("MockFoodRecordRepository not registered")
         }
 
         guard let imageProvider = try? container.resolve(UIImageLoader.self) else {
@@ -82,7 +68,24 @@ private extension AppFlowController {
         ) else {
             fatalError("RequestPhotoAuthorizationUseCase not registered")
         }
+      
+        let loadWeeklyCalendarDataUseCase = LoadWeeklyRecordUseCase(
+            calendar: .current,
+            recordRepository: foodRecordRepository,
+            fetchFoodImageAssetUseCase: fetchFoodImageAssetUseCase
+        )
 
+        let saveFoodRecordUseCase = SaveFoodRecordUseCase(
+            repository: foodRecordRepository,
+            imageProvider: imageProvider
+        )
+
+        let viewModel = WeeklyCalendarViewModel(
+            requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase,
+            loadWeeklyCalendarDataUseCase: loadWeeklyCalendarDataUseCase,
+            saveFoodRecordUseCase: saveFoodRecordUseCase
+        )
+      
         guard let fetchMonthlyCalendarDaysUseCase = try? container.resolve(
             FetchMonthlyCalendarDaysUseCase<MockFoodRecordRepository>.self
         ) else {

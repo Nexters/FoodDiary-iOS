@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct FoodImageAsset<ImageAsset: ImageAssetable>: Sendable {
+public struct FoodImageAsset<ImageAsset: ImageAssetable>: Sendable, Equatable {
     public let imageAsset: ImageAsset
     /// 음식일 확률 (0.0 ~ 1.0)
     public let foodProbability: Float
@@ -18,5 +18,9 @@ public struct FoodImageAsset<ImageAsset: ImageAssetable>: Sendable {
     public init(imageAsset: ImageAsset, foodProbability: Float) {
         self.imageAsset = imageAsset
         self.foodProbability = foodProbability
+    }
+
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.id == rhs.id && lhs.foodProbability == rhs.foodProbability
     }
 }
