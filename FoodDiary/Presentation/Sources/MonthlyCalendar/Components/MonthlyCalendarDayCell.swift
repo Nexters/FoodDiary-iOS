@@ -156,7 +156,6 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
         polaroidImageCardsView.isHidden = !hasRecord
 
         guard hasRecord else { return }
-
         
         if records.count == 1 {
             polaroidImageCardsView.configure(image: DesignSystemAsset.foodPlaceholder.image)
