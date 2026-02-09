@@ -24,21 +24,7 @@ public final class MonthlyCalendarViewController<
 
     // MARK: - UI Components
 
-    private let subtitleLabel: UILabel = {
-        let label = UILabel()
-        label.setText("이번주 음식을 기록해 보세요", style: .p12)
-        label.textColor = .white
-        return label
-    }()
-
-    private let titleLabel: UILabel = {
-        let label = UILabel()
-        label.numberOfLines = 2
-        label.setText("길동님의 음식 기록,\n지금 바로 쓸 수 있어요", style: .hd20)
-        label.textColor = .white
-        return label
-    }()
-
+    private let recordPromptHeaderView = RecordPromptHeaderView()
     private let monthYearHeaderView = MonthlyCalendarHeaderView()
     private let weekdayHeaderView = WeekdayHeaderView()
     
@@ -118,32 +104,26 @@ public final class MonthlyCalendarViewController<
 
     private func setupUI() {
         view.backgroundColor = DesignSystemAsset.sdBase.color
-        view.addSubview(subtitleLabel)
-        view.addSubview(titleLabel)
+        view.addSubview(recordPromptHeaderView)
         view.addSubview(monthYearHeaderView)
         view.addSubview(containerView)
         containerView.addSubview(stackView)
     }
 
     private func setupConstraints() {
-        subtitleLabel.snp.makeConstraints {
-            $0.top.equalTo(view.safeAreaLayoutGuide).offset(Constants.subtitleTopOffset)
-            $0.leading.equalToSuperview().inset(Constants.horizontalInset)
-        }
-
-        titleLabel.snp.makeConstraints {
-            $0.top.equalTo(subtitleLabel.snp.bottom).offset(Constants.titleTopSpacing)
-            $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
+        recordPromptHeaderView.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview().inset(Constants.recordPromptHorizontalInset)
+            $0.bottom.equalTo(monthYearHeaderView.snp.top).offset(Constants.recordPromptBottomOffset)
         }
 
         monthYearHeaderView.snp.makeConstraints {
-            $0.top.equalTo(titleLabel.snp.bottom).offset(Constants.headerTopSpacing)
             $0.leading.trailing.equalToSuperview().inset(Constants.headerHorizontalInset)
+            $0.bottom.equalTo(containerView.snp.top).offset(Constants.headerBottomOffset)
             $0.height.equalTo(32)
         }
 
         containerView.snp.makeConstraints {
-            $0.top.equalTo(monthYearHeaderView.snp.bottom).offset(Constants.containerTopSpacing)
+            $0.top.equalTo(view.safeAreaLayoutGuide).offset(Constants.containerTopOffset)
             $0.leading.trailing.equalToSuperview().inset(Constants.containerHorizontalInset)
             $0.bottom.equalTo(view.safeAreaLayoutGuide).inset(Constants.containerBottomInset)
         }
@@ -290,12 +270,11 @@ extension MonthlyCalendarViewController {
     enum Constants {
         static var containerCornerRadius: CGFloat { 16 }
         static var containerBorderWidth: CGFloat { 1 }
-        static var subtitleTopOffset: CGFloat { 130 }
-        static var titleTopSpacing: CGFloat { 8 }
-        static var horizontalInset: CGFloat { 16 }
-        static var headerTopSpacing: CGFloat { 36 }
+        static var recordPromptHorizontalInset: CGFloat { 16 }
+        static var recordPromptBottomOffset: CGFloat { -18 }
+        static var headerBottomOffset: CGFloat { -18 }
         static var headerHorizontalInset: CGFloat { 20 }
-        static var containerTopSpacing: CGFloat { 24 }
+        static var containerTopOffset: CGFloat { 260 }
         static var containerHorizontalInset: CGFloat { 20 }
         static var containerBottomInset: CGFloat { 100 }
         static var stackTopInset: CGFloat { 24 }
