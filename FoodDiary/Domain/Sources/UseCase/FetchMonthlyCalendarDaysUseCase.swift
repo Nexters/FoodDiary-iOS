@@ -14,7 +14,8 @@ public struct FetchMonthlyCalendarDaysUseCase<Repository: FoodRecordRepository>:
     }
 
     public func execute(for period: DateInterval, currentMonth: Date) async throws -> [MonthlyCalendarDay] {
-        let calendar = Calendar.current
+        var calendar = Calendar.current
+        calendar.timeZone = TimeZone(identifier: "Asia/Seoul") ?? TimeZone.current
 
         // 음식 기록 조회
         let recordsByDate = try await repository.fetchRecords(in: period.start...period.end)
@@ -37,13 +38,16 @@ public struct FetchMonthlyCalendarDaysUseCase<Repository: FoodRecordRepository>:
         recordsByDate: [Date: [FoodRecord]]
     ) -> [MonthlyCalendarDay] {
         let today = calendar.startOfDay(for: Date())
-        let currentMonthInterval = calendar.dateInterval(of: .month, for: currentMonth)
+        let currentMonthComponents = calendar.dateComponents([.year, .month], from: currentMonth)
 
         var days: [MonthlyCalendarDay] = []
         var currentDate = period.start
 
         while currentDate < period.end {
-            let isCurrentMonth = currentMonthInterval?.contains(currentDate) ?? false
+            let dateComponents = calendar.dateComponents([.year, .month], from: currentDate)
+            let isCurrentMonth = dateComponents.year == currentMonthComponents.year &&
+                                 dateComponents.month == currentMonthComponents.month
+
             let dayStart = calendar.startOfDay(for: currentDate)
             let records = recordsByDate[dayStart] ?? []
 
@@ -57,6 +61,8 @@ public struct FetchMonthlyCalendarDaysUseCase<Repository: FoodRecordRepository>:
             guard let next = calendar.date(byAdding: .day, value: 1, to: currentDate) else { break }
             currentDate = next
         }
+
+        dump(days)
 
         return days
     }
