@@ -41,7 +41,7 @@ public final class MonthlyCalendarViewController<
         let sv = UIStackView(arrangedSubviews: [weekdayHeaderView, collectionView])
         sv.axis = .vertical
         sv.distribution = .fill
-        sv.spacing = 16
+        sv.spacing = Constants.stackSpacing
         return sv
     }()
 
@@ -112,25 +112,23 @@ public final class MonthlyCalendarViewController<
 
     private func setupConstraints() {
         recordPromptHeaderView.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(Constants.recordPromptHorizontalInset)
-            $0.bottom.equalTo(monthYearHeaderView.snp.top).offset(Constants.recordPromptBottomOffset)
+            $0.top.equalTo(view.safeAreaLayoutGuide).offset(Constants.recordPromptTopOffset)
+            $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
         }
 
         monthYearHeaderView.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(Constants.headerHorizontalInset)
-            $0.bottom.equalTo(containerView.snp.top).offset(Constants.headerBottomOffset)
-            $0.height.equalTo(32)
+            $0.top.equalTo(recordPromptHeaderView.snp.bottom).offset(Constants.monthYearHeaderTopOffset)
+            $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
         }
 
         containerView.snp.makeConstraints {
-            $0.top.equalTo(view.safeAreaLayoutGuide).offset(Constants.containerTopOffset)
-            $0.leading.trailing.equalToSuperview().inset(Constants.containerHorizontalInset)
-            $0.bottom.equalTo(view.safeAreaLayoutGuide).inset(Constants.containerBottomInset)
+            $0.top.equalTo(monthYearHeaderView.snp.bottom).offset(Constants.containerTopOffset)
+            $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
         }
 
         stackView.snp.makeConstraints {
             $0.top.equalToSuperview().inset(Constants.stackTopInset)
-            $0.leading.trailing.equalToSuperview().inset(Constants.stackHorizontalInset)
+            $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
             $0.bottom.equalToSuperview().inset(Constants.stackBottomInset)
         }
 
@@ -144,11 +142,16 @@ public final class MonthlyCalendarViewController<
             guard let self else { return nil }
 
             let itemSize = NSCollectionLayoutSize(
-                widthDimension: .fractionalWidth(1.0 / 7.0),
+                widthDimension: .fractionalWidth(1.0 / Constants.numberOfDaysInWeek),
                 heightDimension: .fractionalHeight(1.0)
             )
             let item = NSCollectionLayoutItem(layoutSize: itemSize)
-            item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 1.5, bottom: 0, trailing: 1.5)
+            item.contentInsets = NSDirectionalEdgeInsets(
+                top: 0,
+                leading: Constants.cellHorizontalSpacing,
+                bottom: 0,
+                trailing: Constants.cellHorizontalSpacing
+            )
 
             let groupSize = NSCollectionLayoutSize(
                 widthDimension: .fractionalWidth(1.0),
@@ -212,10 +215,10 @@ public final class MonthlyCalendarViewController<
     }
 
     private func updateCollectionViewHeight() {
-        let availableWidth = view.bounds.width - Constants.containerHorizontalInset * 2 - Constants.stackHorizontalInset * 2
-        let cellWidth = availableWidth / 7
+        let availableWidth = view.bounds.width - Constants.horizontalInset * 4
+        let cellWidth = availableWidth / Constants.numberOfDaysInWeek
 
-        let rowHeight = cellWidth + 28
+        let rowHeight = cellWidth + Constants.cellRowHeightPadding
         let totalHeight = rowHeight * CGFloat(numberOfWeeks)
         collectionViewHeightConstraint?.update(offset: totalHeight)
     }
@@ -233,7 +236,9 @@ public final class MonthlyCalendarViewController<
         )
 
         if let sheet = picker.sheetPresentationController {
-            sheet.detents = [.custom { context in context.maximumDetentValue * 0.45 }]
+            sheet.detents = [.custom { context in
+                context.maximumDetentValue * Constants.monthPickerDetentRatio
+            }]
         }
         
         picker.selectedMonthPublisher
@@ -265,17 +270,18 @@ public final class MonthlyCalendarViewController<
 
 extension MonthlyCalendarViewController {
     enum Constants {
+        static var horizontalInset: CGFloat { 16 }
         static var containerCornerRadius: CGFloat { 16 }
         static var containerBorderWidth: CGFloat { 1 }
-        static var recordPromptHorizontalInset: CGFloat { 16 }
-        static var recordPromptBottomOffset: CGFloat { -18 }
-        static var headerBottomOffset: CGFloat { -18 }
-        static var headerHorizontalInset: CGFloat { 20 }
-        static var containerTopOffset: CGFloat { 260 }
-        static var containerHorizontalInset: CGFloat { 20 }
-        static var containerBottomInset: CGFloat { 100 }
+        static var recordPromptTopOffset: CGFloat { 28 }
+        static var monthYearHeaderTopOffset: CGFloat { 36 }
+        static var containerTopOffset: CGFloat { 36 }
+        static var stackSpacing: CGFloat { 16 }
         static var stackTopInset: CGFloat { 24 }
-        static var stackHorizontalInset: CGFloat { 14 }
         static var stackBottomInset: CGFloat { 18 }
+        static var cellHorizontalSpacing: CGFloat { 1.5 }
+        static var cellRowHeightPadding: CGFloat { 28 }
+        static var numberOfDaysInWeek: CGFloat { 7 }
+        static var monthPickerDetentRatio: CGFloat { 0.45 }
     }
 }
