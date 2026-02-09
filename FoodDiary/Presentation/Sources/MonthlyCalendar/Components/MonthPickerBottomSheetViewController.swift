@@ -5,6 +5,27 @@ import UIKit
 
 final class MonthPickerBottomSheetViewController: UIViewController {
 
+    // MARK: - Constants
+
+    private enum Constants {
+        static let closeButtonTopInset: CGFloat = 20
+        static let closeButtonTrailingInset: CGFloat = 20
+        static let closeButtonSize: CGFloat = 44
+
+        static let pickerTopOffset: CGFloat = 10
+        static let pickerHorizontalInset: CGFloat = 18
+        static let pickerBottomOffset: CGFloat = 32
+
+        static let selectButtonHorizontalInset: CGFloat = 18
+        static let selectButtonBottomInset: CGFloat = 40
+        static let selectButtonHeight: CGFloat = 47
+        static let selectButtonCornerRadius: CGFloat = 28
+
+        static let pickerLabelFontSize: CGFloat = 18
+        static let pickerRowHeight: CGFloat = 40
+        static let yearRange: Int = 10
+    }
+
     // MARK: - Publishers
 
     private let selectedMonthSubject = PassthroughSubject<Date, Never>()
@@ -36,9 +57,9 @@ final class MonthPickerBottomSheetViewController: UIViewController {
         let button = UIButton(type: .system)
         button.setTitle("선택", for: .normal)
         button.setTitleColor(.white, for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
+        button.titleLabel?.font = .systemFont(ofSize: Constants.pickerLabelFontSize, weight: .semibold)
         button.backgroundColor = DesignSystemAsset.primary.color
-        button.layer.cornerRadius = 28
+        button.layer.cornerRadius = Constants.selectButtonCornerRadius
         button.addTarget(self, action: #selector(selectButtonTapped), for: .touchUpInside)
         return button
     }()
@@ -51,7 +72,7 @@ final class MonthPickerBottomSheetViewController: UIViewController {
         let currentYear = calendar.component(.year, from: currentMonth)
         self.selectedYear = currentYear
         self.selectedMonth = calendar.component(.month, from: currentMonth)
-        self.years = Array((currentYear - 10)...(currentYear + 10))
+        self.years = Array((currentYear - Constants.yearRange)...(currentYear + Constants.yearRange))
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -80,21 +101,21 @@ final class MonthPickerBottomSheetViewController: UIViewController {
 
     private func setupConstraints() {
         closeButton.snp.makeConstraints {
-            $0.top.equalToSuperview().inset(20)
-            $0.trailing.equalToSuperview().inset(20)
-            $0.width.height.equalTo(44)
+            $0.top.equalToSuperview().inset(Constants.closeButtonTopInset)
+            $0.trailing.equalToSuperview().inset(Constants.closeButtonTrailingInset)
+            $0.width.height.equalTo(Constants.closeButtonSize)
         }
 
         selectButton.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(18)
-            $0.bottom.equalTo(view.safeAreaLayoutGuide).inset(40)
-            $0.height.equalTo(47)
+            $0.leading.trailing.equalToSuperview().inset(Constants.selectButtonHorizontalInset)
+            $0.bottom.equalTo(view.safeAreaLayoutGuide).inset(Constants.selectButtonBottomInset)
+            $0.height.equalTo(Constants.selectButtonHeight)
         }
 
         pickerView.snp.makeConstraints {
-            $0.top.equalTo(closeButton.snp.bottom).offset(10)
-            $0.leading.trailing.equalToSuperview().inset(18)
-            $0.bottom.equalTo(selectButton.snp.top).offset(-32)
+            $0.top.equalTo(closeButton.snp.bottom).offset(Constants.pickerTopOffset)
+            $0.leading.trailing.equalToSuperview().inset(Constants.pickerHorizontalInset)
+            $0.bottom.equalTo(selectButton.snp.top).offset(-Constants.pickerBottomOffset)
         }
     }
 
@@ -151,13 +172,13 @@ extension MonthPickerBottomSheetViewController: UIPickerViewDelegate {
     func pickerView(_ pickerView: UIPickerView, viewForRow row: Int, forComponent component: Int, reusing view: UIView?) -> UIView {
         let label = (view as? UILabel) ?? UILabel()
         label.textAlignment = .center
-        label.font = .systemFont(ofSize: 18, weight: .regular)
+        label.font = .systemFont(ofSize: Constants.pickerLabelFontSize, weight: .regular)
         label.textColor = .white
         label.text = component == 0 ? "\(years[row])년" : "\(months[row])월"
         return label
     }
 
     func pickerView(_ pickerView: UIPickerView, rowHeightForComponent component: Int) -> CGFloat {
-        40
+        Constants.pickerRowHeight
     }
 }

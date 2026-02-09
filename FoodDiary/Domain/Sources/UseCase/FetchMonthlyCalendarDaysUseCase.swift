@@ -62,8 +62,6 @@ public struct FetchMonthlyCalendarDaysUseCase<Repository: FoodRecordRepository>:
             currentDate = next
         }
 
-        dump(days)
-
         return days
     }
 }
