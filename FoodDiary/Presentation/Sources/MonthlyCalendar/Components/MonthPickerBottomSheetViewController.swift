@@ -44,7 +44,8 @@ final class MonthPickerBottomSheetViewController: UIViewController {
 
     private let currentMonth: Date
     private let years: [Int]
-    private let months = Array(1...12)
+    private let currentYear: Int
+    private let currentMonthNumber: Int
     private var selectedYear: Int
     private var selectedMonth: Int
 
@@ -74,12 +75,15 @@ final class MonthPickerBottomSheetViewController: UIViewController {
     // MARK: - Init
 
     init(currentMonth: Date) {
+        let calendar = Calendar.seoul
         self.currentMonth = currentMonth
-        let calendar = Calendar.current
-        let currentYear = calendar.component(.year, from: currentMonth)
-        self.selectedYear = currentYear
-        self.selectedMonth = calendar.component(.month, from: currentMonth)
-        self.years = Array((currentYear - Constants.yearRange)...(currentYear + Constants.yearRange))
+        self.currentYear = calendar.component(.year, from: currentMonth)
+        self.currentMonthNumber = calendar.component(.month, from: currentMonth)
+        
+        self.selectedYear = calendar.component(.year, from: currentMonth)
+        self.selectedMonth = currentMonthNumber
+        
+        self.years = Array((currentYear - Constants.yearRange)...currentYear)
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -141,6 +145,15 @@ final class MonthPickerBottomSheetViewController: UIViewController {
         pickerView.selectRow(selectedMonth - 1, inComponent: 1, animated: false)
     }
 
+    /// 선택된 연도에 따라 사용 가능한 월 배열 반환
+    private func availableMonths(for year: Int) -> [Int] {
+        if year == currentYear {
+            return Array(1...currentMonthNumber)
+        } else {
+            return Array(1...12)
+        }
+    }
+
     @objc private func closeButtonTapped() {
         dismiss(animated: true)
     }
@@ -162,11 +175,15 @@ final class MonthPickerBottomSheetViewController: UIViewController {
 
 extension MonthPickerBottomSheetViewController: UIPickerViewDataSource {
     func numberOfComponents(in pickerView: UIPickerView) -> Int {
-        2
+        return 2
     }
 
     func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
-        component == 0 ? years.count : months.count
+        if component == 0 {
+            return years.count
+        } else {
+            return availableMonths(for: selectedYear).count
+        }
     }
 }
 
@@ -176,8 +193,19 @@ extension MonthPickerBottomSheetViewController: UIPickerViewDelegate {
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
         if component == 0 {
             selectedYear = years[row]
+
+            // 현재 연도 선택 시 월 컴포넌트 리로드
+            let availableMonths = availableMonths(for: selectedYear)
+            pickerView.reloadComponent(1)
+
+            // 선택된 월이 사용 가능한 범위를 벗어나면 마지막 월로 조정
+            if selectedMonth > availableMonths.count {
+                selectedMonth = availableMonths.count
+                pickerView.selectRow(selectedMonth - 1, inComponent: 1, animated: true)
+            }
         } else {
-            selectedMonth = months[row]
+            let availableMonths = availableMonths(for: selectedYear)
+            selectedMonth = availableMonths[row]
         }
     }
 
@@ -186,11 +214,18 @@ extension MonthPickerBottomSheetViewController: UIPickerViewDelegate {
         label.textAlignment = .center
         label.font = .systemFont(ofSize: Constants.pickerLabelFontSize, weight: .regular)
         label.textColor = .white
-        label.text = component == 0 ? "\(years[row])년" : "\(months[row])월"
+
+        if component == 0 {
+            label.text = "\(years[row])년"
+        } else {
+            let availableMonths = availableMonths(for: selectedYear)
+            label.text = "\(availableMonths[row])월"
+        }
+
         return label
     }
 
     func pickerView(_ pickerView: UIPickerView, rowHeightForComponent component: Int) -> CGFloat {
-        Constants.pickerRowHeight
+        return Constants.pickerRowHeight
     }
 }
