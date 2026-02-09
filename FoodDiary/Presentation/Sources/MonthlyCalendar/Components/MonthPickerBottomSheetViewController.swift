@@ -1,8 +1,3 @@
-//
-//  MonthPickerBottomSheetViewController.swift
-//  Presentation
-//
-
 import Combine
 import DesignSystem
 import SnapKit
@@ -19,24 +14,44 @@ final class MonthPickerBottomSheetViewController: UIViewController {
 
     // MARK: - Properties
 
-    private let months: [Date]
     private let currentMonth: Date
+    private let years: [Int]
+    private let months = Array(1...12)
+    private var selectedYear: Int
+    private var selectedMonth: Int
 
     // MARK: - UI Components
 
-    private let tableView: UITableView = {
-        let tv = UITableView(frame: .zero, style: .plain)
-        tv.backgroundColor = .clear
-        tv.separatorStyle = .none
-        tv.showsVerticalScrollIndicator = false
-        return tv
+    private lazy var closeButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "xmark"), for: .normal)
+        button.tintColor = .white
+        button.addTarget(self, action: #selector(closeButtonTapped), for: .touchUpInside)
+        return button
+    }()
+
+    private let pickerView = UIPickerView()
+
+    private lazy var selectButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("선택", for: .normal)
+        button.setTitleColor(.white, for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
+        button.backgroundColor = DesignSystemAsset.primary.color
+        button.layer.cornerRadius = 28
+        button.addTarget(self, action: #selector(selectButtonTapped), for: .touchUpInside)
+        return button
     }()
 
     // MARK: - Init
 
     init(currentMonth: Date) {
         self.currentMonth = currentMonth
-        self.months = Self.generateMonths()
+        let calendar = Calendar.current
+        let currentYear = calendar.component(.year, from: currentMonth)
+        self.selectedYear = currentYear
+        self.selectedMonth = calendar.component(.month, from: currentMonth)
+        self.years = Array((currentYear - 10)...(currentYear + 10))
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -51,142 +66,98 @@ final class MonthPickerBottomSheetViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupConstraints()
-        setupTableView()
-        scrollToCurrentMonth()
+        setupPickerView()
     }
 
     // MARK: - Setup
 
     private func setupUI() {
         view.backgroundColor = DesignSystemAsset.sdBase.color
-        view.addSubview(tableView)
+        view.addSubview(closeButton)
+        view.addSubview(pickerView)
+        view.addSubview(selectButton)
     }
 
     private func setupConstraints() {
-        tableView.snp.makeConstraints {
-            $0.top.equalToSuperview().inset(24)
-            $0.leading.trailing.equalToSuperview()
-            $0.bottom.equalToSuperview()
+        closeButton.snp.makeConstraints {
+            $0.top.equalToSuperview().inset(20)
+            $0.trailing.equalToSuperview().inset(20)
+            $0.width.height.equalTo(44)
+        }
+
+        selectButton.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview().inset(18)
+            $0.bottom.equalTo(view.safeAreaLayoutGuide).inset(40)
+            $0.height.equalTo(47)
+        }
+
+        pickerView.snp.makeConstraints {
+            $0.top.equalTo(closeButton.snp.bottom).offset(10)
+            $0.leading.trailing.equalToSuperview().inset(18)
+            $0.bottom.equalTo(selectButton.snp.top).offset(-32)
         }
     }
 
-    private func setupTableView() {
-        tableView.dataSource = self
-        tableView.delegate = self
-        tableView.register(MonthPickerCell.self, forCellReuseIdentifier: MonthPickerCell.reuseIdentifier)
-    }
+    private func setupPickerView() {
+        pickerView.dataSource = self
+        pickerView.delegate = self
 
-    private func scrollToCurrentMonth() {
-        let calendar = Calendar.current
-        guard let index = months.firstIndex(where: {
-            calendar.isDate($0, equalTo: currentMonth, toGranularity: .month)
-        }) else { return }
-
-        DispatchQueue.main.async { [weak self] in
-            self?.tableView.scrollToRow(
-                at: IndexPath(row: index, section: 0),
-                at: .middle,
-                animated: false
-            )
+        if let yearIndex = years.firstIndex(of: selectedYear) {
+            pickerView.selectRow(yearIndex, inComponent: 0, animated: false)
         }
+        pickerView.selectRow(selectedMonth - 1, inComponent: 1, animated: false)
     }
 
-    // MARK: - Month Generation
-
-    private static func generateMonths() -> [Date] {
-        let calendar = Calendar.current
-        let today = Date()
-
-        guard let startOfCurrentMonth = calendar.date(
-            from: calendar.dateComponents([.year, .month], from: today)
-        ) else { return [] }
-
-        var months: [Date] = []
-        for i in 0..<24 {
-            if let date = calendar.date(byAdding: .month, value: -i, to: startOfCurrentMonth) {
-                months.append(date)
-            }
-        }
-        return months
-    }
-}
-
-// MARK: - UITableViewDataSource
-
-extension MonthPickerBottomSheetViewController: UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        months.count
-    }
-
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(
-            withIdentifier: MonthPickerCell.reuseIdentifier,
-            for: indexPath
-        ) as? MonthPickerCell else {
-            return UITableViewCell()
-        }
-
-        let month = months[indexPath.row]
-        let calendar = Calendar.current
-        let isSelected = calendar.isDate(month, equalTo: currentMonth, toGranularity: .month)
-        cell.configure(with: month, isSelected: isSelected)
-        return cell
-    }
-}
-
-// MARK: - UITableViewDelegate
-
-extension MonthPickerBottomSheetViewController: UITableViewDelegate {
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
-        let month = months[indexPath.row]
-        selectedMonthSubject.send(month)
+    @objc private func closeButtonTapped() {
         dismiss(animated: true)
     }
 
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        48
+    @objc private func selectButtonTapped() {
+        var components = DateComponents()
+        components.year = selectedYear
+        components.month = selectedMonth
+        components.day = 1
+
+        if let date = Calendar.current.date(from: components) {
+            selectedMonthSubject.send(date)
+        }
+        dismiss(animated: true)
     }
 }
 
-// MARK: - MonthPickerCell
+// MARK: - UIPickerViewDataSource
 
-private final class MonthPickerCell: UITableViewCell {
-
-    static let reuseIdentifier = "MonthPickerCell"
-
-    private let monthLabel: UILabel = {
-        let label = UILabel()
-        return label
-    }()
-
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        setupUI()
+extension MonthPickerBottomSheetViewController: UIPickerViewDataSource {
+    func numberOfComponents(in pickerView: UIPickerView) -> Int {
+        2
     }
 
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+        component == 0 ? years.count : months.count
     }
+}
 
-    private func setupUI() {
-        backgroundColor = .clear
-        selectionStyle = .none
-        contentView.addSubview(monthLabel)
-        monthLabel.snp.makeConstraints {
-            $0.leading.equalToSuperview().inset(24)
-            $0.centerY.equalToSuperview()
+// MARK: - UIPickerViewDelegate
+
+extension MonthPickerBottomSheetViewController: UIPickerViewDelegate {
+    func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+        if component == 0 {
+            selectedYear = years[row]
+        } else {
+            selectedMonth = months[row]
         }
     }
 
-    func configure(with date: Date, isSelected: Bool) {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ko_KR")
-        formatter.dateFormat = "yyyy년 M월"
-        let text = formatter.string(from: date)
+    func pickerView(_ pickerView: UIPickerView, viewForRow row: Int, forComponent component: Int, reusing view: UIView?) -> UIView {
+        let label = (view as? UILabel) ?? UILabel()
+        label.textAlignment = .center
+        label.font = .systemFont(ofSize: 18, weight: .regular)
+        label.textColor = .white
+        label.text = component == 0 ? "\(years[row])년" : "\(months[row])월"
+        return label
+    }
 
-        let color: UIColor = isSelected ? DesignSystemAsset.primary.color : .white
-        monthLabel.setText(text, style: .hd18, color: color)
+    func pickerView(_ pickerView: UIPickerView, rowHeightForComponent component: Int) -> CGFloat {
+        40
     }
 }

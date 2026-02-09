@@ -36,11 +36,11 @@ public extension Calendar {
 }
 
 public extension Date {
-    /// 월 텍스트 포맷팅 (예: "1월")
+    /// 월 텍스트 포맷팅 (예: "2023년 1월")
     func formatMonthText(locale: Locale = Locale(identifier: "ko_KR")) -> String {
         let formatter = DateFormatter()
         formatter.locale = locale
-        formatter.dateFormat = "M월"
+        formatter.dateFormat = "yyyy년 M월"
         return formatter.string(from: self)
     }
 
