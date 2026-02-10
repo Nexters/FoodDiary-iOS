@@ -111,8 +111,8 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
     // MARK: - Configuration
 
     func configure(with day: MonthlyCalendarDay, isSelected: Bool) {
-        applyRecordStyle(hasRecord: !day.records.isEmpty)
-        
+        applyRecordStyle(records: day.records)
+
         applyDayNumberStyle(
             dayNumber: day.dayNumber,
             isCurrentMonth: day.isCurrentMonth,
@@ -150,13 +150,16 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
         dashedBorderView.layer.borderColor = DesignSystemAsset.sd800.color.cgColor
     }
 
-    private func applyRecordStyle(hasRecord: Bool) {
+    private func applyRecordStyle(records: [FoodRecord]) {
+        let hasRecord = !records.isEmpty
         dashedBorderView.isHidden = hasRecord
         polaroidImageCardsView.isHidden = !hasRecord
 
-        // 기록이 있다면 PolaroidImageCardView 보여주기
-        // TODO: 기록 1 or 2개에 따라서 분기가 필요함.
-        if hasRecord {
+        guard hasRecord else { return }
+        
+        if records.count == 1 {
+            polaroidImageCardsView.configure(image: DesignSystemAsset.foodPlaceholder.image)
+        } else {
             polaroidImageCardsView.configure(
                 backImage: DesignSystemAsset.foodPlaceholder.image,
                 frontImage: DesignSystemAsset.foodPlaceholder.image

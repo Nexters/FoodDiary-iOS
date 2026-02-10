@@ -6,6 +6,13 @@
 import Foundation
 
 public extension Calendar {
+    /// 서울 시간대로 설정된 Calendar
+    static var seoul: Calendar {
+        var calendar = Calendar.current
+        calendar.timeZone = TimeZone(identifier: "Asia/Seoul") ?? TimeZone.current
+        return calendar
+    }
+    
     /// 이전 주 날짜 계산
     func previousWeek(from date: Date) -> Date {
         self.date(byAdding: .weekOfYear, value: -1, to: date) ?? date
@@ -36,11 +43,11 @@ public extension Calendar {
 }
 
 public extension Date {
-    /// 월 텍스트 포맷팅 (예: "1월")
+    /// 월 텍스트 포맷팅 (예: "2023년 1월")
     func formatMonthText(locale: Locale = Locale(identifier: "ko_KR")) -> String {
         let formatter = DateFormatter()
         formatter.locale = locale
-        formatter.dateFormat = "M월"
+        formatter.dateFormat = "yyyy년 M월"
         return formatter.string(from: self)
     }
 

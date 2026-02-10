@@ -28,8 +28,7 @@ final class MonthlyCalendarHeaderView: UIView {
 
     private let chevronButton: UIButton = {
         let button = UIButton(type: .system)
-        let config = UIImage.SymbolConfiguration(pointSize: 14, weight: .bold)
-        button.setImage(UIImage(systemName: "chevron.right", withConfiguration: config), for: .normal)
+        button.setImage(DesignSystemAsset.iconNext.image, for: .normal)
         button.tintColor = .white
         return button
     }()
@@ -39,7 +38,14 @@ final class MonthlyCalendarHeaderView: UIView {
         sv.axis = .horizontal
         sv.alignment = .center
         sv.spacing = 4
+        sv.isUserInteractionEnabled = false
         return sv
+    }()
+
+    private lazy var tapButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.backgroundColor = .clear
+        return button
     }()
 
     // MARK: - Init
@@ -60,16 +66,25 @@ final class MonthlyCalendarHeaderView: UIView {
 
     private func setupUI() {
         addSubview(containerStackView)
+        addSubview(tapButton)
     }
 
     private func setupConstraints() {
         containerStackView.snp.makeConstraints {
-            $0.leading.centerY.equalToSuperview()
+            $0.leading.top.bottom.equalToSuperview()
+        }
+
+        chevronButton.snp.makeConstraints {
+            $0.width.height.equalTo(24)
+        }
+
+        tapButton.snp.makeConstraints {
+            $0.edges.equalTo(containerStackView)
         }
     }
 
     private func setupActions() {
-        chevronButton.addTarget(self, action: #selector(handleMonthPickerTap), for: .touchUpInside)
+        tapButton.addTarget(self, action: #selector(handleMonthPickerTap), for: .touchUpInside)
     }
 
     // MARK: - Configuration
@@ -78,9 +93,28 @@ final class MonthlyCalendarHeaderView: UIView {
         monthYearLabel.setText(text, style: .p18, color: .gray050)
     }
 
+    func resetChevron() {
+        UIView.transition(
+            with: chevronButton,
+            duration: 0.3,
+            options: .transitionFlipFromBottom,
+            animations: {
+                self.chevronButton.setImage(DesignSystemAsset.iconNext.image, for: .normal)
+            }
+        )
+    }
+
     // MARK: - Actions
 
     @objc private func handleMonthPickerTap() {
+        UIView.transition(
+            with: chevronButton,
+            duration: 0.3,
+            options: .transitionFlipFromTop,
+            animations: {
+                self.chevronButton.setImage(DesignSystemAsset.iconDown.image, for: .normal)
+            }
+        )
         monthPickerTapSubject.send()
     }
 }

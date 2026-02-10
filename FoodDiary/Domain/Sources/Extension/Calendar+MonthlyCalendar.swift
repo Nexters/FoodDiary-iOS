@@ -10,6 +10,7 @@ public extension Calendar {
     func monthlyCalendarPeriod(for date: Date) -> DateInterval {
         var calendar = self
         calendar.firstWeekday = 2  // 월요일 시작
+        calendar.timeZone = TimeZone(identifier: "Asia/Seoul") ?? TimeZone.current
 
         guard let monthInterval = calendar.dateInterval(of: .month, for: date),
               let firstWeekday = calendar.dateComponents([.weekday], from: monthInterval.start).weekday
@@ -34,7 +35,12 @@ public extension Calendar {
         ).day ?? 0
 
         let remainder = daysFromStartToMonthEnd % 7
-        let trailingCount = remainder > 0 ? 7 - remainder : 0
+        var trailingCount = remainder > 0 ? 7 - remainder : 0
+
+        // 28일(4주)인 경우 다음 주 7일 추가
+        if daysFromStartToMonthEnd == 28 {
+            trailingCount += 7
+        }
 
         let endDate = calendar.date(
             byAdding: .day,

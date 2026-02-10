@@ -12,7 +12,7 @@ import UIKit
 public final class MonthlyCalendarViewController<
     RecordRepo: FoodRecordRepository,
     AuthRepo: PhotoAuthorizationRepository
->: UIViewController {
+>: UIViewController, UICollectionViewDelegate {
 
     private enum Section: Hashable {
         case calendar
@@ -23,31 +23,8 @@ public final class MonthlyCalendarViewController<
     private let viewModel: MonthlyCalendarViewModel<RecordRepo, AuthRepo>
 
     // MARK: - UI Components
-    
-    private let scrollView: UIScrollView = {
-        let sv = UIScrollView()
-        sv.showsVerticalScrollIndicator = false
-        sv.alwaysBounceVertical = true
-        return sv
-    }()
 
-    private let scrollContentView = UIView()
-
-    private let subtitleLabel: UILabel = {
-        let label = UILabel()
-        label.setText("이번주 음식을 기록해 보세요", style: .p12)
-        label.textColor = .white
-        return label
-    }()
-
-    private let titleLabel: UILabel = {
-        let label = UILabel()
-        label.numberOfLines = 2
-        label.setText("길동님의 음식 기록,\n지금 바로 쓸 수 있어요", style: .hd20)
-        label.textColor = .white
-        return label
-    }()
-
+    private let recordPromptHeaderView = RecordPromptHeaderView()
     private let monthYearHeaderView = MonthlyCalendarHeaderView()
     private let weekdayHeaderView = WeekdayHeaderView()
     
@@ -64,7 +41,7 @@ public final class MonthlyCalendarViewController<
         let sv = UIStackView(arrangedSubviews: [weekdayHeaderView, collectionView])
         sv.axis = .vertical
         sv.distribution = .fill
-        sv.spacing = 16
+        sv.spacing = Constants.stackSpacing
         return sv
     }()
 
@@ -83,7 +60,7 @@ public final class MonthlyCalendarViewController<
 
     private var dataSource: UICollectionViewDiffableDataSource<Section, MonthlyCalendarDay>?
     private var cancellables = Set<AnyCancellable>()
-    private var monthPickerCancellable: AnyCancellable?
+    private var monthPickerCancellables = Set<AnyCancellable>()
     private var numberOfWeeks: Int = 5
     private var collectionViewHeightConstraint: Constraint?
 
@@ -108,6 +85,8 @@ public final class MonthlyCalendarViewController<
         setupDataSource()
         setupBindings()
 
+        collectionView.delegate = self
+
         viewModel.input.send(.loadInitialData)
     }
 
@@ -125,51 +104,31 @@ public final class MonthlyCalendarViewController<
 
     private func setupUI() {
         view.backgroundColor = DesignSystemAsset.sdBase.color
-        view.addSubview(scrollView)
-        scrollView.addSubview(scrollContentView)
-        scrollContentView.addSubview(subtitleLabel)
-        scrollContentView.addSubview(titleLabel)
-        scrollContentView.addSubview(monthYearHeaderView)
-        scrollContentView.addSubview(containerView)
+        view.addSubview(recordPromptHeaderView)
+        view.addSubview(monthYearHeaderView)
+        view.addSubview(containerView)
         containerView.addSubview(stackView)
     }
 
     private func setupConstraints() {
-        scrollView.snp.makeConstraints {
-            $0.top.equalToSuperview()
-            $0.leading.trailing.bottom.equalToSuperview()
-        }
-
-        scrollContentView.snp.makeConstraints {
-            $0.edges.equalToSuperview()
-            $0.width.equalTo(scrollView.snp.width)
-        }
-
-        subtitleLabel.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(Constants.subtitleTopOffset)
-            $0.leading.equalToSuperview().inset(Constants.horizontalInset)
-        }
-
-        titleLabel.snp.makeConstraints {
-            $0.top.equalTo(subtitleLabel.snp.bottom).offset(Constants.titleTopSpacing)
+        recordPromptHeaderView.snp.makeConstraints {
+            $0.top.equalTo(view.safeAreaLayoutGuide).offset(Constants.recordPromptTopOffset)
             $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
         }
 
         monthYearHeaderView.snp.makeConstraints {
-            $0.top.equalTo(titleLabel.snp.bottom).offset(Constants.headerTopSpacing)
-            $0.leading.trailing.equalToSuperview().inset(Constants.headerHorizontalInset)
-            $0.height.equalTo(32)
+            $0.top.equalTo(recordPromptHeaderView.snp.bottom).offset(Constants.monthYearHeaderTopOffset)
+            $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
         }
 
         containerView.snp.makeConstraints {
-            $0.top.equalTo(monthYearHeaderView.snp.bottom).offset(Constants.containerTopSpacing)
-            $0.leading.trailing.equalToSuperview().inset(Constants.containerHorizontalInset)
-            $0.bottom.equalToSuperview().inset(Constants.containerBottomInset)
+            $0.top.equalTo(monthYearHeaderView.snp.bottom).offset(Constants.containerTopOffset)
+            $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
         }
 
         stackView.snp.makeConstraints {
             $0.top.equalToSuperview().inset(Constants.stackTopInset)
-            $0.leading.trailing.equalToSuperview().inset(Constants.stackHorizontalInset)
+            $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
             $0.bottom.equalToSuperview().inset(Constants.stackBottomInset)
         }
 
@@ -183,11 +142,16 @@ public final class MonthlyCalendarViewController<
             guard let self else { return nil }
 
             let itemSize = NSCollectionLayoutSize(
-                widthDimension: .fractionalWidth(1.0 / 7.0),
+                widthDimension: .fractionalWidth(1.0 / Constants.numberOfDaysInWeek),
                 heightDimension: .fractionalHeight(1.0)
             )
             let item = NSCollectionLayoutItem(layoutSize: itemSize)
-            item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 1.5, bottom: 0, trailing: 1.5)
+            item.contentInsets = NSDirectionalEdgeInsets(
+                top: 0,
+                leading: Constants.cellHorizontalSpacing,
+                bottom: 0,
+                trailing: Constants.cellHorizontalSpacing
+            )
 
             let groupSize = NSCollectionLayoutSize(
                 widthDimension: .fractionalWidth(1.0),
@@ -251,10 +215,10 @@ public final class MonthlyCalendarViewController<
     }
 
     private func updateCollectionViewHeight() {
-        let availableWidth = view.bounds.width - Constants.containerHorizontalInset * 2 - Constants.stackHorizontalInset * 2
-        let cellWidth = availableWidth / 7
+        let availableWidth = view.bounds.width - Constants.horizontalInset * 4
+        let cellWidth = availableWidth / Constants.numberOfDaysInWeek
 
-        let rowHeight = cellWidth + 28
+        let rowHeight = cellWidth + Constants.cellRowHeightPadding
         let totalHeight = rowHeight * CGFloat(numberOfWeeks)
         collectionViewHeightConstraint?.update(offset: totalHeight)
     }
@@ -272,16 +236,33 @@ public final class MonthlyCalendarViewController<
         )
 
         if let sheet = picker.sheetPresentationController {
-            sheet.detents = [.custom { context in context.maximumDetentValue * 0.4 }]
+            sheet.detents = [.custom { context in
+                context.maximumDetentValue * Constants.monthPickerDetentRatio
+            }]
         }
-
-        monthPickerCancellable = picker.selectedMonthPublisher
+        
+        picker.selectedMonthPublisher
             .sink { [weak self] date in
                 self?.viewModel.input.send(.selectMonth(date))
-                self?.monthPickerCancellable = nil
-            }
+            }.store(in: &monthPickerCancellables)
+        
+        picker.dismissPublisher
+            .sink { [weak self] in
+                self?.monthYearHeaderView.resetChevron()
+                self?.monthPickerCancellables.removeAll()
+            }.store(in: &monthPickerCancellables)
 
         present(picker, animated: true)
+    }
+
+    // MARK: - UICollectionViewDelegate
+
+    public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        guard let day = dataSource?.itemIdentifier(for: indexPath) else { return }
+
+        let detailVC = MockFoodRecordDetailViewController(records: day.records, date: day.date)
+        detailVC.modalPresentationStyle = .pageSheet
+        present(detailVC, animated: true)
     }
 }
 
@@ -289,18 +270,18 @@ public final class MonthlyCalendarViewController<
 
 extension MonthlyCalendarViewController {
     enum Constants {
+        static var horizontalInset: CGFloat { 16 }
         static var containerCornerRadius: CGFloat { 16 }
         static var containerBorderWidth: CGFloat { 1 }
-        static var subtitleTopOffset: CGFloat { 130 }
-        static var titleTopSpacing: CGFloat { 8 }
-        static var horizontalInset: CGFloat { 16 }
-        static var headerTopSpacing: CGFloat { 36 }
-        static var headerHorizontalInset: CGFloat { 20 }
-        static var containerTopSpacing: CGFloat { 24 }
-        static var containerHorizontalInset: CGFloat { 20 }
-        static var containerBottomInset: CGFloat { 100 }
+        static var recordPromptTopOffset: CGFloat { 28 }
+        static var monthYearHeaderTopOffset: CGFloat { 36 }
+        static var containerTopOffset: CGFloat { 18 }
+        static var stackSpacing: CGFloat { 16 }
         static var stackTopInset: CGFloat { 24 }
-        static var stackHorizontalInset: CGFloat { 14 }
         static var stackBottomInset: CGFloat { 18 }
+        static var cellHorizontalSpacing: CGFloat { 1.5 }
+        static var cellRowHeightPadding: CGFloat { 28 }
+        static var numberOfDaysInWeek: CGFloat { 7 }
+        static var monthPickerDetentRatio: CGFloat { 0.45 }
     }
 }
