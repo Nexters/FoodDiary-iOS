@@ -29,8 +29,10 @@ final class AppFlowController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        updateLoginStateFromToken()
-        routeToAppropriateScreen()
+        Task {
+            await updateLoginStateFromToken()
+            routeToAppropriateScreen()
+        }
     }
 }
 
@@ -40,12 +42,14 @@ private extension AppFlowController {
         transition(to: destinationVC)
     }
     
-    func updateLoginStateFromToken() {
-        guard let tokenManager = try? container.resolve(TokenManager<KeychainService>.self) else {
-            fatalError("TokenManager Failed Resolve")
+    func updateLoginStateFromToken() async {
+        guard let validateAccessTokenUseCase = try? container.resolve(
+            ValidateAccessTokenUseCase<TokenRepositoryImpl<HTTPClient, TokenManager<KeychainService>>>.self
+        ) else {
+            fatalError("ValidateAccessTokenUseCase Failed Resolve")
         }
-        
-        isLogin = tokenManager.get() != nil
+
+        isLogin = await validateAccessTokenUseCase.execute()
     }
     
     func createMainView() -> UIViewController {
