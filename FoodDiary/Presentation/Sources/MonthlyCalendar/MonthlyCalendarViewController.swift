@@ -275,7 +275,7 @@ extension MonthlyCalendarViewController {
         static var containerBorderWidth: CGFloat { 1 }
         static var recordPromptTopOffset: CGFloat { 28 }
         static var monthYearHeaderTopOffset: CGFloat { 36 }
-        static var containerTopOffset: CGFloat { 36 }
+        static var containerTopOffset: CGFloat { 18 }
         static var stackSpacing: CGFloat { 16 }
         static var stackTopInset: CGFloat { 24 }
         static var stackBottomInset: CGFloat { 18 }

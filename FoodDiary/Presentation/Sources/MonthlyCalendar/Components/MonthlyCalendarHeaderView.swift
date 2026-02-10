@@ -71,7 +71,7 @@ final class MonthlyCalendarHeaderView: UIView {
 
     private func setupConstraints() {
         containerStackView.snp.makeConstraints {
-            $0.leading.centerY.equalToSuperview()
+            $0.leading.top.bottom.equalToSuperview()
         }
 
         chevronButton.snp.makeConstraints {
