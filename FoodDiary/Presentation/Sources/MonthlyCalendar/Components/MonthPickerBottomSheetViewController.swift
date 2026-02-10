@@ -76,13 +76,15 @@ final class MonthPickerBottomSheetViewController: UIViewController {
 
     init(currentMonth: Date) {
         let calendar = Calendar.seoul
+        let today = Date()
+
         self.currentMonth = currentMonth
-        self.currentYear = calendar.component(.year, from: currentMonth)
-        self.currentMonthNumber = calendar.component(.month, from: currentMonth)
-        
+        self.currentYear = calendar.component(.year, from: today)
+        self.currentMonthNumber = calendar.component(.month, from: today)
+
         self.selectedYear = calendar.component(.year, from: currentMonth)
-        self.selectedMonth = currentMonthNumber
-        
+        self.selectedMonth = calendar.component(.month, from: currentMonth)
+
         self.years = Array((currentYear - Constants.yearRange)...currentYear)
         super.init(nibName: nil, bundle: nil)
     }
