@@ -94,13 +94,27 @@ final class MonthlyCalendarHeaderView: UIView {
     }
 
     func resetChevron() {
-        chevronButton.setImage(DesignSystemAsset.iconNext.image, for: .normal)
+        UIView.transition(
+            with: chevronButton,
+            duration: 0.3,
+            options: .transitionFlipFromBottom,
+            animations: {
+                self.chevronButton.setImage(DesignSystemAsset.iconNext.image, for: .normal)
+            }
+        )
     }
 
     // MARK: - Actions
 
     @objc private func handleMonthPickerTap() {
-        chevronButton.setImage(DesignSystemAsset.iconDown.image, for: .normal)
+        UIView.transition(
+            with: chevronButton,
+            duration: 0.3,
+            options: .transitionFlipFromTop,
+            animations: {
+                self.chevronButton.setImage(DesignSystemAsset.iconDown.image, for: .normal)
+            }
+        )
         monthPickerTapSubject.send()
     }
 }
