@@ -4,7 +4,7 @@ import Domain
 import SnapKit
 import UIKit
 
-public final class FoodRecordDetailViewController: UIViewController {
+public final class MockFoodRecordDetailViewController: UIViewController {
 
     // MARK: - Properties
 
