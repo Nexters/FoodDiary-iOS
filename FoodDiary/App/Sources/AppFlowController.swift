@@ -17,16 +17,16 @@ final class AppFlowController: UIViewController {
     private var currentChild: UIViewController?
     private var cancellables = Set<AnyCancellable>()
     private let container: DIContainer
-    
+
     public init(container: DIContainer) {
         self.container = container
         super.init(nibName: nil, bundle: nil)
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         updateLoginStateFromToken()
@@ -98,12 +98,15 @@ private extension AppFlowController {
             analysisRepository: analysisRepository
         )
 
+        let pushNotificationObserver = PushNotificationObserver()
+
         let viewModel = WeeklyCalendarViewModel(
             requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase,
             loadWeeklyCalendarDataUseCase: loadWeeklyCalendarDataUseCase,
             saveFoodRecordUseCase: saveFoodRecordUseCase,
             restorePendingRecordsUseCase: restorePendingRecordsUseCase,
-            checkPendingAnalysisUseCase: checkPendingAnalysisUseCase
+            checkPendingAnalysisUseCase: checkPendingAnalysisUseCase,
+            pushNotificationObserver: pushNotificationObserver
         )
       
         guard let fetchMonthlyCalendarDaysUseCase = try? container.resolve(
@@ -157,3 +160,4 @@ private extension AppFlowController {
         currentChild = viewController
     }
 }
+

@@ -9,9 +9,11 @@ import UIKit
 import UserNotifications
 import FirebaseCore
 import FirebaseMessaging
+import Domain
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
+
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         print("[AppDelegate] didFinishLaunchingWithOptions")
         FirebaseApp.configure()
@@ -82,9 +84,9 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
     private func handlePushNotification(_ userInfo: [AnyHashable: Any]) {
         guard let uploadId = userInfo["uploadId"] as? String else { return }
         NotificationCenter.default.post(
-            name: .analysisResultReceived,
+            name: PushNotificationKey.analysisResult,
             object: nil,
-            userInfo: ["uploadId": uploadId]
+            userInfo: [PushNotificationKey.uploadIdKey: uploadId]
         )
     }
 }
@@ -112,7 +114,6 @@ extension AppDelegate: MessagingDelegate {
 // MARK: - Notification Names
 
 public extension Notification.Name {
-    static let analysisResultReceived = Notification.Name("analysisResultReceived")
     static let appWillEnterForeground = Notification.Name("appWillEnterForeground")
 }
 

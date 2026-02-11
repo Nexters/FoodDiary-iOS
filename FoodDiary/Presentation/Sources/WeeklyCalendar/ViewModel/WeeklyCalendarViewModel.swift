@@ -52,6 +52,7 @@ public final class WeeklyCalendarViewModel<
     private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, ImageProvider, PendingRepo>
     private let restorePendingRecordsUseCase: RestorePendingRecordsUseCase<PendingRepo>
     private let checkPendingAnalysisUseCase: CheckPendingAnalysisUseCase<PendingRepo, AnalysisRepo>
+    private let pushNotificationObserver: PushNotificationObserving
 
     // MARK: - Init
 
@@ -60,13 +61,15 @@ public final class WeeklyCalendarViewModel<
         loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase<RecordRepo, AssetRepo>,
         saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, ImageProvider, PendingRepo>,
         restorePendingRecordsUseCase: RestorePendingRecordsUseCase<PendingRepo>,
-        checkPendingAnalysisUseCase: CheckPendingAnalysisUseCase<PendingRepo, AnalysisRepo>
+        checkPendingAnalysisUseCase: CheckPendingAnalysisUseCase<PendingRepo, AnalysisRepo>,
+        pushNotificationObserver: PushNotificationObserving
     ) {
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
         self.loadWeeklyCalendarDataUseCase = loadWeeklyCalendarDataUseCase
         self.saveFoodRecordUseCase = saveFoodRecordUseCase
         self.restorePendingRecordsUseCase = restorePendingRecordsUseCase
         self.checkPendingAnalysisUseCase = checkPendingAnalysisUseCase
+        self.pushNotificationObserver = pushNotificationObserver
 
         self.calendar = Calendar.current
 
@@ -86,6 +89,12 @@ public final class WeeklyCalendarViewModel<
                 Task(priority: .userInitiated) {
                     await self.handleInput(action)
                 }
+            }
+            .store(in: &cancellables)
+
+        pushNotificationObserver.analysisResultPublisher
+            .sink { [weak self] uploadId in
+                self?.input.send(.handlePushNotification(uploadId: uploadId))
             }
             .store(in: &cancellables)
     }
