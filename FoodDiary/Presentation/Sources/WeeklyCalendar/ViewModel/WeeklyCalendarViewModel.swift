@@ -255,21 +255,13 @@ public final class WeeklyCalendarViewModel<
         do {
             let result = try await checkPendingAnalysisUseCase.execute(for: allPendingUploadIds)
 
-            var hasChanges = false
-            for (uploadId, record) in result.completedRecords {
+            for (uploadId, _) in result.completedRecords {
                 removePendingRecord(uploadId: uploadId)
-                eventSubject.send(.analysisCompleted(uploadId: uploadId, record: record))
-                hasChanges = true
             }
 
             for (uploadId, reason) in result.failedUploadIds {
                 removePendingRecord(uploadId: uploadId)
                 eventSubject.send(.analysisFailed(uploadId: uploadId, reason: reason))
-                hasChanges = true
-            }
-
-            if hasChanges {
-                await updateDateContent(for: state.selectedDate)
             }
         } catch {
             // 폴링 실패는 무시 (다음에 다시 시도)
@@ -283,11 +275,8 @@ public final class WeeklyCalendarViewModel<
 
             if let completed = result.completedRecords.first {
                 removePendingRecord(uploadId: completed.uploadId)
-                await updateDateContent(for: state.selectedDate)
-                eventSubject.send(.analysisCompleted(uploadId: completed.uploadId, record: completed.record))
             } else if let failed = result.failedUploadIds.first {
                 removePendingRecord(uploadId: failed.uploadId)
-                await updateDateContent(for: state.selectedDate)
                 eventSubject.send(.analysisFailed(uploadId: failed.uploadId, reason: failed.reason))
             }
         } catch {
@@ -295,10 +284,23 @@ public final class WeeklyCalendarViewModel<
         }
     }
 
+    @MainActor
     private func removePendingRecord(uploadId: String) {
         for (date, records) in state.pendingRecordsByDate {
             state.pendingRecordsByDate[date] = records.filter { $0.uploadId != uploadId }
         }
+        updatePendingRecordsInDateContent()
+    }
+
+    @MainActor
+    private func updatePendingRecordsInDateContent() {
+        guard let currentContent = state.dateContent else { return }
+        let updatedPendingRecords = pendingRecords(for: state.selectedDate)
+        state.dateContent = DateContent(
+            records: currentContent.records,
+            pendingRecords: updatedPendingRecords,
+            foodPhotoCount: currentContent.foodPhotoCount
+        )
     }
 }
 
@@ -331,7 +333,6 @@ extension WeeklyCalendarViewModel {
         case uploadCompleted(PendingFoodRecord)
         case saveFailed(Error)
         case loadFailed(Error)
-        case analysisCompleted(uploadId: String, record: FoodRecord)
         case analysisFailed(uploadId: String, reason: String)
     }
 }

@@ -224,8 +224,6 @@ public final class WeeklyCalendarViewController<
                     self?.showSaveErrorAlert(error)
                 case .loadFailed:
                     break
-                case .analysisCompleted:
-                    break
                 case .analysisFailed(_, let reason):
                     self?.showAnalysisFailedAlert(reason: reason)
                 }
