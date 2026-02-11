@@ -38,6 +38,8 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
         print("[MockFoodRecordRepository] ✅ 업로드 완료! uploadId: \(uploadId)")
         print("[MockFoodRecordRepository] 🤖 AI 분석은 서버에서 비동기로 진행됩니다. Remote Push로 결과 수신 예정.")
 
+        simulatePushNotification(uploadId: uploadId)
+
         return uploadId
     }
 
@@ -145,5 +147,21 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
                 ),
             ]
         }
+    }
+}
+
+private func simulatePushNotification(uploadId: String) {
+    Task {
+        for _ in 1...5 {
+            try await Task.sleep(for: .seconds(2))
+            print("[MockFoodRecordRepository] ⏳ 분석 중... (uploadId: \(uploadId))")
+        }
+
+        print("[MockFoodRecordRepository] 📲 푸시 알림 시뮬레이션: uploadId=\(uploadId)")
+        NotificationCenter.default.post(
+            name: AppNotification.Push.analysisResult,
+            object: nil,
+            userInfo: [AppNotification.Push.Key.uploadId: uploadId]
+        )
     }
 }

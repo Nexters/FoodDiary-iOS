@@ -98,7 +98,7 @@ private extension AppFlowController {
             analysisRepository: analysisRepository
         )
 
-        let pushNotificationObserver = MockPushNotificationObserver()
+        let pushNotificationObserver = PushNotificationObserver()
 
         let viewModel = WeeklyCalendarViewModel(
             requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase,

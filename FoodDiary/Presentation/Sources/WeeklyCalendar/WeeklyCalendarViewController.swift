@@ -21,7 +21,10 @@ public final class WeeklyCalendarViewController<
 
     // MARK: - Dependencies
 
-    private let viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, AnalysisRepo>
+    private let viewModel:
+        WeeklyCalendarViewModel<
+            RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, AnalysisRepo
+        >
     private let imageProvider: ImageProvider
 
     // MARK: - UI Components
@@ -60,7 +63,9 @@ public final class WeeklyCalendarViewController<
     // MARK: - Init
 
     public init(
-        viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, AnalysisRepo>,
+        viewModel: WeeklyCalendarViewModel<
+            RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, AnalysisRepo
+        >,
         imageProvider: ImageProvider
     ) {
         self.viewModel = viewModel

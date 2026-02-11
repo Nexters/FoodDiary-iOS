@@ -13,10 +13,21 @@ public final class MockAnalysisResultRepository: AnalysisResultRepository, @unch
 
     public func fetchResults(for uploadIds: [String]) async throws -> [String: AnalysisStatus] {
         // TODO: 실제 API 구현 시 교체
-        // 현재는 모든 요청에 대해 pending 상태 반환
+        // 테스트용: 모든 요청에 대해 completed 상태 반환
         var results: [String: AnalysisStatus] = [:]
         for uploadId in uploadIds {
-            results[uploadId] = .pending
+            let mockRecord = FoodRecord(
+                id: uploadId,
+                date: Date(),
+                mealType: .lunch,
+                genre: .korean,
+                imageURLs: [],
+                restaurantName: "테스트 식당",
+                address: nil,
+                hashtags: ["테스트"],
+                createdAt: Date()
+            )
+            results[uploadId] = .completed(mockRecord)
         }
         return results
     }
