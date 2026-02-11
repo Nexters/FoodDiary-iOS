@@ -24,9 +24,6 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.makeKeyAndVisible()
     }
 
-    func sceneWillEnterForeground(_ scene: UIScene) {
-        NotificationCenter.default.post(name: .appWillEnterForeground, object: nil)
-    }
 }
 
 private extension SceneDelegate {

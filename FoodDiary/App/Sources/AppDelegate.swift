@@ -84,9 +84,9 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
     private func handlePushNotification(_ userInfo: [AnyHashable: Any]) {
         guard let uploadId = userInfo["uploadId"] as? String else { return }
         NotificationCenter.default.post(
-            name: PushNotificationKey.analysisResult,
+            name: AppNotification.Push.analysisResult,
             object: nil,
-            userInfo: [PushNotificationKey.uploadIdKey: uploadId]
+            userInfo: [AppNotification.Push.Key.uploadId: uploadId]
         )
     }
 }
@@ -111,9 +111,4 @@ extension AppDelegate: MessagingDelegate {
     }
 }
 
-// MARK: - Notification Names
-
-public extension Notification.Name {
-    static let appWillEnterForeground = Notification.Name("appWillEnterForeground")
-}
 
