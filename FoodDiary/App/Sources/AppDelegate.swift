@@ -15,9 +15,7 @@ import Domain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        print("[AppDelegate] didFinishLaunchingWithOptions")
         FirebaseApp.configure()
-        print("[AppDelegate] Firebase configured")
         Messaging.messaging().delegate = self
         setupAppearance()
         registerForRemoteNotifications(application)
@@ -31,7 +29,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private func registerForRemoteNotifications(_ application: UIApplication) {
         UNUserNotificationCenter.current().delegate = self
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
-            print("[AppDelegate] Push authorization granted: \(granted), error: \(String(describing: error))")
             guard granted else { return }
             DispatchQueue.main.async {
                 application.registerForRemoteNotifications()
@@ -50,13 +47,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         // APNs 토큰을 FCM에 전달
         Messaging.messaging().apnsToken = deviceToken
-
-        let apnsToken = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
-        print("[AppDelegate] APNs Token: \(apnsToken)")
     }
 
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
-        print("[AppDelegate] Failed to register for remote notifications: \(error)")
     }
 }
 
@@ -95,17 +88,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
 
 extension AppDelegate: MessagingDelegate {
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
-        guard let fcmToken else {
-            print("[AppDelegate] FCM Token is nil")
-            return
-        }
-
-        let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? "unknown"
-
-        print("[AppDelegate] ========== FCM Token Info ==========")
-        print("[AppDelegate] FCM Token: \(fcmToken)")
-        print("[AppDelegate] Device ID: \(deviceId)")
-        print("[AppDelegate] =====================================")
+        guard let fcmToken else { return }
 
         // TODO: 서버 API로 deviceId, fcmToken 전송
     }
