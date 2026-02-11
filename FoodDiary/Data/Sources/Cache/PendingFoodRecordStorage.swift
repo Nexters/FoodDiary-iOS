@@ -5,10 +5,11 @@
 
 import Domain
 import Foundation
+import UIKit
 
 /// Pending 기록 로컬 저장소 (Actor + JSON 파일)
-/// 
-/// 엄청 많이 쌓이면 어떡하죠? 
+///
+/// 엄청 많이 쌓이면 어떡하죠?
 ///     -> Pending 기록은 서버 업로드 완료 후 AI 분석 대기 중인 기록이므로
 ///      분석이 완료되면 바로 삭제되니까 엄청 쌓이진 않을 거임
 public actor PendingFoodRecordStorage: PendingFoodRecordRepository {
@@ -16,11 +17,12 @@ public actor PendingFoodRecordStorage: PendingFoodRecordRepository {
     private let fileURL: URL
 
     private var saveTask: Task<Void, Never>?
+    private var backgroundObserverTask: Task<Void, Never>?
     private let debounceInterval: Duration
 
     public init(
         fileName: String = "pending_records.json",
-        debounceInterval: Duration = .seconds(0.5)
+        debounceInterval: Duration = .seconds(0.2)
     ) {
         let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let fileURL = documentsDir.appendingPathComponent(fileName)
@@ -28,6 +30,14 @@ public actor PendingFoodRecordStorage: PendingFoodRecordRepository {
         self.fileURL = fileURL
         self.debounceInterval = debounceInterval
         self.records = Self.loadFromDisk(fileURL: fileURL)
+
+        backgroundObserverTask = Task { [weak self] in
+            for await _ in NotificationCenter.default.notifications(
+                named: UIScene.didEnterBackgroundNotification)
+            {
+                await self?.flushToDisk()
+            }
+        }
     }
 
     // MARK: - PendingFoodRecordRepository
@@ -67,6 +77,11 @@ public actor PendingFoodRecordStorage: PendingFoodRecordRepository {
     private func saveToDisk(records: [String: PendingFoodRecord], to fileURL: URL) {
         guard let encoded = try? JSONEncoder().encode(records) else { return }
         try? encoded.write(to: fileURL, options: .atomic)
+    }
+
+    private func flushToDisk() {
+        saveTask?.cancel()
+        saveToDisk(records: records, to: fileURL)
     }
 
     private static func loadFromDisk(fileURL: URL) -> [String: PendingFoodRecord] {
