@@ -55,9 +55,6 @@ public final class WeeklyCalendarViewModel<
     private let syncPendingAnalysisUseCase: SyncPendingAnalysisUseCase<PendingRepo, AnalysisRepo>
     private let pushNotificationObserver: PushObserver
 
-    /// Detail 화면 등에서 사용하기 위해 노출
-    public let recordRepository: RecordRepo
-
     // MARK: - Init
 
     public init(
@@ -67,6 +64,7 @@ public final class WeeklyCalendarViewModel<
         loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>,
         syncPendingAnalysisUseCase: SyncPendingAnalysisUseCase<PendingRepo, AnalysisRepo>,
         pushNotificationObserver: PushObserver
+        fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
     ) {
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
         self.loadWeeklyCalendarDataUseCase = loadWeeklyCalendarDataUseCase
@@ -74,6 +72,7 @@ public final class WeeklyCalendarViewModel<
         self.loadPendingRecordsUseCase = loadPendingRecordsUseCase
         self.syncPendingAnalysisUseCase = syncPendingAnalysisUseCase
         self.pushNotificationObserver = pushNotificationObserver
+        self.fetchFoodRecordsUseCase = fetchFoodRecordsUseCase
 
         self.calendar = Calendar.current
 
@@ -353,6 +352,14 @@ extension WeeklyCalendarViewModel {
 // MARK: - Public Methods
 
 extension WeeklyCalendarViewModel {
+    /// Detail 화면용 ViewModel 생성
+    public func makeDetailViewModel(for date: Date) -> DetailViewModel<RecordRepo> {
+        DetailViewModel(
+            initialDate: date,
+            fetchRecordsUseCase: fetchFoodRecordsUseCase
+        )
+    }
+
     /// 다음 주로 이동 가능 여부
     public func canGoToNextWeek(from date: Date) -> Bool {
         let calendar = Calendar.current

@@ -111,7 +111,7 @@ public final class DetailViewModel<RecordRepo: FoodRecordRepository> {
     private func updateDateText() {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "ko_KR")
-        formatter.dateFormat = "yyyy년 M월 d일"
+        formatter.dateFormat = "yyyy년 M월 d일 (E)"
         state.dateText = formatter.string(from: state.currentDate)
     }
 }

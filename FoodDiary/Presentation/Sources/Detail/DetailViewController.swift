@@ -218,6 +218,25 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
                 self?.handleShare(record: record)
             }
             .store(in: &cancellables)
+
+        // Edit buttons
+        breakfastSection.editTapPublisher
+            .sink { [weak self] mealType in
+                self?.handleEdit(mealType: mealType)
+            }
+            .store(in: &cancellables)
+
+        lunchSection.editTapPublisher
+            .sink { [weak self] mealType in
+                self?.handleEdit(mealType: mealType)
+            }
+            .store(in: &cancellables)
+
+        dinnerSection.editTapPublisher
+            .sink { [weak self] mealType in
+                self?.handleEdit(mealType: mealType)
+            }
+            .store(in: &cancellables)
     }
 
     // MARK: - Private Methods
@@ -314,5 +333,9 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
 
     @objc private func moreButtonTapped() {
         // TODO: Show more options menu
+    }
+
+    private func handleEdit(mealType: MealType) {
+        // TODO: Navigate to edit screen
     }
 }

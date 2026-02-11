@@ -21,7 +21,10 @@ final class DetailFoodCardView: UIView {
         static let badgeTopInset: CGFloat = 18
         static let badgeLeadingInset: CGFloat = 16
         static let badgeSpacing: CGFloat = 4
-        static let bottomContentInset: CGFloat = 18
+        static let bottomContentTopInset: CGFloat = 12
+        static let bottomContentHorizontalInset: CGFloat = 8
+        static let bottomContentBottomInset: CGFloat = 12
+        static let buttonSpacing: CGFloat = 16
         static let fadeTransitionDuration: Double = 0.25
     }
 
@@ -73,53 +76,72 @@ final class DetailFoodCardView: UIView {
     private let timeBadge: PillBadgeView
     private let locationBadge: PillBadgeView?
 
-    private let bottomOverlayView: UIView = {
-        let view = UIView()
-        view.backgroundColor = UIColor.black.withAlphaComponent(0.4)
-        return view
-    }()
-
-    private let genreBadge: PillBadgeView
+    // 이미지 아래 콘텐츠 영역
+    private let bottomContentView = UIView()
 
     private let restaurantLabel: UILabel = {
         let label = UILabel()
-        label.textColor = .white
+        label.textColor = .sdBase
         return label
     }()
 
     private let hashtagsLabel: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor.white.withAlphaComponent(0.8)
+        label.textColor = .gray500
         label.numberOfLines = 1
         label.lineBreakMode = .byTruncatingTail
         return label
     }()
 
+    private lazy var copyStackView: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [copyButton, copyLabel])
+        stack.axis = .horizontal
+        stack.spacing = 4
+        stack.alignment = .center
+        return stack
+    }()
+
+    private lazy var shareStackView: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [shareButton, shareLabel])
+        stack.axis = .horizontal
+        stack.spacing = 4
+        stack.alignment = .center
+        return stack
+    }()
+
+    private lazy var actionButtonsStackView: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [copyStackView, shareStackView])
+        stack.axis = .horizontal
+        stack.spacing = Constants.buttonSpacing
+        stack.alignment = .center
+        return stack
+    }()
+
     private let copyButton: UIButton = {
         let button = UIButton()
         button.setImage(DesignSystemAsset.iconCopy.image, for: .normal)
-        button.tintColor = .white
+        button.tintColor = .gray500
         return button
     }()
 
     private let copyLabel: UILabel = {
         let label = UILabel()
         label.text = "복사"
-        label.textColor = .white
+        label.textColor = .gray500
         return label
     }()
 
     private let shareButton: UIButton = {
         let button = UIButton()
         button.setImage(UIImage(systemName: "square.and.arrow.up"), for: .normal)
-        button.tintColor = .white
+        button.tintColor = .gray500
         return button
     }()
 
     private let shareLabel: UILabel = {
         let label = UILabel()
         label.text = "공유"
-        label.textColor = .white
+        label.textColor = .gray500
         return label
     }()
 
@@ -130,7 +152,6 @@ final class DetailFoodCardView: UIView {
         self.imageURL = imageURL
         self.timeBadge = PillBadgeView(text: record.formattedShortTime)
         self.locationBadge = record.district.map { PillBadgeView(text: $0) }
-        self.genreBadge = PillBadgeView(text: record.genre.rawValue)
         super.init(frame: .zero)
         setupUI()
         setupConstraints()
@@ -147,23 +168,21 @@ final class DetailFoodCardView: UIView {
 
     private func setupUI() {
         addSubview(containerView)
+
+        // 이미지 영역
         containerView.addSubview(foodImageView)
         containerView.addSubview(topBadgeStackView)
-        containerView.addSubview(bottomOverlayView)
-        containerView.addSubview(genreBadge)
 
         topBadgeStackView.addArrangedSubview(timeBadge)
         if let locationBadge {
             topBadgeStackView.addArrangedSubview(locationBadge)
         }
 
-        // Bottom overlay contents
-        bottomOverlayView.addSubview(restaurantLabel)
-        bottomOverlayView.addSubview(hashtagsLabel)
-        bottomOverlayView.addSubview(copyButton)
-        bottomOverlayView.addSubview(copyLabel)
-        bottomOverlayView.addSubview(shareButton)
-        bottomOverlayView.addSubview(shareLabel)
+        // 하단 콘텐츠 영역
+        containerView.addSubview(bottomContentView)
+        bottomContentView.addSubview(restaurantLabel)
+        bottomContentView.addSubview(hashtagsLabel)
+        bottomContentView.addSubview(actionButtonsStackView)
     }
 
     private func setupConstraints() {
@@ -172,7 +191,7 @@ final class DetailFoodCardView: UIView {
         }
 
         foodImageView.snp.makeConstraints {
-            $0.edges.equalToSuperview().inset(Constants.imageInset)
+            $0.top.leading.trailing.equalToSuperview().inset(Constants.imageInset)
         }
 
         topBadgeStackView.snp.makeConstraints {
@@ -180,47 +199,34 @@ final class DetailFoodCardView: UIView {
             $0.leading.equalTo(foodImageView).offset(Constants.badgeLeadingInset)
         }
 
-        bottomOverlayView.snp.makeConstraints {
-            $0.leading.trailing.bottom.equalTo(foodImageView)
-        }
-
-        genreBadge.snp.makeConstraints {
-            $0.leading.equalTo(bottomOverlayView).offset(Constants.bottomContentInset)
-            $0.centerY.equalTo(bottomOverlayView.snp.top)
+        bottomContentView.snp.makeConstraints {
+            $0.top.equalTo(foodImageView.snp.bottom).offset(Constants.bottomContentTopInset)
+            $0.leading.trailing.equalToSuperview().inset(Constants.bottomContentHorizontalInset)
+            $0.bottom.equalToSuperview().offset(-Constants.bottomContentBottomInset)
         }
 
         restaurantLabel.snp.makeConstraints {
-            $0.leading.equalToSuperview().offset(Constants.bottomContentInset)
-            $0.top.equalToSuperview().offset(Constants.bottomContentInset)
+            $0.top.leading.equalToSuperview()
         }
 
         hashtagsLabel.snp.makeConstraints {
-            $0.leading.equalToSuperview().offset(Constants.bottomContentInset)
-            $0.top.equalTo(restaurantLabel.snp.bottom).offset(2)
-            $0.trailing.lessThanOrEqualTo(copyButton.snp.leading).offset(-12)
-            $0.bottom.equalToSuperview().offset(-Constants.bottomContentInset)
+            $0.top.equalTo(restaurantLabel.snp.bottom).offset(4)
+            $0.leading.equalToSuperview()
+            $0.trailing.lessThanOrEqualTo(actionButtonsStackView.snp.leading).offset(-12)
+            $0.bottom.lessThanOrEqualToSuperview()
         }
 
-        shareButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().offset(-Constants.bottomContentInset)
-            $0.top.equalToSuperview().offset(Constants.bottomContentInset)
-            $0.size.equalTo(24)
-        }
-
-        shareLabel.snp.makeConstraints {
-            $0.centerX.equalTo(shareButton)
-            $0.top.equalTo(shareButton.snp.bottom).offset(4)
+        actionButtonsStackView.snp.makeConstraints {
+            $0.trailing.equalToSuperview()
+            $0.centerY.equalToSuperview()
         }
 
         copyButton.snp.makeConstraints {
-            $0.trailing.equalTo(shareButton.snp.leading).offset(-24)
-            $0.top.equalToSuperview().offset(Constants.bottomContentInset)
-            $0.size.equalTo(24)
+            $0.size.equalTo(20)
         }
 
-        copyLabel.snp.makeConstraints {
-            $0.centerX.equalTo(copyButton)
-            $0.top.equalTo(copyButton.snp.bottom).offset(4)
+        shareButton.snp.makeConstraints {
+            $0.size.equalTo(20)
         }
     }
 

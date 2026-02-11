@@ -67,6 +67,54 @@ private extension AppFlowController {
             fatalError("WeeklyCalendarViewModel not registered")
         }
 
+        guard let analysisRepository = try? container.resolve(MockAnalysisResultRepository.self) else {
+            fatalError("MockAnalysisResultRepository not registered")
+        }
+
+        let loadWeeklyCalendarDataUseCase = LoadWeeklyRecordUseCase(
+            calendar: .current,
+            recordRepository: foodRecordRepository,
+            fetchFoodImageAssetUseCase: fetchFoodImageAssetUseCase
+        )
+
+        let saveFoodRecordUseCase = SaveFoodRecordUseCase(
+            repository: foodRecordRepository,
+            imageProvider: imageProvider,
+            pendingRepository: pendingRepository
+        )
+
+        let restorePendingRecordsUseCase = RestorePendingRecordsUseCase(
+            repository: pendingRepository
+        )
+
+        let checkPendingAnalysisUseCase = CheckPendingAnalysisUseCase(
+            pendingRepository: pendingRepository,
+            analysisRepository: analysisRepository
+        )
+
+        let pushNotificationObserver = PushNotificationObserver()
+
+        let viewModel = WeeklyCalendarViewModel(
+            requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase,
+            loadWeeklyCalendarDataUseCase: loadWeeklyCalendarDataUseCase,
+            saveFoodRecordUseCase: saveFoodRecordUseCase,
+            restorePendingRecordsUseCase: restorePendingRecordsUseCase,
+            checkPendingAnalysisUseCase: checkPendingAnalysisUseCase,
+            pushNotificationObserver: pushNotificationObserver
+        )
+      
+        guard let fetchMonthlyCalendarDaysUseCase = try? container.resolve(
+            FetchMonthlyCalendarDaysUseCase<MockFoodRecordRepository>.self
+        ) else {
+            fatalError("FetchMonthlyCalendarDaysUseCase not registered")
+        }
+
+        let monthlyViewModel = MonthlyCalendarViewModel(
+            fetchMonthlyCalendarDaysUseCase: fetchMonthlyCalendarDaysUseCase,
+            requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase
+        )
+
+        let monthlyCalendarVC = MonthlyCalendarViewController(viewModel: monthlyViewModel)
         let weeklyCalendarVC = WeeklyCalendarViewController(viewModel: viewModel, imageProvider: imageProvider)
 
         return UINavigationController(rootViewController: weeklyCalendarVC)

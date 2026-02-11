@@ -43,8 +43,13 @@ final class MealSectionView: UIView {
         shareTapSubject.eraseToAnyPublisher()
     }
 
+    var editTapPublisher: AnyPublisher<MealType, Never> {
+        editTapSubject.eraseToAnyPublisher()
+    }
+
     private let copyTapSubject = PassthroughSubject<FoodRecord, Never>()
     private let shareTapSubject = PassthroughSubject<FoodRecord, Never>()
+    private let editTapSubject = PassthroughSubject<MealType, Never>()
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - State
@@ -57,8 +62,15 @@ final class MealSectionView: UIView {
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.textColor = .white
-        label.textAlignment = .center
         return label
+    }()
+
+    private let editButton: UIButton = {
+        let button = UIButton()
+        button.setTitle("수정", for: .normal)
+        button.setTitleColor(.gray400, for: .normal)
+        button.isHidden = true
+        return button
     }()
 
     private let contentContainerView: UIView = {
@@ -122,7 +134,9 @@ final class MealSectionView: UIView {
         super.init(frame: .zero)
         setupUI()
         setupConstraints()
+        setupActions()
         configureTitleLabel()
+        configureEditButton()
     }
 
     @available(*, unavailable)
@@ -134,6 +148,7 @@ final class MealSectionView: UIView {
 
     private func setupUI() {
         addSubview(titleLabel)
+        addSubview(editButton)
         addSubview(contentContainerView)
 
         // CollectionView
@@ -150,7 +165,12 @@ final class MealSectionView: UIView {
     private func setupConstraints() {
         titleLabel.snp.makeConstraints {
             $0.top.equalToSuperview().offset(Constants.titleTopInset)
-            $0.centerX.equalToSuperview()
+            $0.leading.equalToSuperview().offset(Constants.horizontalInset)
+        }
+
+        editButton.snp.makeConstraints {
+            $0.centerY.equalTo(titleLabel)
+            $0.trailing.equalToSuperview().offset(-Constants.horizontalInset)
         }
 
         contentContainerView.snp.makeConstraints {
@@ -224,6 +244,10 @@ final class MealSectionView: UIView {
         return UICollectionViewCompositionalLayout(section: section)
     }
 
+    private func setupActions() {
+        editButton.addTarget(self, action: #selector(editTapped), for: .touchUpInside)
+    }
+
     private func configureTitleLabel() {
         let title: String
         switch mealType {
@@ -237,6 +261,10 @@ final class MealSectionView: UIView {
             title = "야식"
         }
         titleLabel.setText(title, style: .hd20)
+    }
+
+    private func configureEditButton() {
+        editButton.titleLabel?.setText("수정", style: .p14)
     }
 
     // MARK: - Public Methods
@@ -260,13 +288,23 @@ final class MealSectionView: UIView {
         collectionView.isHidden = true
         pageControl.isHidden = true
         emptyStateView.isHidden = false
-        emptyLabel.setText("오늘의 음식 사진을 추가해보세요.", style: .p14)
+        editButton.isHidden = true
+
+        let emptyText: String
+        switch mealType {
+        case .lunch:
+            emptyText = "귀찮은 입력은 AI가 대신하고 있어요.."
+        default:
+            emptyText = "오늘의 음식 사진을 추가해보세요."
+        }
+        emptyLabel.setText(emptyText, style: .p14)
     }
 
     private func showCardState() {
         collectionView.isHidden = false
         pageControl.isHidden = cardItems.count <= 1
         emptyStateView.isHidden = true
+        editButton.isHidden = false
 
         pageControl.numberOfPages = cardItems.count
         pageControl.currentPage = 0
@@ -279,6 +317,10 @@ final class MealSectionView: UIView {
     @objc private func pageControlChanged() {
         let indexPath = IndexPath(item: pageControl.currentPage, section: 0)
         collectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: true)
+    }
+
+    @objc private func editTapped() {
+        editTapSubject.send(mealType)
     }
 }
 

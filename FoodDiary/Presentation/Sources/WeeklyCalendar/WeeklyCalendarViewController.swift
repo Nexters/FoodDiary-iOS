@@ -337,11 +337,7 @@ public final class WeeklyCalendarViewController<
     }
 
     private func navigateToDetail(with record: FoodRecord) {
-        let fetchRecordsUseCase = FetchFoodRecordsUseCase(repository: viewModel.recordRepository)
-        let detailViewModel = DetailViewModel(
-            initialDate: record.date,
-            fetchRecordsUseCase: fetchRecordsUseCase
-        )
+        let detailViewModel = viewModel.makeDetailViewModel(for: record.date)
         let detailVC = DetailViewController(
             initialRecord: record,
             viewModel: detailViewModel
