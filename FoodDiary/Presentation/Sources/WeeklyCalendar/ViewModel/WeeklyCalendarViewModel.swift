@@ -106,6 +106,7 @@ public final class WeeklyCalendarViewModel<
             await requestPhotoAuthorizationIfNeeded()
             await restorePendingRecords()
             await loadWeekData(for: currentWeekBaseDate)
+            await updateDateContent(for: state.selectedDate)
             await checkPendingAnalysisStatus()
 
         case .requestPhotoAuthorization:
@@ -118,6 +119,7 @@ public final class WeeklyCalendarViewModel<
             currentWeekBaseDate = calendar.previousWeek(from: currentWeekBaseDate)
             updateSelectedDateToSameWeekday(in: currentWeekBaseDate)
             await loadWeekData(for: currentWeekBaseDate)
+            await updateDateContent(for: state.selectedDate)
 
         case .goToNextWeek:
             let nextWeek = calendar.nextWeek(from: currentWeekBaseDate)
@@ -127,10 +129,12 @@ public final class WeeklyCalendarViewModel<
             currentWeekBaseDate = nextWeek
             updateSelectedDateToSameWeekday(in: currentWeekBaseDate)
             await loadWeekData(for: currentWeekBaseDate)
+            await updateDateContent(for: state.selectedDate)
 
         case .selectDate(let date):
             if !calendar.isDate(state.selectedDate, inSameDayAs: date) {
                 state.selectedDate = date
+                await updateDateContent(for: date)
             }
 
         case .saveSelectedPhotos(let assets):
@@ -160,7 +164,22 @@ public final class WeeklyCalendarViewModel<
         }
     }
 
+    @MainActor
+    private func updateDateContent(for date: Date) async {
+        do {
+            let dateData = try await loadWeeklyCalendarDataUseCase.loadDateData(for: date)
+            state.dateContent = DateContent(
+                records: dateData.records,
+                pendingRecords: pendingRecords(for: date),
+                foodPhotoCount: countFoodPhotos(in: dateData.photos)
+            )
+        } catch {
+            eventSubject.send(.loadFailed(error))
+        }
+    }
 
+
+    @MainActor
     private func savePhotosAsRecord(_ assets: [AssetRepo.Asset]) async {
         guard !assets.isEmpty else { return }
 
@@ -172,6 +191,7 @@ public final class WeeklyCalendarViewModel<
             )
             let dateKey = calendar.startOfDay(for: pendingRecord.date)
             state.pendingRecordsByDate[dateKey, default: []].insert(pendingRecord, at: 0)
+            await updateDateContent(for: state.selectedDate)
             eventSubject.send(.uploadCompleted(pendingRecord))
         } catch {
             eventSubject.send(.saveFailed(error))
@@ -235,14 +255,21 @@ public final class WeeklyCalendarViewModel<
         do {
             let result = try await checkPendingAnalysisUseCase.execute(for: allPendingUploadIds)
 
+            var hasChanges = false
             for (uploadId, record) in result.completedRecords {
                 removePendingRecord(uploadId: uploadId)
                 eventSubject.send(.analysisCompleted(uploadId: uploadId, record: record))
+                hasChanges = true
             }
 
             for (uploadId, reason) in result.failedUploadIds {
                 removePendingRecord(uploadId: uploadId)
                 eventSubject.send(.analysisFailed(uploadId: uploadId, reason: reason))
+                hasChanges = true
+            }
+
+            if hasChanges {
+                await updateDateContent(for: state.selectedDate)
             }
         } catch {
             // 폴링 실패는 무시 (다음에 다시 시도)
@@ -256,9 +283,11 @@ public final class WeeklyCalendarViewModel<
 
             if let completed = result.completedRecords.first {
                 removePendingRecord(uploadId: completed.uploadId)
+                await updateDateContent(for: state.selectedDate)
                 eventSubject.send(.analysisCompleted(uploadId: completed.uploadId, record: completed.record))
             } else if let failed = result.failedUploadIds.first {
                 removePendingRecord(uploadId: failed.uploadId)
+                await updateDateContent(for: state.selectedDate)
                 eventSubject.send(.analysisFailed(uploadId: failed.uploadId, reason: failed.reason))
             }
         } catch {
@@ -283,6 +312,7 @@ extension WeeklyCalendarViewModel {
         public internal(set) var monthText: String = ""
         public internal(set) var pendingRecordsByDate: [Date: [PendingFoodRecord]] = [:]
         public internal(set) var isLoading: Bool = false
+        public internal(set) var dateContent: DateContent?
     }
 
     public enum Input {
@@ -309,7 +339,7 @@ extension WeeklyCalendarViewModel {
 // MARK: - DateContent
 
 extension WeeklyCalendarViewModel {
-    public struct DateContent {
+    public struct DateContent: Equatable {
         public let records: [FoodRecord]
         public let pendingRecords: [PendingFoodRecord]
         public let foodPhotoCount: Int
@@ -319,17 +349,6 @@ extension WeeklyCalendarViewModel {
 // MARK: - Public Methods
 
 extension WeeklyCalendarViewModel {
-    /// 특정 날짜의 콘텐츠 로드 (기록, 대기중 기록, 음식 사진 개수)
-    public func loadDateContent(for date: Date) async throws -> DateContent {
-        let dateData = try await loadWeeklyCalendarDataUseCase.loadDateData(for: date)
-
-        return DateContent(
-            records: dateData.records,
-            pendingRecords: pendingRecords(for: date),
-            foodPhotoCount: countFoodPhotos(in: dateData.photos)
-        )
-    }
-
     /// 다음 주로 이동 가능 여부
     public func canGoToNextWeek(from date: Date) -> Bool {
         let calendar = Calendar.current

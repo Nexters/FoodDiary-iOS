@@ -199,17 +199,15 @@ public final class WeeklyCalendarViewController<
             .store(in: &cancellables)
 
         viewModel.statePublisher
-            .map { ($0.selectedDate, $0.pendingRecordsByDate) }
-            .removeDuplicates { lhs, rhs in
-                Calendar.current.isDate(lhs.0, inSameDayAs: rhs.0)
-                    && lhs.1 == rhs.1
-            }
+            .compactMap(\.dateContent)
+            .removeDuplicates()
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] selectedDate, _ in
-                guard let self else { return }
-                Task {
-                    await self.loadDateData(for: selectedDate)
-                }
+            .sink { [weak self] content in
+                self?.bottomContentView.configure(
+                    records: content.records,
+                    pendingRecords: content.pendingRecords,
+                    photoCount: content.foodPhotoCount
+                )
             }
             .store(in: &cancellables)
 
@@ -227,10 +225,7 @@ public final class WeeklyCalendarViewController<
                 case .loadFailed:
                     break
                 case .analysisCompleted:
-                    Task { [weak self] in
-                        guard let self else { return }
-                        await self.loadDateData(for: self.viewModel.state.selectedDate)
-                    }
+                    break
                 case .analysisFailed(_, let reason):
                     self?.showAnalysisFailedAlert(reason: reason)
                 }
@@ -239,20 +234,6 @@ public final class WeeklyCalendarViewController<
     }
 
     // MARK: - Actions
-
-    @MainActor
-    private func loadDateData(for date: Date) async {
-        do {
-            let content = try await viewModel.loadDateContent(for: date)
-            bottomContentView.configure(
-                records: content.records,
-                pendingRecords: content.pendingRecords,
-                photoCount: content.foodPhotoCount
-            )
-        } catch {
-            // 에러 처리는 ViewModel의 loadFailed 이벤트로 위임 가능
-        }
-    }
 
     private func handleAddButtonTap() {
         if viewModel.checkPhotoAuthorizationForAddingPhoto() {
