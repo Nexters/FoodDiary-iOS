@@ -212,6 +212,13 @@ public final class WeeklyCalendarViewController<
             }
             .store(in: &cancellables)
 
+        // 카드 스택 탭 → 상세 화면으로 이동
+        bottomContentView.cardStackTapPublisher
+            .sink { [weak self] record in
+                self?.navigateToDetail(with: record)
+            }
+            .store(in: &cancellables)
+
         // Event: 권한 거부 시 설정 이동 안내 Alert 표시 및 저장 결과 처리
         viewModel.eventPublisher
             .receive(on: DispatchQueue.main)
@@ -327,5 +334,18 @@ public final class WeeklyCalendarViewController<
         )
         alert.addAction(UIAlertAction(title: "확인", style: .default))
         present(alert, animated: true)
+    }
+
+    private func navigateToDetail(with record: FoodRecord) {
+        let fetchRecordsUseCase = FetchFoodRecordsUseCase(repository: viewModel.recordRepository)
+        let detailViewModel = DetailViewModel(
+            initialDate: record.date,
+            fetchRecordsUseCase: fetchRecordsUseCase
+        )
+        let detailVC = DetailViewController(
+            initialRecord: record,
+            viewModel: detailViewModel
+        )
+        navigationController?.pushViewController(detailVC, animated: true)
     }
 }

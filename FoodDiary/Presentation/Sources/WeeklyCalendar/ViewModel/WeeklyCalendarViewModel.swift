@@ -55,6 +55,9 @@ public final class WeeklyCalendarViewModel<
     private let syncPendingAnalysisUseCase: SyncPendingAnalysisUseCase<PendingRepo, AnalysisRepo>
     private let pushNotificationObserver: PushObserver
 
+    /// Detail 화면 등에서 사용하기 위해 노출
+    public let recordRepository: RecordRepo
+
     // MARK: - Init
 
     public init(
