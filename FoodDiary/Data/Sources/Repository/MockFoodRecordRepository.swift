@@ -38,7 +38,7 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
         print("[MockFoodRecordRepository] ✅ 업로드 완료! uploadId: \(uploadId)")
         print("[MockFoodRecordRepository] 🤖 AI 분석은 서버에서 비동기로 진행됩니다. Remote Push로 결과 수신 예정.")
 
-        simulatePushNotification(uploadId: uploadId)
+        simulatePushNotification(uploadId: uploadId, date: request.date)
 
         return uploadId
     }
@@ -47,53 +47,11 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
 
     private static let mockImageURL = URL(
         string:
-            "https://mblogthumb-phinf.pstatic.net/MjAyNDExMjBfNzgg/MDAxNzMyMTAyNjU2Nzc5.-_dSylVBQ7k5rG6AxtNZ2H8_tAh2kOTjNsU1Ef2xQHog.v80D1-aXmFLEFMCz6vr_Vgao2AnJgPucdfGMI4dGAvwg.JPEG/IMG_7463.JPG?type=w800"
+            "https://scontent-icn2-1.cdninstagram.com/v/t51.29350-15/461504105_2580000165532574_7826255553974624552_n.jpg?stp=dst-jpg_e35_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InRocmVhZHMuQ0FST1VTRUxfSVRFTS5pbWFnZV91cmxnZW4uMTQ0MHgxNDQwLnNkci5mMjkzNTAuZGVmYXVsdF9pbWFnZS5jMiJ9&_nc_ht=scontent-icn2-1.cdninstagram.com&_nc_cat=102&_nc_oc=Q6cZ2QF8w3O7ifi1Y1Vt8PsovLJXxldhHEZlzl3ASN01dV112tEUtvmsQvsmj1l3CIezXBU&_nc_ohc=lHxDPz1Ccz8Q7kNvwFX84oT&_nc_gid=_Z1qIYP7NELwB84RenKVNg&edm=AKr904kBAAAA&ccb=7-5&ig_cache_key=MzQ2OTA5NzA2NzczNjgxNTkxMQ%3D%3D.3-ccb7-5&oh=00_AfteQkqGT01MMvi0V1WSeHtguB_Jwkx0To0c5UVSu1JCDw&oe=6993A39A&_nc_sid=23467f"
     )!
 
     private func setupMockData() {
         let today = calendar.startOfDay(for: Date())
-
-        // 오늘 기록
-        if let todayBreakfast = calendar.date(bySettingHour: 8, minute: 0, second: 0, of: today),
-            let todayLunch = calendar.date(bySettingHour: 12, minute: 30, second: 0, of: today),
-            let todayDinner = calendar.date(bySettingHour: 19, minute: 0, second: 0, of: today)
-        {
-            mockRecords[today] = [
-                FoodRecord(
-                    id: UUID().uuidString,
-                    date: today,
-                    mealType: .breakfast,
-                    genre: .korean,
-                    imageURLs: [Self.mockImageURL],
-                    restaurantName: "아침식당",
-                    address: "서울시 강남구 역삼동 789",
-                    hashtags: ["된장찌개", "계란말이", "김치"],
-                    createdAt: todayBreakfast
-                ),
-                FoodRecord(
-                    id: UUID().uuidString,
-                    date: today,
-                    mealType: .lunch,
-                    genre: .chinese,
-                    imageURLs: [Self.mockImageURL],
-                    restaurantName: "맛있는 중화요리",
-                    address: "서울시 강남구 테헤란로 123",
-                    hashtags: ["양장피", "짜장면", "탕수육"],
-                    createdAt: todayLunch
-                ),
-                FoodRecord(
-                    id: UUID().uuidString,
-                    date: today,
-                    mealType: .dinner,
-                    genre: .japanese,
-                    imageURLs: [Self.mockImageURL],
-                    restaurantName: "스시오마카세",
-                    address: "서울시 강남구 압구정로 456",
-                    hashtags: ["오마카세", "스시", "사케"],
-                    createdAt: todayDinner
-                ),
-            ]
-        }
 
         // 어제 기록
         if let yesterday = calendar.date(byAdding: .day, value: -1, to: today),
@@ -148,20 +106,46 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
             ]
         }
     }
-}
 
-private func simulatePushNotification(uploadId: String) {
-    Task {
-        for _ in 1...5 {
-            try await Task.sleep(for: .seconds(2))
-            print("[MockFoodRecordRepository] ⏳ 분석 중... (uploadId: \(uploadId))")
+    private func simulatePushNotification(uploadId: String, date: Date) {
+        Task {
+            for _ in 1...2 {
+                try await Task.sleep(for: .seconds(2))
+                print("[MockFoodRecordRepository] ⏳ 분석 중... (uploadId: \(uploadId))")
+            }
+
+            // 분석 완료 후 mockRecords에 레코드 추가
+            let newRecord = FoodRecord(
+                id: uploadId,
+                date: date,
+                mealType: .lunch,
+                genre: .korean,
+                imageURLs: [Self.mockImageURL],
+                restaurantName: "새로 추가된 식당",
+                address: "서울시 강남구",
+                hashtags: ["맛집", "점심"],
+                createdAt: date
+            )
+            let dateKey = calendar.startOfDay(for: date)
+            if mockRecords[dateKey] != nil {
+                mockRecords[dateKey]?.append(newRecord)
+            } else {
+                mockRecords[dateKey] = [newRecord]
+            }
+            print("[MockFoodRecordRepository] ✅ mockRecords에 레코드 추가 완료")
+
+            let dateFormatter = ISO8601DateFormatter()
+            dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+            print("[MockFoodRecordRepository] 📲 푸시 알림 시뮬레이션: uploadId=\(uploadId)")
+            NotificationCenter.default.post(
+                name: AppNotification.Push.analysisResult,
+                object: nil,
+                userInfo: [
+                    AppNotification.Push.Key.uploadId: uploadId,
+                    AppNotification.Push.Key.date: dateFormatter.string(from: date),
+                ]
+            )
         }
-
-        print("[MockFoodRecordRepository] 📲 푸시 알림 시뮬레이션: uploadId=\(uploadId)")
-        NotificationCenter.default.post(
-            name: AppNotification.Push.analysisResult,
-            object: nil,
-            userInfo: [AppNotification.Push.Key.uploadId: uploadId]
-        )
     }
 }

@@ -217,12 +217,6 @@ private extension SceneDelegate {
             )
         }
 
-        container.register(FilterUIRelevantPushUseCase.self) { resolver in
-            guard let pushObserver = resolver.resolve(PushNotificationObserver.self) else {
-                fatalError("PushNotificationObserver not registered")
-            }
-            return FilterUIRelevantPushUseCase(pushNotificationObserver: pushObserver)
-        }
     }
     
     func registerPresentation() {
@@ -241,7 +235,8 @@ private extension SceneDelegate {
             PhotoAuthorizationFetcher,
             UIImageLoader,
             PendingFoodRecordStorage<FileStorageService>,
-            MockAnalysisResultRepository
+            MockAnalysisResultRepository,
+            PushNotificationObserver
         >
 
         container.register(WeeklyVM.self, scope: .transient) { resolver in
@@ -260,7 +255,7 @@ private extension SceneDelegate {
                   let syncPendingUseCase = resolver.resolve(
                       SyncPendingAnalysisUseCase<PendingFoodRecordStorage<FileStorageService>, MockAnalysisResultRepository>.self
                   ),
-                  let filterPushUseCase = resolver.resolve(FilterUIRelevantPushUseCase.self) else {
+                  let pushObserver = resolver.resolve(PushNotificationObserver.self) else {
                 fatalError("WeeklyCalendarViewModel dependencies not registered")
             }
 
@@ -270,7 +265,7 @@ private extension SceneDelegate {
                 saveFoodRecordUseCase: saveFoodRecordUseCase,
                 loadPendingRecordsUseCase: loadPendingUseCase,
                 syncPendingAnalysisUseCase: syncPendingUseCase,
-                filterUIRelevantPushUseCase: filterPushUseCase
+                pushNotificationObserver: pushObserver
             )
         }
     }

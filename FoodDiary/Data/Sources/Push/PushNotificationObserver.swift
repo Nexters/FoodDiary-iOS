@@ -8,9 +8,22 @@ import Domain
 import Foundation
 
 public final class PushNotificationObserver: PushNotificationObserving {
-    public var analysisResultPublisher: AnyPublisher<String, Never> {
+    private let dateFormatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
+
+    public var analysisResultPublisher: AnyPublisher<AnalysisResultNotification, Never> {
         NotificationCenter.default.publisher(for: AppNotification.Push.analysisResult)
-            .compactMap { $0.userInfo?[AppNotification.Push.Key.uploadId] as? String }
+            .compactMap { [dateFormatter] notification -> AnalysisResultNotification? in
+                guard let userInfo = notification.userInfo,
+                      let uploadId = userInfo[AppNotification.Push.Key.uploadId] as? String,
+                      let dateString = userInfo[AppNotification.Push.Key.date] as? String,
+                      let date = dateFormatter.date(from: dateString)
+                else { return nil }
+                return AnalysisResultNotification(uploadId: uploadId, date: date)
+            }
             .eraseToAnyPublisher()
     }
 

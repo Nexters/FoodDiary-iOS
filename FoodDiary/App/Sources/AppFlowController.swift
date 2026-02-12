@@ -59,7 +59,8 @@ private extension AppFlowController {
             PhotoAuthorizationFetcher,
             UIImageLoader,
             PendingFoodRecordStorage<FileStorageService>,
-            MockAnalysisResultRepository
+            MockAnalysisResultRepository,
+            PushNotificationObserver
         >
 
         guard let viewModel = try? container.resolve(WeeklyVM.self) else {

@@ -16,7 +16,8 @@ public final class WeeklyCalendarViewModel<
     AuthRepo: PhotoAuthorizationRepository,
     ImageProvider: RenderableImageRepository,
     PendingRepo: PendingFoodRecordRepository,
-    AnalysisRepo: AnalysisResultRepository
+    AnalysisRepo: AnalysisResultRepository,
+    PushObserver: PushNotificationObserving
 > where ImageProvider.Asset == AssetRepo.Asset {
     // MARK: - Output
 
@@ -52,7 +53,7 @@ public final class WeeklyCalendarViewModel<
     private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, ImageProvider, PendingRepo>
     private let loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>
     private let syncPendingAnalysisUseCase: SyncPendingAnalysisUseCase<PendingRepo, AnalysisRepo>
-    private let pushNotificationObserver: PushNotificationObserving
+    private let pushNotificationObserver: PushObserver
 
     // MARK: - Init
 
@@ -62,7 +63,7 @@ public final class WeeklyCalendarViewModel<
         saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, ImageProvider, PendingRepo>,
         loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>,
         syncPendingAnalysisUseCase: SyncPendingAnalysisUseCase<PendingRepo, AnalysisRepo>,
-        pushNotificationObserver: PushNotificationObserving
+        pushNotificationObserver: PushObserver
     ) {
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
         self.loadWeeklyCalendarDataUseCase = loadWeeklyCalendarDataUseCase
@@ -93,8 +94,8 @@ public final class WeeklyCalendarViewModel<
             .store(in: &cancellables)
 
         pushNotificationObserver.analysisResultPublisher
-            .sink { [weak self] uploadId in
-                self?.input.send(.handlePushNotification(uploadId: uploadId))
+            .sink { [weak self] notification in
+                self?.input.send(.handlePushNotification(notification))
             }
             .store(in: &cancellables)
     }
@@ -142,8 +143,8 @@ public final class WeeklyCalendarViewModel<
         case .checkPendingAnalysisStatus:
             await checkPendingAnalysisStatus()
 
-        case .handlePushNotification(let uploadId):
-            await handlePushNotification(uploadId: uploadId)
+        case .handlePushNotification(let notification):
+            await handlePushNotification(notification)
         }
     }
 
@@ -242,10 +243,29 @@ public final class WeeklyCalendarViewModel<
         }
     }
 
-    private func handlePushNotification(uploadId: String) async {
+    private func handlePushNotification(_ notification: AnalysisResultNotification) async {
         do {
-            let result = try await syncPendingAnalysisUseCase.execute(for: [uploadId])
-            processSyncResult(result)
+            let syncResult = try await syncPendingAnalysisUseCase.execute(for: [notification.uploadId])
+
+            // 실패 이벤트는 항상 발행
+            for (uploadId, reason) in syncResult.failedUploadIds {
+                eventSubject.send(.analysisFailed(uploadId: uploadId, reason: reason))
+            }
+
+            let notificationDate = calendar.startOfDay(for: notification.date)
+            let selectedDate = calendar.startOfDay(for: state.selectedDate)
+            let (weekStart, weekEnd) = calendar.weekRange(for: currentWeekBaseDate)
+            let currentWeekRange = weekStart...weekEnd
+
+            // 완료된 레코드가 있으면 해당 날짜/주차 데이터 갱신
+            if currentWeekRange.contains(notificationDate) {
+                await loadWeekData(for: currentWeekBaseDate)
+            }
+
+            // selectedDate에 해당하는 변경사항이 있으면 dateContent 업데이트
+            if notificationDate == selectedDate {
+                await updateDateContent(for: state.selectedDate)
+            }
         } catch {
             // Push 처리 실패는 무시
         }
@@ -254,13 +274,24 @@ public final class WeeklyCalendarViewModel<
     private func processSyncResult(
         _ result: SyncPendingAnalysisUseCase<PendingRepo, AnalysisRepo>.Result
     ) {
-        let hasChanges = !result.completedRecords.isEmpty || !result.failedUploadIds.isEmpty
-
         for (uploadId, reason) in result.failedUploadIds {
             eventSubject.send(.analysisFailed(uploadId: uploadId, reason: reason))
         }
 
-        if hasChanges {
+        // 완료된 레코드들의 날짜 확인
+        let selectedDateStart = calendar.startOfDay(for: state.selectedDate)
+
+        // weekDays 배지 업데이트 (현재 주에 해당하는 레코드들)
+        Task {
+            await loadWeekData(for: currentWeekBaseDate)
+        }
+
+        // selectedDate에 해당하는 변경사항이 있으면 dateContent 업데이트
+        let hasChangesForSelectedDate = result.completedRecords.contains { _, record in
+            calendar.startOfDay(for: record.date) == selectedDateStart
+        } || !result.failedUploadIds.isEmpty
+
+        if hasChangesForSelectedDate {
             Task {
                 await updateDateContent(for: state.selectedDate)
             }
@@ -294,7 +325,7 @@ extension WeeklyCalendarViewModel {
         case selectDate(Date)
         case saveSelectedPhotos([AssetRepo.Asset])
         case checkPendingAnalysisStatus
-        case handlePushNotification(uploadId: String)
+        case handlePushNotification(AnalysisResultNotification)
     }
 
     public enum Event {

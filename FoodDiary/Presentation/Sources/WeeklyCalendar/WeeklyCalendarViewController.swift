@@ -16,14 +16,15 @@ public final class WeeklyCalendarViewController<
     AuthRepo: PhotoAuthorizationRepository,
     ImageProvider: RenderableImageRepository,
     PendingRepo: PendingFoodRecordRepository,
-    AnalysisRepo: AnalysisResultRepository
+    AnalysisRepo: AnalysisResultRepository,
+    PushObserver: PushNotificationObserving
 >: UIViewController where ImageProvider.Asset == AssetRepo.Asset {
 
     // MARK: - Dependencies
 
     private let viewModel:
         WeeklyCalendarViewModel<
-            RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, AnalysisRepo
+            RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, AnalysisRepo, PushObserver
         >
     private let imageProvider: ImageProvider
 
@@ -64,7 +65,7 @@ public final class WeeklyCalendarViewController<
 
     public init(
         viewModel: WeeklyCalendarViewModel<
-            RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, AnalysisRepo
+            RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, AnalysisRepo, PushObserver
         >,
         imageProvider: ImageProvider
     ) {

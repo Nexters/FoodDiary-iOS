@@ -11,6 +11,7 @@ public enum AppNotification {
 
         public enum Key {
             public static let uploadId = "uploadId"
+            public static let date = "date"
         }
     }
 }

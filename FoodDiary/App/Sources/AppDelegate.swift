@@ -75,11 +75,17 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
     }
 
     private func handlePushNotification(_ userInfo: [AnyHashable: Any]) {
-        guard let uploadId = userInfo["uploadId"] as? String else { return }
+        guard let uploadId = userInfo["uploadId"] as? String,
+              let dateString = userInfo["date"] as? String
+        else { return }
+
         NotificationCenter.default.post(
             name: AppNotification.Push.analysisResult,
             object: nil,
-            userInfo: [AppNotification.Push.Key.uploadId: uploadId]
+            userInfo: [
+                AppNotification.Push.Key.uploadId: uploadId,
+                AppNotification.Push.Key.date: dateString
+            ]
         )
     }
 }
