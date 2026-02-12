@@ -19,6 +19,9 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         registerDependencies()
+        // #if DEBUG
+        // saveDebugImageToPhotoLibrary()
+        // #endif
         guard let windowScene = scene as? UIWindowScene else { return }
         window = UIWindow(windowScene: windowScene)
         window?.rootViewController = AppFlowController(container: container)
@@ -121,6 +124,10 @@ private extension SceneDelegate {
         container.register(MockAnalysisResultRepository.self) { _ in
             MockAnalysisResultRepository()
         }
+
+        container.register(PushNotificationObserver.self) { _ in
+            PushNotificationObserver()
+        }
     }
     
     func registerDomain() {
@@ -193,6 +200,29 @@ private extension SceneDelegate {
             }
             return FetchMonthlyCalendarDaysUseCase(repository: repository)
         }
+
+        container.register(
+            LoadWeeklyRecordUseCase<MockFoodRecordRepository, FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
+        ) { resolver in
+            guard let recordRepo = resolver.resolve(MockFoodRecordRepository.self),
+                  let fetchAssetUseCase = resolver.resolve(
+                      FetchFoodImageAssetUseCase<FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
+                  ) else {
+                fatalError("LoadWeeklyRecordUseCase dependencies not registered")
+            }
+            return LoadWeeklyRecordUseCase(
+                calendar: .current,
+                recordRepository: recordRepo,
+                fetchFoodImageAssetUseCase: fetchAssetUseCase
+            )
+        }
+
+        container.register(FilterUIRelevantPushUseCase.self) { resolver in
+            guard let pushObserver = resolver.resolve(PushNotificationObserver.self) else {
+                fatalError("PushNotificationObserver not registered")
+            }
+            return FilterUIRelevantPushUseCase(pushNotificationObserver: pushObserver)
+        }
     }
     
     func registerPresentation() {
@@ -200,8 +230,62 @@ private extension SceneDelegate {
             guard let useCase = resolver.resolve(FinalizeAppleLoginUseCase.self) else {
                 fatalError("FinalizeAppleLoginUseCase not registered")
             }
-            
+
             return LoginViewModel(finalizeAppleLoginUseCase: useCase)
         }
+
+        // WeeklyCalendarViewModel 타입 별칭
+        typealias WeeklyVM = WeeklyCalendarViewModel<
+            MockFoodRecordRepository,
+            FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>,
+            PhotoAuthorizationFetcher,
+            UIImageLoader,
+            PendingFoodRecordStorage<FileStorageService>,
+            MockAnalysisResultRepository
+        >
+
+        container.register(WeeklyVM.self, scope: .transient) { resolver in
+            guard let requestPhotoAuthUseCase = resolver.resolve(
+                RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>.self
+            ),
+                  let loadWeeklyUseCase = resolver.resolve(
+                      LoadWeeklyRecordUseCase<MockFoodRecordRepository, FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
+                  ),
+                  let saveFoodRecordUseCase = resolver.resolve(
+                      SaveFoodRecordUseCase<MockFoodRecordRepository, UIImageLoader, PendingFoodRecordStorage<FileStorageService>>.self
+                  ),
+                  let loadPendingUseCase = resolver.resolve(
+                      LoadPendingRecordsUseCase<PendingFoodRecordStorage<FileStorageService>>.self
+                  ),
+                  let syncPendingUseCase = resolver.resolve(
+                      SyncPendingAnalysisUseCase<PendingFoodRecordStorage<FileStorageService>, MockAnalysisResultRepository>.self
+                  ),
+                  let filterPushUseCase = resolver.resolve(FilterUIRelevantPushUseCase.self) else {
+                fatalError("WeeklyCalendarViewModel dependencies not registered")
+            }
+
+            return WeeklyCalendarViewModel(
+                requestPhotoAuthorizationUseCase: requestPhotoAuthUseCase,
+                loadWeeklyCalendarDataUseCase: loadWeeklyUseCase,
+                saveFoodRecordUseCase: saveFoodRecordUseCase,
+                loadPendingRecordsUseCase: loadPendingUseCase,
+                syncPendingAnalysisUseCase: syncPendingUseCase,
+                filterUIRelevantPushUseCase: filterPushUseCase
+            )
+        }
     }
+
+    // #if DEBUG
+    // func saveDebugImageToPhotoLibrary() {
+    //     PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+    //         guard status == .authorized || status == .limited else { return }
+    //
+    //         PHPhotoLibrary.shared().performChanges {
+    //             guard let path = Bundle.main.path(forResource: "food", ofType: "jpg"),
+    //                   let image = UIImage(contentsOfFile: path) else { return }
+    //             PHAssetChangeRequest.creationRequestForAsset(from: image)
+    //         }
+    //     }
+    // }
+    // #endif
 }
