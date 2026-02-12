@@ -71,7 +71,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
         handlePushNotification(notification.request.content.userInfo)
-        completionHandler([.banner, .sound])
+        completionHandler([])
     }
 
     private func handlePushNotification(_ userInfo: [AnyHashable: Any]) {
