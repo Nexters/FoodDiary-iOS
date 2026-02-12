@@ -17,16 +17,16 @@ final class AppFlowController: UIViewController {
     private var currentChild: UIViewController?
     private var cancellables = Set<AnyCancellable>()
     private let container: DIContainer
-    
+
     public init(container: DIContainer) {
         self.container = container
         super.init(nibName: nil, bundle: nil)
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         updateLoginStateFromToken()
@@ -49,57 +49,27 @@ private extension AppFlowController {
     }
     
     func createMainView() -> UIViewController {
-        guard let fetchFoodImageAssetUseCase = try? container.resolve(
-            FetchFoodImageAssetUseCase<FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
-        ) else {
-            fatalError("FetchFoodImageAssetUseCase not registered")
-        }
-
-        guard let foodRecordRepository = try? container.resolve(MockFoodRecordRepository.self) else {
-            fatalError("MockFoodRecordRepository not registered")
-        }
-
         guard let imageProvider = try? container.resolve(UIImageLoader.self) else {
             fatalError("UIImageLoader not registered")
         }
 
-        guard let requestPhotoAuthorizationUseCase = try? container.resolve(
-            RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>.self
-        ) else {
-            fatalError("RequestPhotoAuthorizationUseCase not registered")
-        }
-      
-        let loadWeeklyCalendarDataUseCase = LoadWeeklyRecordUseCase(
-            calendar: .current,
-            recordRepository: foodRecordRepository,
-            fetchFoodImageAssetUseCase: fetchFoodImageAssetUseCase
-        )
+        typealias WeeklyVM = WeeklyCalendarViewModel<
+            MockFoodRecordRepository,
+            FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>,
+            PhotoAuthorizationFetcher,
+            UIImageLoader,
+            PendingFoodRecordStorage<FileStorageService>,
+            MockAnalysisResultRepository,
+            PushNotificationObserver
+        >
 
-        let saveFoodRecordUseCase = SaveFoodRecordUseCase(
-            repository: foodRecordRepository,
-            imageProvider: imageProvider
-        )
-
-        let viewModel = WeeklyCalendarViewModel(
-            requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase,
-            loadWeeklyCalendarDataUseCase: loadWeeklyCalendarDataUseCase,
-            saveFoodRecordUseCase: saveFoodRecordUseCase
-        )
-      
-        guard let fetchMonthlyCalendarDaysUseCase = try? container.resolve(
-            FetchMonthlyCalendarDaysUseCase<MockFoodRecordRepository>.self
-        ) else {
-            fatalError("FetchMonthlyCalendarDaysUseCase not registered")
+        guard let viewModel = try? container.resolve(WeeklyVM.self) else {
+            fatalError("WeeklyCalendarViewModel not registered")
         }
 
-        let monthlyViewModel = MonthlyCalendarViewModel(
-            fetchMonthlyCalendarDaysUseCase: fetchMonthlyCalendarDaysUseCase,
-            requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase
-        )
+        let weeklyCalendarVC = WeeklyCalendarViewController(viewModel: viewModel, imageProvider: imageProvider)
 
-        let monthlyCalendarVC = MonthlyCalendarViewController(viewModel: monthlyViewModel)
-
-        return UINavigationController(rootViewController: monthlyCalendarVC)
+        return UINavigationController(rootViewController: weeklyCalendarVC)
     }
     
     func createLoginView() -> UIViewController {
@@ -137,3 +107,4 @@ private extension AppFlowController {
         currentChild = viewController
     }
 }
+

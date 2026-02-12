@@ -14,12 +14,18 @@ public final class WeeklyCalendarViewController<
     RecordRepo: FoodRecordRepository,
     AssetRepo: FoodImageAssetRepository,
     AuthRepo: PhotoAuthorizationRepository,
-    ImageProvider: RenderableImageRepository
+    ImageProvider: RenderableImageRepository,
+    PendingRepo: PendingFoodRecordRepository,
+    AnalysisRepo: AnalysisResultRepository,
+    PushObserver: PushNotificationObserving
 >: UIViewController where ImageProvider.Asset == AssetRepo.Asset {
 
     // MARK: - Dependencies
 
-    private let viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo, ImageProvider>
+    private let viewModel:
+        WeeklyCalendarViewModel<
+            RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, AnalysisRepo, PushObserver
+        >
     private let imageProvider: ImageProvider
 
     // MARK: - UI Components
@@ -58,7 +64,9 @@ public final class WeeklyCalendarViewController<
     // MARK: - Init
 
     public init(
-        viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo, ImageProvider>,
+        viewModel: WeeklyCalendarViewModel<
+            RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, AnalysisRepo, PushObserver
+        >,
         imageProvider: ImageProvider
     ) {
         self.viewModel = viewModel
@@ -192,17 +200,15 @@ public final class WeeklyCalendarViewController<
             .store(in: &cancellables)
 
         viewModel.statePublisher
-            .map { ($0.selectedDate, $0.pendingRecordsByDate) }
-            .removeDuplicates { lhs, rhs in
-                Calendar.current.isDate(lhs.0, inSameDayAs: rhs.0)
-                    && lhs.1 == rhs.1
-            }
+            .compactMap(\.dateContent)
+            .removeDuplicates()
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] selectedDate, _ in
-                guard let self else { return }
-                Task {
-                    await self.loadDateData(for: selectedDate)
-                }
+            .sink { [weak self] content in
+                self?.bottomContentView.configure(
+                    records: content.records,
+                    pendingRecords: content.pendingRecords,
+                    photoCount: content.foodPhotoCount
+                )
             }
             .store(in: &cancellables)
 
@@ -219,26 +225,14 @@ public final class WeeklyCalendarViewController<
                     self?.showSaveErrorAlert(error)
                 case .loadFailed:
                     break
+                case .analysisFailed(_, let reason):
+                    self?.showAnalysisFailedAlert(reason: reason)
                 }
             }
             .store(in: &cancellables)
     }
 
     // MARK: - Actions
-
-    @MainActor
-    private func loadDateData(for date: Date) async {
-        do {
-            let content = try await viewModel.loadDateContent(for: date)
-            bottomContentView.configure(
-                records: content.records,
-                pendingRecords: content.pendingRecords,
-                photoCount: content.foodPhotoCount
-            )
-        } catch {
-            // 에러 처리는 ViewModel의 loadFailed 이벤트로 위임 가능
-        }
-    }
 
     private func handleAddButtonTap() {
         if viewModel.checkPhotoAuthorizationForAddingPhoto() {
@@ -319,6 +313,16 @@ public final class WeeklyCalendarViewController<
         let alert = UIAlertController(
             title: "저장 실패",
             message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
+    }
+
+    private func showAnalysisFailedAlert(reason: String) {
+        let alert = UIAlertController(
+            title: "분석 실패",
+            message: reason,
             preferredStyle: .alert
         )
         alert.addAction(UIAlertAction(title: "확인", style: .default))

@@ -11,6 +11,7 @@ import DesignSystem
 import Presentation
 import Domain
 import DI
+import Photos
 
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
@@ -18,11 +19,15 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         registerDependencies()
+        // #if DEBUG
+        // saveDebugImageToPhotoLibrary()
+        // #endif
         guard let windowScene = scene as? UIWindowScene else { return }
         window = UIWindow(windowScene: windowScene)
         window?.rootViewController = AppFlowController(container: container)
         window?.makeKeyAndVisible()
     }
+
 }
 
 private extension SceneDelegate {
@@ -104,6 +109,25 @@ private extension SceneDelegate {
         container.register(PhotoAuthorizationFetcher.self) { _ in
             PhotoAuthorizationFetcher()
         }
+
+        container.register(FileStorageService.self) { _ in
+            FileStorageService()
+        }
+
+        container.register(PendingFoodRecordStorage<FileStorageService>.self) { resolver in
+            guard let fileStorage = resolver.resolve(FileStorageService.self) else {
+                fatalError("FileStorageService not registered")
+            }
+            return PendingFoodRecordStorage(fileStorage: fileStorage)
+        }
+
+        container.register(MockAnalysisResultRepository.self) { _ in
+            MockAnalysisResultRepository()
+        }
+
+        container.register(PushNotificationObserver.self) { _ in
+            PushNotificationObserver()
+        }
     }
     
     func registerDomain() {
@@ -133,12 +157,66 @@ private extension SceneDelegate {
             return RequestPhotoAuthorizationUseCase(repository: repository)
         }
 
+        container.register(
+            LoadPendingRecordsUseCase<PendingFoodRecordStorage<FileStorageService>>.self
+        ) { resolver in
+            guard let repository = resolver.resolve(PendingFoodRecordStorage<FileStorageService>.self) else {
+                fatalError("PendingFoodRecordStorage not registered")
+            }
+            return LoadPendingRecordsUseCase(repository: repository)
+        }
+
+        container.register(
+            SyncPendingAnalysisUseCase<PendingFoodRecordStorage<FileStorageService>, MockAnalysisResultRepository>.self
+        ) { resolver in
+            guard let pendingRepo = resolver.resolve(PendingFoodRecordStorage<FileStorageService>.self),
+                  let analysisRepo = resolver.resolve(MockAnalysisResultRepository.self) else {
+                fatalError("Pending analysis dependencies not registered")
+            }
+            return SyncPendingAnalysisUseCase(
+                pendingRepository: pendingRepo,
+                analysisRepository: analysisRepo
+            )
+        }
+
+        container.register(
+            SaveFoodRecordUseCase<MockFoodRecordRepository, UIImageLoader, PendingFoodRecordStorage<FileStorageService>>.self
+        ) { resolver in
+            guard let recordRepo = resolver.resolve(MockFoodRecordRepository.self),
+                  let imageLoader = resolver.resolve(UIImageLoader.self),
+                  let pendingRepo = resolver.resolve(PendingFoodRecordStorage<FileStorageService>.self) else {
+                fatalError("SaveFoodRecordUseCase dependencies not registered")
+            }
+            return SaveFoodRecordUseCase(
+                repository: recordRepo,
+                imageProvider: imageLoader,
+                pendingRepository: pendingRepo
+            )
+        }
+
         container.register(FetchMonthlyCalendarDaysUseCase<MockFoodRecordRepository>.self) { resolver in
             guard let repository = resolver.resolve(MockFoodRecordRepository.self) else {
                 fatalError("MockFoodRecordRepository not registered")
             }
             return FetchMonthlyCalendarDaysUseCase(repository: repository)
         }
+
+        container.register(
+            LoadWeeklyRecordUseCase<MockFoodRecordRepository, FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
+        ) { resolver in
+            guard let recordRepo = resolver.resolve(MockFoodRecordRepository.self),
+                  let fetchAssetUseCase = resolver.resolve(
+                      FetchFoodImageAssetUseCase<FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
+                  ) else {
+                fatalError("LoadWeeklyRecordUseCase dependencies not registered")
+            }
+            return LoadWeeklyRecordUseCase(
+                calendar: .current,
+                recordRepository: recordRepo,
+                fetchFoodImageAssetUseCase: fetchAssetUseCase
+            )
+        }
+
     }
     
     func registerPresentation() {
@@ -146,8 +224,63 @@ private extension SceneDelegate {
             guard let useCase = resolver.resolve(FinalizeAppleLoginUseCase.self) else {
                 fatalError("FinalizeAppleLoginUseCase not registered")
             }
-            
+
             return LoginViewModel(finalizeAppleLoginUseCase: useCase)
         }
+
+        // WeeklyCalendarViewModel 타입 별칭
+        typealias WeeklyVM = WeeklyCalendarViewModel<
+            MockFoodRecordRepository,
+            FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>,
+            PhotoAuthorizationFetcher,
+            UIImageLoader,
+            PendingFoodRecordStorage<FileStorageService>,
+            MockAnalysisResultRepository,
+            PushNotificationObserver
+        >
+
+        container.register(WeeklyVM.self, scope: .transient) { resolver in
+            guard let requestPhotoAuthUseCase = resolver.resolve(
+                RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>.self
+            ),
+                  let loadWeeklyUseCase = resolver.resolve(
+                      LoadWeeklyRecordUseCase<MockFoodRecordRepository, FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
+                  ),
+                  let saveFoodRecordUseCase = resolver.resolve(
+                      SaveFoodRecordUseCase<MockFoodRecordRepository, UIImageLoader, PendingFoodRecordStorage<FileStorageService>>.self
+                  ),
+                  let loadPendingUseCase = resolver.resolve(
+                      LoadPendingRecordsUseCase<PendingFoodRecordStorage<FileStorageService>>.self
+                  ),
+                  let syncPendingUseCase = resolver.resolve(
+                      SyncPendingAnalysisUseCase<PendingFoodRecordStorage<FileStorageService>, MockAnalysisResultRepository>.self
+                  ),
+                  let pushObserver = resolver.resolve(PushNotificationObserver.self) else {
+                fatalError("WeeklyCalendarViewModel dependencies not registered")
+            }
+
+            return WeeklyCalendarViewModel(
+                requestPhotoAuthorizationUseCase: requestPhotoAuthUseCase,
+                loadWeeklyCalendarDataUseCase: loadWeeklyUseCase,
+                saveFoodRecordUseCase: saveFoodRecordUseCase,
+                loadPendingRecordsUseCase: loadPendingUseCase,
+                syncPendingAnalysisUseCase: syncPendingUseCase,
+                pushNotificationObserver: pushObserver
+            )
+        }
     }
+
+    // #if DEBUG
+    // func saveDebugImageToPhotoLibrary() {
+    //     PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+    //         guard status == .authorized || status == .limited else { return }
+    //
+    //         PHPhotoLibrary.shared().performChanges {
+    //             guard let path = Bundle.main.path(forResource: "food", ofType: "jpg"),
+    //                   let image = UIImage(contentsOfFile: path) else { return }
+    //             PHAssetChangeRequest.creationRequestForAsset(from: image)
+    //         }
+    //     }
+    // }
+    // #endif
 }
