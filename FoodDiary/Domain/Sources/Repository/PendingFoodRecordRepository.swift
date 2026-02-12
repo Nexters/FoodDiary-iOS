@@ -13,9 +13,6 @@ public protocol PendingFoodRecordRepository: Sendable {
     /// Pending 기록 저장
     func save(_ record: PendingFoodRecord) async throws
 
-    /// uploadId로 특정 기록 삭제
-    func delete(byUploadId uploadId: String) async throws
-
     /// 여러 uploadId의 기록 일괄 삭제
     func delete(byUploadIds uploadIds: [String]) async throws
 }

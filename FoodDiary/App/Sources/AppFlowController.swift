@@ -69,7 +69,7 @@ private extension AppFlowController {
             fatalError("RequestPhotoAuthorizationUseCase not registered")
         }
 
-        guard let pendingRepository = try? container.resolve(PendingFoodRecordStorage.self) else {
+        guard let pendingRepository = try? container.resolve(PendingFoodRecordStorage<FileStorageService>.self) else {
             fatalError("PendingFoodRecordStorage not registered")
         }
 

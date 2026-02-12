@@ -106,8 +106,15 @@ private extension SceneDelegate {
             PhotoAuthorizationFetcher()
         }
 
-        container.register(PendingFoodRecordStorage.self) { _ in
-            PendingFoodRecordStorage()
+        container.register(FileStorageService.self) { _ in
+            FileStorageService()
+        }
+
+        container.register(PendingFoodRecordStorage<FileStorageService>.self) { resolver in
+            guard let fileStorage = resolver.resolve(FileStorageService.self) else {
+                fatalError("FileStorageService not registered")
+            }
+            return PendingFoodRecordStorage(fileStorage: fileStorage)
         }
 
         container.register(MockAnalysisResultRepository.self) { _ in
@@ -143,18 +150,18 @@ private extension SceneDelegate {
         }
 
         container.register(
-            RestorePendingRecordsUseCase<PendingFoodRecordStorage>.self
+            RestorePendingRecordsUseCase<PendingFoodRecordStorage<FileStorageService>>.self
         ) { resolver in
-            guard let repository = resolver.resolve(PendingFoodRecordStorage.self) else {
+            guard let repository = resolver.resolve(PendingFoodRecordStorage<FileStorageService>.self) else {
                 fatalError("PendingFoodRecordStorage not registered")
             }
             return RestorePendingRecordsUseCase(repository: repository)
         }
 
         container.register(
-            CheckPendingAnalysisUseCase<PendingFoodRecordStorage, MockAnalysisResultRepository>.self
+            CheckPendingAnalysisUseCase<PendingFoodRecordStorage<FileStorageService>, MockAnalysisResultRepository>.self
         ) { resolver in
-            guard let pendingRepo = resolver.resolve(PendingFoodRecordStorage.self),
+            guard let pendingRepo = resolver.resolve(PendingFoodRecordStorage<FileStorageService>.self),
                   let analysisRepo = resolver.resolve(MockAnalysisResultRepository.self) else {
                 fatalError("Pending analysis dependencies not registered")
             }
@@ -165,11 +172,11 @@ private extension SceneDelegate {
         }
 
         container.register(
-            SaveFoodRecordUseCase<MockFoodRecordRepository, UIImageLoader, PendingFoodRecordStorage>.self
+            SaveFoodRecordUseCase<MockFoodRecordRepository, UIImageLoader, PendingFoodRecordStorage<FileStorageService>>.self
         ) { resolver in
             guard let recordRepo = resolver.resolve(MockFoodRecordRepository.self),
                   let imageLoader = resolver.resolve(UIImageLoader.self),
-                  let pendingRepo = resolver.resolve(PendingFoodRecordStorage.self) else {
+                  let pendingRepo = resolver.resolve(PendingFoodRecordStorage<FileStorageService>.self) else {
                 fatalError("SaveFoodRecordUseCase dependencies not registered")
             }
             return SaveFoodRecordUseCase(

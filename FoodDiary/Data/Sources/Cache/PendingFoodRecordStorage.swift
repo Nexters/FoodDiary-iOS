@@ -12,24 +12,24 @@ import UIKit
 /// 엄청 많이 쌓이면 어떡하죠?
 ///     -> Pending 기록은 서버 업로드 완료 후 AI 분석 대기 중인 기록이므로
 ///      분석이 완료되면 바로 삭제되니까 엄청 쌓이진 않을 거임
-public actor PendingFoodRecordStorage: PendingFoodRecordRepository {
+public actor PendingFoodRecordStorage<Storage: FileStorageServicing>: PendingFoodRecordRepository {
     private var records: [String: PendingFoodRecord] = [:]  // uploadId 기준
-    private let fileURL: URL
+    private let fileName: String
+    private let fileStorage: Storage
 
     private var saveTask: Task<Void, Never>?
     private var backgroundObserverTask: Task<Void, Never>?
     private let debounceInterval: Duration
 
     public init(
+        fileStorage: Storage,
         fileName: String = "pending_records.json",
         debounceInterval: Duration = .seconds(0.2)
     ) {
-        let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let fileURL = documentsDir.appendingPathComponent(fileName)
-
-        self.fileURL = fileURL
+        self.fileStorage = fileStorage
+        self.fileName = fileName
         self.debounceInterval = debounceInterval
-        self.records = Self.loadFromDisk(fileURL: fileURL)
+        self.records = Self.loadFromDisk(fileStorage: fileStorage, fileName: fileName)
 
         backgroundObserverTask = Task { [weak self] in
             for await _ in NotificationCenter.default.notifications(
@@ -51,11 +51,6 @@ public actor PendingFoodRecordStorage: PendingFoodRecordRepository {
         scheduleSave()
     }
 
-    public func delete(byUploadId uploadId: String) throws {
-        records.removeValue(forKey: uploadId)
-        scheduleSave()
-    }
-
     public func delete(byUploadIds uploadIds: [String]) throws {
         for uploadId in uploadIds {
             records.removeValue(forKey: uploadId)
@@ -70,22 +65,25 @@ public actor PendingFoodRecordStorage: PendingFoodRecordRepository {
         saveTask = Task(priority: .utility) {
             try? await Task.sleep(for: self.debounceInterval)
             guard !Task.isCancelled else { return }
-            saveToDisk(records: self.records, to: self.fileURL)
+            self.saveToDisk(records: self.records)
         }
     }
 
-    private func saveToDisk(records: [String: PendingFoodRecord], to fileURL: URL) {
+    private func saveToDisk(records: [String: PendingFoodRecord]) {
         guard let encoded = try? JSONEncoder().encode(records) else { return }
-        try? encoded.write(to: fileURL, options: .atomic)
+        _ = fileStorage.save(data: encoded, fileName: fileName)
     }
 
     private func flushToDisk() {
         saveTask?.cancel()
-        saveToDisk(records: records, to: fileURL)
+        saveToDisk(records: records)
     }
 
-    private static func loadFromDisk(fileURL: URL) -> [String: PendingFoodRecord] {
-        guard let data = try? Data(contentsOf: fileURL),
+    private static func loadFromDisk(
+        fileStorage: Storage,
+        fileName: String
+    ) -> [String: PendingFoodRecord] {
+        guard let data = fileStorage.load(fileName: fileName),
             let decoded = try? JSONDecoder().decode([String: PendingFoodRecord].self, from: data)
         else {
             return [:]
