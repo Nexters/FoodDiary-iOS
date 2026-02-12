@@ -150,22 +150,22 @@ private extension SceneDelegate {
         }
 
         container.register(
-            RestorePendingRecordsUseCase<PendingFoodRecordStorage<FileStorageService>>.self
+            LoadPendingRecordsUseCase<PendingFoodRecordStorage<FileStorageService>>.self
         ) { resolver in
             guard let repository = resolver.resolve(PendingFoodRecordStorage<FileStorageService>.self) else {
                 fatalError("PendingFoodRecordStorage not registered")
             }
-            return RestorePendingRecordsUseCase(repository: repository)
+            return LoadPendingRecordsUseCase(repository: repository)
         }
 
         container.register(
-            CheckPendingAnalysisUseCase<PendingFoodRecordStorage<FileStorageService>, MockAnalysisResultRepository>.self
+            SyncPendingAnalysisUseCase<PendingFoodRecordStorage<FileStorageService>, MockAnalysisResultRepository>.self
         ) { resolver in
             guard let pendingRepo = resolver.resolve(PendingFoodRecordStorage<FileStorageService>.self),
                   let analysisRepo = resolver.resolve(MockAnalysisResultRepository.self) else {
                 fatalError("Pending analysis dependencies not registered")
             }
-            return CheckPendingAnalysisUseCase(
+            return SyncPendingAnalysisUseCase(
                 pendingRepository: pendingRepo,
                 analysisRepository: analysisRepo
             )

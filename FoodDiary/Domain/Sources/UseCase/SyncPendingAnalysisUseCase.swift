@@ -1,12 +1,12 @@
 //
-//  CheckPendingAnalysisUseCase.swift
+//  SyncPendingAnalysisUseCase.swift
 //  Domain
 //
 
 import Foundation
 
 /// Pending 기록들의 분석 결과를 확인하고 완료된 것 처리
-public struct CheckPendingAnalysisUseCase<
+public struct SyncPendingAnalysisUseCase<
     PendingRepo: PendingFoodRecordRepository,
     AnalysisRepo: AnalysisResultRepository
 >: Sendable {

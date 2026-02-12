@@ -89,11 +89,11 @@ private extension AppFlowController {
             pendingRepository: pendingRepository
         )
 
-        let restorePendingRecordsUseCase = RestorePendingRecordsUseCase(
+        let loadPendingRecordsUseCase = LoadPendingRecordsUseCase(
             repository: pendingRepository
         )
 
-        let checkPendingAnalysisUseCase = CheckPendingAnalysisUseCase(
+        let syncPendingAnalysisUseCase = SyncPendingAnalysisUseCase(
             pendingRepository: pendingRepository,
             analysisRepository: analysisRepository
         )
@@ -104,8 +104,8 @@ private extension AppFlowController {
             requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase,
             loadWeeklyCalendarDataUseCase: loadWeeklyCalendarDataUseCase,
             saveFoodRecordUseCase: saveFoodRecordUseCase,
-            restorePendingRecordsUseCase: restorePendingRecordsUseCase,
-            checkPendingAnalysisUseCase: checkPendingAnalysisUseCase,
+            loadPendingRecordsUseCase: loadPendingRecordsUseCase,
+            syncPendingAnalysisUseCase: syncPendingAnalysisUseCase,
             pushNotificationObserver: pushNotificationObserver
         )
       

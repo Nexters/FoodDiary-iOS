@@ -50,8 +50,8 @@ public final class WeeklyCalendarViewModel<
     private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>
     private let loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase<RecordRepo, AssetRepo>
     private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, ImageProvider, PendingRepo>
-    private let restorePendingRecordsUseCase: RestorePendingRecordsUseCase<PendingRepo>
-    private let checkPendingAnalysisUseCase: CheckPendingAnalysisUseCase<PendingRepo, AnalysisRepo>
+    private let loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>
+    private let syncPendingAnalysisUseCase: SyncPendingAnalysisUseCase<PendingRepo, AnalysisRepo>
     private let pushNotificationObserver: PushNotificationObserving
 
     // MARK: - Init
@@ -60,15 +60,15 @@ public final class WeeklyCalendarViewModel<
         requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>,
         loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase<RecordRepo, AssetRepo>,
         saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, ImageProvider, PendingRepo>,
-        restorePendingRecordsUseCase: RestorePendingRecordsUseCase<PendingRepo>,
-        checkPendingAnalysisUseCase: CheckPendingAnalysisUseCase<PendingRepo, AnalysisRepo>,
+        loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>,
+        syncPendingAnalysisUseCase: SyncPendingAnalysisUseCase<PendingRepo, AnalysisRepo>,
         pushNotificationObserver: PushNotificationObserving
     ) {
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
         self.loadWeeklyCalendarDataUseCase = loadWeeklyCalendarDataUseCase
         self.saveFoodRecordUseCase = saveFoodRecordUseCase
-        self.restorePendingRecordsUseCase = restorePendingRecordsUseCase
-        self.checkPendingAnalysisUseCase = checkPendingAnalysisUseCase
+        self.loadPendingRecordsUseCase = loadPendingRecordsUseCase
+        self.syncPendingAnalysisUseCase = syncPendingAnalysisUseCase
         self.pushNotificationObserver = pushNotificationObserver
 
         self.calendar = Calendar.current
@@ -234,7 +234,7 @@ public final class WeeklyCalendarViewModel<
     @MainActor
     private func restorePendingRecords() async {
         do {
-            let pendingRecords = try await restorePendingRecordsUseCase.execute()
+            let pendingRecords = try await loadPendingRecordsUseCase.execute()
             for record in pendingRecords {
                 let dateKey = calendar.startOfDay(for: record.date)
                 state.pendingRecordsByDate[dateKey, default: []].append(record)
@@ -253,16 +253,8 @@ public final class WeeklyCalendarViewModel<
         guard !allPendingUploadIds.isEmpty else { return }
 
         do {
-            let result = try await checkPendingAnalysisUseCase.execute(for: allPendingUploadIds)
-
-            for (uploadId, _) in result.completedRecords {
-                removePendingRecord(uploadId: uploadId)
-            }
-
-            for (uploadId, reason) in result.failedUploadIds {
-                removePendingRecord(uploadId: uploadId)
-                eventSubject.send(.analysisFailed(uploadId: uploadId, reason: reason))
-            }
+            let result = try await syncPendingAnalysisUseCase.execute(for: allPendingUploadIds)
+            processSyncResult(result)
         } catch {
             // 폴링 실패는 무시 (다음에 다시 시도)
         }
@@ -271,16 +263,23 @@ public final class WeeklyCalendarViewModel<
     @MainActor
     private func handlePushNotification(uploadId: String) async {
         do {
-            let result = try await checkPendingAnalysisUseCase.execute(for: [uploadId])
-
-            if let completed = result.completedRecords.first {
-                removePendingRecord(uploadId: completed.uploadId)
-            } else if let failed = result.failedUploadIds.first {
-                removePendingRecord(uploadId: failed.uploadId)
-                eventSubject.send(.analysisFailed(uploadId: failed.uploadId, reason: failed.reason))
-            }
+            let result = try await syncPendingAnalysisUseCase.execute(for: [uploadId])
+            processSyncResult(result)
         } catch {
             // Push 처리 실패는 무시
+        }
+    }
+
+    @MainActor
+    private func processSyncResult(
+        _ result: SyncPendingAnalysisUseCase<PendingRepo, AnalysisRepo>.Result
+    ) {
+        for (uploadId, _) in result.completedRecords {
+            removePendingRecord(uploadId: uploadId)
+        }
+        for (uploadId, reason) in result.failedUploadIds {
+            removePendingRecord(uploadId: uploadId)
+            eventSubject.send(.analysisFailed(uploadId: uploadId, reason: reason))
         }
     }
 
