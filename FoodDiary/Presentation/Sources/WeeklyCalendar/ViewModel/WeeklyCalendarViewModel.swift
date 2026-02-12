@@ -104,7 +104,6 @@ public final class WeeklyCalendarViewModel<
         switch action {
         case .loadInitialData:
             await requestPhotoAuthorizationIfNeeded()
-            await restorePendingRecords()
             await loadWeekData(for: currentWeekBaseDate)
             await updateDateContent(for: state.selectedDate)
             await checkPendingAnalysisStatus()
@@ -167,10 +166,15 @@ public final class WeeklyCalendarViewModel<
     @MainActor
     private func updateDateContent(for date: Date) async {
         do {
-            let dateData = try await loadWeeklyCalendarDataUseCase.loadDateData(for: date)
+            async let dateDataTask = loadWeeklyCalendarDataUseCase.loadDateData(for: date)
+            async let pendingRecordsTask = loadPendingRecords(for: date)
+
+            let dateData = try await dateDataTask
+            let pendingRecords = try await pendingRecordsTask
+
             state.dateContent = DateContent(
                 records: dateData.records,
-                pendingRecords: pendingRecords(for: date),
+                pendingRecords: pendingRecords,
                 foodPhotoCount: countFoodPhotos(in: dateData.photos)
             )
         } catch {
@@ -184,13 +188,11 @@ public final class WeeklyCalendarViewModel<
         guard !assets.isEmpty else { return }
 
         do {
-            // 이미지 로드 → 서버 업로드 → PendingRecord 반환
+            // 이미지 로드 → 서버 업로드 → PendingRecord 저장 (Repository)
             let pendingRecord = try await saveFoodRecordUseCase.execute(
                 from: assets,
                 date: state.selectedDate
             )
-            let dateKey = calendar.startOfDay(for: pendingRecord.date)
-            state.pendingRecordsByDate[dateKey, default: []].insert(pendingRecord, at: 0)
             await updateDateContent(for: state.selectedDate)
             eventSubject.send(.uploadCompleted(pendingRecord))
         } catch {
@@ -231,36 +233,15 @@ public final class WeeklyCalendarViewModel<
 
     // MARK: - Pending Records
 
-    @MainActor
-    private func restorePendingRecords() async {
-        do {
-            let pendingRecords = try await loadPendingRecordsUseCase.execute()
-            for record in pendingRecords {
-                let dateKey = calendar.startOfDay(for: record.date)
-                state.pendingRecordsByDate[dateKey, default: []].append(record)
-            }
-        } catch {
-            // 복원 실패는 치명적이지 않음
-        }
-    }
-
-    @MainActor
     private func checkPendingAnalysisStatus() async {
-        let allPendingUploadIds = state.pendingRecordsByDate.values
-            .flatMap { $0 }
-            .map { $0.uploadId }
-
-        guard !allPendingUploadIds.isEmpty else { return }
-
         do {
-            let result = try await syncPendingAnalysisUseCase.execute(for: allPendingUploadIds)
+            let result = try await syncPendingAnalysisUseCase.execute()
             processSyncResult(result)
         } catch {
             // 폴링 실패는 무시 (다음에 다시 시도)
         }
     }
 
-    @MainActor
     private func handlePushNotification(uploadId: String) async {
         do {
             let result = try await syncPendingAnalysisUseCase.execute(for: [uploadId])
@@ -270,36 +251,26 @@ public final class WeeklyCalendarViewModel<
         }
     }
 
-    @MainActor
     private func processSyncResult(
         _ result: SyncPendingAnalysisUseCase<PendingRepo, AnalysisRepo>.Result
     ) {
-        for (uploadId, _) in result.completedRecords {
-            removePendingRecord(uploadId: uploadId)
-        }
+        let hasChanges = !result.completedRecords.isEmpty || !result.failedUploadIds.isEmpty
+
         for (uploadId, reason) in result.failedUploadIds {
-            removePendingRecord(uploadId: uploadId)
             eventSubject.send(.analysisFailed(uploadId: uploadId, reason: reason))
         }
-    }
 
-    @MainActor
-    private func removePendingRecord(uploadId: String) {
-        for (date, records) in state.pendingRecordsByDate {
-            state.pendingRecordsByDate[date] = records.filter { $0.uploadId != uploadId }
+        if hasChanges {
+            Task {
+                await updateDateContent(for: state.selectedDate)
+            }
         }
-        updatePendingRecordsInDateContent()
     }
 
-    @MainActor
-    private func updatePendingRecordsInDateContent() {
-        guard let currentContent = state.dateContent else { return }
-        let updatedPendingRecords = pendingRecords(for: state.selectedDate)
-        state.dateContent = DateContent(
-            records: currentContent.records,
-            pendingRecords: updatedPendingRecords,
-            foodPhotoCount: currentContent.foodPhotoCount
-        )
+    private func loadPendingRecords(for date: Date) async throws -> [PendingFoodRecord] {
+        let allRecords = try await loadPendingRecordsUseCase.execute()
+        let dateKey = calendar.startOfDay(for: date)
+        return allRecords.filter { calendar.startOfDay(for: $0.date) == dateKey }
     }
 }
 
@@ -311,7 +282,6 @@ extension WeeklyCalendarViewModel {
         public internal(set) var weekDays: [WeeklyCalendarDay] = []
         public internal(set) var selectedDate: Date = Date()
         public internal(set) var monthText: String = ""
-        public internal(set) var pendingRecordsByDate: [Date: [PendingFoodRecord]] = [:]
         public internal(set) var isLoading: Bool = false
         public internal(set) var dateContent: DateContent?
     }
@@ -364,12 +334,6 @@ extension WeeklyCalendarViewModel {
     }
 
     // MARK: - Private Helpers
-
-    /// 특정 날짜의 대기 중인 기록
-    private func pendingRecords(for date: Date) -> [PendingFoodRecord] {
-        let dateKey = Calendar.current.startOfDay(for: date)
-        return state.pendingRecordsByDate[dateKey] ?? []
-    }
 
     /// 특정 사진 배열의 음식 사진 개수
     private func countFoodPhotos(in photos: [FoodImageAsset<AssetRepo.Asset>]) -> Int {

@@ -11,6 +11,7 @@ import DesignSystem
 import Presentation
 import Domain
 import DI
+import Photos
 
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?

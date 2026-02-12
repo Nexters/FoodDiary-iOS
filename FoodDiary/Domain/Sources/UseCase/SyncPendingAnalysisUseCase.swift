@@ -37,6 +37,14 @@ public struct SyncPendingAnalysisUseCase<
         }
     }
 
+    /// Repository에서 모든 pending records를 조회하여 동기화
+    public func execute() async throws -> Result {
+        let allPendingRecords = try await pendingRepository.fetchAll()
+        let uploadIds = allPendingRecords.map { $0.uploadId }
+        return try await execute(for: uploadIds)
+    }
+
+    /// 특정 uploadIds에 대해서만 동기화 (Push 알림 등)
     public func execute(for uploadIds: [String]) async throws -> Result {
         guard !uploadIds.isEmpty else {
             return Result(completedRecords: [], failedUploadIds: [], stillPendingUploadIds: [])
