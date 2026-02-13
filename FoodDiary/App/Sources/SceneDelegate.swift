@@ -285,15 +285,15 @@ private extension SceneDelegate {
 
     #if DEBUG
     func saveDebugImageToPhotoLibrary() {
-        PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
-            guard status == .authorized || status == .limited else { return }
+        // PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+        //     guard status == .authorized || status == .limited else { return }
     
-            PHPhotoLibrary.shared().performChanges {
-                guard let path = Bundle.main.path(forResource: "food", ofType: "jpg"),
-                      let image = UIImage(contentsOfFile: path) else { return }
-                PHAssetChangeRequest.creationRequestForAsset(from: image)
-            }
-        }
+        //     PHPhotoLibrary.shared().performChanges {
+        //         guard let path = Bundle.main.path(forResource: "food", ofType: "jpg"),
+        //               let image = UIImage(contentsOfFile: path) else { return }
+        //         PHAssetChangeRequest.creationRequestForAsset(from: image)
+        //     }
+        // }
     }
     #endif
 }
