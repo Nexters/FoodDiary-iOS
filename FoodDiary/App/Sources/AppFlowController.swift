@@ -125,30 +125,40 @@ private extension AppFlowController {
         return tabBarVC
     }
     
+    func handleLoginResult(_ loginResult: LoginResult) {
+        if loginResult.isFirst {
+            transition(to: createOnboardingView())
+        } else {
+            transition(to: createMainView())
+        }
+    }
+
     func createOnboardingView() -> UIViewController {
         let onboardingVC = OnboardingViewController()
 
         onboardingVC.didCompletePublisher
             .receive(on: DispatchQueue.main)
-            .sink { _ in
-                print("DD")
+            .sink { [weak self] _ in
+                guard let self else { return }
+                transition(to: createMainView())
             }
             .store(in: &cancellables)
 
-        return onboardingVC
+        return UINavigationController(rootViewController: onboardingVC)
     }
 
     func createLoginView() -> UIViewController {
         guard let viewModel = try? container.resolve(LoginViewModel.self) else {
             fatalError("LoginViewModel Failed Resolve")
         }
-        
+
         let loginVC = LoginViewController(viewModel: viewModel)
-        
+
         loginVC.didLoginPublisher
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in
-                self?.routeToAppropriateScreen(isLogin: true)
+            .sink { [weak self] loginResult in
+                guard let self else { return }
+                handleLoginResult(loginResult)
             }
             .store(in: &cancellables)
 
@@ -156,19 +166,29 @@ private extension AppFlowController {
     }
     
     func transition(to viewController: UIViewController) {
-        if let currentChild {
-            currentChild.willMove(toParent: nil)
-            currentChild.view.removeFromSuperview()
-            currentChild.removeFromParent()
-        }
+        let previousChild = currentChild
 
         addChild(viewController)
         view.addSubview(viewController.view)
         viewController.view.frame = view.bounds
         viewController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        viewController.didMove(toParent: self)
+        viewController.view.alpha = 0
 
-        currentChild = viewController
+        UIView.animate(
+            withDuration: 0.3,
+            animations: {
+                previousChild?.view.alpha = 0
+                viewController.view.alpha = 1
+            },
+            completion: { _ in
+                previousChild?.willMove(toParent: nil)
+                previousChild?.view.removeFromSuperview()
+                previousChild?.removeFromParent()
+
+                viewController.didMove(toParent: self)
+                self.currentChild = viewController
+            }
+        )
     }
 }
 
