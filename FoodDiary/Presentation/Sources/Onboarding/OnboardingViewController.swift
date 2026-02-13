@@ -20,12 +20,6 @@ public final class OnboardingViewController: UIViewController {
     @Published private var currentPage: Int = 0
 
     private var cancellables = Set<AnyCancellable>()
-    
-    private let topContainerView: UIView = {
-        let view = UIView()
-        view.backgroundColor = .clear
-        return view
-    }()
 
     private let pages: [(image: UIImage?, text: String)] = [
         (DesignSystemAsset.onboard1.image, "여기저기 흩어진 음식 기록을,\n간편히 정리해 드릴게요"),
@@ -48,14 +42,6 @@ public final class OnboardingViewController: UIViewController {
         collectionView.dataSource = self
         collectionView.delegate = self
         return collectionView
-    }()
-
-    private let skipButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
-        button.setTitle("건너뛰기", for: .normal)
-        button.setTitleColor(DesignSystemAsset.gray050.color, for: .normal)
-        return button
     }()
 
     private let pageControl: UIPageControl = {
@@ -87,6 +73,7 @@ public final class OnboardingViewController: UIViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
         configureUI()
+        configureNavigationBar()
         setupActions()
         setupGestures()
         setupBindings()
@@ -103,25 +90,12 @@ private extension OnboardingViewController {
     func configureUI() {
         view.backgroundColor = DesignSystemAsset.sdBase.color
 
-        view.addSubview(topContainerView)
-        topContainerView.addSubview(skipButton)
         view.addSubview(collectionView)
         view.addSubview(pageControl)
         view.addSubview(nextButton)
 
-        topContainerView.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview()
-            $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
-            $0.height.equalTo(60)
-        }
-        
-        skipButton.snp.makeConstraints {
-            $0.centerY.equalToSuperview()
-            $0.trailing.equalToSuperview().inset(20)
-        }
-
         collectionView.snp.makeConstraints {
-            $0.top.equalTo(topContainerView.snp.bottom)
+            $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
             $0.leading.trailing.equalToSuperview()
             $0.bottom.equalTo(pageControl.snp.top).offset(-10)
         }
@@ -138,8 +112,18 @@ private extension OnboardingViewController {
         }
     }
 
+    func configureNavigationBar() {
+        let skipButton = UIBarButtonItem(
+            title: "건너뛰기",
+            style: .plain,
+            target: self,
+            action: #selector(skipButtonTapped)
+        )
+        
+        navigationItem.rightBarButtonItem = skipButton
+    }
+
     func setupActions() {
-        skipButton.addTarget(self, action: #selector(skipButtonTapped), for: .touchUpInside)
         nextButton.addTarget(self, action: #selector(nextButtonTapped), for: .touchUpInside)
     }
 
