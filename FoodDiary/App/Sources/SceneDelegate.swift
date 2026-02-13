@@ -35,6 +35,10 @@ private extension SceneDelegate {
     }
     
     func registerData() {
+        container.register(NetworkMonitoring.self) { _ in
+            NetworkMonitor()
+        }
+
         container.register(KeychainService.self) { _ in
             KeychainService()
         }
