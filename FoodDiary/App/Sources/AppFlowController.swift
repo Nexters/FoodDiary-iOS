@@ -125,6 +125,19 @@ private extension AppFlowController {
         return tabBarVC
     }
     
+    func createOnboardingView() -> UIViewController {
+        let onboardingVC = OnboardingViewController()
+
+        onboardingVC.didCompletePublisher
+            .receive(on: DispatchQueue.main)
+            .sink { _ in
+                print("DD")
+            }
+            .store(in: &cancellables)
+
+        return onboardingVC
+    }
+
     func createLoginView() -> UIViewController {
         guard let viewModel = try? container.resolve(LoginViewModel.self) else {
             fatalError("LoginViewModel Failed Resolve")
