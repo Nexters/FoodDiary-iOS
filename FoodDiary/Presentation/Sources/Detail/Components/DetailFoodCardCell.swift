@@ -3,7 +3,6 @@
 //  Presentation
 //
 
-import Combine
 import Domain
 import SnapKit
 import UIKit
@@ -13,21 +12,9 @@ final class DetailFoodCardCell: UICollectionViewCell {
 
     static let reuseIdentifier = "DetailFoodCardCell"
 
-    // MARK: - Publishers
-
-    var copyTapPublisher: AnyPublisher<Void, Never> {
-        cardView?.copyTapPublisher.map { _ in () }.eraseToAnyPublisher()
-            ?? Empty().eraseToAnyPublisher()
-    }
-
-    var shareTapPublisher: AnyPublisher<Void, Never> {
-        cardView?.shareTapPublisher.map { _ in () }.eraseToAnyPublisher()
-            ?? Empty().eraseToAnyPublisher()
-    }
-
     // MARK: - UI Components
 
-    private var cardView: DetailFoodCardView?
+    private var cardView: FoodRecordCardView?
 
     // MARK: - Init
 
@@ -46,7 +33,7 @@ final class DetailFoodCardCell: UICollectionViewCell {
     func configure(with record: FoodRecord, imageURL: URL) {
         cardView?.removeFromSuperview()
 
-        let newCardView = DetailFoodCardView(record: record, imageURL: imageURL)
+        let newCardView = FoodRecordCardView(record: record, imageURL: imageURL)
         contentView.addSubview(newCardView)
         newCardView.snp.makeConstraints {
             $0.edges.equalToSuperview()

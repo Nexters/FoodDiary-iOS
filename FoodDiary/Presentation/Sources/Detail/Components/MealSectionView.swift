@@ -345,18 +345,6 @@ extension MealSectionView: UICollectionViewDataSource {
         let cardItem = cardItems[indexPath.item]
         cell.configure(with: cardItem.record, imageURL: cardItem.imageURL)
 
-        cell.copyTapPublisher
-            .sink { [weak self] in
-                self?.copyTapSubject.send(cardItem.record)
-            }
-            .store(in: &cancellables)
-
-        cell.shareTapPublisher
-            .sink { [weak self] in
-                self?.shareTapSubject.send(cardItem.record)
-            }
-            .store(in: &cancellables)
-
         return cell
     }
 }

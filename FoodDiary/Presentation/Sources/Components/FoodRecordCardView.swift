@@ -28,6 +28,7 @@ public final class FoodRecordCardView: UIView {
     // MARK: - State
 
     public let record: FoodRecord
+    private let explicitImageURL: URL?
 
     // MARK: - UI Components
 
@@ -61,8 +62,9 @@ public final class FoodRecordCardView: UIView {
 
     // MARK: - Init
 
-    public init(record: FoodRecord) {
+    public init(record: FoodRecord, imageURL: URL? = nil) {
         self.record = record
+        self.explicitImageURL = imageURL
         self.timeBadge = PillBadgeView(text: record.formattedShortTime)
         self.locationBadge = record.district.map { PillBadgeView(text: $0) }
         super.init(frame: .zero)
@@ -107,7 +109,7 @@ public final class FoodRecordCardView: UIView {
     // MARK: - Configuration
 
     private func configure() {
-        setImageURL(record.imageURLs.first)
+        setImageURL(explicitImageURL ?? record.imageURLs.first)
     }
 
     public func setImage(_ image: UIImage?) {

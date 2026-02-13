@@ -19,9 +19,9 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         registerDependencies()
-        // #if DEBUG
-        // saveDebugImageToPhotoLibrary()
-        // #endif
+        #if DEBUG
+        saveDebugImageToPhotoLibrary()
+        #endif
         guard let windowScene = scene as? UIWindowScene else { return }
         window = UIWindow(windowScene: windowScene)
         window?.rootViewController = AppFlowController(container: container)
@@ -202,6 +202,15 @@ private extension SceneDelegate {
         }
 
         container.register(
+            FetchFoodRecordsUseCase<MockFoodRecordRepository>.self
+        ) { resolver in
+            guard let repository = resolver.resolve(MockFoodRecordRepository.self) else {
+                fatalError("MockFoodRecordRepository not registered")
+            }
+            return FetchFoodRecordsUseCase(repository: repository)
+        }
+
+        container.register(
             LoadWeeklyRecordUseCase<MockFoodRecordRepository, FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
         ) { resolver in
             guard let recordRepo = resolver.resolve(MockFoodRecordRepository.self),
@@ -255,7 +264,10 @@ private extension SceneDelegate {
                   let syncPendingUseCase = resolver.resolve(
                       SyncPendingAnalysisUseCase<PendingFoodRecordStorage<FileStorageService>, MockAnalysisResultRepository>.self
                   ),
-                  let pushObserver = resolver.resolve(PushNotificationObserver.self) else {
+                  let pushObserver = resolver.resolve(PushNotificationObserver.self),
+                  let fetchFoodRecordsUseCase = resolver.resolve(
+                      FetchFoodRecordsUseCase<MockFoodRecordRepository>.self
+                  ) else {
                 fatalError("WeeklyCalendarViewModel dependencies not registered")
             }
 
@@ -265,22 +277,23 @@ private extension SceneDelegate {
                 saveFoodRecordUseCase: saveFoodRecordUseCase,
                 loadPendingRecordsUseCase: loadPendingUseCase,
                 syncPendingAnalysisUseCase: syncPendingUseCase,
-                pushNotificationObserver: pushObserver
+                pushNotificationObserver: pushObserver,
+                fetchFoodRecordsUseCase: fetchFoodRecordsUseCase
             )
         }
     }
 
-    // #if DEBUG
-    // func saveDebugImageToPhotoLibrary() {
-    //     PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
-    //         guard status == .authorized || status == .limited else { return }
-    //
-    //         PHPhotoLibrary.shared().performChanges {
-    //             guard let path = Bundle.main.path(forResource: "food", ofType: "jpg"),
-    //                   let image = UIImage(contentsOfFile: path) else { return }
-    //             PHAssetChangeRequest.creationRequestForAsset(from: image)
-    //         }
-    //     }
-    // }
-    // #endif
+    #if DEBUG
+    func saveDebugImageToPhotoLibrary() {
+        PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+            guard status == .authorized || status == .limited else { return }
+    
+            PHPhotoLibrary.shared().performChanges {
+                guard let path = Bundle.main.path(forResource: "food", ofType: "jpg"),
+                      let image = UIImage(contentsOfFile: path) else { return }
+                PHAssetChangeRequest.creationRequestForAsset(from: image)
+            }
+        }
+    }
+    #endif
 }

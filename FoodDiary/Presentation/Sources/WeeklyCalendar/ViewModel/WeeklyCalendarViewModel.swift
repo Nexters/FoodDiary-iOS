@@ -54,6 +54,7 @@ public final class WeeklyCalendarViewModel<
     private let loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>
     private let syncPendingAnalysisUseCase: SyncPendingAnalysisUseCase<PendingRepo, AnalysisRepo>
     private let pushNotificationObserver: PushObserver
+    private let fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
 
     // MARK: - Init
 
@@ -63,7 +64,7 @@ public final class WeeklyCalendarViewModel<
         saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, ImageProvider, PendingRepo>,
         loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>,
         syncPendingAnalysisUseCase: SyncPendingAnalysisUseCase<PendingRepo, AnalysisRepo>,
-        pushNotificationObserver: PushObserver
+        pushNotificationObserver: PushObserver,
         fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
     ) {
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
