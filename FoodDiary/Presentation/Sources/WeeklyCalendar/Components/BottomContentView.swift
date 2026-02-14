@@ -18,7 +18,6 @@ final class BottomContentView: UIView {
         static let containerBorderWidth: CGFloat = 1
         static let containerHorizontalInset: CGFloat = 16
         static let containerBackgroundAlpha: CGFloat = 0.05
-        static let containerBorderAlpha: CGFloat = 0.1
         static let cardHorizontalInset: CGFloat = 40
         static let pendingCardHorizontalInset: CGFloat = 60
         static let cardAspectRatio: CGFloat = 1.15
@@ -42,10 +41,10 @@ final class BottomContentView: UIView {
 
     private let containerView: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor.white.withAlphaComponent(Constants.containerBackgroundAlpha)
+        view.backgroundColor = .sd800
         view.layer.cornerRadius = Constants.containerCornerRadius
         view.layer.borderWidth = Constants.containerBorderWidth
-        view.layer.borderColor = UIColor.white.withAlphaComponent(Constants.containerBorderAlpha).cgColor
+        view.layer.borderColor = UIColor.sd800.cgColor
         return view
     }()
 
@@ -135,6 +134,7 @@ final class BottomContentView: UIView {
         emptyStateView = nil
         cardStackStateView.isHidden = true
         pendingStateView.isHidden = false
+        showContainerStyle(true)
 
         // 기존 pending 카드 제거
         pendingCardView?.removeFromSuperview()
@@ -152,7 +152,7 @@ final class BottomContentView: UIView {
     }
 
     private func showContainerStyle(_ show: Bool) {
-        containerView.backgroundColor = show ? UIColor.white.withAlphaComponent(Constants.containerBackgroundAlpha) : .clear
+        containerView.backgroundColor = show ? .sd800 : .clear
         containerView.layer.borderWidth = show ? Constants.containerBorderWidth : 0
     }
 
@@ -188,6 +188,7 @@ final class BottomContentView: UIView {
         cardStackStateView.isHidden = false
         pendingStateView.isHidden = true
         pendingCardView?.removeFromSuperview()
+        showContainerStyle(true)
 
         // 기존 카드스택뷰 제거
         cardStackView?.removeFromSuperview()

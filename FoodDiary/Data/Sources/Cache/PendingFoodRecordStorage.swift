@@ -90,4 +90,9 @@ public actor PendingFoodRecordStorage<Storage: FileStorageServicing>: PendingFoo
         }
         return decoded
     }
+
+    deinit {
+        saveTask?.cancel()
+        backgroundObserverTask?.cancel()
+    }
 }
