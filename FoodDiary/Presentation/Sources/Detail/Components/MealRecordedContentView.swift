@@ -3,7 +3,6 @@
 //  Presentation
 //
 
-import Combine
 import DesignSystem
 import Domain
 import SnapKit
@@ -32,18 +31,10 @@ final class MealRecordedContentView: UIView {
         let imageURL: URL
     }
 
-    // MARK: - Publishers
+    // MARK: - Handlers
 
-    var copyTapPublisher: AnyPublisher<FoodRecord, Never> {
-        copyTapSubject.eraseToAnyPublisher()
-    }
-
-    var shareTapPublisher: AnyPublisher<FoodRecord, Never> {
-        shareTapSubject.eraseToAnyPublisher()
-    }
-
-    private let copyTapSubject = PassthroughSubject<FoodRecord, Never>()
-    private let shareTapSubject = PassthroughSubject<FoodRecord, Never>()
+    private let onCopyTapped: ((FoodRecord) -> Void)?
+    private let onShareTapped: ((FoodRecord) -> Void)?
 
     // MARK: - State
 
@@ -101,7 +92,13 @@ final class MealRecordedContentView: UIView {
 
     // MARK: - Init
 
-    init(records: [FoodRecord]) {
+    init(
+        records: [FoodRecord],
+        onCopyTapped: ((FoodRecord) -> Void)? = nil,
+        onShareTapped: ((FoodRecord) -> Void)? = nil
+    ) {
+        self.onCopyTapped = onCopyTapped
+        self.onShareTapped = onShareTapped
         super.init(frame: .zero)
 
         cardItems = records.flatMap { record in
@@ -250,12 +247,12 @@ final class MealRecordedContentView: UIView {
 
     @objc private func copyTapped() {
         guard let record = currentRecord else { return }
-        copyTapSubject.send(record)
+        onCopyTapped?(record)
     }
 
     @objc private func shareTapped() {
         guard let record = currentRecord else { return }
-        shareTapSubject.send(record)
+        onShareTapped?(record)
     }
 }
 

@@ -190,21 +190,22 @@ final class MealSectionView: UIView {
     private func showRecordedState(records: [FoodRecord]) {
         editButton.isHidden = false
 
-        let recordedView = MealRecordedContentView(records: records)
+        let recordedView = MealRecordedContentView(
+            records: records,
+            onCopyTapped: { [weak self] record in
+                self?.copyTapSubject.send(record)
+            },
+            onShareTapped: { [weak self] record in
+                self?.shareTapSubject.send(record)
+            }
+        )
+        
         contentContainerView.addSubview(recordedView)
         recordedView.snp.makeConstraints {
             $0.top.equalToSuperview()
             $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
             $0.bottom.equalToSuperview()
         }
-
-        recordedView.copyTapPublisher
-            .sink { [weak self] record in self?.copyTapSubject.send(record) }
-            .store(in: &cancellables)
-
-        recordedView.shareTapPublisher
-            .sink { [weak self] record in self?.shareTapSubject.send(record) }
-            .store(in: &cancellables)
     }
 
     // MARK: - Actions
