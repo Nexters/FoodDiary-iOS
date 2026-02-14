@@ -80,10 +80,7 @@ private extension AppFlowController {
             fatalError("FetchMonthlyCalendarDaysUseCase not registered")
         }
 
-        let monthlyViewModel = MonthlyCalendarViewModel(
-            fetchMonthlyCalendarDaysUseCase: fetchMonthlyCalendarDaysUseCase,
-            requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase
-        )
+        let weeklyCalendarVC = WeeklyCalendarViewController(viewModel: viewModel, imageProvider: imageProvider)
 
         let monthlyCalendarVC = MonthlyCalendarViewController(viewModel: monthlyViewModel)
         let weeklyCalendarVC = WeeklyCalendarViewController(viewModel: viewModel, imageProvider: imageProvider)
