@@ -161,17 +161,18 @@ final class BottomContentView: UIView {
 
     // MARK: - Configuration
 
-    func configure(
-        records: [FoodRecord],
-        pendingRecords: [PendingFoodRecord],
-        photoCount: Int
-    ) {
-        if let firstPending = pendingRecords.first {
-            showPendingState(record: firstPending)
-        } else if let firstRecord = records.first {
-            showCardStackState(record: firstRecord, totalCount: records.count)
-        } else {
+    func configure(state: State) {
+        switch state {
+        case .empty(let photoCount):
             showEmptyState(photoCount: photoCount)
+        case .pending(let records):
+            if let first = records.first {
+                showPendingState(record: first)
+            }
+        case .recorded(let records):
+            if let first = records.first {
+                showCardStackState(record: first, totalCount: records.count)
+            }
         }
     }
 
@@ -243,5 +244,15 @@ final class BottomContentView: UIView {
 
     @objc private func addButtonTapped() {
         addButtonTapSubject.send()
+    }
+}
+
+// MARK: - State
+
+extension BottomContentView {
+    enum State: Equatable {
+        case empty(photoCount: Int)
+        case pending([PendingFoodRecord])
+        case recorded([FoodRecord])
     }
 }

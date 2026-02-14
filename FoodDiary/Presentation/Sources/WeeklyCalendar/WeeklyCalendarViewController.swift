@@ -204,11 +204,16 @@ public final class WeeklyCalendarViewController<
             .removeDuplicates()
             .receive(on: DispatchQueue.main)
             .sink { [weak self] content in
-                self?.bottomContentView.configure(
-                    records: content.records,
-                    pendingRecords: content.pendingRecords,
-                    photoCount: content.foodPhotoCount
-                )
+                guard let self else { return }
+                let state: BottomContentView.State = if !content.records.isEmpty {
+                    .recorded(content.records)
+                } else if !content.pendingRecords.isEmpty {
+                    .pending(content.pendingRecords)
+                } else {
+                    .empty(photoCount: content.foodPhotoCount)
+                }
+
+                bottomContentView.configure(state: state)
             }
             .store(in: &cancellables)
 
