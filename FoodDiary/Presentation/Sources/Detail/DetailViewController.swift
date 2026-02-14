@@ -276,9 +276,17 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
     // MARK: - Private Methods
 
     private func updateMealSections(_ recordsByMealType: [MealType: [FoodRecord]]) {
-        breakfastSection.configure(records: recordsByMealType[.breakfast] ?? [])
-        lunchSection.configure(records: recordsByMealType[.lunch] ?? [])
-        dinnerSection.configure(records: recordsByMealType[.dinner] ?? [])
+        let sections: [(MealType, MealSectionView)] = [
+            (.breakfast, breakfastSection),
+            (.lunch, lunchSection),
+            (.dinner, dinnerSection),
+        ]
+
+        for (mealType, section) in sections {
+            let records = recordsByMealType[mealType] ?? []
+            let state: MealSectionView.State = records.isEmpty ? .empty : .recorded(records)
+            section.configure(state: state)
+        }
     }
 
     private func formatRecordForCopy(_ record: FoodRecord) -> String {
