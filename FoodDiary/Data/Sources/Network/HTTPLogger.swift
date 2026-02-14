@@ -15,39 +15,32 @@ public struct HTTPLogger {
 
     func logRequest(_ request: URLRequest) {
         #if DEBUG
-        let method = request.httpMethod ?? "UNKNOWN"
-        let url = request.url?.absoluteString ?? "nil"
-        logger.info("[Request] [\(method)] \(url)")
+            let method = request.httpMethod ?? "UNKNOWN"
+            let url = request.url?.absoluteString ?? "nil"
+            logger.info("[Request] [\(method)] \(url)")
         #endif
     }
 
     func logResponse(_ response: URLResponse, statusCode: Int) {
         #if DEBUG
-        let url = response.url?.absoluteString ?? "nil"
-        if (200..<300).contains(statusCode) {
-            logger.info("[Response] [\(statusCode)] \(url)")
-        } else {
-            logger.error("[Response] [\(statusCode)] \(url)")
-        }
+            let url = response.url?.absoluteString ?? "nil"
+            if (200..<300).contains(statusCode) {
+                logger.info("[Response] [\(statusCode)] \(url)")
+            } else {
+                logger.error("[Response] [\(statusCode)] \(url)")
+            }
         #endif
     }
 
     func logDecodedModel<T>(_ model: T) {
         #if DEBUG
-        logger.info("[Decoded] \(String(describing: type(of: model))): \(model)")
-        #endif
-    }
-
-    func logErrorResponse(_ data: Data, statusCode: Int) {
-        #if DEBUG
-        let body = String(data: data, encoding: .utf8) ?? "Unable to decode response body"
-        logger.error("[Error Response] [\(statusCode)] \(body)")
+            logger.info("[Decoded] \(String(describing: type(of: model))): \(model)")
         #endif
     }
 
     func logError(_ error: Error, context: String) {
         #if DEBUG
-        logger.error("[Error] \(context): \(error.localizedDescription)")
+            logger.error("[Error] \(context): \(error.localizedDescription)")
         #endif
     }
 }

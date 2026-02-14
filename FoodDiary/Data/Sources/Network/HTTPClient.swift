@@ -38,10 +38,6 @@ public struct HTTPClient: HTTPClienting {
 
             logger.logResponse(response, statusCode: httpResponse.statusCode)
 
-            if !(200..<300).contains(httpResponse.statusCode) {
-                logger.logErrorResponse(data, statusCode: httpResponse.statusCode)
-            }
-
             try checkResponse(data, httpResponse)
 
             do {

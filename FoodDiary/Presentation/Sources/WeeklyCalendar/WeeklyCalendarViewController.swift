@@ -210,7 +210,7 @@ public final class WeeklyCalendarViewController<
                 } else if !content.pendingRecords.isEmpty {
                     .pending(content.pendingRecords)
                 } else {
-                    .empty(photoCount: content.foodPhotoCount)
+                    .empty
                 }
 
                 bottomContentView.configure(state: state)

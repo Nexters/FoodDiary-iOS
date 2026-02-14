@@ -17,7 +17,6 @@ final class EmptyFoodRecordView: UIView {
         static let cornerRadius: CGFloat = 16
         static let addImageSize: CGFloat = 140
         static let placeholderTopSpacing: CGFloat = 25
-        static let photoCountTopSpacing: CGFloat = 4
     }
 
     // MARK: - Publishers
@@ -47,29 +46,15 @@ final class EmptyFoodRecordView: UIView {
         return label
     }()
 
-    private let photoCountLabel: UILabel = {
-        let label = UILabel()
-        label.textAlignment = .center
-        return label
-    }()
 
     // MARK: - Init
-
-    init(photoCount: Int) {
-        super.init(frame: .zero)
-        setupUI()
-        setupConstraints()
-        setupActions()
-        configure(photoCount: photoCount)
-    }
 
     init(text: String) {
         super.init(frame: .zero)
         setupUI()
         setupConstraints()
         setupActions()
-        placeholderLabel.setText(text, style: .p14, color: .white)
-        photoCountLabel.isHidden = true
+        placeholderLabel.setText(text, style: .p14, color: .gray050)
     }
 
     @available(*, unavailable)
@@ -89,7 +74,6 @@ final class EmptyFoodRecordView: UIView {
 
         contentView.addSubview(addImageView)
         contentView.addSubview(placeholderLabel)
-        contentView.addSubview(photoCountLabel)
     }
 
     private func setupConstraints() {
@@ -111,29 +95,11 @@ final class EmptyFoodRecordView: UIView {
             $0.centerX.equalToSuperview()
             $0.top.equalTo(addImageView.snp.bottom).offset(Constants.placeholderTopSpacing)
         }
-
-        photoCountLabel.snp.makeConstraints {
-            $0.centerX.equalToSuperview()
-            $0.top.equalTo(placeholderLabel.snp.bottom).offset(Constants.photoCountTopSpacing)
-        }
     }
 
     private func setupActions() {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(viewTapped))
         addGestureRecognizer(tapGesture)
-    }
-
-    // MARK: - Configuration
-
-    func configure(photoCount: Int) {
-        if photoCount > 0 {
-            placeholderLabel.setText("음식 사진을 추가해보세요.", style: .p14, color: .gray050)
-            photoCountLabel.setText("올리지 않은 음식 사진 \(photoCount)장", style: .p12, color: .gray050)
-            photoCountLabel.isHidden = false
-        } else {
-            placeholderLabel.setText("오늘의 음식 사진을 추가해보세요.", style: .p14, color: .gray050)
-            photoCountLabel.isHidden = true
-        }
     }
 
     // MARK: - Actions

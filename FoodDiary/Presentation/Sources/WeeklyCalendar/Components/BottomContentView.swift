@@ -116,8 +116,8 @@ final class BottomContentView: UIView {
 
     func configure(state: State) {
         switch state {
-        case .empty(let photoCount):
-            showEmptyState(photoCount: photoCount)
+        case .empty:
+            showEmptyState()
         case .pending(let records):
             if let first = records.first {
                 showPendingState(record: first)
@@ -156,7 +156,7 @@ final class BottomContentView: UIView {
         containerView.layer.borderWidth = show ? Constants.containerBorderWidth : 0
     }
 
-    private func showEmptyState(photoCount: Int) {
+    private func showEmptyState() {
         cardStackStateView.isHidden = true
         pendingStateView.isHidden = true
         showContainerStyle(false)
@@ -166,7 +166,7 @@ final class BottomContentView: UIView {
         cancellables.removeAll()
 
         // 새로 생성
-        let newEmptyView = EmptyFoodRecordView(photoCount: photoCount)
+        let newEmptyView = EmptyFoodRecordView(text: "오늘의 음식 사진을 추가해보세요.")
         containerView.addSubview(newEmptyView)
         emptyStateView = newEmptyView
 
@@ -219,7 +219,7 @@ final class BottomContentView: UIView {
 
 extension BottomContentView {
     enum State: Equatable {
-        case empty(photoCount: Int)
+        case empty
         case pending([PendingFoodRecord])
         case recorded([FoodRecord])
     }

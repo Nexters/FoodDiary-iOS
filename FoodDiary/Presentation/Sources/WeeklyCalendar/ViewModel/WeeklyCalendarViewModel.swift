@@ -178,8 +178,7 @@ public final class WeeklyCalendarViewModel<
 
             state.dateContent = DateContent(
                 records: dateData.records,
-                pendingRecords: pendingRecords,
-                foodPhotoCount: countFoodPhotos(in: dateData.photos)
+                pendingRecords: pendingRecords
             )
         } catch {
             eventSubject.send(.loadFailed(error))
@@ -346,7 +345,6 @@ extension WeeklyCalendarViewModel {
     public struct DateContent: Equatable {
         public let records: [FoodRecord]
         public let pendingRecords: [PendingFoodRecord]
-        public let foodPhotoCount: Int
     }
 }
 
@@ -376,9 +374,4 @@ extension WeeklyCalendarViewModel {
     }
 
     // MARK: - Private Helpers
-
-    /// 특정 사진 배열의 음식 사진 개수
-    private func countFoodPhotos(in photos: [FoodImageAsset<AssetRepo.Asset>]) -> Int {
-        photos.filter { $0.foodProbability >= State.foodProbabilityThreshold }.count
-    }
 }
