@@ -82,9 +82,6 @@ private extension AppFlowController {
 
         let weeklyCalendarVC = WeeklyCalendarViewController(viewModel: viewModel, imageProvider: imageProvider)
 
-        let monthlyCalendarVC = MonthlyCalendarViewController(viewModel: monthlyViewModel)
-        let weeklyCalendarVC = WeeklyCalendarViewController(viewModel: viewModel, imageProvider: imageProvider)
-
         return UINavigationController(rootViewController: weeklyCalendarVC)
     }
     
