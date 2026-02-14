@@ -31,6 +31,7 @@ public final class RootTabBarController: UITabBarController {
     
     private func setup() {
         self.delegate = self
+        tabBar.tintColor = DesignSystemAsset.primary.color
 
         calendarVC.currentModePublisher
             .receive(on: DispatchQueue.main)
