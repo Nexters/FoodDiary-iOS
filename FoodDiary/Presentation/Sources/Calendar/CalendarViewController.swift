@@ -41,7 +41,6 @@ public final class CalendarViewController: UIViewController {
     }
 
     private func setupNavigationBar() {
-        print(DesignSystemAsset.iconMypage.image.size)
         let mypageButton = UIBarButtonItem(
             image: DesignSystemAsset.iconMypage.image,
             style: .plain,
