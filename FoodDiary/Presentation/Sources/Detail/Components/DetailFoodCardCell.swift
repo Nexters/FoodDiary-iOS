@@ -3,7 +3,6 @@
 //  Presentation
 //
 
-import Domain
 import SnapKit
 import UIKit
 
@@ -30,10 +29,10 @@ final class DetailFoodCardCell: UICollectionViewCell {
 
     // MARK: - Configuration
 
-    func configure(with record: FoodRecord, imageURL: URL) {
+    func configure(time: String, district: String?, imageURL: URL?) {
         cardView?.removeFromSuperview()
 
-        let newCardView = FoodRecordCardView(record: record, imageURL: imageURL)
+        let newCardView = FoodRecordCardView(time: time, district: district, imageURL: imageURL)
         contentView.addSubview(newCardView)
         newCardView.snp.makeConstraints {
             $0.edges.equalToSuperview()

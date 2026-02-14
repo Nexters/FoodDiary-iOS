@@ -425,7 +425,11 @@ extension MealSectionView: UICollectionViewDataSource {
         }
 
         let cardItem = cardItems[indexPath.item]
-        cell.configure(with: cardItem.record, imageURL: cardItem.imageURL)
+        cell.configure(
+            time: cardItem.record.formattedShortTime,
+            district: cardItem.record.district,
+            imageURL: cardItem.imageURL
+        )
 
         return cell
     }

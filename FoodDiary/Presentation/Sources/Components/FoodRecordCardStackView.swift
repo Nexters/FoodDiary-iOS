@@ -53,7 +53,11 @@ public final class FoodRecordCardStackView: UIView {
     public init(record: FoodRecord, totalCount: Int) {
         self.record = record
         self.totalCount = totalCount
-        self.frontCardView = FoodRecordCardView(record: record)
+        self.frontCardView = FoodRecordCardView(
+            time: record.formattedShortTime,
+            district: record.district,
+            imageURL: record.imageURLs.first
+        )
         
         super.init(frame: .zero)
         setupUI()
@@ -165,6 +169,6 @@ public final class FoodRecordCardStackView: UIView {
     }
 
     @objc private func frontCardTapped() {
-        cardTapSubject.send(frontCardView.record)
+        cardTapSubject.send(record)
     }
 }
