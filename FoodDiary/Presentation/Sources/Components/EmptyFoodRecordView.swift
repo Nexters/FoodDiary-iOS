@@ -14,9 +14,9 @@ final class EmptyFoodRecordView: UIView {
     // MARK: - Constants
 
     private enum Constants {
-        static let addButtonSize: CGFloat = 120
-        static let addButtonCenterYOffset: CGFloat = -20
-        static let placeholderTopSpacing: CGFloat = 16
+        static let cornerRadius: CGFloat = 16
+        static let addImageSize: CGFloat = 140
+        static let placeholderTopSpacing: CGFloat = 25
         static let photoCountTopSpacing: CGFloat = 4
     }
 
@@ -30,10 +30,15 @@ final class EmptyFoodRecordView: UIView {
 
     // MARK: - UI Components
 
-    private let addButton: UIButton = {
-        let button = UIButton()
-        button.setImage(DesignSystemAsset.add.image, for: .normal)
-        return button
+    private let dashedBorderView = DashedBorderView(strokeColor: .gray900)
+
+    private let contentView = UIView()
+
+    private let addImageView: UIImageView = {
+        let iv = UIImageView()
+        iv.image = DesignSystemAsset.add.image
+        iv.contentMode = .scaleAspectFit
+        return iv
     }()
 
     private let placeholderLabel: UILabel = {
@@ -58,6 +63,15 @@ final class EmptyFoodRecordView: UIView {
         configure(photoCount: photoCount)
     }
 
+    init(text: String) {
+        super.init(frame: .zero)
+        setupUI()
+        setupConstraints()
+        setupActions()
+        placeholderLabel.setText(text, style: .p14, color: .white)
+        photoCountLabel.isHidden = true
+    }
+
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -66,21 +80,36 @@ final class EmptyFoodRecordView: UIView {
     // MARK: - Setup
 
     private func setupUI() {
-        addSubview(addButton)
-        addSubview(placeholderLabel)
-        addSubview(photoCountLabel)
+        dashedBorderView.cornerRadius = Constants.cornerRadius
+        dashedBorderView.backgroundColor = .sd900
+        dashedBorderView.layer.cornerRadius = Constants.cornerRadius
+        dashedBorderView.clipsToBounds = true
+        addSubview(dashedBorderView)
+        dashedBorderView.addSubview(contentView)
+
+        contentView.addSubview(addImageView)
+        contentView.addSubview(placeholderLabel)
+        contentView.addSubview(photoCountLabel)
     }
 
     private func setupConstraints() {
-        addButton.snp.makeConstraints {
+        dashedBorderView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
+
+        contentView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
+
+        addImageView.snp.makeConstraints {
             $0.centerX.equalToSuperview()
-            $0.centerY.equalToSuperview().offset(Constants.addButtonCenterYOffset)
-            $0.width.height.equalTo(Constants.addButtonSize)
+            $0.centerY.equalToSuperview().offset(-(Constants.placeholderTopSpacing / 2))
+            $0.size.equalTo(Constants.addImageSize)
         }
 
         placeholderLabel.snp.makeConstraints {
             $0.centerX.equalToSuperview()
-            $0.top.equalTo(addButton.snp.bottom).offset(Constants.placeholderTopSpacing)
+            $0.top.equalTo(addImageView.snp.bottom).offset(Constants.placeholderTopSpacing)
         }
 
         photoCountLabel.snp.makeConstraints {
@@ -90,7 +119,8 @@ final class EmptyFoodRecordView: UIView {
     }
 
     private func setupActions() {
-        addButton.addTarget(self, action: #selector(addButtonTapped), for: .touchUpInside)
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(viewTapped))
+        addGestureRecognizer(tapGesture)
     }
 
     // MARK: - Configuration
@@ -108,7 +138,7 @@ final class EmptyFoodRecordView: UIView {
 
     // MARK: - Actions
 
-    @objc private func addButtonTapped() {
+    @objc private func viewTapped() {
         addButtonTapSubject.send()
     }
 }

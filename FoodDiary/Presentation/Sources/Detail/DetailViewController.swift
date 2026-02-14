@@ -262,6 +262,15 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
                 self?.handleEdit(mealType: mealType)
             }
             .store(in: &cancellables)
+
+        // Add buttons (empty state)
+        [breakfastSection, lunchSection, dinnerSection].forEach { section in
+            section.addButtonTapPublisher
+                .sink { [weak self] in
+                    self?.handleAddPhoto()
+                }
+                .store(in: &cancellables)
+        }
     }
 
     // MARK: - Private Methods
@@ -362,5 +371,9 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
 
     private func handleEdit(mealType: MealType) {
         // TODO: Navigate to edit screen
+    }
+
+    private func handleAddPhoto() {
+        // TODO: Navigate to add photo screen
     }
 }

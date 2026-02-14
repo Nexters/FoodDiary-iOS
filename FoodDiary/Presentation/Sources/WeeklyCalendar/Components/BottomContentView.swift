@@ -11,6 +11,19 @@ import UIKit
 /// 하단 영역 (+버튼 또는 기록된 카드 스택)
 final class BottomContentView: UIView {
 
+    // MARK: - Constants
+
+    private enum Constants {
+        static let containerCornerRadius: CGFloat = 24
+        static let containerBorderWidth: CGFloat = 1
+        static let containerHorizontalInset: CGFloat = 16
+        static let containerBackgroundAlpha: CGFloat = 0.05
+        static let containerBorderAlpha: CGFloat = 0.1
+        static let cardHorizontalInset: CGFloat = 40
+        static let pendingCardHorizontalInset: CGFloat = 60
+        static let cardAspectRatio: CGFloat = 1.15
+    }
+
     // MARK: - Publishers
 
     var addButtonTapPublisher: AnyPublisher<Void, Never> {
@@ -29,10 +42,10 @@ final class BottomContentView: UIView {
 
     private let containerView: UIView = {
         let view = UIView()
-        view.backgroundColor = UIColor.white.withAlphaComponent(0.05)
-        view.layer.cornerRadius = 24
-        view.layer.borderWidth = 1
-        view.layer.borderColor = UIColor.white.withAlphaComponent(0.1).cgColor
+        view.backgroundColor = UIColor.white.withAlphaComponent(Constants.containerBackgroundAlpha)
+        view.layer.cornerRadius = Constants.containerCornerRadius
+        view.layer.borderWidth = Constants.containerBorderWidth
+        view.layer.borderColor = UIColor.white.withAlphaComponent(Constants.containerBorderAlpha).cgColor
         return view
     }()
 
@@ -86,7 +99,7 @@ final class BottomContentView: UIView {
 
     private func setupConstraints() {
         containerView.snp.makeConstraints {
-            $0.edges.equalToSuperview().inset(UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16))
+            $0.edges.equalToSuperview().inset(UIEdgeInsets(top: 0, left: Constants.containerHorizontalInset, bottom: 0, right: Constants.containerHorizontalInset))
         }
 
         // Card Stack State Constraints
@@ -133,14 +146,20 @@ final class BottomContentView: UIView {
 
         newPendingCardView.snp.makeConstraints {
             $0.center.equalToSuperview()
-            $0.horizontalEdges.equalToSuperview().inset(60)
-            $0.height.equalTo(newPendingCardView.snp.width).multipliedBy(1.15)
+            $0.horizontalEdges.equalToSuperview().inset(Constants.pendingCardHorizontalInset)
+            $0.height.equalTo(newPendingCardView.snp.width).multipliedBy(Constants.cardAspectRatio)
         }
+    }
+
+    private func showContainerStyle(_ show: Bool) {
+        containerView.backgroundColor = show ? UIColor.white.withAlphaComponent(Constants.containerBackgroundAlpha) : .clear
+        containerView.layer.borderWidth = show ? Constants.containerBorderWidth : 0
     }
 
     private func showEmptyState(photoCount: Int) {
         cardStackStateView.isHidden = true
         pendingStateView.isHidden = true
+        showContainerStyle(false)
 
         // 기존 empty 뷰 제거
         emptyStateView?.removeFromSuperview()
@@ -181,8 +200,8 @@ final class BottomContentView: UIView {
 
         newCardStackView.snp.makeConstraints {
             $0.center.equalToSuperview()
-            $0.horizontalEdges.equalToSuperview().inset(60)
-            $0.height.equalTo(newCardStackView.snp.width).multipliedBy(1.15)
+            $0.horizontalEdges.equalToSuperview().inset(Constants.cardHorizontalInset)
+            $0.height.equalTo(newCardStackView.snp.width).multipliedBy(Constants.cardAspectRatio)
         }
 
         // Publisher 바인딩

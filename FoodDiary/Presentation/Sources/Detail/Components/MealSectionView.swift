@@ -25,9 +25,6 @@ final class MealSectionView: UIView {
         static let infoTopSpacing: CGFloat = 16
         static let buttonSpacing: CGFloat = 10
         static let hashtagTopSpacing: CGFloat = 16
-        static let emptyStateImageSize: CGFloat = 140
-        static let emptyCardCornerRadius: CGFloat = 16
-        static let emptyLabelTopSpacing: CGFloat = 25
         static let buttonImagePadding: CGFloat = 4
     }
 
@@ -52,9 +49,14 @@ final class MealSectionView: UIView {
         editTapSubject.eraseToAnyPublisher()
     }
 
+    var addButtonTapPublisher: AnyPublisher<Void, Never> {
+        addButtonTapSubject.eraseToAnyPublisher()
+    }
+
     private let copyTapSubject = PassthroughSubject<FoodRecord, Never>()
     private let shareTapSubject = PassthroughSubject<FoodRecord, Never>()
     private let editTapSubject = PassthroughSubject<MealType, Never>()
+    private let addButtonTapSubject = PassthroughSubject<Void, Never>()
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - State
@@ -106,39 +108,8 @@ final class MealSectionView: UIView {
         return pc
     }()
 
-    // 빈 상태 뷰 (기록 없을 때 일러스트 + 안내 문구)
-    private let emptyStateView: UIView = {
-        let view = UIView()
-        view.isHidden = true
-        return view
-    }()
-
-    // 빈 상태 카드 (점선 테두리 박스)
-    private let emptyCardView: DashedBorderView = {
-        let view = DashedBorderView(strokeColor: .gray900)
-        view.cornerRadius = Constants.emptyCardCornerRadius
-        view.backgroundColor = .sd900
-        view.layer.cornerRadius = Constants.emptyCardCornerRadius
-        view.clipsToBounds = true
-        return view
-    }()
-
-    // 빈 상태 일러스트 이미지 (추가 아이콘)
-    private let emptyImageView: UIImageView = {
-        let iv = UIImageView()
-        iv.image = DesignSystemAsset.add.image
-        iv.contentMode = .scaleAspectFit
-        return iv
-    }()
-
-    // 빈 상태 안내 문구 ("오늘의 음식 사진을 추가해보세요." 등)
-    private let emptyLabel: UILabel = {
-        let label = UILabel()
-        label.text = "오늘의 음식 사진을 추가해보세요."
-        label.textColor = UIColor.white.withAlphaComponent(0.6)
-        label.textAlignment = .center
-        return label
-    }()
+    // 빈 상태 뷰 (기록 없을 때 점선 카드 + 안내 문구)
+    private var emptyFoodRecordView: EmptyFoodRecordView?
 
     // 카드 하단 정보 영역 (식당명, 복사/공유 버튼, 해시태그)
     private let infoContainerView: UIView = {
@@ -205,12 +176,6 @@ final class MealSectionView: UIView {
         contentContainerView.addSubview(collectionView)
         contentContainerView.addSubview(pageControl)
 
-        // Empty state
-        contentContainerView.addSubview(emptyStateView)
-        emptyStateView.addSubview(emptyCardView)
-        emptyCardView.addSubview(emptyImageView)
-        emptyCardView.addSubview(emptyLabel)
-
         // Info section
         contentContainerView.addSubview(infoContainerView)
         infoContainerView.addSubview(restaurantNameLabel)
@@ -274,29 +239,6 @@ final class MealSectionView: UIView {
             $0.bottom.equalToSuperview()
         }
 
-        emptyStateView.snp.makeConstraints {
-            $0.top.bottom.equalToSuperview()
-            $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
-        }
-
-        emptyCardView.snp.makeConstraints {
-            $0.top.leading.trailing.equalToSuperview()
-            $0.height.equalTo(emptyCardView.snp.width)
-            $0.bottom.lessThanOrEqualToSuperview()
-        }
-
-        emptyImageView.snp.makeConstraints {
-            $0.centerX.equalToSuperview()
-            $0.centerY.equalToSuperview().offset(
-                -(Constants.emptyLabelTopSpacing / 2)
-            )
-            $0.size.equalTo(Constants.emptyStateImageSize)
-        }
-
-        emptyLabel.snp.makeConstraints {
-            $0.centerX.equalToSuperview()
-            $0.top.equalTo(emptyImageView.snp.bottom).offset(Constants.emptyLabelTopSpacing)
-        }
     }
 
     private func createLayout() -> UICollectionViewCompositionalLayout {
@@ -377,9 +319,11 @@ final class MealSectionView: UIView {
         collectionView.isHidden = true
         pageControl.isHidden = true
         infoContainerView.isHidden = true
-        emptyStateView.isHidden = false
         editButton.isHidden = true
         currentRecord = nil
+
+        // 기존 empty 뷰 제거
+        emptyFoodRecordView?.removeFromSuperview()
 
         let emptyText: String
         switch mealType {
@@ -388,13 +332,26 @@ final class MealSectionView: UIView {
         default:
             emptyText = "오늘의 음식 사진을 추가해보세요."
         }
-        emptyLabel.setText(emptyText, style: .p14, color: .white)
+
+        let emptyView = EmptyFoodRecordView(text: emptyText)
+        contentContainerView.addSubview(emptyView)
+        emptyView.snp.makeConstraints {
+            $0.top.bottom.equalToSuperview()
+            $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
+        }
+        emptyView.addButtonTapPublisher
+            .sink { [weak self] in
+                self?.addButtonTapSubject.send()
+            }
+            .store(in: &cancellables)
+        emptyFoodRecordView = emptyView
     }
 
     private func showCardState() {
         collectionView.isHidden = false
         pageControl.isHidden = cardItems.count <= 1
-        emptyStateView.isHidden = true
+        emptyFoodRecordView?.removeFromSuperview()
+        emptyFoodRecordView = nil
         editButton.isHidden = false
 
         pageControl.numberOfPages = cardItems.count
