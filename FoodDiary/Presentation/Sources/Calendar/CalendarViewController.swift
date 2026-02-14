@@ -7,6 +7,7 @@
 
 import UIKit
 import Combine
+import DesignSystem
 
 public final class CalendarViewController: UIViewController {
     public enum ViewMode {
@@ -35,7 +36,23 @@ public final class CalendarViewController: UIViewController {
 
     public override func viewDidLoad() {
         super.viewDidLoad()
+        setupNavigationBar()
         showViewController(for: currentModeSubject.value)
+    }
+
+    private func setupNavigationBar() {
+        print(DesignSystemAsset.iconMypage.image.size)
+        let mypageButton = UIBarButtonItem(
+            image: DesignSystemAsset.iconMypage.image,
+            style: .plain,
+            target: self,
+            action: #selector(mypageButtonTapped)
+        )
+        navigationItem.rightBarButtonItem = mypageButton
+    }
+
+    @objc private func mypageButtonTapped() {
+        // TODO: 마이페이지 화면으로 이동
     }
 
     public func toggleViewMode() {
