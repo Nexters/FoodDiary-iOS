@@ -183,6 +183,15 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
             .store(in: &cancellables)
 
         viewModel.statePublisher
+            .map(\.isLoading)
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isLoading in
+                self?.dateNavigatorView.setPending(isLoading)
+            }
+            .store(in: &cancellables)
+
+        viewModel.statePublisher
             .map(\.recordsByMealType)
             .removeDuplicates()
             .receive(on: DispatchQueue.main)

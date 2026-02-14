@@ -61,6 +61,15 @@ final class DetailDateNavigatorView: UIView {
         return label
     }()
 
+    private let shimmerView: ShimmerView = {
+        let view = ShimmerView()
+        view.backgroundColor = .gray300
+        view.layer.cornerRadius = 4
+        view.clipsToBounds = true
+        view.isHidden = true
+        return view
+    }()
+
     private let nextButton: UIButton = {
         let button = UIButton()
         let config = UIImage.SymbolConfiguration(weight: .semibold)
@@ -94,6 +103,7 @@ final class DetailDateNavigatorView: UIView {
         }
         contentView.addSubview(previousButton)
         contentView.addSubview(dateLabel)
+        contentView.addSubview(shimmerView)
         contentView.addSubview(nextButton)
 
         if #available(iOS 26, *) {
@@ -123,6 +133,12 @@ final class DetailDateNavigatorView: UIView {
             $0.center.equalToSuperview()
         }
 
+        shimmerView.snp.makeConstraints {
+            $0.center.equalToSuperview()
+            $0.width.equalTo(120)
+            $0.height.equalTo(20)
+        }
+
         nextButton.snp.makeConstraints {
             $0.trailing.equalToSuperview().offset(-Constants.horizontalPadding)
             $0.centerY.equalToSuperview()
@@ -142,6 +158,16 @@ final class DetailDateNavigatorView: UIView {
             dateLabel.setText(text, style: .p15, color: .label)
         } else {
             dateLabel.setText(text, style: .p15)
+        }
+    }
+
+    func setPending(_ isPending: Bool) {
+        dateLabel.isHidden = isPending
+        shimmerView.isHidden = !isPending
+        if isPending {
+            shimmerView.startAnimating()
+        } else {
+            shimmerView.stopAnimating()
         }
     }
 
