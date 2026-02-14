@@ -51,6 +51,7 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
     private let breakfastSection = MealSectionView(mealType: .breakfast)
     private let lunchSection = MealSectionView(mealType: .lunch)
     private let dinnerSection = MealSectionView(mealType: .dinner)
+    private let lateNightSection = MealSectionView(mealType: .lateNight)
 
     // MARK: - State
 
@@ -58,10 +59,7 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
 
     // MARK: - Init
 
-    public init(
-        initialRecord: FoodRecord,
-        viewModel: DetailViewModel<RecordRepo>
-    ) {
+    public init(viewModel: DetailViewModel<RecordRepo>) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
@@ -93,23 +91,6 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
     private func setupNavigation() {
         title = "상세보기"
 
-        // Navigation bar appearance
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .sdBase
-        appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
-        navigationController?.navigationBar.standardAppearance = appearance
-        navigationController?.navigationBar.scrollEdgeAppearance = appearance
-        navigationController?.navigationBar.tintColor = .white
-
-        // Back button
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            image: UIImage(systemName: "chevron.left"),
-            style: .plain,
-            target: self,
-            action: #selector(backButtonTapped)
-        )
-
         // More button
         navigationItem.rightBarButtonItem = UIBarButtonItem(
             image: UIImage(systemName: "ellipsis"),
@@ -130,6 +111,7 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
         mealSectionsStackView.addArrangedSubview(breakfastSection)
         mealSectionsStackView.addArrangedSubview(lunchSection)
         mealSectionsStackView.addArrangedSubview(dinnerSection)
+        mealSectionsStackView.addArrangedSubview(lateNightSection)
     }
 
     private func setupConstraints() {
@@ -142,7 +124,9 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
         scrollView.snp.makeConstraints {
             $0.edges.equalTo(view.safeAreaLayoutGuide)
         }
-        let topInset = Constants.dateNavigatorTopPadding + Constants.dateNavigatorHeight + Constants.dateNavigatorBottomSpacing
+        let topInset =
+            Constants.dateNavigatorTopPadding + Constants.dateNavigatorHeight
+            + Constants.dateNavigatorBottomSpacing
         scrollView.contentInset.top = topInset
         scrollView.verticalScrollIndicatorInsets.top = topInset
 
@@ -205,72 +189,33 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
     }
 
     private func setupCardEventBindings() {
-        // Breakfast section
         breakfastSection.copyTapPublisher
+            .merge(with: lunchSection.copyTapPublisher, dinnerSection.copyTapPublisher, lateNightSection.copyTapPublisher)
             .sink { [weak self] record in
                 self?.handleCopy(record: record)
             }
             .store(in: &cancellables)
 
         breakfastSection.shareTapPublisher
+            .merge(with: lunchSection.shareTapPublisher, dinnerSection.shareTapPublisher, lateNightSection.shareTapPublisher)
             .sink { [weak self] record in
                 self?.handleShare(record: record)
             }
             .store(in: &cancellables)
 
-        // Lunch section
-        lunchSection.copyTapPublisher
-            .sink { [weak self] record in
-                self?.handleCopy(record: record)
-            }
-            .store(in: &cancellables)
-
-        lunchSection.shareTapPublisher
-            .sink { [weak self] record in
-                self?.handleShare(record: record)
-            }
-            .store(in: &cancellables)
-
-        // Dinner section
-        dinnerSection.copyTapPublisher
-            .sink { [weak self] record in
-                self?.handleCopy(record: record)
-            }
-            .store(in: &cancellables)
-
-        dinnerSection.shareTapPublisher
-            .sink { [weak self] record in
-                self?.handleShare(record: record)
-            }
-            .store(in: &cancellables)
-
-        // Edit buttons
         breakfastSection.editTapPublisher
+            .merge(with: lunchSection.editTapPublisher, dinnerSection.editTapPublisher, lateNightSection.editTapPublisher)
             .sink { [weak self] mealType in
                 self?.handleEdit(mealType: mealType)
             }
             .store(in: &cancellables)
 
-        lunchSection.editTapPublisher
-            .sink { [weak self] mealType in
-                self?.handleEdit(mealType: mealType)
+        breakfastSection.addButtonTapPublisher
+            .merge(with: lunchSection.addButtonTapPublisher, dinnerSection.addButtonTapPublisher, lateNightSection.addButtonTapPublisher)
+            .sink { [weak self] in
+                self?.handleAddPhoto()
             }
             .store(in: &cancellables)
-
-        dinnerSection.editTapPublisher
-            .sink { [weak self] mealType in
-                self?.handleEdit(mealType: mealType)
-            }
-            .store(in: &cancellables)
-
-        // Add buttons (empty state)
-        [breakfastSection, lunchSection, dinnerSection].forEach { section in
-            section.addButtonTapPublisher
-                .sink { [weak self] in
-                    self?.handleAddPhoto()
-                }
-                .store(in: &cancellables)
-        }
     }
 
     // MARK: - Private Methods
@@ -280,6 +225,7 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
             (.breakfast, breakfastSection),
             (.lunch, lunchSection),
             (.dinner, dinnerSection),
+            (.lateNight, lateNightSection),
         ]
 
         for (mealType, section) in sections {
@@ -290,15 +236,18 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
     }
 
     private func formatRecordForCopy(_ record: FoodRecord) -> String {
-        var lines: [String] = []
-        if let name = record.restaurantName {
-            lines.append(name)
-        }
-        lines.append(record.genre.rawValue)
-        if !record.hashtags.isEmpty {
-            lines.append(record.hashtags.map { "#\($0)" }.joined(separator: " "))
-        }
-        return lines.joined(separator: "\n")
+        let lines: String =
+            if let name = record.restaurantName {
+                if let address = record.address {
+                    "\(name): \(address)"
+                } else {
+                    name
+                }
+            } else {
+                ""
+            }
+
+        return lines
     }
 
     private func handleCopy(record: FoodRecord) {
@@ -310,23 +259,7 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
     }
 
     private func handleShare(record: FoodRecord) {
-        let text = formatRecordForCopy(record)
-
-        // Image from Kingfisher cache
-        if let imageURL = record.imageURLs.first {
-            ImageCache.default.retrieveImage(forKey: imageURL.absoluteString) { [weak self] result in
-                guard let self else { return }
-                DispatchQueue.main.async {
-                    var items: [Any] = [text]
-                    if case .success(let cacheResult) = result, let image = cacheResult.image {
-                        items.insert(image, at: 0)
-                    }
-                    self.presentShareSheet(items: items)
-                }
-            }
-        } else {
-            presentShareSheet(items: [text])
-        }
+        // TODO: 공유할 콘텐츠 구성
     }
 
     private func presentShareSheet(items: [Any]) {
@@ -337,6 +270,7 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
         present(activityVC, animated: true)
     }
 
+    // TODO: 임시로 걍 대충 떼워놓음
     private func showToast(message: String) {
         let toastLabel = UILabel()
         toastLabel.backgroundColor = UIColor.black.withAlphaComponent(0.7)
@@ -356,22 +290,24 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
             $0.width.greaterThanOrEqualTo(Constants.toastMinWidth)
         }
 
-        UIView.animate(withDuration: 0.3, animations: {
-            toastLabel.alpha = 1
-        }) { _ in
-            UIView.animate(withDuration: 0.3, delay: 1.5, options: [], animations: {
-                toastLabel.alpha = 0
-            }) { _ in
+        UIView.animate(
+            withDuration: 0.3,
+            animations: {
+                toastLabel.alpha = 1
+            }
+        ) { _ in
+            UIView.animate(
+                withDuration: 0.3, delay: 1.5, options: [],
+                animations: {
+                    toastLabel.alpha = 0
+                }
+            ) { _ in
                 toastLabel.removeFromSuperview()
             }
         }
     }
 
     // MARK: - Actions
-
-    @objc private func backButtonTapped() {
-        navigationController?.popViewController(animated: true)
-    }
 
     @objc private func moreButtonTapped() {
         // TODO: Show more options menu

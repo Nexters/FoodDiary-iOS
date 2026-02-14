@@ -46,6 +46,7 @@ public final class DetailViewModel<RecordRepo: FoodRecordRepository> {
         let startOfDay = calendar.startOfDay(for: initialDate)
         self.stateSubject = CurrentValueSubject(State(currentDate: startOfDay))
 
+        updateDateText()
         setupBindings()
     }
 
@@ -69,22 +70,23 @@ public final class DetailViewModel<RecordRepo: FoodRecordRepository> {
             await loadRecords(for: state.currentDate)
 
         case .goToPreviousDay:
-            if let previousDay = calendar.date(byAdding: .day, value: -1, to: state.currentDate) {
-                state.currentDate = previousDay
-                updateDateText()
-                await loadRecords(for: previousDay)
-            }
+            await navigateDay(by: -1)
 
         case .goToNextDay:
-            if let nextDay = calendar.date(byAdding: .day, value: 1, to: state.currentDate) {
-                state.currentDate = nextDay
-                updateDateText()
-                await loadRecords(for: nextDay)
-            }
+            await navigateDay(by: 1)
         }
     }
 
     // MARK: - Private Methods
+
+    @MainActor
+    private func navigateDay(by offset: Int) async {
+        if let newDate = calendar.date(byAdding: .day, value: offset, to: state.currentDate) {
+            state.currentDate = newDate
+            updateDateText()
+            await loadRecords(for: newDate)
+        }
+    }
 
     @MainActor
     private func loadRecords(for date: Date) async {
@@ -108,11 +110,15 @@ public final class DetailViewModel<RecordRepo: FoodRecordRepository> {
         return grouped
     }
 
-    private func updateDateText() {
+    private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "ko_KR")
         formatter.dateFormat = "yyyy년 M월 d일 (E)"
-        state.dateText = formatter.string(from: state.currentDate)
+        return formatter
+    }()
+
+    private func updateDateText() {
+        state.dateText = dateFormatter.string(from: state.currentDate)
     }
 }
 
