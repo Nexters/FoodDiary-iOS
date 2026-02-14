@@ -93,7 +93,7 @@ private extension AppFlowController {
             PushNotificationObserver
         >
 
-        guard let viewModel = try? container.resolve(WeeklyVM.self) else {
+        guard let weeklyViewModel = try? container.resolve(WeeklyVM.self) else {
             fatalError("WeeklyCalendarViewModel not registered")
         }
 
@@ -112,7 +112,7 @@ private extension AppFlowController {
         typealias DetailVM = DetailViewModel<MockFoodRecordRepository>
 
         let weeklyCalendarVC = WeeklyCalendarViewController(
-            viewModel: viewModel,
+            viewModel: weeklyViewModel,
             imageProvider: imageProvider,
             detailViewModelFactory: { [container] date in
                 guard let vm = try? container.resolve(DetailVM.self, argument: date) else {
@@ -122,7 +122,21 @@ private extension AppFlowController {
             }
         )
 
-        return UINavigationController(rootViewController: weeklyCalendarVC)
+        typealias MonthlyVM = MonthlyCalendarViewModel<
+            MockFoodRecordRepository,
+            PhotoAuthorizationFetcher
+        >
+
+        guard let monthlyViewModel = try? container.resolve(MonthlyVM.self) else {
+            fatalError("MonthlyCalendarViewModel not registered")
+        }
+
+        let weeklyCalendarVC = WeeklyCalendarViewController(viewModel: weeklyViewModel, imageProvider: imageProvider)
+        let monthlyCalendarVC = MonthlyCalendarViewController(viewModel: monthlyViewModel)
+
+        let calendarVC = CalendarViewController(weeklyVC: weeklyCalendarVC, monthlyVC: monthlyCalendarVC)
+        let tabBarVC = RootTabBarController(calendarVC: calendarVC, insightVC: UIViewController())
+        return tabBarVC
     }
     
     func createLoginView() -> UIViewController {
