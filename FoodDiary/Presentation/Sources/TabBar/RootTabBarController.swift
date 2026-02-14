@@ -13,7 +13,7 @@ public final class RootTabBarController: UITabBarController {
     let calendarVC: CalendarViewController
     let insightVC: UIViewController
     private var cancellables = Set<AnyCancellable>()
-
+    
     public init(calendarVC: CalendarViewController, insightVC: UIViewController) {
         self.calendarVC = calendarVC
         self.insightVC = insightVC
@@ -53,14 +53,14 @@ public final class RootTabBarController: UITabBarController {
 
         viewControllers = [calendarNav, insightNav, toggleNav]
     }
-
+    
     private func toggleViewMode() {
         calendarVC.toggleViewMode()
     }
-
+    
     private func updateToggleIcon(for mode: CalendarViewController.ViewMode) {
         guard let items = tabBar.items, items.count > 2 else { return }
-
+        
         let newImage = mode == .monthly ? DesignSystemAsset.iconWeekly.image : DesignSystemAsset.iconMonthly.image
         items[2].image = newImage
     }
@@ -69,12 +69,22 @@ public final class RootTabBarController: UITabBarController {
 extension RootTabBarController: UITabBarControllerDelegate {
     public func tabBarController(_ tabBarController: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
         guard let index = viewControllers?.firstIndex(of: viewController) else { return true }
-
+        
         if index == 2 {
             toggleViewMode()
             return false
         }
-
+        
         return true
+    }
+    
+    public func tabBarController(_ tabBarController: UITabBarController, didSelect viewController: UIViewController) {
+        Task { @MainActor in
+            for subview in self.tabBar.subviews {
+                if subview.frame.origin.x > self.tabBar.bounds.width * 0.6 {
+                    subview.isHidden = selectedIndex == 1
+                }
+            }
+        }
     }
 }
