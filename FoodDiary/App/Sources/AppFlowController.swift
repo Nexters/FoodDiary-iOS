@@ -41,11 +41,12 @@ private extension AppFlowController {
     }
     
     func updateLoginStateFromToken() {
-        guard let tokenManager = try? container.resolve(TokenManager<KeychainService>.self) else {
-            fatalError("TokenManager Failed Resolve")
-        }
-        
-        isLogin = tokenManager.get() != nil
+        // TODO: 로그인 복구 시 아래 코드로 되돌릴 것
+        // guard let tokenManager = try? container.resolve(TokenManager<KeychainService>.self) else {
+        //     fatalError("TokenManager Failed Resolve")
+        // }
+        // isLogin = tokenManager.get() != nil
+        isLogin = true
     }
     
     func createMainView() -> UIViewController {

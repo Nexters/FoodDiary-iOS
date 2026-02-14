@@ -12,6 +12,19 @@ import UIKit
 
 public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIViewController {
 
+    // MARK: - Constants
+
+    private enum Constants {
+        static var dateNavigatorHeight: CGFloat { 64 }
+        static var dateNavigatorTopPadding: CGFloat { 32 }
+        static var dateNavigatorBottomSpacing: CGFloat { 16 }
+        static var bottomPadding: CGFloat { 32 }
+        static var toastCornerRadius: CGFloat { 16 }
+        static var toastHeight: CGFloat { 32 }
+        static var toastMinWidth: CGFloat { 150 }
+        static var toastBottomOffset: CGFloat { 32 }
+    }
+
     // MARK: - Dependencies
 
     private let viewModel: DetailViewModel<RecordRepo>
@@ -111,8 +124,8 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
 
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
-        contentView.addSubview(dateNavigatorView)
         contentView.addSubview(mealSectionsStackView)
+        view.addSubview(dateNavigatorView)
 
         mealSectionsStackView.addArrangedSubview(breakfastSection)
         mealSectionsStackView.addArrangedSubview(lunchSection)
@@ -120,25 +133,28 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
     }
 
     private func setupConstraints() {
+        dateNavigatorView.snp.makeConstraints {
+            $0.top.equalTo(view.safeAreaLayoutGuide).offset(Constants.dateNavigatorTopPadding)
+            $0.leading.trailing.equalToSuperview()
+            $0.height.equalTo(Constants.dateNavigatorHeight)
+        }
+
         scrollView.snp.makeConstraints {
             $0.edges.equalTo(view.safeAreaLayoutGuide)
         }
+        let topInset = Constants.dateNavigatorTopPadding + Constants.dateNavigatorHeight + Constants.dateNavigatorBottomSpacing
+        scrollView.contentInset.top = topInset
+        scrollView.verticalScrollIndicatorInsets.top = topInset
 
         contentView.snp.makeConstraints {
             $0.edges.equalToSuperview()
             $0.width.equalToSuperview()
         }
 
-        dateNavigatorView.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(16)
-            $0.leading.trailing.equalToSuperview()
-            $0.height.equalTo(44)
-        }
-
         mealSectionsStackView.snp.makeConstraints {
-            $0.top.equalTo(dateNavigatorView.snp.bottom).offset(16)
+            $0.top.equalToSuperview()
             $0.leading.trailing.equalToSuperview()
-            $0.bottom.equalToSuperview().offset(-32)
+            $0.bottom.equalToSuperview().offset(-Constants.bottomPadding)
         }
     }
 
@@ -303,15 +319,15 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
         toastLabel.font = .systemFont(ofSize: 14)
         toastLabel.text = message
         toastLabel.alpha = 0
-        toastLabel.layer.cornerRadius = 16
+        toastLabel.layer.cornerRadius = Constants.toastCornerRadius
         toastLabel.clipsToBounds = true
 
         view.addSubview(toastLabel)
         toastLabel.snp.makeConstraints {
             $0.centerX.equalToSuperview()
-            $0.bottom.equalTo(view.safeAreaLayoutGuide).offset(-32)
-            $0.height.equalTo(32)
-            $0.width.greaterThanOrEqualTo(150)
+            $0.bottom.equalTo(view.safeAreaLayoutGuide).offset(-Constants.toastBottomOffset)
+            $0.height.equalTo(Constants.toastHeight)
+            $0.width.greaterThanOrEqualTo(Constants.toastMinWidth)
         }
 
         UIView.animate(withDuration: 0.3, animations: {

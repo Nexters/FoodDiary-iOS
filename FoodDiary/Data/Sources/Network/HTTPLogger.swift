@@ -38,6 +38,13 @@ public struct HTTPLogger {
         #endif
     }
 
+    func logErrorResponse(_ data: Data, statusCode: Int) {
+        #if DEBUG
+        let body = String(data: data, encoding: .utf8) ?? "Unable to decode response body"
+        logger.error("[Error Response] [\(statusCode)] \(body)")
+        #endif
+    }
+
     func logError(_ error: Error, context: String) {
         #if DEBUG
         logger.error("[Error] \(context): \(error.localizedDescription)")
