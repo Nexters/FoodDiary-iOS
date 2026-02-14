@@ -41,7 +41,7 @@ final class BottomContentView: UIView {
 
     private let containerView: UIView = {
         let view = UIView()
-        view.backgroundColor = .sd800
+        view.backgroundColor = .sd900
         view.layer.cornerRadius = Constants.containerCornerRadius
         view.layer.borderWidth = Constants.containerBorderWidth
         view.layer.borderColor = UIColor.sd800.cgColor
@@ -152,7 +152,7 @@ final class BottomContentView: UIView {
     }
 
     private func showContainerStyle(_ show: Bool) {
-        containerView.backgroundColor = show ? .sd800 : .clear
+        containerView.backgroundColor = show ? .sd900 : .clear
         containerView.layer.borderWidth = show ? Constants.containerBorderWidth : 0
     }
 
@@ -188,7 +188,7 @@ final class BottomContentView: UIView {
         cardStackStateView.isHidden = false
         pendingStateView.isHidden = true
         pendingCardView?.removeFromSuperview()
-        showContainerStyle(true)
+        showContainerStyle(false)
 
         // 기존 카드스택뷰 제거
         cardStackView?.removeFromSuperview()
