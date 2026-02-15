@@ -24,6 +24,14 @@ final class DetailDateNavigatorView: UIView {
     private let previousTapSubject = PassthroughSubject<Void, Never>()
     private let nextTapSubject = PassthroughSubject<Void, Never>()
 
+    private let defaultTintColor: UIColor = {
+        if #available(iOS 26, *) {
+            return .label
+        } else {
+            return .white
+        }
+    }()
+
     // MARK: - Constants
 
     private enum Constants {
@@ -159,6 +167,11 @@ final class DetailDateNavigatorView: UIView {
         } else {
             dateLabel.setText(text, style: .p15)
         }
+    }
+
+    func setNextButtonEnabled(_ enabled: Bool) {
+        nextButton.isEnabled = enabled
+        nextButton.tintColor = enabled ? defaultTintColor : .gray400
     }
 
     func setPending(_ isPending: Bool) {

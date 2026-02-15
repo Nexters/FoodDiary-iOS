@@ -343,7 +343,12 @@ public final class WeeklyCalendarViewController<
 
     private func navigateToDetail(with record: FoodRecord) {
         let detailViewModel = viewModel.makeDetailViewModel(for: record.date)
-        let detailVC = DetailViewController(viewModel: detailViewModel)
+        let detailVC = DetailViewController(
+            viewModel: detailViewModel,
+            onDismissWithDate: { [weak self] date in
+                self?.viewModel.input.send(.selectDate(date))
+            }
+        )
         navigationController?.pushViewController(detailVC, animated: true)
     }
 }

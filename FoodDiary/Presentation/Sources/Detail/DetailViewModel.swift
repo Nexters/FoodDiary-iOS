@@ -47,6 +47,7 @@ public final class DetailViewModel<RecordRepo: FoodRecordRepository> {
         self.stateSubject = CurrentValueSubject(State(currentDate: startOfDay))
 
         updateDateText()
+        updateNextDayAvailability()
         setupBindings()
     }
 
@@ -82,8 +83,13 @@ public final class DetailViewModel<RecordRepo: FoodRecordRepository> {
     @MainActor
     private func navigateDay(by offset: Int) async {
         if let newDate = calendar.date(byAdding: .day, value: offset, to: state.currentDate) {
+            if offset > 0 {
+                let today = calendar.startOfDay(for: Date())
+                guard newDate <= today else { return }
+            }
             state.currentDate = newDate
             updateDateText()
+            updateNextDayAvailability()
             await loadRecords(for: newDate)
         }
     }
@@ -120,6 +126,11 @@ public final class DetailViewModel<RecordRepo: FoodRecordRepository> {
     private func updateDateText() {
         state.dateText = dateFormatter.string(from: state.currentDate)
     }
+
+    private func updateNextDayAvailability() {
+        let today = calendar.startOfDay(for: Date())
+        state.isNextDayAvailable = state.currentDate < today
+    }
 }
 
 // MARK: - State & Input
@@ -130,12 +141,14 @@ extension DetailViewModel {
         public var recordsByMealType: [MealType: [FoodRecord]] = [:]
         public var dateText: String = ""
         public var isLoading: Bool = false
+        public var isNextDayAvailable: Bool = true
 
         public static func == (lhs: Self, rhs: Self) -> Bool {
             Calendar.current.isDate(lhs.currentDate, inSameDayAs: rhs.currentDate)
                 && lhs.recordsByMealType == rhs.recordsByMealType
                 && lhs.dateText == rhs.dateText
                 && lhs.isLoading == rhs.isLoading
+                && lhs.isNextDayAvailable == rhs.isNextDayAvailable
         }
     }
 

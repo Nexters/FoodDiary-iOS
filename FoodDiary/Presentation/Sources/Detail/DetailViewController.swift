@@ -28,6 +28,7 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
     // MARK: - Dependencies
 
     private let viewModel: DetailViewModel<RecordRepo>
+    private let onDismissWithDate: ((Date) -> Void)?
 
     // MARK: - UI Components
 
@@ -59,8 +60,12 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
 
     // MARK: - Init
 
-    public init(viewModel: DetailViewModel<RecordRepo>) {
+    public init(
+        viewModel: DetailViewModel<RecordRepo>,
+        onDismissWithDate: ((Date) -> Void)? = nil
+    ) {
         self.viewModel = viewModel
+        self.onDismissWithDate = onDismissWithDate
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -84,6 +89,13 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(false, animated: animated)
+    }
+
+    public override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if isMovingFromParent {
+            onDismissWithDate?(viewModel.state.currentDate)
+        }
     }
 
     // MARK: - Setup
@@ -158,6 +170,20 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
 
         // Output: ViewModel → View
         viewModel.statePublisher
+            .map(\.currentDate)
+            .removeDuplicates { Calendar.current.isDate($0, inSameDayAs: $1) }
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                guard let self else { return }
+                self.scrollView.setContentOffset(
+                    CGPoint(x: 0, y: -self.scrollView.contentInset.top),
+                    animated: false
+                )
+            }
+            .store(in: &cancellables)
+
+        viewModel.statePublisher
             .map(\.dateText)
             .removeDuplicates()
             .receive(on: DispatchQueue.main)
@@ -172,6 +198,15 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
             .receive(on: DispatchQueue.main)
             .sink { [weak self] isLoading in
                 self?.dateNavigatorView.setPending(isLoading)
+            }
+            .store(in: &cancellables)
+
+        viewModel.statePublisher
+            .map(\.isNextDayAvailable)
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isAvailable in
+                self?.dateNavigatorView.setNextButtonEnabled(isAvailable)
             }
             .store(in: &cancellables)
 

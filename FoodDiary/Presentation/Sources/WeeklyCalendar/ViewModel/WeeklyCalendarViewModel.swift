@@ -137,6 +137,7 @@ public final class WeeklyCalendarViewModel<
         case .selectDate(let date):
             if !calendar.isDate(state.selectedDate, inSameDayAs: date) {
                 state.selectedDate = date
+                await moveToWeekIfNeeded(for: date)
                 await updateDateContent(for: date)
             }
 
@@ -185,7 +186,6 @@ public final class WeeklyCalendarViewModel<
         }
     }
 
-
     @MainActor
     private func savePhotosAsRecord(_ assets: [AssetRepo.Asset]) async {
         guard !assets.isEmpty else { return }
@@ -200,6 +200,16 @@ public final class WeeklyCalendarViewModel<
             eventSubject.send(.uploadCompleted(pendingRecord))
         } catch {
             eventSubject.send(.saveFailed(error))
+        }
+    }
+
+    /// 선택된 날짜가 현재 표시 중인 주 범위 밖이면 해당 주로 이동
+    private func moveToWeekIfNeeded(for date: Date) async {
+        let (weekStart, weekEnd) = calendar.weekRange(for: currentWeekBaseDate)
+        let dateStart = calendar.startOfDay(for: date)
+        if !(weekStart...weekEnd).contains(dateStart) {
+            currentWeekBaseDate = date
+            await loadWeekData(for: currentWeekBaseDate)
         }
     }
 
@@ -247,7 +257,9 @@ public final class WeeklyCalendarViewModel<
 
     private func handlePushNotification(_ notification: AnalysisResultNotification) async {
         do {
-            let syncResult = try await syncPendingAnalysisUseCase.execute(for: [notification.uploadId])
+            let syncResult = try await syncPendingAnalysisUseCase.execute(for: [
+                notification.uploadId
+            ])
 
             // 실패 이벤트는 항상 발행
             for (uploadId, reason) in syncResult.failedUploadIds {
@@ -289,9 +301,10 @@ public final class WeeklyCalendarViewModel<
         }
 
         // selectedDate에 해당하는 변경사항이 있으면 dateContent 업데이트
-        let hasChangesForSelectedDate = result.completedRecords.contains { _, record in
-            calendar.startOfDay(for: record.date) == selectedDateStart
-        } || !result.failedUploadIds.isEmpty
+        let hasChangesForSelectedDate =
+            result.completedRecords.contains { _, record in
+                calendar.startOfDay(for: record.date) == selectedDateStart
+            } || !result.failedUploadIds.isEmpty
 
         if hasChangesForSelectedDate {
             Task {
