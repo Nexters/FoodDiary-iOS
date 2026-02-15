@@ -35,6 +35,7 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
     private let scrollView: UIScrollView = {
         let sv = UIScrollView()
         sv.showsVerticalScrollIndicator = false
+
         return sv
     }()
 
@@ -89,10 +90,12 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(false, animated: animated)
+        navigationController?.hidesBarsOnSwipe = true
     }
 
     public override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        navigationController?.hidesBarsOnSwipe = false
         if isMovingFromParent {
             onDismissWithDate?(viewModel.state.currentDate)
         }
@@ -134,7 +137,7 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
         }
 
         scrollView.snp.makeConstraints {
-            $0.edges.equalTo(view.safeAreaLayoutGuide)
+            $0.edges.equalToSuperview()
         }
         let topInset =
             Constants.dateNavigatorTopPadding + Constants.dateNavigatorHeight
