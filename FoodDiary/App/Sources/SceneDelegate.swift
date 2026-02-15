@@ -281,6 +281,26 @@ private extension SceneDelegate {
                 fetchFoodRecordsUseCase: fetchFoodRecordsUseCase
             )
         }
+
+        typealias DetailVM = DetailViewModel<MockFoodRecordRepository>
+
+        container.register(
+            DetailVM.self,
+            argument: Date.self,
+            scope: .transient,
+            factory: { resolver, initialDate in
+                guard let fetchRecordsUseCase = resolver.resolve(
+                    FetchFoodRecordsUseCase<MockFoodRecordRepository>.self
+                ) else {
+                    fatalError("FetchFoodRecordsUseCase not registered")
+                }
+
+                return DetailViewModel(
+                    initialDate: initialDate,
+                    fetchRecordsUseCase: fetchRecordsUseCase
+                )
+            }
+        )
     }
 
     #if DEBUG

@@ -80,7 +80,18 @@ private extension AppFlowController {
             fatalError("FetchMonthlyCalendarDaysUseCase not registered")
         }
 
-        let weeklyCalendarVC = WeeklyCalendarViewController(viewModel: viewModel, imageProvider: imageProvider)
+        typealias DetailVM = DetailViewModel<MockFoodRecordRepository>
+
+        let weeklyCalendarVC = WeeklyCalendarViewController(
+            viewModel: viewModel,
+            imageProvider: imageProvider,
+            detailViewModelFactory: { [container] date in
+                guard let vm = try? container.resolve(DetailVM.self, argument: date) else {
+                    fatalError("DetailViewModel not registered")
+                }
+                return vm
+            }
+        )
 
         return UINavigationController(rootViewController: weeklyCalendarVC)
     }

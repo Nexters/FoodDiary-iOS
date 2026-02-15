@@ -364,14 +364,6 @@ extension WeeklyCalendarViewModel {
 // MARK: - Public Methods
 
 extension WeeklyCalendarViewModel {
-    /// Detail 화면용 ViewModel 생성
-    public func makeDetailViewModel(for date: Date) -> DetailViewModel<RecordRepo> {
-        DetailViewModel(
-            initialDate: date,
-            fetchRecordsUseCase: fetchFoodRecordsUseCase
-        )
-    }
-
     /// 다음 주로 이동 가능 여부
     public func canGoToNextWeek(from date: Date) -> Bool {
         let calendar = Calendar.current

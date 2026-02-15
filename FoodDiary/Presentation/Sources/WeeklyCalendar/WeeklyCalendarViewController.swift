@@ -27,6 +27,7 @@ public final class WeeklyCalendarViewController<
             RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, AnalysisRepo, PushObserver
         >
     private let imageProvider: ImageProvider
+    private let detailViewModelFactory: (Date) -> DetailViewModel<RecordRepo>
 
     // MARK: - UI Components
 
@@ -67,10 +68,12 @@ public final class WeeklyCalendarViewController<
         viewModel: WeeklyCalendarViewModel<
             RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, AnalysisRepo, PushObserver
         >,
-        imageProvider: ImageProvider
+        imageProvider: ImageProvider,
+        detailViewModelFactory: @escaping (Date) -> DetailViewModel<RecordRepo>
     ) {
         self.viewModel = viewModel
         self.imageProvider = imageProvider
+        self.detailViewModelFactory = detailViewModelFactory
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -342,7 +345,7 @@ public final class WeeklyCalendarViewController<
     }
 
     private func navigateToDetail(with record: FoodRecord) {
-        let detailViewModel = viewModel.makeDetailViewModel(for: record.date)
+        let detailViewModel = detailViewModelFactory(record.date)
         let detailVC = DetailViewController(
             viewModel: detailViewModel,
             onDismissWithDate: { [weak self] date in
