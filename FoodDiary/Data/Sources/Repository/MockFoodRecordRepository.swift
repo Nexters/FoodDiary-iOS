@@ -50,6 +50,14 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
             "https://scontent-icn2-1.cdninstagram.com/v/t51.29350-15/461504105_2580000165532574_7826255553974624552_n.jpg?stp=dst-jpg_e35_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InRocmVhZHMuQ0FST1VTRUxfSVRFTS5pbWFnZV91cmxnZW4uMTQ0MHgxNDQwLnNkci5mMjkzNTAuZGVmYXVsdF9pbWFnZS5jMiJ9&_nc_ht=scontent-icn2-1.cdninstagram.com&_nc_cat=102&_nc_oc=Q6cZ2QF8w3O7ifi1Y1Vt8PsovLJXxldhHEZlzl3ASN01dV112tEUtvmsQvsmj1l3CIezXBU&_nc_ohc=lHxDPz1Ccz8Q7kNvwFX84oT&_nc_gid=_Z1qIYP7NELwB84RenKVNg&edm=AKr904kBAAAA&ccb=7-5&ig_cache_key=MzQ2OTA5NzA2NzczNjgxNTkxMQ%3D%3D.3-ccb7-5&oh=00_AfteQkqGT01MMvi0V1WSeHtguB_Jwkx0To0c5UVSu1JCDw&oe=6993A39A&_nc_sid=23467f"
     )!
 
+    private static let mockImageURL2 = URL(
+        string: "https://picsum.photos/seed/food1/800/800"
+    )!
+
+    private static let mockImageURL3 = URL(
+        string: "https://picsum.photos/seed/food2/800/800"
+    )!
+
     private func setupMockData() {
         let today = calendar.startOfDay(for: Date())
 
@@ -64,7 +72,7 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
                     date: yesterday,
                     mealType: .lunch,
                     genre: .korean,
-                    imageURLs: [Self.mockImageURL],
+                    imageURLs: [Self.mockImageURL, Self.mockImageURL2, Self.mockImageURL3],
                     restaurantName: "할머니 손칼국수",
                     address: "서울시 종로구 인사동길 12",
                     hashtags: ["칼국수", "만두", "김치"],

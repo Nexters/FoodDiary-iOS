@@ -5,7 +5,6 @@
 
 import Combine
 import DesignSystem
-import Domain
 import Kingfisher
 import SnapKit
 import UIKit
@@ -27,7 +26,7 @@ public final class FoodRecordCardView: UIView {
 
     // MARK: - State
 
-    public let record: FoodRecord
+    private let imageURL: URL?
 
     // MARK: - UI Components
 
@@ -61,10 +60,10 @@ public final class FoodRecordCardView: UIView {
 
     // MARK: - Init
 
-    public init(record: FoodRecord) {
-        self.record = record
-        self.timeBadge = PillBadgeView(text: record.formattedShortTime)
-        self.locationBadge = record.district.map { PillBadgeView(text: $0) }
+    public init(time: String, district: String?, imageURL: URL?) {
+        self.imageURL = imageURL
+        self.timeBadge = PillBadgeView(text: time)
+        self.locationBadge = district.map { PillBadgeView(text: $0) }
         super.init(frame: .zero)
         setupUI()
         setupConstraints()
@@ -107,21 +106,23 @@ public final class FoodRecordCardView: UIView {
     // MARK: - Configuration
 
     private func configure() {
-        setImageURL(record.imageURLs.first)
-    }
-
-    public func setImage(_ image: UIImage?) {
-        foodImageView.image = image
-    }
-
-    public func setImageURL(_ url: URL?) {
+        guard let imageURL else {
+            showImageUnavailable()
+            return
+        }
         foodImageView.kf.setImage(
-            with: url,
+            with: imageURL,
             placeholder: nil,
             options: [
                 .transition(.fade(Constants.fadeTransitionDuration)),
                 .cacheOriginalImage,
             ]
         )
+    }
+
+    private func showImageUnavailable() {
+        foodImageView.image = UIImage(systemName: "xmark.circle")
+        foodImageView.tintColor = .gray300
+        foodImageView.contentMode = .center
     }
 }

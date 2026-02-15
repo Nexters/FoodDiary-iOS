@@ -12,7 +12,6 @@ final class DashedBorderView: UIView {
     private let dashedBorderLayer: CAShapeLayer = {
         let layer = CAShapeLayer()
         layer.fillColor = UIColor.clear.cgColor
-        layer.strokeColor = DesignSystemAsset.gray900.color.cgColor
         layer.lineDashPattern = [4, 4]
         layer.lineWidth = 1
         return layer
@@ -24,8 +23,9 @@ final class DashedBorderView: UIView {
         }
     }
 
-    override init(frame: CGRect) {
-        super.init(frame: frame)
+    init(strokeColor: UIColor = DesignSystemAsset.gray900.color) {
+        super.init(frame: .zero)
+        dashedBorderLayer.strokeColor = strokeColor.cgColor
         setupLayer()
     }
 
