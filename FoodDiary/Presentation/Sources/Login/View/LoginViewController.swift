@@ -11,6 +11,7 @@ import UIKit
 import SnapKit
 import DesignSystem
 import Domain
+import UserNotifications
 
 final public class LoginViewController: UIViewController {
     private let didLoginSubject = PassthroughSubject<Void, Never>()
@@ -34,9 +35,27 @@ final public class LoginViewController: UIViewController {
         super.viewDidLoad()
         configureUI()
     }
+
+    override public func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        requestNotificationPermission()
+    }
 }
 
 private extension LoginViewController {
+    /// 알림 권한 요청
+    func requestNotificationPermission() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
+            guard let error else { return }
+            
+            if granted {
+                Task { @MainActor in
+                    UIApplication.shared.registerForRemoteNotifications()
+                }
+            }
+        }
+    }
+
     func configureUI() {
         view.backgroundColor = DesignSystemAsset.sdBase.color
         
@@ -90,16 +109,19 @@ private extension LoginViewController {
 extension LoginViewController: ASAuthorizationControllerDelegate {
     public func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
         if case let appleIDCredential as ASAuthorizationAppleIDCredential = authorization.credential {
-            if let token = appleIDCredential.identityToken {
+            if let token = appleIDCredential.identityToken,
+               let tokenString = String(data: token, encoding: .utf8) {
                 Task {
                     do {
-                        try await viewModel.sendIdentityToken(token)
+                        let _ = try await viewModel.sendIdentityToken(tokenString)
                         didLoginSubject.send()
                     } catch {
-                        // TODO: 추후에 에러 처리 필요
                         print(error.localizedDescription)
                     }
                 }
+            } else {
+                // TODO: identityToken 변환 실패 처리
+                print("identityToken 변환 실패")
             }
         }
     }
