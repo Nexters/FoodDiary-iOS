@@ -2,7 +2,7 @@
 //  NetworkMonitoring.swift
 //  Domain
 //
-//  Created by Claude on 2/13/26.
+//  Created by 강대훈 on 2/13/26.
 //
 
 import Foundation
