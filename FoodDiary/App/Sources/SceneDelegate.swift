@@ -42,10 +42,6 @@ private extension SceneDelegate {
             NetworkMonitor()
         }
 
-        container.register(DeviceInfoProviding.self) { _ in
-            DeviceInfoProvider()
-        }
-
         container.register(PushTokenStoring.self) { _ in
             PushTokenStorage()
         }
@@ -161,7 +157,6 @@ private extension SceneDelegate {
     func registerDomain() {
         container.register(FinalizeAppleLoginUseCase.self) { resolver in
             guard let repository = resolver.resolve(AuthRepository.self),
-                  let deviceInfoProvider = resolver.resolve(DeviceInfoProviding.self),
                   let pushTokenStorage = resolver.resolve(PushTokenStoring.self),
                   let notificationAuthProvider = resolver.resolve(NotificationAuthorizationProviding.self) else {
                 fatalError("FinalizeAppleLoginUseCase dependencies not registered")
@@ -169,7 +164,7 @@ private extension SceneDelegate {
 
             return FinalizeAppleLoginUseCase(
                 authRepository: repository,
-                deviceInfoProvider: deviceInfoProvider,
+                deviceInfoProvider: DeviceInfoProvider(),
                 pushTokenStorage: pushTokenStorage,
                 notificationAuthorizationProvider: notificationAuthProvider
             )
