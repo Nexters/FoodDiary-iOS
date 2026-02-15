@@ -36,10 +36,22 @@ private extension SceneDelegate {
         registerDomain()
         registerPresentation()
     }
-    
+
     func registerData() {
         container.register(NetworkMonitoring.self) { _ in
             NetworkMonitor()
+        }
+
+        container.register(DeviceInfoProviding.self) { _ in
+            DeviceInfoProvider()
+        }
+
+        container.register(PushTokenStoring.self) { _ in
+            PushTokenStorage()
+        }
+
+        container.register(NotificationAuthorizationProviding.self) { _ in
+            NotificationAuthorizationProvider()
         }
 
         container.register(KeychainService.self) { _ in
@@ -50,36 +62,36 @@ private extension SceneDelegate {
             HTTPClient()
         }
         
-        container.register(TokenManager<KeychainService>.self) { resolver in
+        container.register(AuthTokenStorage<KeychainService>.self) { resolver in
             guard let service = resolver.resolve(KeychainService.self) else {
                 fatalError("KeychainService not registered")
             }
-            
-            return TokenManager(keychainService: service)
+
+            return AuthTokenStorage(keychainService: service)
         }
         
         container.register(AuthRepository.self) { resolver in
-            guard let manager = resolver.resolve(TokenManager<KeychainService>.self) else {
-                fatalError("TokenManager not registered")
+            guard let storage = resolver.resolve(AuthTokenStorage<KeychainService>.self) else {
+                fatalError("AuthTokenStorage not registered")
             }
 
             guard let client = resolver.resolve(HTTPClient.self) else {
                 fatalError("HTTPClient not registered")
             }
 
-            return AuthRepositoryImpl(httpClient: client, tokenManager: manager)
+            return AuthRepositoryImpl(httpClient: client, tokenStorage: storage)
         }
 
         container.register(TokenRepository.self) { resolver in
             guard let client = resolver.resolve(HTTPClient.self) else {
                 fatalError("HTTPClient not registered")
             }
-            
-            guard let manager = resolver.resolve(TokenManager<KeychainService>.self) else {
-                fatalError("TokenManager not registered")
+
+            guard let storage = resolver.resolve(AuthTokenStorage<KeychainService>.self) else {
+                fatalError("AuthTokenStorage not registered")
             }
 
-            return TokenRepositoryImpl(httpClient: client, manager: manager)
+            return TokenRepositoryImpl(httpClient: client, storage: storage)
         }
 
         container.register(PHAssetConverter.self) { _ in
@@ -148,21 +160,29 @@ private extension SceneDelegate {
     
     func registerDomain() {
         container.register(FinalizeAppleLoginUseCase.self) { resolver in
-            guard let repository = resolver.resolve(AuthRepository.self) else {
-                fatalError("AuthRepository not registered")
+            guard let repository = resolver.resolve(AuthRepository.self),
+                  let deviceInfoProvider = resolver.resolve(DeviceInfoProviding.self),
+                  let pushTokenStorage = resolver.resolve(PushTokenStoring.self),
+                  let notificationAuthProvider = resolver.resolve(NotificationAuthorizationProviding.self) else {
+                fatalError("FinalizeAppleLoginUseCase dependencies not registered")
             }
 
-            return FinalizeAppleLoginUseCase(authRepository: repository)
+            return FinalizeAppleLoginUseCase(
+                authRepository: repository,
+                deviceInfoProvider: deviceInfoProvider,
+                pushTokenStorage: pushTokenStorage,
+                notificationAuthorizationProvider: notificationAuthProvider
+            )
         }
 
         container.register(
-            ValidateAccessTokenUseCase<TokenRepositoryImpl<HTTPClient, TokenManager<KeychainService>>>.self
+            ValidateAccessTokenUseCase<TokenRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>.self
         ) { resolver in
             guard let repository = resolver.resolve(TokenRepository.self) else {
                 fatalError("TokenRepository not registered")
             }
 
-            guard let concreteRepository = repository as? TokenRepositoryImpl<HTTPClient, TokenManager<KeychainService>> else {
+            guard let concreteRepository = repository as? TokenRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>> else {
                 fatalError("TokenRepository is not of expected type")
             }
 

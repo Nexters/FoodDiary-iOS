@@ -14,6 +14,7 @@ import Data
 
 final class AppFlowController: UIViewController {
     private var currentChild: UIViewController?
+    private var networkCancellable: AnyCancellable?
     private var cancellables = Set<AnyCancellable>()
     private let container: DIContainer
 
@@ -40,12 +41,11 @@ private extension AppFlowController {
 
         networkMonitor.startMonitoring()
         
-        networkMonitor.networkStatusPublisher
+        networkCancellable = networkMonitor.networkStatusPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] isConnected in
                 self?.handleNetworkStatusChange(isConnected: isConnected)
             }
-            .store(in: &cancellables)
     }
 
     func handleNetworkStatusChange(isConnected: Bool) {
@@ -58,7 +58,8 @@ private extension AppFlowController {
         Task {
             let isLogin = await validateToken()
             routeToAppropriateScreen(isLogin: isLogin)
-            cancellables.removeAll()
+            networkCancellable?.cancel()
+            networkCancellable = nil
         }
     }
 
@@ -69,7 +70,7 @@ private extension AppFlowController {
     
     func validateToken() async -> Bool {
         guard let validateAccessTokenUseCase = try? container.resolve(
-            ValidateAccessTokenUseCase<TokenRepositoryImpl<HTTPClient, TokenManager<KeychainService>>>.self
+            ValidateAccessTokenUseCase<TokenRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>.self
         ) else {
             fatalError("ValidateAccessTokenUseCase Failed Resolve")
         }
