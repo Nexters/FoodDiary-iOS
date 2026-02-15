@@ -8,17 +8,17 @@
 import Domain
 import Foundation
 
-public struct TokenRepositoryImpl<Client: HTTPClienting, Manager: TokenManaging>: TokenRepository {
+public struct TokenRepositoryImpl<Client: HTTPClienting, Storage: AuthTokenStoring>: TokenRepository {
     let httpClient: Client
-    let manager: Manager
+    let storage: Storage
 
-    public init(httpClient: Client, manager: Manager) {
+    public init(httpClient: Client, storage: Storage) {
         self.httpClient = httpClient
-        self.manager = manager
+        self.storage = storage
     }
 
     public func verifyToken() async -> Bool {
-        guard let accessToken = manager.get() else {
+        guard let accessToken = storage.get() else {
             return false
         }
         
