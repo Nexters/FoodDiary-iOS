@@ -35,27 +35,29 @@ final public class LoginViewController: UIViewController {
         super.viewDidLoad()
         configureUI()
     }
-
+    
     override public func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        requestNotificationPermission()
+        Task { await requestNotificationPermission() }
     }
 }
 
 private extension LoginViewController {
     /// 알림 권한 요청
-    func requestNotificationPermission() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
-            guard let error else { return }
-            
+    func requestNotificationPermission() async {
+        do {
+            let granted = try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound])
             if granted {
-                Task { @MainActor in
+                await MainActor.run {
                     UIApplication.shared.registerForRemoteNotifications()
                 }
             }
+        } catch {
+            // TODO: 추후 처리
+            print(error.localizedDescription)
         }
     }
-
+    
     func configureUI() {
         view.backgroundColor = DesignSystemAsset.sdBase.color
         
