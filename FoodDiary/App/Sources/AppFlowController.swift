@@ -13,7 +13,6 @@ import Domain
 import Data
 
 final class AppFlowController: UIViewController {
-    private var isLogin: Bool = true
     private var currentChild: UIViewController?
     private var cancellables = Set<AnyCancellable>()
     private let container: DIContainer
@@ -29,24 +28,53 @@ final class AppFlowController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        updateLoginStateFromToken()
-        routeToAppropriateScreen()
+        setupNetworkMonitoring()
     }
 }
 
 private extension AppFlowController {
-    func routeToAppropriateScreen() {
+    func setupNetworkMonitoring() {
+        guard let networkMonitor = try? container.resolve(NetworkMonitoring.self) else {
+            fatalError("NetworkMonitoring not registered")
+        }
+
+        networkMonitor.startMonitoring()
+        
+        networkMonitor.networkStatusPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isConnected in
+                self?.handleNetworkStatusChange(isConnected: isConnected)
+            }
+            .store(in: &cancellables)
+    }
+
+    func handleNetworkStatusChange(isConnected: Bool) {
+        if isConnected {
+            proceedToNextScreen()
+        }
+    }
+
+    func proceedToNextScreen() {
+        Task {
+            let isLogin = await validateToken()
+            routeToAppropriateScreen(isLogin: isLogin)
+            cancellables.removeAll()
+        }
+    }
+
+    func routeToAppropriateScreen(isLogin: Bool) {
         let destinationVC = isLogin ? createMainView() : createLoginView()
         transition(to: destinationVC)
     }
     
-    func updateLoginStateFromToken() {
-        // TODO: 로그인 복구 시 아래 코드로 되돌릴 것
-        // guard let tokenManager = try? container.resolve(TokenManager<KeychainService>.self) else {
-        //     fatalError("TokenManager Failed Resolve")
-        // }
-        // isLogin = tokenManager.get() != nil
-        isLogin = true
+    func validateToken() async -> Bool {
+        guard let validateAccessTokenUseCase = try? container.resolve(
+            ValidateAccessTokenUseCase<TokenRepositoryImpl<HTTPClient, TokenManager<KeychainService>>>.self
+        ) else {
+            fatalError("ValidateAccessTokenUseCase Failed Resolve")
+        }
+
+        return await validateAccessTokenUseCase.execute()
     }
     
     func createMainView() -> UIViewController {
@@ -106,9 +134,7 @@ private extension AppFlowController {
         loginVC.didLoginPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
-                guard let self else { return }
-                self.isLogin = true
-                self.routeToAppropriateScreen()
+                self?.routeToAppropriateScreen(isLogin: true)
             }
             .store(in: &cancellables)
 

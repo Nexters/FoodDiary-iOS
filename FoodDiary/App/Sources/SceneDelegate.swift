@@ -38,6 +38,10 @@ private extension SceneDelegate {
     }
     
     func registerData() {
+        container.register(NetworkMonitoring.self) { _ in
+            NetworkMonitor()
+        }
+
         container.register(KeychainService.self) { _ in
             KeychainService()
         }
@@ -58,12 +62,24 @@ private extension SceneDelegate {
             guard let manager = resolver.resolve(TokenManager<KeychainService>.self) else {
                 fatalError("TokenManager not registered")
             }
-            
+
+            guard let client = resolver.resolve(HTTPClient.self) else {
+                fatalError("HTTPClient not registered")
+            }
+
+            return AuthRepositoryImpl(httpClient: client, tokenManager: manager)
+        }
+
+        container.register(TokenRepository.self) { resolver in
             guard let client = resolver.resolve(HTTPClient.self) else {
                 fatalError("HTTPClient not registered")
             }
             
-            return AuthRepositoryImpl(httpClient: client, tokenManager: manager)
+            guard let manager = resolver.resolve(TokenManager<KeychainService>.self) else {
+                fatalError("TokenManager not registered")
+            }
+
+            return TokenRepositoryImpl(httpClient: client, manager: manager)
         }
 
         container.register(PHAssetConverter.self) { _ in
@@ -135,8 +151,22 @@ private extension SceneDelegate {
             guard let repository = resolver.resolve(AuthRepository.self) else {
                 fatalError("AuthRepository not registered")
             }
-            
+
             return FinalizeAppleLoginUseCase(authRepository: repository)
+        }
+
+        container.register(
+            ValidateAccessTokenUseCase<TokenRepositoryImpl<HTTPClient, TokenManager<KeychainService>>>.self
+        ) { resolver in
+            guard let repository = resolver.resolve(TokenRepository.self) else {
+                fatalError("TokenRepository not registered")
+            }
+
+            guard let concreteRepository = repository as? TokenRepositoryImpl<HTTPClient, TokenManager<KeychainService>> else {
+                fatalError("TokenRepository is not of expected type")
+            }
+
+            return ValidateAccessTokenUseCase(repository: concreteRepository)
         }
 
         container.register(

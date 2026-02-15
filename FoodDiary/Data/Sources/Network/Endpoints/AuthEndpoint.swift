@@ -10,6 +10,7 @@ import Foundation
 
 public enum AuthEndpoint {
     case login(idToken: String)
+    case verify
 }
 
 extension AuthEndpoint: Requestable {
@@ -25,6 +26,8 @@ extension AuthEndpoint: Requestable {
         switch self {
         case .login:
             "/auth/login"
+        case .verify:
+            "/auth/verify"
         }
     }
     
@@ -32,12 +35,16 @@ extension AuthEndpoint: Requestable {
         switch self {
         case .login:
             .post
+        case .verify:
+            .get
         }
     }
     
     public var queryParameters: Encodable? {
         switch self {
         case .login:
+            nil
+        case .verify:
             nil
         }
     }
@@ -46,12 +53,14 @@ extension AuthEndpoint: Requestable {
         switch self {
         case let .login(idToken):
             AuthRequestDTO(idToken: idToken, provider: .apple)
+        case .verify:
+            nil
         }
     }
     
     public var headers: [String : String] {
         switch self {
-        case .login:
+        case .login, .verify:
             [:]
         }
     }
