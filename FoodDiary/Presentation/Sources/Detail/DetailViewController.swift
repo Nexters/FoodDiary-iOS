@@ -29,6 +29,7 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
 
     private let viewModel: DetailViewModel<RecordRepo>
     private let onDismissWithDate: ((Date) -> Void)?
+    private let onEditRecord: ((FoodRecord) -> Void)?
 
     // MARK: - UI Components
 
@@ -63,10 +64,12 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
 
     public init(
         viewModel: DetailViewModel<RecordRepo>,
-        onDismissWithDate: ((Date) -> Void)? = nil
+        onDismissWithDate: ((Date) -> Void)? = nil,
+        onEditRecord: ((FoodRecord) -> Void)? = nil
     ) {
         self.viewModel = viewModel
         self.onDismissWithDate = onDismissWithDate
+        self.onEditRecord = onEditRecord
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -243,8 +246,8 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
 
         breakfastSection.editTapPublisher
             .merge(with: lunchSection.editTapPublisher, dinnerSection.editTapPublisher, lateNightSection.editTapPublisher)
-            .sink { [weak self] mealType in
-                self?.handleEdit(mealType: mealType)
+            .sink { [weak self] record in
+                self?.handleEdit(record: record)
             }
             .store(in: &cancellables)
 
@@ -351,8 +354,8 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
         // TODO: Show more options menu
     }
 
-    private func handleEdit(mealType: MealType) {
-        // TODO: Navigate to edit screen
+    private func handleEdit(record: FoodRecord) {
+        onEditRecord?(record)
     }
 
     private func handleAddPhoto() {

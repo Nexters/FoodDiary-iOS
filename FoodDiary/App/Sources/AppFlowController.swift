@@ -56,7 +56,12 @@ private extension AppFlowController {
 
     func proceedToNextScreen() {
         Task {
+            // FIXME: 개발 완료 후 제거
+            #if DEBUG
+            let isLogin = true
+            #else
             let isLogin = await validateToken()
+            #endif
             routeToAppropriateScreen(isLogin: isLogin)
             cancellables.removeAll()
         }
@@ -109,6 +114,9 @@ private extension AppFlowController {
         }
 
         typealias DetailVM = DetailViewModel<MockFoodRecordRepository>
+        typealias EditVM = EditFoodRecordViewModel<MockFoodRecordRepository, KakaoAddressRepository>
+
+        let navigationController = UINavigationController()
 
         let weeklyCalendarVC = WeeklyCalendarViewController(
             viewModel: viewModel,
@@ -118,10 +126,22 @@ private extension AppFlowController {
                     fatalError("DetailViewModel not registered")
                 }
                 return vm
+            },
+            onEditRecord: { [container, weak navigationController] record in
+                guard let editVM = try? container.resolve(EditVM.self, argument: record) else {
+                    fatalError("EditFoodRecordViewModel not registered")
+                }
+
+                let editVC = EditFoodRecordViewController(
+                    viewModel: editVM,
+                    onDismissWithResult: { _ in }
+                )
+                navigationController?.pushViewController(editVC, animated: true)
             }
         )
 
-        return UINavigationController(rootViewController: weeklyCalendarVC)
+        navigationController.viewControllers = [weeklyCalendarVC]
+        return navigationController
     }
     
     func createLoginView() -> UIViewController {

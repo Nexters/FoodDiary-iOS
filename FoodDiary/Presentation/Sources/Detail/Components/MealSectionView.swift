@@ -32,7 +32,7 @@ final class MealSectionView: UIView {
         shareTapSubject.eraseToAnyPublisher()
     }
 
-    var editTapPublisher: AnyPublisher<MealType, Never> {
+    var editTapPublisher: AnyPublisher<FoodRecord, Never> {
         editTapSubject.eraseToAnyPublisher()
     }
 
@@ -42,7 +42,7 @@ final class MealSectionView: UIView {
 
     private let copyTapSubject = PassthroughSubject<FoodRecord, Never>()
     private let shareTapSubject = PassthroughSubject<FoodRecord, Never>()
-    private let editTapSubject = PassthroughSubject<MealType, Never>()
+    private let editTapSubject = PassthroughSubject<FoodRecord, Never>()
     private let addButtonTapSubject = PassthroughSubject<Void, Never>()
     private var cancellables = Set<AnyCancellable>()
 
@@ -50,6 +50,7 @@ final class MealSectionView: UIView {
 
     private let mealType: MealType
     private var currentState: State?
+    private var currentDisplayedRecord: FoodRecord?
 
     // MARK: - UI Components
 
@@ -197,6 +198,9 @@ final class MealSectionView: UIView {
             },
             onShareTapped: { [weak self] record in
                 self?.shareTapSubject.send(record)
+            },
+            onCurrentRecordChanged: { [weak self] record in
+                self?.currentDisplayedRecord = record
             }
         )
         
@@ -211,7 +215,8 @@ final class MealSectionView: UIView {
     // MARK: - Actions
 
     @objc private func editTapped() {
-        editTapSubject.send(mealType)
+        guard let record = currentDisplayedRecord else { return }
+        editTapSubject.send(record)
     }
 }
 

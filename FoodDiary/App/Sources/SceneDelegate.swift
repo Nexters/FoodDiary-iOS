@@ -144,6 +144,13 @@ private extension SceneDelegate {
         container.register(PushNotificationObserver.self) { _ in
             PushNotificationObserver()
         }
+
+        container.register(KakaoAddressRepository.self) { resolver in
+            guard let client = resolver.resolve(HTTPClient.self) else {
+                fatalError("HTTPClient not registered")
+            }
+            return KakaoAddressRepository(httpClient: client)
+        }
     }
     
     func registerDomain() {
@@ -256,6 +263,23 @@ private extension SceneDelegate {
             )
         }
 
+        container.register(
+            UpdateFoodRecordUseCase<MockFoodRecordRepository>.self
+        ) { resolver in
+            guard let repository = resolver.resolve(MockFoodRecordRepository.self) else {
+                fatalError("MockFoodRecordRepository not registered")
+            }
+            return UpdateFoodRecordUseCase(repository: repository)
+        }
+
+        container.register(
+            DeleteFoodRecordUseCase<MockFoodRecordRepository>.self
+        ) { resolver in
+            guard let repository = resolver.resolve(MockFoodRecordRepository.self) else {
+                fatalError("MockFoodRecordRepository not registered")
+            }
+            return DeleteFoodRecordUseCase(repository: repository)
+        }
     }
     
     func registerPresentation() {
@@ -328,6 +352,32 @@ private extension SceneDelegate {
                 return DetailViewModel(
                     initialDate: initialDate,
                     fetchRecordsUseCase: fetchRecordsUseCase
+                )
+            }
+        )
+
+        typealias EditVM = EditFoodRecordViewModel<MockFoodRecordRepository, KakaoAddressRepository>
+
+        container.register(
+            EditVM.self,
+            argument: FoodRecord.self,
+            scope: .transient,
+            factory: { resolver, record in
+                guard let updateUseCase = resolver.resolve(
+                    UpdateFoodRecordUseCase<MockFoodRecordRepository>.self
+                ),
+                      let deleteUseCase = resolver.resolve(
+                          DeleteFoodRecordUseCase<MockFoodRecordRepository>.self
+                      ),
+                      let addressRepo = resolver.resolve(KakaoAddressRepository.self) else {
+                    fatalError("EditFoodRecordViewModel dependencies not registered")
+                }
+
+                return EditFoodRecordViewModel(
+                    record: record,
+                    updateFoodRecordUseCase: updateUseCase,
+                    deleteFoodRecordUseCase: deleteUseCase,
+                    addressRepository: addressRepo
                 )
             }
         )

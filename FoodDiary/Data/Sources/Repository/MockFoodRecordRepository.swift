@@ -43,6 +43,51 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
         return uploadId
     }
 
+    public func updateRecord(_ request: UpdateFoodRecordRequest) async throws -> FoodRecord {
+        for (dateKey, records) in mockRecords {
+            if let index = records.firstIndex(where: { $0.id == request.id }) {
+                let existing = records[index]
+                let combinedAddress: String? = if let address = request.address {
+                    if let detail = request.detailAddress, !detail.isEmpty {
+                        "\(address) \(detail)"
+                    } else {
+                        address
+                    }
+                } else {
+                    existing.address
+                }
+
+                let updated = FoodRecord(
+                    id: existing.id,
+                    date: existing.date,
+                    mealType: existing.mealType,
+                    genre: request.genre,
+                    imageURLs: request.existingImageURLs,
+                    restaurantName: existing.restaurantName,
+                    address: combinedAddress,
+                    hashtags: request.hashtags,
+                    createdAt: existing.createdAt
+                )
+                mockRecords[dateKey]?[index] = updated
+                return updated
+            }
+        }
+        throw NSError(domain: "MockFoodRecordRepository", code: 404, userInfo: [NSLocalizedDescriptionKey: "기록을 찾을 수 없습니다"])
+    }
+
+    public func deleteRecord(id: String) async throws {
+        for (dateKey, records) in mockRecords {
+            if let index = records.firstIndex(where: { $0.id == id }) {
+                mockRecords[dateKey]?.remove(at: index)
+                if mockRecords[dateKey]?.isEmpty == true {
+                    mockRecords.removeValue(forKey: dateKey)
+                }
+                return
+            }
+        }
+        throw NSError(domain: "MockFoodRecordRepository", code: 404, userInfo: [NSLocalizedDescriptionKey: "기록을 찾을 수 없습니다"])
+    }
+
     // MARK: - Mock Data Setup
 
     private static let mockImageURL = URL(
