@@ -145,11 +145,8 @@ private extension SceneDelegate {
             PushNotificationObserver()
         }
 
-        container.register(KakaoAddressRepository.self) { resolver in
-            guard let client = resolver.resolve(HTTPClient.self) else {
-                fatalError("HTTPClient not registered")
-            }
-            return KakaoAddressRepository(httpClient: client)
+        container.register(MockAddressSearchRepository.self) { _ in
+            MockAddressSearchRepository()
         }
     }
     
@@ -280,6 +277,15 @@ private extension SceneDelegate {
             }
             return DeleteFoodRecordUseCase(repository: repository)
         }
+
+        container.register(
+            SearchAddressUseCase<MockAddressSearchRepository>.self
+        ) { resolver in
+            guard let addressRepo = resolver.resolve(MockAddressSearchRepository.self) else {
+                fatalError("MockAddressSearchRepository not registered")
+            }
+            return SearchAddressUseCase(repository: addressRepo)
+        }
     }
     
     func registerPresentation() {
@@ -356,7 +362,7 @@ private extension SceneDelegate {
             }
         )
 
-        typealias EditVM = EditFoodRecordViewModel<MockFoodRecordRepository, KakaoAddressRepository>
+        typealias EditVM = EditFoodRecordViewModel<MockFoodRecordRepository>
 
         container.register(
             EditVM.self,
@@ -368,16 +374,33 @@ private extension SceneDelegate {
                 ),
                       let deleteUseCase = resolver.resolve(
                           DeleteFoodRecordUseCase<MockFoodRecordRepository>.self
-                      ),
-                      let addressRepo = resolver.resolve(KakaoAddressRepository.self) else {
+                      ) else {
                     fatalError("EditFoodRecordViewModel dependencies not registered")
                 }
 
                 return EditFoodRecordViewModel(
                     record: record,
                     updateFoodRecordUseCase: updateUseCase,
-                    deleteFoodRecordUseCase: deleteUseCase,
-                    addressRepository: addressRepo
+                    deleteFoodRecordUseCase: deleteUseCase
+                )
+            }
+        )
+
+        typealias AddressSearchVM = AddressSearchViewModel<MockAddressSearchRepository>
+
+        container.register(
+            AddressSearchVM.self,
+            argument: String.self,
+            scope: .transient,
+            factory: { resolver, restaurantName in
+                guard let searchUseCase = resolver.resolve(
+                    SearchAddressUseCase<MockAddressSearchRepository>.self
+                ) else {
+                    fatalError("SearchAddressUseCase not registered")
+                }
+                return AddressSearchViewModel(
+                    searchAddressUseCase: searchUseCase,
+                    restaurantName: restaurantName
                 )
             }
         )

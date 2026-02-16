@@ -24,8 +24,7 @@ private enum EditFoodRecordConstants {
 }
 
 public final class EditFoodRecordViewController<
-    RecordRepo: FoodRecordRepository,
-    AddressRepo: AddressSearchRepository
+    RecordRepo: FoodRecordRepository
 >: UIViewController {
 
     // MARK: - Types
@@ -38,8 +37,9 @@ public final class EditFoodRecordViewController<
 
     // MARK: - Dependencies
 
-    private let viewModel: EditFoodRecordViewModel<RecordRepo, AddressRepo>
+    private let viewModel: EditFoodRecordViewModel<RecordRepo>
     private let onDismissWithResult: ((EditResult) -> Void)?
+    private let onPresentAddressSearch: ((@escaping (AddressSearchResult) -> Void) -> Void)?
 
     // MARK: - UI Components
 
@@ -75,7 +75,7 @@ public final class EditFoodRecordViewController<
         return label
     }()
 
-    private let addressSectionView = AddressSearchSectionView()
+    private let addressDisplayView = AddressDisplayView()
 
     private let tagTitleLabel: UILabel = {
         let label = UILabel()
@@ -113,11 +113,13 @@ public final class EditFoodRecordViewController<
     // MARK: - Init
 
     public init(
-        viewModel: EditFoodRecordViewModel<RecordRepo, AddressRepo>,
-        onDismissWithResult: ((EditResult) -> Void)? = nil
+        viewModel: EditFoodRecordViewModel<RecordRepo>,
+        onDismissWithResult: ((EditResult) -> Void)? = nil,
+        onPresentAddressSearch: ((@escaping (AddressSearchResult) -> Void) -> Void)? = nil
     ) {
         self.viewModel = viewModel
         self.onDismissWithResult = onDismissWithResult
+        self.onPresentAddressSearch = onPresentAddressSearch
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -158,7 +160,7 @@ public final class EditFoodRecordViewController<
         contentView.addSubview(categoryTitleLabel)
         contentView.addSubview(categoryStackView)
         contentView.addSubview(addressTitleLabel)
-        contentView.addSubview(addressSectionView)
+        contentView.addSubview(addressDisplayView)
         contentView.addSubview(tagTitleLabel)
         contentView.addSubview(tagSectionView)
 
@@ -219,13 +221,13 @@ public final class EditFoodRecordViewController<
             $0.leading.equalToSuperview().offset(EditFoodRecordConstants.horizontalInset)
         }
 
-        addressSectionView.snp.makeConstraints {
+        addressDisplayView.snp.makeConstraints {
             $0.top.equalTo(addressTitleLabel.snp.bottom).offset(EditFoodRecordConstants.contentTopSpacing)
             $0.leading.trailing.equalToSuperview().inset(EditFoodRecordConstants.horizontalInset)
         }
 
         tagTitleLabel.snp.makeConstraints {
-            $0.top.equalTo(addressSectionView.snp.bottom).offset(EditFoodRecordConstants.sectionSpacing)
+            $0.top.equalTo(addressDisplayView.snp.bottom).offset(EditFoodRecordConstants.sectionSpacing)
             $0.leading.equalToSuperview().offset(EditFoodRecordConstants.horizontalInset)
         }
 
@@ -274,7 +276,7 @@ public final class EditFoodRecordViewController<
             .map { ($0.address, $0.detailAddress) }
             .receive(on: DispatchQueue.main)
             .sink { [weak self] address, detailAddress in
-                self?.addressSectionView.configure(address: address, detailAddress: detailAddress)
+                self?.addressDisplayView.configure(address: address, detailAddress: detailAddress)
             }
             .store(in: &cancellables)
 
@@ -284,15 +286,6 @@ public final class EditFoodRecordViewController<
             .receive(on: DispatchQueue.main)
             .sink { [weak self] tags in
                 self?.tagSectionView.configure(tags: tags)
-            }
-            .store(in: &cancellables)
-
-        viewModel.statePublisher
-            .map(\.addressSearchResults)
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] results in
-                self?.addressSectionView.updateSearchResults(results)
             }
             .store(in: &cancellables)
 
@@ -324,19 +317,13 @@ public final class EditFoodRecordViewController<
             }
             .store(in: &cancellables)
 
-        addressSectionView.searchTextPublisher
-            .sink { [weak self] text in
-                self?.viewModel.input.send(.searchAddress(text))
+        addressDisplayView.addressTapPublisher
+            .sink { [weak self] in
+                self?.presentAddressSearchModal()
             }
             .store(in: &cancellables)
 
-        addressSectionView.addressSelectedPublisher
-            .sink { [weak self] result in
-                self?.viewModel.input.send(.selectAddress(result))
-            }
-            .store(in: &cancellables)
-
-        addressSectionView.detailAddressPublisher
+        addressDisplayView.detailAddressPublisher
             .sink { [weak self] text in
                 self?.viewModel.input.send(.updateDetailAddress(text))
             }
@@ -367,7 +354,7 @@ public final class EditFoodRecordViewController<
         }
     }
 
-    private func handleEvent(_ event: EditFoodRecordViewModel<RecordRepo, AddressRepo>.Event) {
+    private func handleEvent(_ event: EditFoodRecordViewModel<RecordRepo>.Event) {
         switch event {
         case .saveCompleted(let record):
             onDismissWithResult?(.updated(record))
@@ -385,6 +372,12 @@ public final class EditFoodRecordViewController<
             )
             alert.addAction(UIAlertAction(title: "확인", style: .default))
             present(alert, animated: true)
+        }
+    }
+
+    private func presentAddressSearchModal() {
+        onPresentAddressSearch? { [weak self] result in
+            self?.viewModel.input.send(.selectAddress(result))
         }
     }
 

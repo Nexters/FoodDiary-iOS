@@ -8,10 +8,7 @@ import Domain
 import Foundation
 import UIKit
 
-public final class EditFoodRecordViewModel<
-    RecordRepo: FoodRecordRepository,
-    AddressRepo: AddressSearchRepository
-> {
+public final class EditFoodRecordViewModel<RecordRepo: FoodRecordRepository> {
 
     // MARK: - Output
 
@@ -42,19 +39,16 @@ public final class EditFoodRecordViewModel<
 
     private let updateFoodRecordUseCase: UpdateFoodRecordUseCase<RecordRepo>
     private let deleteFoodRecordUseCase: DeleteFoodRecordUseCase<RecordRepo>
-    private let addressRepository: AddressRepo
 
     // MARK: - Init
 
     public init(
         record: FoodRecord,
         updateFoodRecordUseCase: UpdateFoodRecordUseCase<RecordRepo>,
-        deleteFoodRecordUseCase: DeleteFoodRecordUseCase<RecordRepo>,
-        addressRepository: AddressRepo
+        deleteFoodRecordUseCase: DeleteFoodRecordUseCase<RecordRepo>
     ) {
         self.updateFoodRecordUseCase = updateFoodRecordUseCase
         self.deleteFoodRecordUseCase = deleteFoodRecordUseCase
-        self.addressRepository = addressRepository
 
         self.stateSubject = CurrentValueSubject(
             State(
@@ -63,10 +57,8 @@ public final class EditFoodRecordViewModel<
                 newImages: [],
                 selectedGenre: record.genre,
                 address: record.address,
-                detailAddress: "",
+                detailAddress: record.restaurantName ?? "",
                 hashtags: record.hashtags,
-                addressSearchResults: [],
-                isSearchingAddress: false,
                 isSaving: false
             )
         )
@@ -104,23 +96,9 @@ public final class EditFoodRecordViewModel<
         case .selectGenre(let genre):
             state.selectedGenre = genre
 
-        case .searchAddress(let keyword):
-            guard !keyword.isEmpty else {
-                state.addressSearchResults = []
-                return
-            }
-            state.isSearchingAddress = true
-            do {
-                let results = try await addressRepository.searchAddress(keyword: keyword, page: 1)
-                state.addressSearchResults = results
-            } catch {
-                state.addressSearchResults = []
-            }
-            state.isSearchingAddress = false
-
         case .selectAddress(let result):
             state.address = result.roadAddress
-            state.addressSearchResults = []
+            state.detailAddress = result.placeName
 
         case .updateDetailAddress(let text):
             state.detailAddress = text
@@ -189,8 +167,6 @@ extension EditFoodRecordViewModel {
         public var address: String?
         public var detailAddress: String
         public var hashtags: [String]
-        public var addressSearchResults: [AddressSearchResult]
-        public var isSearchingAddress: Bool
         public var isSaving: Bool
 
         public static func == (lhs: Self, rhs: Self) -> Bool {
@@ -201,8 +177,6 @@ extension EditFoodRecordViewModel {
                 && lhs.address == rhs.address
                 && lhs.detailAddress == rhs.detailAddress
                 && lhs.hashtags == rhs.hashtags
-                && lhs.addressSearchResults == rhs.addressSearchResults
-                && lhs.isSearchingAddress == rhs.isSearchingAddress
                 && lhs.isSaving == rhs.isSaving
         }
     }
@@ -212,7 +186,6 @@ extension EditFoodRecordViewModel {
         case removeNewImage(at: Int)
         case addImages([UIImage])
         case selectGenre(FoodGenre)
-        case searchAddress(String)
         case selectAddress(AddressSearchResult)
         case updateDetailAddress(String)
         case addHashtag(String)

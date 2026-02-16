@@ -32,7 +32,7 @@ final class EditImageCell: UICollectionViewCell {
         let button = UIButton()
         let config = UIImage.SymbolConfiguration(pointSize: 12, weight: .bold)
         button.setImage(
-            UIImage(systemName: "xmark.circle.fill")?.withConfiguration(config),
+            UIImage(systemName: "xmark")?.withConfiguration(config),
             for: .normal
         )
         button.tintColor = .white

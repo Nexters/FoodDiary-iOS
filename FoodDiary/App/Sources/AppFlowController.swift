@@ -114,7 +114,8 @@ private extension AppFlowController {
         }
 
         typealias DetailVM = DetailViewModel<MockFoodRecordRepository>
-        typealias EditVM = EditFoodRecordViewModel<MockFoodRecordRepository, KakaoAddressRepository>
+        typealias EditVM = EditFoodRecordViewModel<MockFoodRecordRepository>
+        typealias AddressSearchVM = AddressSearchViewModel<MockAddressSearchRepository>
 
         let navigationController = UINavigationController()
 
@@ -134,7 +135,24 @@ private extension AppFlowController {
 
                 let editVC = EditFoodRecordViewController(
                     viewModel: editVM,
-                    onDismissWithResult: { _ in }
+                    onDismissWithResult: { _ in },
+                    onPresentAddressSearch: { [container, weak navigationController] onSelect in
+                        let restaurantName = editVM.state.originalRecord.restaurantName ?? ""
+                        guard let addressVM = try? container.resolve(
+                            AddressSearchVM.self,
+                            argument: restaurantName
+                        ) else {
+                            fatalError("AddressSearchViewModel not registered")
+                        }
+                        let addressSearchVC = AddressSearchViewController(viewModel: addressVM)
+                        addressSearchVC.onAddressSelected = { result in
+                            onSelect(result)
+                        }
+                        navigationController?.topViewController?.present(
+                            addressSearchVC,
+                            animated: true
+                        )
+                    }
                 )
                 navigationController?.pushViewController(editVC, animated: true)
             }

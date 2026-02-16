@@ -163,6 +163,7 @@ final class TagSectionView: UIView {
         let containerStack = UIStackView()
         containerStack.axis = .vertical
         containerStack.spacing = Constants.chipSpacing
+        containerStack.alignment = .leading
 
         flowLayoutView.addSubview(containerStack)
         containerStack.snp.makeConstraints {
@@ -174,7 +175,8 @@ final class TagSectionView: UIView {
         for chip in chips {
             chip.layoutIfNeeded()
             let chipWidth = chip.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize).width
-            let neededWidth = currentRowWidth + (currentRowWidth > 0 ? Constants.chipSpacing : 0) + chipWidth
+            let neededWidth =
+                currentRowWidth + (currentRowWidth > 0 ? Constants.chipSpacing : 0) + chipWidth
 
             if neededWidth > maxWidth && currentRowWidth > 0 {
                 containerStack.addArrangedSubview(currentRow)
