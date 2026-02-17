@@ -47,11 +47,10 @@ public final class RootTabBarController: UITabBarController {
         insightNav.tabBarItem = UITabBarItem(title: "인사이트", image: DesignSystemAsset.iconInsight.image, tag: 1)
 
         let toggleVC = UIViewController()
-        let toggleNav = UINavigationController(rootViewController: toggleVC)
-        toggleNav.tabBarItem = UITabBarItem(tabBarSystemItem: .search, tag: 2)
-        toggleNav.tabBarItem.image = DesignSystemAsset.iconWeekly.image
+        toggleVC.tabBarItem = UITabBarItem(tabBarSystemItem: .search, tag: 2)
+        toggleVC.tabBarItem.image = DesignSystemAsset.iconWeekly.image
 
-        viewControllers = [calendarNav, insightNav, toggleNav]
+        viewControllers = [calendarNav, insightNav, toggleVC]
     }
     
     private func toggleViewMode() {
