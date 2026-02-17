@@ -134,8 +134,7 @@ private extension AppFlowController {
         let weeklyCalendarVC = WeeklyCalendarViewController(viewModel: weeklyViewModel, imageProvider: imageProvider)
         let monthlyCalendarVC = MonthlyCalendarViewController(viewModel: monthlyViewModel)
 
-        let calendarVC = CalendarViewController(weeklyVC: weeklyCalendarVC, monthlyVC: monthlyCalendarVC)
-        let tabBarVC = RootTabBarController(calendarVC: calendarVC, insightVC: UIViewController())
+        let tabBarVC = RootTabBarController(weeklyVC: weeklyCalendarVC, monthlyVC: monthlyCalendarVC, insightVC: UIViewController())
         return tabBarVC
     }
     

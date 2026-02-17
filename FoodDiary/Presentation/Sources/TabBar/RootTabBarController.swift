@@ -13,9 +13,9 @@ public final class RootTabBarController: UITabBarController {
     let calendarVC: CalendarViewController
     let insightVC: UIViewController
     private var cancellables = Set<AnyCancellable>()
-    
-    public init(calendarVC: CalendarViewController, insightVC: UIViewController) {
-        self.calendarVC = calendarVC
+
+    public init(weeklyVC: UIViewController, monthlyVC: UIViewController, insightVC: UIViewController) {
+        self.calendarVC = CalendarViewController(weeklyVC: weeklyVC, monthlyVC: monthlyVC)
         self.insightVC = insightVC
         super.init(nibName: nil, bundle: nil)
     }
