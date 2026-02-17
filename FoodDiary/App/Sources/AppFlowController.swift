@@ -97,18 +97,6 @@ private extension AppFlowController {
             fatalError("WeeklyCalendarViewModel not registered")
         }
 
-        guard let requestPhotoAuthorizationUseCase = try? container.resolve(
-            RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>.self
-        ) else {
-            fatalError("RequestPhotoAuthorizationUseCase not registered")
-        }
-
-        guard let fetchMonthlyCalendarDaysUseCase = try? container.resolve(
-            FetchMonthlyCalendarDaysUseCase<MockFoodRecordRepository>.self
-        ) else {
-            fatalError("FetchMonthlyCalendarDaysUseCase not registered")
-        }
-
         typealias DetailVM = DetailViewModel<MockFoodRecordRepository>
 
         let weeklyCalendarVC = WeeklyCalendarViewController(
@@ -131,7 +119,6 @@ private extension AppFlowController {
             fatalError("MonthlyCalendarViewModel not registered")
         }
 
-        let weeklyCalendarVC = WeeklyCalendarViewController(viewModel: weeklyViewModel, imageProvider: imageProvider)
         let monthlyCalendarVC = MonthlyCalendarViewController(viewModel: monthlyViewModel)
 
         let tabBarVC = RootTabBarController(weeklyVC: weeklyCalendarVC, monthlyVC: monthlyCalendarVC, insightVC: UIViewController())

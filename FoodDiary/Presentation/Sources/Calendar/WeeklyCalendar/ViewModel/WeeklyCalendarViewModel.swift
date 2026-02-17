@@ -54,6 +54,7 @@ public final class WeeklyCalendarViewModel<
     private let loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>
     private let syncPendingAnalysisUseCase: SyncPendingAnalysisUseCase<PendingRepo, AnalysisRepo>
     private let pushNotificationObserver: PushObserver
+    private let fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
 
     // MARK: - Init
 
@@ -63,7 +64,8 @@ public final class WeeklyCalendarViewModel<
         saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, ImageProvider, PendingRepo>,
         loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>,
         syncPendingAnalysisUseCase: SyncPendingAnalysisUseCase<PendingRepo, AnalysisRepo>,
-        pushNotificationObserver: PushObserver
+        pushNotificationObserver: PushObserver,
+        fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
     ) {
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
         self.loadWeeklyCalendarDataUseCase = loadWeeklyCalendarDataUseCase
@@ -71,6 +73,7 @@ public final class WeeklyCalendarViewModel<
         self.loadPendingRecordsUseCase = loadPendingRecordsUseCase
         self.syncPendingAnalysisUseCase = syncPendingAnalysisUseCase
         self.pushNotificationObserver = pushNotificationObserver
+        self.fetchFoodRecordsUseCase = fetchFoodRecordsUseCase
 
         self.calendar = Calendar.current
 
@@ -134,6 +137,7 @@ public final class WeeklyCalendarViewModel<
         case .selectDate(let date):
             if !calendar.isDate(state.selectedDate, inSameDayAs: date) {
                 state.selectedDate = date
+                await moveToWeekIfNeeded(for: date)
                 await updateDateContent(for: date)
             }
 
@@ -175,14 +179,12 @@ public final class WeeklyCalendarViewModel<
 
             state.dateContent = DateContent(
                 records: dateData.records,
-                pendingRecords: pendingRecords,
-                foodPhotoCount: countFoodPhotos(in: dateData.photos)
+                pendingRecords: pendingRecords
             )
         } catch {
             eventSubject.send(.loadFailed(error))
         }
     }
-
 
     @MainActor
     private func savePhotosAsRecord(_ assets: [AssetRepo.Asset]) async {
@@ -198,6 +200,16 @@ public final class WeeklyCalendarViewModel<
             eventSubject.send(.uploadCompleted(pendingRecord))
         } catch {
             eventSubject.send(.saveFailed(error))
+        }
+    }
+
+    /// 선택된 날짜가 현재 표시 중인 주 범위 밖이면 해당 주로 이동
+    private func moveToWeekIfNeeded(for date: Date) async {
+        let (weekStart, weekEnd) = calendar.weekRange(for: currentWeekBaseDate)
+        let dateStart = calendar.startOfDay(for: date)
+        if !(weekStart...weekEnd).contains(dateStart) {
+            currentWeekBaseDate = date
+            await loadWeekData(for: currentWeekBaseDate)
         }
     }
 
@@ -245,7 +257,9 @@ public final class WeeklyCalendarViewModel<
 
     private func handlePushNotification(_ notification: AnalysisResultNotification) async {
         do {
-            let syncResult = try await syncPendingAnalysisUseCase.execute(for: [notification.uploadId])
+            let syncResult = try await syncPendingAnalysisUseCase.execute(for: [
+                notification.uploadId
+            ])
 
             // 실패 이벤트는 항상 발행
             for (uploadId, reason) in syncResult.failedUploadIds {
@@ -287,9 +301,10 @@ public final class WeeklyCalendarViewModel<
         }
 
         // selectedDate에 해당하는 변경사항이 있으면 dateContent 업데이트
-        let hasChangesForSelectedDate = result.completedRecords.contains { _, record in
-            calendar.startOfDay(for: record.date) == selectedDateStart
-        } || !result.failedUploadIds.isEmpty
+        let hasChangesForSelectedDate =
+            result.completedRecords.contains { _, record in
+                calendar.startOfDay(for: record.date) == selectedDateStart
+            } || !result.failedUploadIds.isEmpty
 
         if hasChangesForSelectedDate {
             Task {
@@ -343,7 +358,6 @@ extension WeeklyCalendarViewModel {
     public struct DateContent: Equatable {
         public let records: [FoodRecord]
         public let pendingRecords: [PendingFoodRecord]
-        public let foodPhotoCount: Int
     }
 }
 
@@ -365,9 +379,4 @@ extension WeeklyCalendarViewModel {
     }
 
     // MARK: - Private Helpers
-
-    /// 특정 사진 배열의 음식 사진 개수
-    private func countFoodPhotos(in photos: [FoodImageAsset<AssetRepo.Asset>]) -> Int {
-        photos.filter { $0.foodProbability >= State.foodProbabilityThreshold }.count
-    }
 }

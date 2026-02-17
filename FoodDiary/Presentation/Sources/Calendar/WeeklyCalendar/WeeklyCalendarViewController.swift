@@ -27,6 +27,7 @@ public final class WeeklyCalendarViewController<
             RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, AnalysisRepo, PushObserver
         >
     private let imageProvider: ImageProvider
+    private let detailViewModelFactory: (Date) -> DetailViewModel<RecordRepo>
 
     // MARK: - UI Components
 
@@ -67,10 +68,12 @@ public final class WeeklyCalendarViewController<
         viewModel: WeeklyCalendarViewModel<
             RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, AnalysisRepo, PushObserver
         >,
-        imageProvider: ImageProvider
+        imageProvider: ImageProvider,
+        detailViewModelFactory: @escaping (Date) -> DetailViewModel<RecordRepo>
     ) {
         self.viewModel = viewModel
         self.imageProvider = imageProvider
+        self.detailViewModelFactory = detailViewModelFactory
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -90,6 +93,10 @@ public final class WeeklyCalendarViewController<
         viewModel.input.send(.loadInitialData)
     }
 
+    public override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: animated)
+    }
 
     // MARK: - Setup
 
@@ -200,11 +207,23 @@ public final class WeeklyCalendarViewController<
             .removeDuplicates()
             .receive(on: DispatchQueue.main)
             .sink { [weak self] content in
-                self?.bottomContentView.configure(
-                    records: content.records,
-                    pendingRecords: content.pendingRecords,
-                    photoCount: content.foodPhotoCount
-                )
+                guard let self else { return }
+                let state: BottomContentView.State = if !content.records.isEmpty {
+                    .recorded(content.records)
+                } else if !content.pendingRecords.isEmpty {
+                    .pending(content.pendingRecords)
+                } else {
+                    .empty
+                }
+
+                bottomContentView.configure(state: state)
+            }
+            .store(in: &cancellables)
+
+        // 카드 스택 탭 → 상세 화면으로 이동
+        bottomContentView.cardStackTapPublisher
+            .sink { [weak self] record in
+                self?.navigateToDetail(with: record)
             }
             .store(in: &cancellables)
 
@@ -323,5 +342,16 @@ public final class WeeklyCalendarViewController<
         )
         alert.addAction(UIAlertAction(title: "확인", style: .default))
         present(alert, animated: true)
+    }
+
+    private func navigateToDetail(with record: FoodRecord) {
+        let detailViewModel = detailViewModelFactory(record.date)
+        let detailVC = DetailViewController(
+            viewModel: detailViewModel,
+            onDismissWithDate: { [weak self] date in
+                self?.viewModel.input.send(.selectDate(date))
+            }
+        )
+        navigationController?.pushViewController(detailVC, animated: true)
     }
 }
