@@ -93,26 +93,14 @@ private extension AppFlowController {
             PushNotificationObserver
         >
 
-        guard let viewModel = try? container.resolve(WeeklyVM.self) else {
+        guard let weeklyViewModel = try? container.resolve(WeeklyVM.self) else {
             fatalError("WeeklyCalendarViewModel not registered")
-        }
-
-        guard let requestPhotoAuthorizationUseCase = try? container.resolve(
-            RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>.self
-        ) else {
-            fatalError("RequestPhotoAuthorizationUseCase not registered")
-        }
-
-        guard let fetchMonthlyCalendarDaysUseCase = try? container.resolve(
-            FetchMonthlyCalendarDaysUseCase<MockFoodRecordRepository>.self
-        ) else {
-            fatalError("FetchMonthlyCalendarDaysUseCase not registered")
         }
 
         typealias DetailVM = DetailViewModel<MockFoodRecordRepository>
 
         let weeklyCalendarVC = WeeklyCalendarViewController(
-            viewModel: viewModel,
+            viewModel: weeklyViewModel,
             imageProvider: imageProvider,
             detailViewModelFactory: { [container] date in
                 guard let vm = try? container.resolve(DetailVM.self, argument: date) else {
@@ -122,7 +110,19 @@ private extension AppFlowController {
             }
         )
 
-        return UINavigationController(rootViewController: weeklyCalendarVC)
+        typealias MonthlyVM = MonthlyCalendarViewModel<
+            MockFoodRecordRepository,
+            PhotoAuthorizationFetcher
+        >
+
+        guard let monthlyViewModel = try? container.resolve(MonthlyVM.self) else {
+            fatalError("MonthlyCalendarViewModel not registered")
+        }
+
+        let monthlyCalendarVC = MonthlyCalendarViewController(viewModel: monthlyViewModel)
+
+        let tabBarVC = RootTabBarController(weeklyVC: weeklyCalendarVC, monthlyVC: monthlyCalendarVC, insightVC: UIViewController())
+        return tabBarVC
     }
     
     func createLoginView() -> UIViewController {

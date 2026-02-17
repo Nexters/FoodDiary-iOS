@@ -348,6 +348,28 @@ private extension SceneDelegate {
                 )
             }
         )
+
+        // MonthlyCalendarViewModel 타입 별칭
+        typealias MonthlyVM = MonthlyCalendarViewModel<
+            MockFoodRecordRepository,
+            PhotoAuthorizationFetcher
+        >
+
+        container.register(MonthlyVM.self, scope: .transient) { resolver in
+            guard let fetchMonthlyUseCase = resolver.resolve(
+                FetchMonthlyCalendarDaysUseCase<MockFoodRecordRepository>.self
+            ),
+                  let requestPhotoAuthUseCase = resolver.resolve(
+                      RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>.self
+                  ) else {
+                fatalError("MonthlyCalendarViewModel dependencies not registered")
+            }
+
+            return MonthlyCalendarViewModel(
+                fetchMonthlyCalendarDaysUseCase: fetchMonthlyUseCase,
+                requestPhotoAuthorizationUseCase: requestPhotoAuthUseCase
+            )
+        }
     }
 
     #if DEBUG
