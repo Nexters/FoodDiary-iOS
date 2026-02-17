@@ -79,11 +79,9 @@ extension RootTabBarController: UITabBarControllerDelegate {
     }
     
     public func tabBarController(_ tabBarController: UITabBarController, didSelect viewController: UIViewController) {
-        Task { @MainActor in
-            for subview in self.tabBar.subviews {
-                if subview.frame.origin.x > self.tabBar.bounds.width * 0.6 {
-                    subview.isHidden = selectedIndex == 1
-                }
+        for subview in self.tabBar.subviews {
+            if subview.frame.origin.x > self.tabBar.bounds.width * 0.6 {
+                subview.isHidden = selectedIndex == 1
             }
         }
     }
