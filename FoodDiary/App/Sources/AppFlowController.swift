@@ -7,6 +7,7 @@
 
 import Combine
 import UIKit
+import SnapKit
 import DI
 import Presentation
 import Domain
@@ -124,14 +125,6 @@ private extension AppFlowController {
         let tabBarVC = RootTabBarController(weeklyVC: weeklyCalendarVC, monthlyVC: monthlyCalendarVC, insightVC: UIViewController())
         return tabBarVC
     }
-    
-    func handleLoginResult(_ loginResult: LoginResult) {
-        if loginResult.isFirst {
-            transition(to: createOnboardingView())
-        } else {
-            transition(to: createMainView())
-        }
-    }
 
     func createOnboardingView() -> UIViewController {
         let onboardingVC = OnboardingViewController()
@@ -165,13 +158,18 @@ private extension AppFlowController {
         return loginVC
     }
     
+    func handleLoginResult(_ loginResult: LoginResult) {
+        transition(to: loginResult.isFirst ? createOnboardingView() : createMainView())
+    }
+    
     func transition(to viewController: UIViewController) {
         let previousChild = currentChild
 
         addChild(viewController)
         view.addSubview(viewController.view)
-        viewController.view.frame = view.bounds
-        viewController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        viewController.view.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
         viewController.view.alpha = 0
 
         UIView.animate(
