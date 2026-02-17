@@ -1,5 +1,5 @@
 //
-//  MockTokenManager.swift
+//  MockAuthTokenStorage.swift
 //  Data
 //
 //  Created by 강대훈 on 1/27/26.
@@ -8,7 +8,7 @@
 @testable import Data
 import Domain
 
-final class MockTokenManager: TokenManaging {
+final class MockAuthTokenStorage: AuthTokenStoring {
     private(set) var setCallCount = 0
     private(set) var clearCallCount = 0
     private(set) var lastToken: String?

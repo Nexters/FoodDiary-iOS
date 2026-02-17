@@ -9,7 +9,7 @@ import Domain
 import Foundation
 
 public enum AuthEndpoint {
-    case login(idToken: String)
+    case login(request: LoginRequest)
     case verify
 }
 
@@ -51,10 +51,18 @@ extension AuthEndpoint: Requestable {
     
     public var bodyParameters: Encodable? {
         switch self {
-        case let .login(idToken):
-            AuthRequestDTO(idToken: idToken, provider: .apple)
+        case let .login(request):
+            return AuthRequestDTO(
+                appVersion: request.appVersion,
+                deviceId: request.deviceId,
+                deviceToken: request.fcmToken,
+                idToken: request.identityToken,
+                isActive: request.notificationEnabled,
+                osVersion: request.osVersion,
+                provider: .apple
+            )
         case .verify:
-            nil
+            return nil
         }
     }
     

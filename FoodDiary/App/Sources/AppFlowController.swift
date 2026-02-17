@@ -14,6 +14,7 @@ import Data
 
 final class AppFlowController: UIViewController {
     private var currentChild: UIViewController?
+    private var networkCancellable: AnyCancellable?
     private var cancellables = Set<AnyCancellable>()
     private let container: DIContainer
 
@@ -40,12 +41,11 @@ private extension AppFlowController {
 
         networkMonitor.startMonitoring()
         
-        networkMonitor.networkStatusPublisher
+        networkCancellable = networkMonitor.networkStatusPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] isConnected in
                 self?.handleNetworkStatusChange(isConnected: isConnected)
             }
-            .store(in: &cancellables)
     }
 
     func handleNetworkStatusChange(isConnected: Bool) {
@@ -63,7 +63,8 @@ private extension AppFlowController {
             let isLogin = await validateToken()
             #endif
             routeToAppropriateScreen(isLogin: isLogin)
-            cancellables.removeAll()
+            networkCancellable?.cancel()
+            networkCancellable = nil
         }
     }
 
@@ -74,7 +75,7 @@ private extension AppFlowController {
     
     func validateToken() async -> Bool {
         guard let validateAccessTokenUseCase = try? container.resolve(
-            ValidateAccessTokenUseCase<TokenRepositoryImpl<HTTPClient, TokenManager<KeychainService>>>.self
+            ValidateAccessTokenUseCase<TokenRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>.self
         ) else {
             fatalError("ValidateAccessTokenUseCase Failed Resolve")
         }
@@ -97,20 +98,8 @@ private extension AppFlowController {
             PushNotificationObserver
         >
 
-        guard let viewModel = try? container.resolve(WeeklyVM.self) else {
+        guard let weeklyViewModel = try? container.resolve(WeeklyVM.self) else {
             fatalError("WeeklyCalendarViewModel not registered")
-        }
-
-        guard let requestPhotoAuthorizationUseCase = try? container.resolve(
-            RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>.self
-        ) else {
-            fatalError("RequestPhotoAuthorizationUseCase not registered")
-        }
-
-        guard let fetchMonthlyCalendarDaysUseCase = try? container.resolve(
-            FetchMonthlyCalendarDaysUseCase<MockFoodRecordRepository>.self
-        ) else {
-            fatalError("FetchMonthlyCalendarDaysUseCase not registered")
         }
 
         typealias DetailVM = DetailViewModel<MockFoodRecordRepository>
@@ -120,7 +109,7 @@ private extension AppFlowController {
         let navigationController = UINavigationController()
 
         let weeklyCalendarVC = WeeklyCalendarViewController(
-            viewModel: viewModel,
+            viewModel: weeklyViewModel,
             imageProvider: imageProvider,
             detailViewModelFactory: { [container] date in
                 guard let vm = try? container.resolve(DetailVM.self, argument: date) else {
@@ -158,8 +147,19 @@ private extension AppFlowController {
             }
         )
 
-        navigationController.viewControllers = [weeklyCalendarVC]
-        return navigationController
+        typealias MonthlyVM = MonthlyCalendarViewModel<
+            MockFoodRecordRepository,
+            PhotoAuthorizationFetcher
+        >
+
+        guard let monthlyViewModel = try? container.resolve(MonthlyVM.self) else {
+            fatalError("MonthlyCalendarViewModel not registered")
+        }
+
+        let monthlyCalendarVC = MonthlyCalendarViewController(viewModel: monthlyViewModel)
+
+        let tabBarVC = RootTabBarController(weeklyVC: weeklyCalendarVC, monthlyVC: monthlyCalendarVC, insightVC: UIViewController())
+        return tabBarVC
     }
     
     func createLoginView() -> UIViewController {

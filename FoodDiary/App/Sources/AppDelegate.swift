@@ -10,6 +10,8 @@ import UserNotifications
 import FirebaseCore
 import FirebaseMessaging
 import Domain
+import Data
+import DI
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -96,7 +98,9 @@ extension AppDelegate: MessagingDelegate {
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         guard let fcmToken else { return }
 
-        // TODO: 서버 API로 deviceId, fcmToken 전송
+        // TODO: 서버 API로 fcmToken 전송
+        // TODO: self.container로 사용해야 함.
+        try? DIContainer.shared.resolve(PushTokenStoring.self).set(fcmToken)
     }
 }
 
