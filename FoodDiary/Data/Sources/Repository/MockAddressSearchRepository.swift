@@ -21,6 +21,13 @@ public struct MockAddressSearchRepository: AddressSearchRepository {
         AddressSearchResult(placeName: "투끼", roadAddress: "서울 마포구 와우산로 112", jibunAddress: "서울 마포구 서교동 395-166"),
         AddressSearchResult(placeName: "광화문 미진", roadAddress: "서울 종로구 종로 19", jibunAddress: "서울 종로구 종로1가 24"),
         AddressSearchResult(placeName: "을지로 노가리 골목", roadAddress: "서울 중구 을지로 14", jibunAddress: "서울 중구 을지로2가 199-27"),
+        AddressSearchResult(placeName: "봉피양", roadAddress: "서울 강남구 테헤란로 110", jibunAddress: "서울 강남구 역삼동 648-9"),
+        AddressSearchResult(placeName: "오모리찌개", roadAddress: "서울 강남구 논현로 175", jibunAddress: "서울 강남구 신사동 587-30"),
+        AddressSearchResult(placeName: "한우오마카세 소올", roadAddress: "서울 강남구 학동로 305", jibunAddress: "서울 강남구 논현동 168-7"),
+        AddressSearchResult(placeName: "도스타코스", roadAddress: "서울 강남구 강남대로102길 34", jibunAddress: "서울 강남구 역삼동 824-11"),
+        AddressSearchResult(placeName: "카페 온다", roadAddress: "서울 강남구 선릉로 831", jibunAddress: "서울 강남구 청담동 46-20"),
+        AddressSearchResult(placeName: "스시 사이토", roadAddress: "서울 강남구 도산대로 318", jibunAddress: "서울 강남구 청담동 84-18"),
+        AddressSearchResult(placeName: "진진", roadAddress: "서울 강남구 봉은사로 220", jibunAddress: "서울 강남구 논현동 63-20"),
     ]
 
     public func searchAddress(keyword: String, page: Int) async throws -> [AddressSearchResult] {

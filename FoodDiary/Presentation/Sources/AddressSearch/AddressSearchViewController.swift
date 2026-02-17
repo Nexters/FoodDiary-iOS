@@ -35,6 +35,7 @@ public final class AddressSearchViewController<
 
     private let viewModel: AddressSearchViewModel<AddressRepo>
     private var cancellables = Set<AnyCancellable>()
+    private var containerHeightConstraint: Constraint?
 
     // MARK: - TableView Handler
 
@@ -123,7 +124,7 @@ public final class AddressSearchViewController<
             forCellReuseIdentifier: AddressSearchResultCell.reuseIdentifier)
         tv.rowHeight = UITableView.automaticDimension
         tv.estimatedRowHeight = AddressSearchConstants.resultCellHeight
-        tv.isScrollEnabled = true
+        tv.showsVerticalScrollIndicator = false
         tv.tableFooterView = UIView()
         return tv
     }()
@@ -153,6 +154,12 @@ public final class AddressSearchViewController<
     public override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         searchTextField.becomeFirstResponder()
+    }
+
+    public override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        let contentHeight = resultsTableView.contentSize.height
+        resultsTableView.isScrollEnabled = contentHeight > resultsContainerView.bounds.height
     }
 
     // MARK: - Setup
@@ -198,6 +205,7 @@ public final class AddressSearchViewController<
         resultsContainerView.snp.makeConstraints {
             $0.top.equalTo(guideLabel.snp.bottom).offset(AddressSearchConstants.resultsTopSpacing)
             $0.leading.trailing.equalToSuperview().inset(AddressSearchConstants.horizontalInset)
+            containerHeightConstraint = $0.height.equalTo(0).priority(.high).constraint
             $0.bottom.lessThanOrEqualTo(view.safeAreaLayoutGuide)
         }
 
@@ -223,6 +231,7 @@ public final class AddressSearchViewController<
                 self?.handleEvent(event)
             }
             .store(in: &cancellables)
+
     }
 
     // MARK: - Private Methods
@@ -245,14 +254,11 @@ public final class AddressSearchViewController<
 
         emptyResultLabel.isHidden = !(state.mode == .searchResults && displayResults.isEmpty)
 
-        resultsTableView.layoutIfNeeded()
-        let contentHeight = resultsTableView.contentSize.height
-
-        resultsContainerView.snp.remakeConstraints {
-            $0.top.equalTo(guideLabel.snp.bottom).offset(AddressSearchConstants.resultsTopSpacing)
-            $0.leading.trailing.equalToSuperview().inset(AddressSearchConstants.horizontalInset)
-            $0.height.equalTo(contentHeight).priority(.high)
-            $0.bottom.lessThanOrEqualTo(view.safeAreaLayoutGuide)
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.view.layoutIfNeeded()
+            let contentHeight = self.resultsTableView.contentSize.height
+            self.containerHeightConstraint?.update(offset: contentHeight)
         }
     }
 

@@ -120,7 +120,12 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
                     imageURLs: [Self.mockImageURL, Self.mockImageURL2, Self.mockImageURL3],
                     restaurantName: "할머니 손칼국수",
                     address: "서울시 종로구 인사동길 12",
-                    hashtags: ["칼국수", "만두", "김치"],
+                    hashtags: [
+                        "칼국수", "만두", "김치", "맛집", "점심추천",
+                        "혼밥", "종로맛집", "인사동", "한식", "국물요리",
+                        "수제만두", "손칼국수", "겨울음식", "따뜻한", "가성비",
+                        "직장인점심", "노포", "전통맛집", "단골", "소울푸드"
+                    ],
                     createdAt: yesterdayLunch
                 )
             ]

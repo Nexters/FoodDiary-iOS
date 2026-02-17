@@ -93,12 +93,12 @@ final class TagSectionView: UIView {
 
     private func createTagChip(text: String, index: Int) -> UIView {
         let container = UIView()
-        container.backgroundColor = .sd900
+        container.backgroundColor = .sd800
         container.layer.cornerRadius = Constants.cornerRadius
         container.clipsToBounds = true
 
         let label = UILabel()
-        label.setText(text, style: .p14, color: .white)
+        label.setText(text, style: .p14, color: .gray400)
 
         let deleteButton = UIButton()
         let config = UIImage.SymbolConfiguration(pointSize: 10, weight: .bold)

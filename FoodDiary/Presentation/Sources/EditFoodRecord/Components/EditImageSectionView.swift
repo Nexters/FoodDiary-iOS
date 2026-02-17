@@ -15,7 +15,7 @@ final class EditImageSectionView: UIView {
 
     private enum Constants {
         static let cellSize: CGFloat = 150
-        static let cellSpacing: CGFloat = 12
+        static let cellSpacing: CGFloat = 8
         static let sectionInset: CGFloat = 20
     }
 

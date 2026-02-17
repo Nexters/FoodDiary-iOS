@@ -36,7 +36,7 @@ final class EditImageCell: UICollectionViewCell {
             for: .normal
         )
         button.tintColor = .white
-        button.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        button.backgroundColor = UIColor.black.withAlphaComponent(0.8)
         button.layer.cornerRadius = 12
         button.clipsToBounds = true
         return button
