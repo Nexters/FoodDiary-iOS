@@ -11,11 +11,10 @@ import FirebaseCore
 import FirebaseMessaging
 import Domain
 import Data
+import DI
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
-    // MARK: - Properties
-    private let pushTokenStorage: PushTokenStoring = PushTokenStorage()
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         FirebaseApp.configure()
@@ -100,8 +99,7 @@ extension AppDelegate: MessagingDelegate {
         guard let fcmToken else { return }
 
         // TODO: 서버 API로 fcmToken 전송
-        // FCM Token을 UserDefaults에 저장
-        pushTokenStorage.set(fcmToken)
+        try? DIContainer.shared.resolve(PushTokenStoring.self).set(fcmToken)
     }
 }
 

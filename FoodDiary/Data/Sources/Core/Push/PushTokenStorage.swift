@@ -8,26 +8,21 @@
 import Foundation
 import Domain
 
-/// UserDefaults를 사용한 푸시 토큰 저장소 구현체
-public final class PushTokenStorage: PushTokenStoring {
-    private let userDefaults: UserDefaults
-    private let tokenKey = "push_token"
+public final class InMemoryPushTokenStorage: PushTokenStoring, @unchecked Sendable {
+    private let lock = NSLock()
+    private var token: String?
 
-    /// 초기화
-    /// - Parameter userDefaults: 토큰을 저장할 UserDefaults 인스턴스 (기본값: .standard)
-    public init(userDefaults: UserDefaults = .standard) {
-        self.userDefaults = userDefaults
-    }
+    public init() {}
 
     public func get() -> String? {
-        userDefaults.string(forKey: tokenKey)
+        lock.withLock { token }
     }
 
     public func set(_ token: String) {
-        userDefaults.set(token, forKey: tokenKey)
+        lock.withLock { self.token = token }
     }
 
     public func clear() {
-        userDefaults.removeObject(forKey: tokenKey)
+        lock.withLock { self.token = nil }
     }
 }
