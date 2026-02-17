@@ -61,4 +61,45 @@ struct RequestableTests {
 
         #expect(headers["X-Test-Header"] == expected)
     }
+
+    @Test("json body일 때 Content-Type이 application/json으로 설정된다")
+    func testJsonContentTypeHeader() throws {
+        let request = try MockEndpoint.full.makeURLRequest()
+
+        let headers = try #require(request.allHTTPHeaderFields)
+
+        #expect(headers["Content-Type"] == "application/json")
+    }
+
+    @Test("multipart body가 URLRequest의 httpBody에 올바르게 설정된다")
+    func testMultipartBody() throws {
+        let formData = MultipartFormData(
+            date: "2026-02-17",
+            photos: [
+                File(fileName: "photo1.jpg", mimeType: "image/jpeg", data: "dummy-1".data(using: .utf8)!),
+                File(fileName: "photo2.jpg", mimeType: "image/jpeg", data: "dummy-2".data(using: .utf8)!)
+            ]
+        )
+        let request = try MockEndpoint.multipart(formData).makeURLRequest()
+
+        let body = try #require(request.httpBody)
+
+        #expect(body == formData.body)
+    }
+
+    @Test("multipart body일 때 Content-Type 헤더가 formData의 contentType으로 설정된다")
+    func testMultipartContentTypeHeader() throws {
+        let formData = MultipartFormData(
+            date: "2026-02-17",
+            photos: [
+                File(fileName: "photo1.jpg", mimeType: "image/jpeg", data: "dummy-1".data(using: .utf8)!),
+                File(fileName: "photo2.jpg", mimeType: "image/jpeg", data: "dummy-2".data(using: .utf8)!)
+            ]
+        )
+        let request = try MockEndpoint.multipart(formData).makeURLRequest()
+
+        let headers = try #require(request.allHTTPHeaderFields)
+
+        #expect(headers["Content-Type"] == formData.contentType)
+    }
 }
