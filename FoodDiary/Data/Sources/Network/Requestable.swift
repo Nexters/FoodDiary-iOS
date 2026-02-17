@@ -12,11 +12,9 @@ public protocol Requestable {
     var path: String { get }
     var httpMethod: HTTPMethod { get }
     var queryParameters: Encodable? { get }
-    var bodyParameters: Encodable? { get }
+    var bodyParameters: HTTPBody { get }
     var headers: [String: String] { get }
 }
-
-// TODO: 추후에 JWT가 생겼을 때 어떻게 Header에 포함시킬 것인지?
 
 extension Requestable {
     public func makeURLRequest() throws -> URLRequest {
@@ -30,17 +28,15 @@ extension Requestable {
         
         var request = URLRequest(url: url)
         request.httpMethod = httpMethod.rawValue
-        
-        if let httpBody = try getBodyParameters() {
+
+        let evaluatedBody = bodyParameters
+
+        if let httpBody = try getBodyParameters(from: evaluatedBody) {
             request.httpBody = httpBody
         }
-        
-        headers.forEach { key, value in
-            request.setValue(value, forHTTPHeaderField: key)
-        }
-        
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
+
+        getHeaders(request: &request, body: evaluatedBody)
+
         return request
     }
 }
@@ -71,20 +67,23 @@ extension Requestable {
         return queryItemList
     }
     
-    private func getBodyParameters() throws -> Data? {
-        guard let bodyParameters else {
+    private func getBodyParameters(from body: HTTPBody) throws -> Data? {
+        switch body {
+        case let .json(data):
+            guard let bodyDictionary = try? data.toDictionary() else {
+                throw NetworkError.encodingError
+            }
+
+            guard let encodedBody = try? JSONSerialization.data(withJSONObject: bodyDictionary) else {
+                throw NetworkError.encodingError
+            }
+
+            return encodedBody
+        case let .multipart(data):
+            return data.body
+        case .none:
             return nil
         }
-        
-        guard let bodyDictionary = try? bodyParameters.toDictionary() else {
-            throw NetworkError.encodingError
-        }
-        
-        guard let encodedBody = try? JSONSerialization.data(withJSONObject: bodyDictionary) else {
-            throw NetworkError.encodingError
-        }
-        
-        return encodedBody
     }
     
     private func getURLComponents() throws -> URLComponents {
@@ -92,7 +91,7 @@ extension Requestable {
             throw NetworkError.invalidURL
         }
         
-        guard var urlComponent = URLComponents(string: baseURL + path) else {
+        guard let urlComponent = URLComponents(string: baseURL + path) else {
             throw NetworkError.invalidURL
         }
         
@@ -101,5 +100,20 @@ extension Requestable {
         }
         
         return urlComponent
+    }
+    
+    private func getHeaders(request: inout URLRequest, body: HTTPBody) {
+        headers.forEach { key, value in
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+
+        switch body {
+        case let .multipart(formData):
+            request.setValue(formData.contentType, forHTTPHeaderField: "Content-Type")
+        case .json:
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        case .none:
+            break
+        }
     }
 }
