@@ -18,13 +18,11 @@ private struct BatchUploadDemoEndpoint: Requestable {
     let date: String
     let photos: [File]
 
-    var baseURL: String { "https://your-server.com" } // ← 실제 서버 주소로 교체
+    var baseURL: String { "" } // MARK: ← 실제 서버 주소로 교체
     var path: String { "/photos/batch-upload" }
     var httpMethod: HTTPMethod { .post }
     var queryParameters: Encodable? { ["test_mode": "true"] }
-    var bodyParameters: HTTPBody {
-        .multipart(MultipartFormData(date: date, photos: photos))
-    }
+    var bodyParameters: HTTPBody { .multipart(MultipartFormData(date: date, photos: photos)) }
     var headers: [String: String] { [:] }
 }
 
@@ -35,7 +33,7 @@ struct MultipartDemoTests {
     @Test("multipart/form-data 배치 업로드 실제 통신 데모")
     func batchUpload_withRealHTTPClient_returnsResponse() async throws {
         let client = HTTPClient()
-
+        
         let endpoint = BatchUploadDemoEndpoint(
             date: "2026-02-17",
             photos: [
@@ -51,8 +49,9 @@ struct MultipartDemoTests {
                 )
             ]
         )
-
-        let response: BatchUploadResponseDTO = try await client.request(endpoint)
+        
+        // MARK: accessToken 주입해야 함!!
+        let response: BatchUploadResponseDTO = try await client.request(endpoint, accessToken: "")
 
         #expect(!response.results.isEmpty)
     }
