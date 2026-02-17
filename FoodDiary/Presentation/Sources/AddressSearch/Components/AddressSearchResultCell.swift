@@ -8,6 +8,13 @@ import Domain
 import SnapKit
 import UIKit
 
+private enum Constants {
+    static let horizontalPadding: CGFloat = 20
+    static let verticalPadding: CGFloat = 24
+    static let textStackSpacing: CGFloat = 8
+    static let buttonSpacing: CGFloat = 24
+}
+
 final class AddressSearchResultCell: UITableViewCell {
 
     static let reuseIdentifier = "AddressSearchResultCell"
@@ -33,20 +40,15 @@ final class AddressSearchResultCell: UITableViewCell {
     private let textStack: UIStackView = {
         let sv = UIStackView()
         sv.axis = .vertical
-        sv.spacing = 4
+        sv.spacing = Constants.textStackSpacing
         return sv
     }()
 
     private lazy var selectButton: UIButton = {
         let button = UIButton(type: .system)
-        let baseAttributed = Typography.p14.styled("선택", color: .primary)
-        let mutable = NSMutableAttributedString(attributedString: baseAttributed)
-        mutable.addAttribute(
-            .underlineStyle,
-            value: NSUnderlineStyle.single.rawValue,
-            range: NSRange(location: 0, length: mutable.length)
-        )
-        button.setAttributedTitle(mutable, for: .normal)
+        var config = UIButton.Configuration.plain()
+        config.attributedTitle = underlined("선택", style: .p14, color: .white)
+        button.configuration = config
         button.addTarget(self, action: #selector(selectButtonTapped), for: .touchUpInside)
         return button
     }()
@@ -87,14 +89,15 @@ final class AddressSearchResultCell: UITableViewCell {
 
     private func setupConstraints() {
         textStack.snp.makeConstraints {
-            $0.leading.equalToSuperview().offset(16)
-            $0.centerY.equalToSuperview()
-            $0.trailing.lessThanOrEqualTo(selectButton.snp.leading).offset(-12)
+            $0.leading.equalToSuperview().offset(Constants.horizontalPadding)
+            $0.top.equalToSuperview().offset(Constants.verticalPadding)
+            $0.bottom.equalToSuperview().offset(-Constants.verticalPadding)
+            $0.trailing.lessThanOrEqualTo(selectButton.snp.leading).offset(-Constants.buttonSpacing)
         }
 
         selectButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().offset(-16)
-            $0.centerY.equalToSuperview()
+            $0.trailing.equalToSuperview().offset(-Constants.horizontalPadding)
+            $0.top.equalToSuperview().offset(Constants.verticalPadding)
         }
         selectButton.setContentHuggingPriority(.required, for: .horizontal)
         selectButton.setContentCompressionResistancePriority(.required, for: .horizontal)
@@ -105,6 +108,18 @@ final class AddressSearchResultCell: UITableViewCell {
     func configure(with result: AddressSearchResult) {
         placeNameLabel.setText(result.placeName, style: .hd16)
         roadAddressLabel.setText(result.roadAddress, style: .p14, color: .gray400)
+    }
+
+    // MARK: - Private Methods
+
+    private func underlined(
+        _ text: String,
+        style: Typography,
+        color: UIColor
+    ) -> AttributedString {
+        var attributed = AttributedString(style.styled(text, color: color))
+        attributed.underlineStyle = .single
+        return attributed
     }
 
     // MARK: - Actions

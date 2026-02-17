@@ -14,12 +14,12 @@ import UIKit
 enum AddressSearchConstants {
     static let horizontalInset: CGFloat = 20
     static let textFieldHeight: CGFloat = 48
-    static let cornerRadius: CGFloat = 12
+    static let cornerRadius: CGFloat = 10
     static let closeButtonSize: CGFloat = 44
     static let closeButtonTopInset: CGFloat = 20
     static let searchFieldTopSpacing: CGFloat = 16
     static let guideLabelTopSpacing: CGFloat = 24
-    static let resultsTopSpacing: CGFloat = 12
+    static let resultsTopSpacing: CGFloat = 24
     static let resultCellHeight: CGFloat = 72
 }
 
@@ -93,7 +93,10 @@ public final class AddressSearchViewController<
 
     private let resultsContainerView: UIView = {
         let view = UIView()
-        view.backgroundColor = .sd900
+        view.backgroundColor = .clear
+        view.layer.borderColor = UIColor.sd800.cgColor
+        view.layer.borderWidth = 1
+
         view.layer.cornerRadius = AddressSearchConstants.cornerRadius
         view.clipsToBounds = true
         view.isHidden = true
@@ -115,7 +118,11 @@ public final class AddressSearchViewController<
         tv.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
         tv.delegate = tableViewHandler
         tv.dataSource = tableViewHandler
-        tv.register(AddressSearchResultCell.self, forCellReuseIdentifier: AddressSearchResultCell.reuseIdentifier)
+        tv.register(
+            AddressSearchResultCell.self,
+            forCellReuseIdentifier: AddressSearchResultCell.reuseIdentifier)
+        tv.rowHeight = UITableView.automaticDimension
+        tv.estimatedRowHeight = AddressSearchConstants.resultCellHeight
         tv.isScrollEnabled = true
         tv.tableFooterView = UIView()
         return tv
@@ -163,24 +170,28 @@ public final class AddressSearchViewController<
 
     private func setupConstraints() {
         closeButton.snp.makeConstraints {
-            $0.top.equalTo(view.safeAreaLayoutGuide).offset(AddressSearchConstants.closeButtonTopInset)
+            $0.top.equalTo(view.safeAreaLayoutGuide).offset(
+                AddressSearchConstants.closeButtonTopInset)
             $0.trailing.equalToSuperview().offset(-AddressSearchConstants.horizontalInset)
             $0.size.equalTo(AddressSearchConstants.closeButtonSize)
         }
 
         searchTextField.snp.makeConstraints {
-            $0.top.equalTo(closeButton.snp.bottom).offset(AddressSearchConstants.searchFieldTopSpacing)
+            $0.top.equalTo(closeButton.snp.bottom).offset(
+                AddressSearchConstants.searchFieldTopSpacing)
             $0.leading.trailing.equalToSuperview().inset(AddressSearchConstants.horizontalInset)
             $0.height.equalTo(AddressSearchConstants.textFieldHeight)
         }
 
         guideLabel.snp.makeConstraints {
-            $0.top.equalTo(searchTextField.snp.bottom).offset(AddressSearchConstants.guideLabelTopSpacing)
+            $0.top.equalTo(searchTextField.snp.bottom).offset(
+                AddressSearchConstants.guideLabelTopSpacing)
             $0.leading.equalToSuperview().offset(AddressSearchConstants.horizontalInset)
         }
 
         emptyResultLabel.snp.makeConstraints {
-            $0.top.equalTo(guideLabel.snp.bottom).offset(AddressSearchConstants.resultsTopSpacing + 24)
+            $0.top.equalTo(guideLabel.snp.bottom).offset(
+                AddressSearchConstants.resultsTopSpacing + 24)
             $0.leading.trailing.equalToSuperview().inset(AddressSearchConstants.horizontalInset)
         }
 
@@ -234,14 +245,13 @@ public final class AddressSearchViewController<
 
         emptyResultLabel.isHidden = !(state.mode == .searchResults && displayResults.isEmpty)
 
-        let contentHeight = CGFloat(displayResults.count) * AddressSearchConstants.resultCellHeight
+        resultsTableView.layoutIfNeeded()
+        let contentHeight = resultsTableView.contentSize.height
 
         resultsContainerView.snp.remakeConstraints {
             $0.top.equalTo(guideLabel.snp.bottom).offset(AddressSearchConstants.resultsTopSpacing)
             $0.leading.trailing.equalToSuperview().inset(AddressSearchConstants.horizontalInset)
-            if !displayResults.isEmpty {
-                $0.height.equalTo(contentHeight)
-            }
+            $0.height.equalTo(contentHeight).priority(.high)
             $0.bottom.lessThanOrEqualTo(view.safeAreaLayoutGuide)
         }
     }
@@ -294,10 +304,12 @@ final class AddressSearchTableViewHandler: NSObject, UITableViewDataSource, UITa
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(
-            withIdentifier: AddressSearchResultCell.reuseIdentifier,
-            for: indexPath
-        ) as? AddressSearchResultCell else {
+        guard
+            let cell = tableView.dequeueReusableCell(
+                withIdentifier: AddressSearchResultCell.reuseIdentifier,
+                for: indexPath
+            ) as? AddressSearchResultCell
+        else {
             return UITableViewCell()
         }
 
@@ -311,7 +323,7 @@ final class AddressSearchTableViewHandler: NSObject, UITableViewDataSource, UITa
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        AddressSearchConstants.resultCellHeight
+        UITableView.automaticDimension
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
