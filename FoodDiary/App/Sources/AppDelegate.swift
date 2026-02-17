@@ -99,6 +99,7 @@ extension AppDelegate: MessagingDelegate {
         guard let fcmToken else { return }
 
         // TODO: 서버 API로 fcmToken 전송
+        // TODO: self.container로 사용해야 함.
         try? DIContainer.shared.resolve(PushTokenStoring.self).set(fcmToken)
     }
 }
