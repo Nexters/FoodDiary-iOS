@@ -43,7 +43,7 @@ struct HTTPClientTests {
                 var path: String { "" }
                 var httpMethod: HTTPMethod { .get }
                 var queryParameters: Encodable? { nil }
-                var bodyParameters: Encodable? { nil }
+                var bodyParameters: HTTPBody { .none }
                 var headers: [String: String] { [:] }
             }
             

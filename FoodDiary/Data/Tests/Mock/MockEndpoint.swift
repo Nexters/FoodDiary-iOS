@@ -45,12 +45,12 @@ extension MockEndpoint: Requestable {
         }
     }
 
-    var bodyParameters: Encodable? {
+    var bodyParameters: HTTPBody {
         switch self {
         case .minimal:
-            return nil
+            return .none
         case .full:
-            return MockBodyDTO(name: "Kang", age: 999)
+            return .json(MockBodyDTO(name: "Kang", age: 999))
         }
     }
 
