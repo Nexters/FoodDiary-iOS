@@ -8,6 +8,7 @@
 import UIKit
 import Combine
 import DesignSystem
+import SnapKit
 
 public final class CalendarViewController: UIViewController {
     public enum ViewMode {
@@ -71,8 +72,7 @@ public final class CalendarViewController: UIViewController {
         
         addChild(targetVC)
         view.addSubview(targetVC.view)
-        targetVC.view.frame = view.bounds
-        targetVC.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        targetVC.view.snp.makeConstraints { $0.edges.equalToSuperview() }
         targetVC.didMove(toParent: self)
 
         currentChild = targetVC
