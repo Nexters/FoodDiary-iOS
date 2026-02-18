@@ -23,7 +23,7 @@ public final class RecordPromptHeaderView: UIStackView {
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
         label.numberOfLines = 0
-        label.setText("\(userName)님의 음식 기록\n지금 바로 쓸 수 있어요", style: .hd20, color: DesignSystemAsset.gray050.color)
+        label.setText("\(userName)님의 음식 기록,\n지금 바로 쓸 수 있어요", style: .hd20, color: DesignSystemAsset.gray050.color)
         return label
     }()
 

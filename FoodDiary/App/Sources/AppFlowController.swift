@@ -141,7 +141,7 @@ private extension AppFlowController {
             fatalError("MonthlyCalendarViewModel not registered")
         }
 
-        let monthlyCalendarVC = MonthlyCalendarViewController(viewModel: monthlyViewModel)
+        let monthlyCalendarVC = UINavigationController(rootViewController: MonthlyCalendarViewController(viewModel: monthlyViewModel))
 
         let tabBarVC = RootTabBarController(weeklyVC: weeklyCalendarVC, monthlyVC: monthlyCalendarVC, insightVC: UIViewController())
         return tabBarVC
