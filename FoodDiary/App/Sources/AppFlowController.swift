@@ -105,11 +105,7 @@ private extension AppFlowController {
             guard let addressVM = try? container.resolve(AddressSearchVM.self, argument: restaurantName) else {
                 fatalError("AddressSearchViewModel not registered")
             }
-            let addressSearchVC = AddressSearchViewController(viewModel: addressVM)
-            addressSearchVC.onAddressSelected = { result in
-                onSelect(result)
-            }
-            return addressSearchVC
+            return AddressSearchViewController(viewModel: addressVM, onAddressSelected: onSelect)
         }
 
         let editVCFactory: (FoodRecord) -> UIViewController = { [container] record in

@@ -27,13 +27,10 @@ public final class AddressSearchViewController<
     AddressRepo: AddressSearchRepository
 >: UIViewController, UITextFieldDelegate {
 
-    // MARK: - Callback
-
-    public var onAddressSelected: ((AddressSearchResult) -> Void)?
-
     // MARK: - Dependencies
 
     private let viewModel: AddressSearchViewModel<AddressRepo>
+    private let onAddressSelected: ((AddressSearchResult) -> Void)?
     private var cancellables = Set<AnyCancellable>()
     private var containerHeightConstraint: Constraint?
 
@@ -109,8 +106,12 @@ public final class AddressSearchViewController<
 
     // MARK: - Init
 
-    public init(viewModel: AddressSearchViewModel<AddressRepo>) {
+    public init(
+        viewModel: AddressSearchViewModel<AddressRepo>,
+        onAddressSelected: ((AddressSearchResult) -> Void)?
+    ) {
         self.viewModel = viewModel
+        self.onAddressSelected = onAddressSelected
         super.init(nibName: nil, bundle: nil)
         modalPresentationStyle = .fullScreen
     }
@@ -302,10 +303,6 @@ final class AddressSearchTableViewHandler: NSObject, UITableViewDataSource, UITa
 
         let result = searchResults[indexPath.row]
         cell.configure(with: result)
-        cell.onSelectTapped = { [weak self] in
-            self?.onSelectAddress?(result)
-        }
-
         return cell
     }
 

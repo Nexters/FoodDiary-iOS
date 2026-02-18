@@ -18,10 +18,6 @@ final class AddressSearchResultCell: UITableViewCell {
 
     static let reuseIdentifier = "AddressSearchResultCell"
 
-    // MARK: - Callback
-
-    var onSelectTapped: (() -> Void)?
-
     // MARK: - UI Components
 
     private let placeNameLabel: UILabel = {
@@ -43,12 +39,16 @@ final class AddressSearchResultCell: UITableViewCell {
         return sv
     }()
 
-    private lazy var selectButton: UIButton = {
+    private let selectButton: UIButton = {
         let button = UIButton(type: .system)
         var config = UIButton.Configuration.plain()
-        config.attributedTitle = underlined("선택", style: .p14, color: .white)
+        config.attributedTitle = {
+            var attributed = AttributedString(Typography.p14.styled("선택", color: .white))
+            attributed.underlineStyle = .single
+            return attributed
+        }()
         button.configuration = config
-        button.addTarget(self, action: #selector(selectButtonTapped), for: .touchUpInside)
+        button.isUserInteractionEnabled = false
         return button
     }()
 
@@ -69,7 +69,6 @@ final class AddressSearchResultCell: UITableViewCell {
         super.prepareForReuse()
         placeNameLabel.text = nil
         roadAddressLabel.text = nil
-        onSelectTapped = nil
     }
 
     // MARK: - Setup
@@ -109,21 +108,4 @@ final class AddressSearchResultCell: UITableViewCell {
         roadAddressLabel.setText(result.roadAddress, style: .p14, color: .gray400)
     }
 
-    // MARK: - Private Methods
-
-    private func underlined(
-        _ text: String,
-        style: Typography,
-        color: UIColor
-    ) -> AttributedString {
-        var attributed = AttributedString(style.styled(text, color: color))
-        attributed.underlineStyle = .single
-        return attributed
-    }
-
-    // MARK: - Actions
-
-    @objc private func selectButtonTapped() {
-        onSelectTapped?()
-    }
 }
