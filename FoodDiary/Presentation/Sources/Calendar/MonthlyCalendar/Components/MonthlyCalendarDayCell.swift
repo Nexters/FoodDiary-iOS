@@ -111,7 +111,7 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
     // MARK: - Configuration
 
     func configure(with day: MonthlyCalendarDay, isSelected: Bool) {
-        applyRecordStyle(records: day.records)
+        applyRecordStyle(records: day.records, isCurrentMonth: day.isCurrentMonth)
 
         applyDayNumberStyle(
             dayNumber: day.dayNumber,
@@ -134,6 +134,7 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
         stackView.backgroundColor = .clear
         dashedBorderView.isHidden = false
         polaroidImageCardsView.isHidden = true
+        polaroidImageCardsView.alpha = 1
     }
 
     private func applyTodayStyle() {
@@ -150,12 +151,14 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
         dashedBorderView.layer.borderColor = DesignSystemAsset.sd800.color.cgColor
     }
 
-    private func applyRecordStyle(records: [FoodRecord]) {
+    private func applyRecordStyle(records: [FoodRecord], isCurrentMonth: Bool) {
         let hasRecord = !records.isEmpty
         dashedBorderView.isHidden = hasRecord
         polaroidImageCardsView.isHidden = !hasRecord
 
         guard hasRecord else { return }
+        
+        polaroidImageCardsView.alpha = isCurrentMonth ? 1 : 0.3
 
         if records.count == 1, let url = records[0].imageURLs.first {
             polaroidImageCardsView.configure(imageURL: url)
