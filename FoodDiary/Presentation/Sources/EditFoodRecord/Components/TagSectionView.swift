@@ -106,7 +106,10 @@ final class TagSectionView: UIView {
             UIImage(systemName: "xmark")?.withConfiguration(config),
             for: .normal
         )
+        deleteButton.backgroundColor = UIColor.sdBase.withAlphaComponent(0.8)
         deleteButton.tintColor = .gray400
+        deleteButton.layer.cornerRadius = 8
+        deleteButton.clipsToBounds = true
         deleteButton.tag = index
         deleteButton.addTarget(self, action: #selector(removeTagTapped(_:)), for: .touchUpInside)
 
