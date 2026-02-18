@@ -38,7 +38,6 @@ public struct MultipartFormData {
         data.appendString("--\(boundary)--\r\n")
 
         self.body = data
-        // TODO: Body 체크
     }
 }
 
