@@ -2,7 +2,7 @@
 //  OnboardingViewController.swift
 //  Presentation
 //
-//  Created by Claude Code on 2/11/26.
+//  Created by 강대훈 on 2/18/26.
 //
 
 import UIKit
@@ -29,19 +29,17 @@ public final class OnboardingViewController: UIViewController {
         (DesignSystemAsset.onboard5.image, "기록이 쌓일수록 무엇을, 언제,\n얼마나 먹는지 한눈에 보여요.")
     ]
 
-    private lazy var collectionView: UICollectionView = {
-        let layout = UICollectionViewFlowLayout()
-        layout.scrollDirection = .horizontal
-        layout.minimumLineSpacing = 0
+    private lazy var pageViewControllers: [OnboardPageContentViewController] = {
+        pages.enumerated().map { index, page in
+            OnboardPageContentViewController(pageIndex: index, image: page.image, text: page.text)
+        }
+    }()
 
-        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        collectionView.backgroundColor = .clear
-        collectionView.isScrollEnabled = false
-        collectionView.showsHorizontalScrollIndicator = false
-        collectionView.register(OnboardPageCell.self, forCellWithReuseIdentifier: OnboardPageCell.identifier)
-        collectionView.dataSource = self
-        collectionView.delegate = self
-        return collectionView
+    private lazy var pageViewController: UIPageViewController = {
+        let pageVC = UIPageViewController(transitionStyle: .scroll, navigationOrientation: .horizontal)
+        pageVC.dataSource = self
+        pageVC.delegate = self
+        return pageVC
     }()
 
     private let pageControl: UIPageControl = {
@@ -54,7 +52,7 @@ public final class OnboardingViewController: UIViewController {
 
     private lazy var nextButton: UIButton = {
         let button = UIButton(type: .system)
-        button.titleLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
+        button.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
         button.setTitle("다음", for: .normal)
         button.backgroundColor = DesignSystemAsset.primary.color
         button.setTitleColor(DesignSystemAsset.sdBase.color, for: .normal)
@@ -75,11 +73,11 @@ public final class OnboardingViewController: UIViewController {
         configureUI()
         configureNavigationBar()
         setupActions()
-        setupGestures()
         setupBindings()
         pageControl.numberOfPages = pages.count
+        pageViewController.setViewControllers([pageViewControllers[0]], direction: .forward, animated: false)
     }
-    
+
     public override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         nextButton.layer.cornerRadius = nextButton.frame.height / 2
@@ -90,11 +88,14 @@ private extension OnboardingViewController {
     func configureUI() {
         view.backgroundColor = DesignSystemAsset.sdBase.color
 
-        view.addSubview(collectionView)
+        addChild(pageViewController)
+        view.addSubview(pageViewController.view)
+        pageViewController.didMove(toParent: self)
+
         view.addSubview(pageControl)
         view.addSubview(nextButton)
 
-        collectionView.snp.makeConstraints {
+        pageViewController.view.snp.makeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
             $0.leading.trailing.equalToSuperview()
             $0.bottom.equalTo(pageControl.snp.top).offset(-10)
@@ -119,22 +120,12 @@ private extension OnboardingViewController {
             target: self,
             action: #selector(skipButtonTapped)
         )
-        
+
         navigationItem.rightBarButtonItem = skipButton
     }
 
     func setupActions() {
         nextButton.addTarget(self, action: #selector(nextButtonTapped), for: .touchUpInside)
-    }
-
-    func setupGestures() {
-        let leftSwipe = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipe(_:)))
-        leftSwipe.direction = .left
-        collectionView.addGestureRecognizer(leftSwipe)
-
-        let rightSwipe = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipe(_:)))
-        rightSwipe.direction = .right
-        collectionView.addGestureRecognizer(rightSwipe)
     }
 
     func setupBindings() {
@@ -152,62 +143,45 @@ private extension OnboardingViewController {
         nextButton.setTitle(currentPage == pages.count - 1 ? "시작하기" : "다음", for: .normal)
     }
 
-    func transitionToPage(_ nextPage: Int) {
-        guard nextPage != currentPage,
-              let currentCell = collectionView.cellForItem(at: IndexPath(item: currentPage, section: 0)) else { return }
-        
-        UIView.animate(withDuration: 0.3, animations: {
-            currentCell.alpha = 0
-        }) { _ in
-            let indexPath = IndexPath(item: nextPage, section: 0)
-            self.collectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: false)
-            self.currentPage = nextPage
-
-            self.collectionView.cellForItem(at: indexPath)?.alpha = 0
-            UIView.animate(withDuration: 0.3) {
-                self.collectionView.cellForItem(at: indexPath)?.alpha = 1
-            }
-        }
-    }
-
-    @objc func handleSwipe(_ gesture: UISwipeGestureRecognizer) {
-        let nextPage = gesture.direction == .left
-            ? min(currentPage + 1, pages.count - 1)
-            : max(currentPage - 1, 0)
-
-        transitionToPage(nextPage)
-    }
-
     @objc func skipButtonTapped() {
         didCompleteSubject.send()
     }
 
     @objc func nextButtonTapped() {
-        currentPage == pages.count - 1
-            ? didCompleteSubject.send()
-            : transitionToPage(currentPage + 1)
-    }
-}
-
-extension OnboardingViewController: UICollectionViewDataSource {
-    public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return pages.count
-    }
-
-    public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: OnboardPageCell.identifier, for: indexPath) as? OnboardPageCell else {
-            return UICollectionViewCell()
+        if currentPage == pages.count - 1 {
+            didCompleteSubject.send()
+        } else {
+            let nextPage = currentPage + 1
+            pageViewController.setViewControllers(
+                [pageViewControllers[nextPage]],
+                direction: .forward,
+                animated: false
+            )
+            currentPage = nextPage
         }
-
-        let page = pages[indexPath.item]
-        cell.configure(image: page.image, text: page.text)
-        
-        return cell
     }
 }
 
-extension OnboardingViewController: UICollectionViewDelegateFlowLayout {
-    public func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return collectionView.bounds.size
+extension OnboardingViewController: UIPageViewControllerDataSource {
+    public func pageViewController(_ pageViewController: UIPageViewController, viewControllerBefore viewController: UIViewController) -> UIViewController? {
+        guard let contentVC = viewController as? OnboardPageContentViewController else { return nil }
+        let index = contentVC.pageIndex - 1
+        guard index >= 0 else { return nil }
+        return pageViewControllers[index]
+    }
+
+    public func pageViewController(_ pageViewController: UIPageViewController, viewControllerAfter viewController: UIViewController) -> UIViewController? {
+        guard let contentVC = viewController as? OnboardPageContentViewController else { return nil }
+        let index = contentVC.pageIndex + 1
+        guard index < pages.count else { return nil }
+        return pageViewControllers[index]
+    }
+}
+
+extension OnboardingViewController: UIPageViewControllerDelegate {
+    public func pageViewController(_ pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
+        guard completed,
+              let contentVC = pageViewController.viewControllers?.first as? OnboardPageContentViewController else { return }
+        currentPage = contentVC.pageIndex
     }
 }

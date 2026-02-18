@@ -1,16 +1,14 @@
 //
-//  OnboardPageCell.swift
+//  OnboardPageContentViewController.swift
 //  Presentation
-//
-//  Created by Claude Code on 2/11/26.
 //
 
 import UIKit
 import SnapKit
 import DesignSystem
 
-final class OnboardPageCell: UICollectionViewCell {
-    static let identifier = "OnboardPageCell"
+final class OnboardPageContentViewController: UIViewController {
+    let pageIndex: Int
 
     private let imageView: UIImageView = {
         let imageView = UIImageView()
@@ -33,30 +31,33 @@ final class OnboardPageCell: UICollectionViewCell {
         return stackView
     }()
 
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        setupUI()
+    init(pageIndex: Int, image: UIImage?, text: String) {
+        self.pageIndex = pageIndex
+        super.init(nibName: nil, bundle: nil)
+        imageView.image = image
+        textLabel.setText(text, style: .p15)
+        textLabel.textAlignment = .center
     }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func configure(image: UIImage?, text: String) {
-        imageView.image = image
-        textLabel.setText(text, style: .p15)
-        textLabel.textAlignment = .center
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupUI()
     }
 }
 
-private extension OnboardPageCell {
+private extension OnboardPageContentViewController {
     func setupUI() {
-        contentView.addSubview(stackView)
+        view.backgroundColor = DesignSystemAsset.sdBase.color
+        view.addSubview(stackView)
 
         stackView.snp.makeConstraints {
-            $0.centerX.equalToSuperview()
-            $0.top.equalTo(130)
+            $0.top.equalToSuperview().offset(130)
             $0.leading.trailing.equalToSuperview().inset(65)
+            $0.centerX.equalToSuperview()
         }
 
         imageView.snp.makeConstraints {
