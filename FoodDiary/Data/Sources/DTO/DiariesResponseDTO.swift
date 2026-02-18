@@ -1,5 +1,5 @@
 //
-//  MonthlyDiaryResponseDTO.swift
+//  DiariesResponseDTO.swift
 //  Data
 //
 //  Created by 강대훈 on 2/18/26.
@@ -8,9 +8,7 @@
 import Domain
 import Foundation
 
-public typealias MonthlyDiaryResponseDTO = [String: DailyDiaryDTO]
-
-// MARK: - Daily
+public typealias DiariesResponseDTO = [String: DailyDiaryDTO]
 
 public struct DailyDiaryDTO: Decodable {
     public let diaries: [DiaryDTO]
@@ -19,8 +17,6 @@ public struct DailyDiaryDTO: Decodable {
         case diaries
     }
 }
-
-// MARK: - Diary
 
 public struct DiaryDTO: Decodable {
     public let id: Int
@@ -99,9 +95,7 @@ public enum AnalysisStatusDTO: String, Decodable {
     case processing
 }
 
-// MARK: - Domain Mapping
-
-extension MonthlyDiaryResponseDTO {
+extension DiariesResponseDTO {
     public func toDomain() -> [Date: [FoodRecord]] {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"

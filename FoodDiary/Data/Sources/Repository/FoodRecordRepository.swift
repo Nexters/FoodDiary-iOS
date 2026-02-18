@@ -19,7 +19,7 @@ public struct FoodRecordRepositoryImpl<Client: HTTPClienting & Sendable, Storage
 
     public func fetchRecords(in dateRange: ClosedRange<Date>) async throws -> [Date: [FoodRecord]] {
         let endpoint = DiaryEndpoint.fetchMonthlyTest(startDate: dateRange.lowerBound.apiDateString, endDate: dateRange.upperBound.apiDateString)
-        let response: MonthlyDiaryResponseDTO = try await httpClient.request(endpoint, accessToken: tokenStorage.get())
+        let response: DiariesResponseDTO = try await httpClient.request(endpoint, accessToken: tokenStorage.get())
         return response.toDomain()
     }
 
