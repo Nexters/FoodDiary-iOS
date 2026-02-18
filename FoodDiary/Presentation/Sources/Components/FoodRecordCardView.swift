@@ -121,7 +121,7 @@ public final class FoodRecordCardView: UIView {
     }
 
     private func showImageUnavailable() {
-        foodImageView.image = UIImage(systemName: "xmark.circle")
+        foodImageView.image = UIImage(systemName: "xmark")
         foodImageView.tintColor = .gray300
         foodImageView.contentMode = .center
     }

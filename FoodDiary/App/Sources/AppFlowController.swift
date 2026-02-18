@@ -99,6 +99,26 @@ private extension AppFlowController {
         }
 
         typealias DetailVM = DetailViewModel<MockFoodRecordRepository>
+        typealias EditVM = EditFoodRecordViewModel<MockFoodRecordRepository>
+        typealias AddressSearchVM = AddressSearchViewModel<MockAddressSearchRepository>
+
+        let addressSearchVCFactory: (String, @escaping (AddressSearchResult) -> Void) -> UIViewController = { [container] restaurantName, onSelect in
+            guard let addressVM = try? container.resolve(AddressSearchVM.self, argument: restaurantName) else {
+                fatalError("AddressSearchViewModel not registered")
+            }
+            return AddressSearchViewController(viewModel: addressVM, onAddressSelected: onSelect)
+        }
+
+        let editVCFactory: (FoodRecord) -> UIViewController = { [container] record in
+            guard let editVM = try? container.resolve(EditVM.self, argument: record) else {
+                fatalError("EditFoodRecordViewModel not registered")
+            }
+            return EditFoodRecordViewController(
+                viewModel: editVM,
+                onDismissWithResult: { _ in },
+                addressSearchViewControllerFactory: addressSearchVCFactory
+            )
+        }
 
         let weeklyCalendarVC = WeeklyCalendarViewController(
             viewModel: weeklyViewModel,
@@ -108,7 +128,8 @@ private extension AppFlowController {
                     fatalError("DetailViewModel not registered")
                 }
                 return vm
-            }
+            },
+            editViewControllerFactory: editVCFactory
         )
 
         typealias MonthlyVM = MonthlyCalendarViewModel<

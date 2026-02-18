@@ -152,6 +152,10 @@ private extension SceneDelegate {
         container.register(PushNotificationObserver.self) { _ in
             PushNotificationObserver()
         }
+
+        container.register(MockAddressSearchRepository.self) { _ in
+            MockAddressSearchRepository()
+        }
     }
     
     func registerDomain() {
@@ -273,6 +277,32 @@ private extension SceneDelegate {
             )
         }
 
+        container.register(
+            UpdateFoodRecordUseCase<MockFoodRecordRepository>.self
+        ) { resolver in
+            guard let repository = resolver.resolve(MockFoodRecordRepository.self) else {
+                fatalError("MockFoodRecordRepository not registered")
+            }
+            return UpdateFoodRecordUseCase(repository: repository)
+        }
+
+        container.register(
+            DeleteFoodRecordUseCase<MockFoodRecordRepository>.self
+        ) { resolver in
+            guard let repository = resolver.resolve(MockFoodRecordRepository.self) else {
+                fatalError("MockFoodRecordRepository not registered")
+            }
+            return DeleteFoodRecordUseCase(repository: repository)
+        }
+
+        container.register(
+            SearchAddressUseCase<MockAddressSearchRepository>.self
+        ) { resolver in
+            guard let addressRepo = resolver.resolve(MockAddressSearchRepository.self) else {
+                fatalError("MockAddressSearchRepository not registered")
+            }
+            return SearchAddressUseCase(repository: addressRepo)
+        }
     }
     
     func registerPresentation() {
@@ -345,6 +375,49 @@ private extension SceneDelegate {
                 return DetailViewModel(
                     initialDate: initialDate,
                     fetchRecordsUseCase: fetchRecordsUseCase
+                )
+            }
+        )
+
+        typealias EditVM = EditFoodRecordViewModel<MockFoodRecordRepository>
+
+        container.register(
+            EditVM.self,
+            argument: FoodRecord.self,
+            scope: .transient,
+            factory: { resolver, record in
+                guard let updateUseCase = resolver.resolve(
+                    UpdateFoodRecordUseCase<MockFoodRecordRepository>.self
+                ),
+                      let deleteUseCase = resolver.resolve(
+                          DeleteFoodRecordUseCase<MockFoodRecordRepository>.self
+                      ) else {
+                    fatalError("EditFoodRecordViewModel dependencies not registered")
+                }
+
+                return EditFoodRecordViewModel(
+                    record: record,
+                    updateFoodRecordUseCase: updateUseCase,
+                    deleteFoodRecordUseCase: deleteUseCase
+                )
+            }
+        )
+
+        typealias AddressSearchVM = AddressSearchViewModel<MockAddressSearchRepository>
+
+        container.register(
+            AddressSearchVM.self,
+            argument: String.self,
+            scope: .transient,
+            factory: { resolver, restaurantName in
+                guard let searchUseCase = resolver.resolve(
+                    SearchAddressUseCase<MockAddressSearchRepository>.self
+                ) else {
+                    fatalError("SearchAddressUseCase not registered")
+                }
+                return AddressSearchViewModel(
+                    searchAddressUseCase: searchUseCase,
+                    restaurantName: restaurantName
                 )
             }
         )

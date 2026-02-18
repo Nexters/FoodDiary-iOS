@@ -28,6 +28,7 @@ public final class WeeklyCalendarViewController<
         >
     private let imageProvider: ImageProvider
     private let detailViewModelFactory: (Date) -> DetailViewModel<RecordRepo>
+    private let editViewControllerFactory: ((FoodRecord) -> UIViewController)?
 
     // MARK: - UI Components
 
@@ -69,11 +70,13 @@ public final class WeeklyCalendarViewController<
             RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, AnalysisRepo, PushObserver
         >,
         imageProvider: ImageProvider,
-        detailViewModelFactory: @escaping (Date) -> DetailViewModel<RecordRepo>
+        detailViewModelFactory: @escaping (Date) -> DetailViewModel<RecordRepo>,
+        editViewControllerFactory: ((FoodRecord) -> UIViewController)? = nil
     ) {
         self.viewModel = viewModel
         self.imageProvider = imageProvider
         self.detailViewModelFactory = detailViewModelFactory
+        self.editViewControllerFactory = editViewControllerFactory
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -350,7 +353,8 @@ public final class WeeklyCalendarViewController<
             viewModel: detailViewModel,
             onDismissWithDate: { [weak self] date in
                 self?.viewModel.input.send(.selectDate(date))
-            }
+            },
+            editViewControllerFactory: editViewControllerFactory
         )
         navigationController?.pushViewController(detailVC, animated: true)
     }
