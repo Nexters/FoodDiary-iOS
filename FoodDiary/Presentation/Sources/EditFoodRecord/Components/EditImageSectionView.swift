@@ -19,6 +19,12 @@ final class EditImageSectionView: UIView {
         static let sectionInset: CGFloat = 20
     }
 
+    private enum ImageItem {
+        case addButton
+        case existingImage(index: Int, url: URL)
+        case newImage(index: Int, image: UIImage)
+    }
+
     // MARK: - Publishers
 
     var addImageTapPublisher: AnyPublisher<Void, Never> {
@@ -41,6 +47,13 @@ final class EditImageSectionView: UIView {
 
     private var existingImageURLs: [URL] = []
     private var newImages: [UIImage] = []
+
+    private var items: [ImageItem] {
+        var result: [ImageItem] = [.addButton]
+        result += existingImageURLs.enumerated().map { .existingImage(index: $0.offset, url: $0.element) }
+        result += newImages.enumerated().map { .newImage(index: $0.offset, image: $0.element) }
+        return result
+    }
 
     // MARK: - UI Components
 
@@ -103,11 +116,12 @@ final class EditImageSectionView: UIView {
 
 extension EditImageSectionView: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        1 + existingImageURLs.count + newImages.count
+        items.count
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        if indexPath.item == 0 {
+        switch items[indexPath.item] {
+        case .addButton:
             guard let cell = collectionView.dequeueReusableCell(
                 withReuseIdentifier: AddImageCell.reuseIdentifier,
                 for: indexPath
@@ -115,33 +129,33 @@ extension EditImageSectionView: UICollectionViewDataSource {
                 return UICollectionViewCell()
             }
             return cell
-        }
 
-        let adjustedIndex = indexPath.item - 1
-
-        guard let cell = collectionView.dequeueReusableCell(
-            withReuseIdentifier: EditImageCell.reuseIdentifier,
-            for: indexPath
-        ) as? EditImageCell else {
-            return UICollectionViewCell()
-        }
-
-        if adjustedIndex < existingImageURLs.count {
-            let url = existingImageURLs[adjustedIndex]
+        case .existingImage(let index, let url):
+            guard let cell = collectionView.dequeueReusableCell(
+                withReuseIdentifier: EditImageCell.reuseIdentifier,
+                for: indexPath
+            ) as? EditImageCell else {
+                return UICollectionViewCell()
+            }
             cell.configure(with: url)
             cell.onDeleteTapped = { [weak self] in
-                self?.removeExistingImageSubject.send(adjustedIndex)
+                self?.removeExistingImageSubject.send(index)
             }
-        } else {
-            let newImageIndex = adjustedIndex - existingImageURLs.count
-            let image = newImages[newImageIndex]
+            return cell
+
+        case .newImage(let index, let image):
+            guard let cell = collectionView.dequeueReusableCell(
+                withReuseIdentifier: EditImageCell.reuseIdentifier,
+                for: indexPath
+            ) as? EditImageCell else {
+                return UICollectionViewCell()
+            }
             cell.configure(with: image)
             cell.onDeleteTapped = { [weak self] in
-                self?.removeNewImageSubject.send(newImageIndex)
+                self?.removeNewImageSubject.send(index)
             }
+            return cell
         }
-
-        return cell
     }
 }
 
@@ -149,7 +163,7 @@ extension EditImageSectionView: UICollectionViewDataSource {
 
 extension EditImageSectionView: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if indexPath.item == 0 {
+        if case .addButton = items[indexPath.item] {
             addImageTapSubject.send()
         }
     }
