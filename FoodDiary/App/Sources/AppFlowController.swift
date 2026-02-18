@@ -56,12 +56,7 @@ private extension AppFlowController {
 
     func proceedToNextScreen() {
         Task {
-            // FIXME: 개발 완료 후 제거
-            #if DEBUG
-            let isLogin = true
-            #else
             let isLogin = await validateToken()
-            #endif
             routeToAppropriateScreen(isLogin: isLogin)
             networkCancellable?.cancel()
             networkCancellable = nil

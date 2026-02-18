@@ -6,7 +6,6 @@
 import Combine
 import DesignSystem
 import Domain
-import PhotosUI
 import SnapKit
 import UIKit
 
@@ -382,13 +381,7 @@ public final class EditFoodRecordViewController<
     }
 
     private func presentImagePicker() {
-        var config = PHPickerConfiguration()
-        config.selectionLimit = 5
-        config.filter = .images
-
-        let picker = PHPickerViewController(configuration: config)
-        picker.delegate = self
-        present(picker, animated: true)
+        // TODO: todo
     }
 
     private func presentAddTagAlert() {
@@ -425,35 +418,5 @@ public final class EditFoodRecordViewController<
 
     @objc private func saveButtonTapped() {
         viewModel.input.send(.save)
-    }
-}
-
-// MARK: - PHPickerViewControllerDelegate
-
-extension EditFoodRecordViewController: PHPickerViewControllerDelegate {
-    public func picker(
-        _ picker: PHPickerViewController,
-        didFinishPicking results: [PHPickerResult]
-    ) {
-        picker.dismiss(animated: true)
-
-        let itemProviders = results.map(\.itemProvider)
-        var images: [UIImage] = []
-        let group = DispatchGroup()
-
-        for provider in itemProviders where provider.canLoadObject(ofClass: UIImage.self) {
-            group.enter()
-            provider.loadObject(ofClass: UIImage.self) { object, _ in
-                if let image = object as? UIImage {
-                    images.append(image)
-                }
-                group.leave()
-            }
-        }
-
-        group.notify(queue: .main) { [weak self] in
-            guard !images.isEmpty else { return }
-            self?.viewModel.input.send(.addImages(images))
-        }
     }
 }

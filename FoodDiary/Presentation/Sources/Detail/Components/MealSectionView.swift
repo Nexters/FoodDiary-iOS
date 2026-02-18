@@ -89,8 +89,8 @@ final class MealSectionView: UIView {
 
     private func setupUI() {
         addSubview(titleLabel)
-        addSubview(editButton)
         addSubview(contentContainerView)
+        addSubview(editButton)
     }
 
     private func setupConstraints() {
