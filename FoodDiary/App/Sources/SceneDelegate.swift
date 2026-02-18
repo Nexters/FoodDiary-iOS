@@ -130,6 +130,14 @@ private extension SceneDelegate {
             MockFoodRecordRepository()
         }
 
+        container.register(FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>.self) { resolver in
+            guard let client = resolver.resolve(HTTPClient.self),
+                  let storage = resolver.resolve(AuthTokenStorage<KeychainService>.self) else {
+                fatalError("FoodRecordRepositoryImpl dependencies not registered")
+            }
+            return FoodRecordRepositoryImpl(httpClient: client, tokenStorage: storage)
+        }
+
         container.register(PhotoAuthorizationFetcher.self) { _ in
             PhotoAuthorizationFetcher()
         }
@@ -245,9 +253,9 @@ private extension SceneDelegate {
             )
         }
 
-        container.register(FetchMonthlyCalendarDaysUseCase<MockFoodRecordRepository>.self) { resolver in
-            guard let repository = resolver.resolve(MockFoodRecordRepository.self) else {
-                fatalError("MockFoodRecordRepository not registered")
+        container.register(FetchMonthlyCalendarDaysUseCase<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>.self) { resolver in
+            guard let repository = resolver.resolve(FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>.self) else {
+                fatalError("FoodRecordRepositoryImpl not registered")
             }
             return FetchMonthlyCalendarDaysUseCase(repository: repository)
         }
@@ -424,13 +432,13 @@ private extension SceneDelegate {
 
         // MonthlyCalendarViewModel 타입 별칭
         typealias MonthlyVM = MonthlyCalendarViewModel<
-            MockFoodRecordRepository,
+            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
             PhotoAuthorizationFetcher
         >
 
         container.register(MonthlyVM.self, scope: .transient) { resolver in
             guard let fetchMonthlyUseCase = resolver.resolve(
-                FetchMonthlyCalendarDaysUseCase<MockFoodRecordRepository>.self
+                FetchMonthlyCalendarDaysUseCase<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>.self
             ),
                   let requestPhotoAuthUseCase = resolver.resolve(
                       RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>.self

@@ -15,8 +15,6 @@ public struct FetchMonthlyCalendarDaysUseCase<Repository: FoodRecordRepository>:
 
     public func execute(for period: DateInterval, currentMonth: Date) async throws -> [MonthlyCalendarDay] {
         let calendar = Calendar.seoul
-
-        // 음식 기록 조회
         let recordsByDate = try await repository.fetchRecords(in: period.start...period.end)
 
         // 캘린더 날짜 배열 생성 (records 포함)
