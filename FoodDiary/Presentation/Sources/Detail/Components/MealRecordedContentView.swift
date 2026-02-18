@@ -35,12 +35,11 @@ final class MealRecordedContentView: UIView {
 
     private let onCopyTapped: ((FoodRecord) -> Void)?
     private let onShareTapped: ((FoodRecord) -> Void)?
-    private let onCurrentRecordChanged: ((FoodRecord) -> Void)?
 
     // MARK: - State
 
     private var cardItems: [CardItem] = []
-    private(set) var currentRecord: FoodRecord?
+    private var currentRecord: FoodRecord?
 
     // MARK: - UI Components
 
@@ -96,12 +95,10 @@ final class MealRecordedContentView: UIView {
     init(
         records: [FoodRecord],
         onCopyTapped: ((FoodRecord) -> Void)? = nil,
-        onShareTapped: ((FoodRecord) -> Void)? = nil,
-        onCurrentRecordChanged: ((FoodRecord) -> Void)? = nil
+        onShareTapped: ((FoodRecord) -> Void)? = nil
     ) {
         self.onCopyTapped = onCopyTapped
         self.onShareTapped = onShareTapped
-        self.onCurrentRecordChanged = onCurrentRecordChanged
         super.init(frame: .zero)
 
         cardItems = records.flatMap { record in
@@ -216,7 +213,6 @@ final class MealRecordedContentView: UIView {
         if let record = cardItems.first?.record {
             currentRecord = record
             configureInfoSection(with: record)
-            onCurrentRecordChanged?(record)
         }
     }
 
@@ -240,7 +236,6 @@ final class MealRecordedContentView: UIView {
         guard record != currentRecord else { return }
         currentRecord = record
         configureInfoSection(with: record)
-        onCurrentRecordChanged?(record)
     }
 
     // MARK: - Actions

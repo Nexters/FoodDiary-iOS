@@ -108,12 +108,8 @@ public final class DetailViewModel<RecordRepo: FoodRecordRepository> {
         }
     }
 
-    private func groupRecordsByMealType(_ records: [FoodRecord]) -> [MealType: [FoodRecord]] {
-        var grouped: [MealType: [FoodRecord]] = [:]
-        for record in records {
-            grouped[record.mealType, default: []].append(record)
-        }
-        return grouped
+    private func groupRecordsByMealType(_ records: [FoodRecord]) -> [MealType: FoodRecord] {
+        Dictionary(uniqueKeysWithValues: records.map { ($0.mealType, $0) })
     }
 
     private let dateFormatter: DateFormatter = {
@@ -138,7 +134,7 @@ public final class DetailViewModel<RecordRepo: FoodRecordRepository> {
 extension DetailViewModel {
     public struct State: Equatable {
         public var currentDate: Date
-        public var recordsByMealType: [MealType: [FoodRecord]] = [:]
+        public var recordsByMealType: [MealType: FoodRecord] = [:]
         public var dateText: String = ""
         public var isLoading: Bool = false
         public var isNextDayAvailable: Bool = true

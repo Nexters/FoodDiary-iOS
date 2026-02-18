@@ -50,7 +50,6 @@ final class MealSectionView: UIView {
 
     private let mealType: MealType
     private var currentState: State?
-    private var currentDisplayedRecord: FoodRecord?
 
     // MARK: - UI Components
 
@@ -150,8 +149,8 @@ final class MealSectionView: UIView {
             showEmptyState()
         case .pending(let records):
             showPendingState(records: records)
-        case .recorded(let records):
-            showRecordedState(records: records)
+        case .recorded(let record):
+            showRecordedState(record: record)
         }
     }
 
@@ -188,19 +187,16 @@ final class MealSectionView: UIView {
         }
     }
 
-    private func showRecordedState(records: [FoodRecord]) {
+    private func showRecordedState(record: FoodRecord) {
         editButton.isHidden = false
 
         let recordedView = MealRecordedContentView(
-            records: records,
+            records: [record],
             onCopyTapped: { [weak self] record in
                 self?.copyTapSubject.send(record)
             },
             onShareTapped: { [weak self] record in
                 self?.shareTapSubject.send(record)
-            },
-            onCurrentRecordChanged: { [weak self] record in
-                self?.currentDisplayedRecord = record
             }
         )
         
@@ -215,7 +211,7 @@ final class MealSectionView: UIView {
     // MARK: - Actions
 
     @objc private func editTapped() {
-        guard let record = currentDisplayedRecord else { return }
+        guard case .recorded(let record) = currentState else { return }
         editTapSubject.send(record)
     }
 }
@@ -226,6 +222,6 @@ extension MealSectionView {
     enum State: Equatable {
         case empty
         case pending([PendingFoodRecord])
-        case recorded([FoodRecord])
+        case recorded(FoodRecord)
     }
 }

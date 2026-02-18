@@ -94,6 +94,7 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(false, animated: animated)
         navigationController?.hidesBarsOnSwipe = true
+        // TODO: edit 후 돌아왔을 때 변경된 데이터를 반영하도록 loadRecords 호출 필요
     }
 
     public override func viewWillDisappear(_ animated: Bool) {
@@ -261,7 +262,7 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
 
     // MARK: - Private Methods
 
-    private func updateMealSections(_ recordsByMealType: [MealType: [FoodRecord]]) {
+    private func updateMealSections(_ recordsByMealType: [MealType: FoodRecord]) {
         let sections: [(MealType, MealSectionView)] = [
             (.breakfast, breakfastSection),
             (.lunch, lunchSection),
@@ -270,8 +271,11 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
         ]
 
         for (mealType, section) in sections {
-            let records = recordsByMealType[mealType] ?? []
-            let state: MealSectionView.State = records.isEmpty ? .empty : .recorded(records)
+            let state: MealSectionView.State = if let record = recordsByMealType[mealType] {
+                .recorded(record)
+            } else {
+                .empty
+            }
             section.configure(state: state)
         }
     }
