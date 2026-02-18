@@ -11,6 +11,7 @@ import Foundation
 enum MockEndpoint {
     case minimal
     case full
+    case multipart(MultipartFormData)
 }
 
 extension MockEndpoint: Requestable {
@@ -24,6 +25,8 @@ extension MockEndpoint: Requestable {
             return "/health"
         case .full:
             return "/users"
+        case .multipart:
+            return "/photos/batch-upload"
         }
     }
 
@@ -31,32 +34,34 @@ extension MockEndpoint: Requestable {
         switch self {
         case .minimal:
             return .get
-        case .full:
+        case .full, .multipart:
             return .post
         }
     }
 
     var queryParameters: Encodable? {
         switch self {
-        case .minimal:
+        case .minimal, .multipart:
             return nil
         case .full:
             return ["tests": "1"]
         }
     }
 
-    var bodyParameters: Encodable? {
+    var bodyParameters: HTTPBody {
         switch self {
         case .minimal:
-            return nil
+            return .none
         case .full:
-            return MockBodyDTO(name: "Kang", age: 999)
+            return .json(MockBodyDTO(name: "Kang", age: 999))
+        case let .multipart(formData):
+            return .multipart(formData)
         }
     }
 
     var headers: [String: String] {
         switch self {
-        case .minimal:
+        case .minimal, .multipart:
             return [:]
         case .full:
             return [

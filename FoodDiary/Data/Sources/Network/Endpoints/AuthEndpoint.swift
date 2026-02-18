@@ -49,20 +49,22 @@ extension AuthEndpoint: Requestable {
         }
     }
     
-    public var bodyParameters: Encodable? {
+    public var bodyParameters: HTTPBody {
         switch self {
         case let .login(request):
-            return AuthRequestDTO(
-                appVersion: request.appVersion,
-                deviceId: request.deviceId,
-                deviceToken: request.fcmToken,
-                idToken: request.identityToken,
-                isActive: request.notificationEnabled,
-                osVersion: request.osVersion,
-                provider: .apple
+            return .json(
+                AuthRequestDTO(
+                    appVersion: request.appVersion,
+                    deviceId: request.deviceId,
+                    deviceToken: request.fcmToken,
+                    idToken: request.identityToken,
+                    isActive: request.notificationEnabled,
+                    osVersion: request.osVersion,
+                    provider: .apple
+                )
             )
         case .verify:
-            return nil
+            return .none
         }
     }
     
