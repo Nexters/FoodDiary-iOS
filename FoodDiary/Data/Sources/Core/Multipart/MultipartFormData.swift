@@ -55,6 +55,7 @@ public struct File {
 
 private extension Data {
     mutating func appendString(_ string: String) {
-        append(string.data(using: .utf8)!)
+        guard let data = string.data(using: .utf8) else { return }
+        append(data)
     }
 }
