@@ -14,8 +14,6 @@ final class AddressDisplayView: UIView {
 
     private enum Constants {
         static let height: CGFloat = 48
-        static let cornerRadius: CGFloat = 12
-        static let horizontalInset: CGFloat = 16
         static let spacing: CGFloat = 8
     }
 
@@ -34,42 +32,16 @@ final class AddressDisplayView: UIView {
 
     // MARK: - UI Components
 
-    private let addressButton: UIControl = {
+    private let addressFieldContainer: UIControl = {
         let control = UIControl()
-        control.backgroundColor = .sd900
-        control.layer.cornerRadius = Constants.cornerRadius
         return control
     }()
 
-    private let addressLabel: UILabel = {
-        let label = UILabel()
-        label.numberOfLines = 1
-        return label
-    }()
+    private let addressField = SearchTextField(placeholder: "주소 검색", showSearchIcon: true, isEditable: false)
 
-    private let searchIcon: UIImageView = {
-        let iv = UIImageView(image: UIImage(systemName: "magnifyingglass"))
-        iv.tintColor = .gray400
-        iv.contentMode = .scaleAspectFit
-        return iv
-    }()
-
-    private let detailAddressTextField: UITextField = {
-        let tf = UITextField()
-        tf.backgroundColor = .sd900
-        tf.layer.cornerRadius = Constants.cornerRadius
-        tf.textColor = .white
-        tf.attributedPlaceholder = Typography.p14.styled("상세 주소 입력", color: .gray600)
-        tf.font = DesignSystemFontFamily.Pretendard.regular.font(size: 14)
+    private let detailAddressTextField: SearchTextField = {
+        let tf = SearchTextField(placeholder: "상세 주소 입력")
         tf.isHidden = true
-
-        let leftPadding = UIView(frame: CGRect(x: 0, y: 0, width: Constants.horizontalInset, height: 0))
-        tf.leftView = leftPadding
-        tf.leftViewMode = .always
-
-        let rightPadding = UIView(frame: CGRect(x: 0, y: 0, width: Constants.horizontalInset, height: 0))
-        tf.rightView = rightPadding
-        tf.rightViewMode = .always
         return tf
     }()
 
@@ -99,10 +71,9 @@ final class AddressDisplayView: UIView {
     private func setupUI() {
         addSubview(stackView)
 
-        addressButton.addSubview(addressLabel)
-        addressButton.addSubview(searchIcon)
+        addressFieldContainer.addSubview(addressField)
 
-        stackView.addArrangedSubview(addressButton)
+        stackView.addArrangedSubview(addressFieldContainer)
         stackView.addArrangedSubview(detailAddressTextField)
 
         configure(address: nil, detailAddress: "")
@@ -113,20 +84,12 @@ final class AddressDisplayView: UIView {
             $0.edges.equalToSuperview()
         }
 
-        addressButton.snp.makeConstraints {
+        addressFieldContainer.snp.makeConstraints {
             $0.height.equalTo(Constants.height)
         }
 
-        addressLabel.snp.makeConstraints {
-            $0.leading.equalToSuperview().offset(Constants.horizontalInset)
-            $0.centerY.equalToSuperview()
-            $0.trailing.lessThanOrEqualTo(searchIcon.snp.leading).offset(-8)
-        }
-
-        searchIcon.snp.makeConstraints {
-            $0.trailing.equalToSuperview().offset(-Constants.horizontalInset)
-            $0.centerY.equalToSuperview()
-            $0.size.equalTo(16)
+        addressField.snp.makeConstraints {
+            $0.edges.equalToSuperview()
         }
 
         detailAddressTextField.snp.makeConstraints {
@@ -135,7 +98,7 @@ final class AddressDisplayView: UIView {
     }
 
     private func setupActions() {
-        addressButton.addTarget(self, action: #selector(addressButtonTapped), for: .touchUpInside)
+        addressFieldContainer.addTarget(self, action: #selector(addressButtonTapped), for: .touchUpInside)
         detailAddressTextField.addTarget(self, action: #selector(detailAddressChanged), for: .editingChanged)
     }
 
@@ -143,11 +106,12 @@ final class AddressDisplayView: UIView {
 
     func configure(address: String?, detailAddress: String) {
         if let address, !address.isEmpty {
-            addressLabel.setText(address, style: .p14, color: .white)
+            addressField.text = address
+            addressField.textColor = .white
             detailAddressTextField.isHidden = false
             detailAddressTextField.text = detailAddress
         } else {
-            addressLabel.setText("주소 검색", style: .p14, color: .gray600)
+            addressField.text = nil
             detailAddressTextField.isHidden = true
         }
     }

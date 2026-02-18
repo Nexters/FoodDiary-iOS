@@ -15,7 +15,6 @@ import UIKit
 enum AddressSearchConstants {
     static let horizontalInset: CGFloat = 20
     static let textFieldHeight: CGFloat = 48
-    static let cornerRadius: CGFloat = 10
     static let closeButtonSize: CGFloat = 44
     static let closeButtonTopInset: CGFloat = 20
     static let searchFieldTopSpacing: CGFloat = 16
@@ -58,32 +57,10 @@ public final class AddressSearchViewController<
         return button
     }()
 
-    private lazy var searchTextField: UITextField = {
-        let tf = UITextField()
-        tf.backgroundColor = .sd900
-        tf.layer.cornerRadius = AddressSearchConstants.cornerRadius
-        tf.textColor = .white
-        tf.attributedPlaceholder = Typography.p14.styled("검색어를 입력해주세요.", color: .gray600)
-        tf.font = DesignSystemFontFamily.Pretendard.regular.font(size: 14)
+    private lazy var searchTextField: SearchTextField = {
+        let tf = SearchTextField(placeholder: "검색어를 입력해주세요.", showSearchIcon: true)
         tf.returnKeyType = .search
         tf.delegate = self
-
-        let searchIcon = UIImageView(image: UIImage(systemName: "magnifyingglass"))
-        searchIcon.tintColor = .gray400
-        searchIcon.contentMode = .center
-        searchIcon.isUserInteractionEnabled = true
-
-        let searchButton = UIButton(type: .system)
-        searchButton.setImage(UIImage(systemName: "magnifyingglass"), for: .normal)
-        searchButton.tintColor = .gray400
-        searchButton.frame = CGRect(x: 0, y: 0, width: 40, height: 20)
-        searchButton.addTarget(self, action: #selector(searchButtonTapped), for: .touchUpInside)
-        tf.rightView = searchButton
-        tf.rightViewMode = .always
-
-        let leftPadding = UIView(frame: CGRect(x: 0, y: 0, width: 16, height: 0))
-        tf.leftView = leftPadding
-        tf.leftViewMode = .always
         return tf
     }()
 
@@ -99,7 +76,7 @@ public final class AddressSearchViewController<
         view.layer.borderColor = UIColor.sd800.cgColor
         view.layer.borderWidth = 1
 
-        view.layer.cornerRadius = AddressSearchConstants.cornerRadius
+        view.layer.cornerRadius = 12
         view.clipsToBounds = true
         view.isHidden = true
         return view
@@ -217,6 +194,9 @@ public final class AddressSearchViewController<
 
     private func setupBindings() {
         searchTextField.addTarget(self, action: #selector(searchTextChanged), for: .editingChanged)
+        searchTextField.onSearchIconTapped = { [weak self] in
+            self?.searchButtonTapped()
+        }
 
         viewModel.statePublisher
             .removeDuplicates()
