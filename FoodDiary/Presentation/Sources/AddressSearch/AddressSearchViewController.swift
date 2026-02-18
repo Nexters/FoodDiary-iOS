@@ -255,7 +255,7 @@ public final class AddressSearchViewController<
 
         emptyResultLabel.isHidden = !(state.mode == .searchResults && displayResults.isEmpty)
 
-        DispatchQueue.main.async { [weak self] in
+        Task { @MainActor [weak self] in
             guard let self else { return }
             self.view.layoutIfNeeded()
             let contentHeight = self.resultsTableView.contentSize.height
