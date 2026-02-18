@@ -156,14 +156,14 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
         polaroidImageCardsView.isHidden = !hasRecord
 
         guard hasRecord else { return }
-        
-        if records.count == 1 {
-            polaroidImageCardsView.configure(image: DesignSystemAsset.foodPlaceholder.image)
+
+        if records.count == 1, let url = records[0].imageURLs.first {
+            polaroidImageCardsView.configure(imageURL: url)
+        } else if let backURL = records[0].imageURLs.first,
+                  let frontURL = records[1].imageURLs.first {
+            polaroidImageCardsView.configure(backImageURL: backURL, frontImageURL: frontURL)
         } else {
-            polaroidImageCardsView.configure(
-                backImage: DesignSystemAsset.foodPlaceholder.image,
-                frontImage: DesignSystemAsset.foodPlaceholder.image
-            )
+            polaroidImageCardsView.configure(image: DesignSystemAsset.foodPlaceholder.image)
         }
     }
 
