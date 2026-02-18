@@ -14,9 +14,9 @@ import Domain
 import UserNotifications
 
 final public class LoginViewController: UIViewController {
-    private let didLoginSubject = PassthroughSubject<Void, Never>()
-    
-    public var didLoginPublisher: AnyPublisher<Void, Never> {
+    private let didLoginSubject = PassthroughSubject<LoginResult, Never>()
+
+    public var didLoginPublisher: AnyPublisher<LoginResult, Never> {
         didLoginSubject.eraseToAnyPublisher()
     }
     
@@ -115,8 +115,8 @@ extension LoginViewController: ASAuthorizationControllerDelegate {
                let tokenString = String(data: token, encoding: .utf8) {
                 Task {
                     do {
-                        let _ = try await viewModel.sendIdentityToken(tokenString)
-                        didLoginSubject.send()
+                        let result = try await viewModel.sendIdentityToken(tokenString)
+                        didLoginSubject.send(result)
                     } catch {
                         print(error.localizedDescription)
                     }
