@@ -12,7 +12,7 @@ public struct SearchAddressUseCase<Repository: AddressSearchRepository>: Sendabl
         self.repository = repository
     }
 
-    public func execute(keyword: String, page: Int = 1) async throws -> [AddressSearchResult] {
+    public func searchAddress(keyword: String, page: Int = 1) async throws -> [AddressSearchResult] {
         try await repository.searchAddress(keyword: keyword, page: page)
     }
 

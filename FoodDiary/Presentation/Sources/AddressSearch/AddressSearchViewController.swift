@@ -11,6 +11,7 @@ import UIKit
 
 // MARK: - Constants
 
+/// Cannot use `static let`` inside the class due to generic type constraints, so we define it outside.
 enum AddressSearchConstants {
     static let horizontalInset: CGFloat = 20
     static let textFieldHeight: CGFloat = 48

@@ -101,7 +101,27 @@ private extension AppFlowController {
         typealias EditVM = EditFoodRecordViewModel<MockFoodRecordRepository>
         typealias AddressSearchVM = AddressSearchViewModel<MockAddressSearchRepository>
 
-        let navigationController = UINavigationController()
+        let addressSearchVCFactory: (String, @escaping (AddressSearchResult) -> Void) -> UIViewController = { [container] restaurantName, onSelect in
+            guard let addressVM = try? container.resolve(AddressSearchVM.self, argument: restaurantName) else {
+                fatalError("AddressSearchViewModel not registered")
+            }
+            let addressSearchVC = AddressSearchViewController(viewModel: addressVM)
+            addressSearchVC.onAddressSelected = { result in
+                onSelect(result)
+            }
+            return addressSearchVC
+        }
+
+        let editVCFactory: (FoodRecord) -> UIViewController = { [container] record in
+            guard let editVM = try? container.resolve(EditVM.self, argument: record) else {
+                fatalError("EditFoodRecordViewModel not registered")
+            }
+            return EditFoodRecordViewController(
+                viewModel: editVM,
+                onDismissWithResult: { _ in },
+                addressSearchViewControllerFactory: addressSearchVCFactory
+            )
+        }
 
         let weeklyCalendarVC = WeeklyCalendarViewController(
             viewModel: weeklyViewModel,
@@ -112,34 +132,7 @@ private extension AppFlowController {
                 }
                 return vm
             },
-            onEditRecord: { [container, weak navigationController] record in
-                guard let editVM = try? container.resolve(EditVM.self, argument: record) else {
-                    fatalError("EditFoodRecordViewModel not registered")
-                }
-
-                let editVC = EditFoodRecordViewController(
-                    viewModel: editVM,
-                    onDismissWithResult: { _ in },
-                    onPresentAddressSearch: { [container, weak navigationController] onSelect in
-                        let restaurantName = editVM.state.originalRecord.restaurantName ?? ""
-                        guard let addressVM = try? container.resolve(
-                            AddressSearchVM.self,
-                            argument: restaurantName
-                        ) else {
-                            fatalError("AddressSearchViewModel not registered")
-                        }
-                        let addressSearchVC = AddressSearchViewController(viewModel: addressVM)
-                        addressSearchVC.onAddressSelected = { result in
-                            onSelect(result)
-                        }
-                        navigationController?.topViewController?.present(
-                            addressSearchVC,
-                            animated: true
-                        )
-                    }
-                )
-                navigationController?.pushViewController(editVC, animated: true)
-            }
+            editViewControllerFactory: editVCFactory
         )
 
         typealias MonthlyVM = MonthlyCalendarViewModel<

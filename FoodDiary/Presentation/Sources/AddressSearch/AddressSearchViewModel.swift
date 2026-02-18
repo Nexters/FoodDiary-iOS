@@ -79,7 +79,7 @@ public final class AddressSearchViewModel<AddressRepo: AddressSearchRepository> 
             state.isSearching = true
             state.mode = .searchResults
             do {
-                let results = try await searchAddressUseCase.execute(keyword: keyword)
+                let results = try await searchAddressUseCase.searchAddress(keyword: keyword)
                 state.searchResults = results
             } catch {
                 state.searchResults = []

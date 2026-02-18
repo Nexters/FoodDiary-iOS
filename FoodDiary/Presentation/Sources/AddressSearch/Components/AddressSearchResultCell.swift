@@ -8,14 +8,13 @@ import Domain
 import SnapKit
 import UIKit
 
-private enum Constants {
-    static let horizontalPadding: CGFloat = 20
-    static let verticalPadding: CGFloat = 24
-    static let textStackSpacing: CGFloat = 8
-    static let buttonSpacing: CGFloat = 24
-}
-
 final class AddressSearchResultCell: UITableViewCell {
+    private enum Constants {
+        static let horizontalPadding: CGFloat = 20
+        static let verticalPadding: CGFloat = 24
+        static let textStackSpacing: CGFloat = 8
+        static let buttonSpacing: CGFloat = 24
+    }
 
     static let reuseIdentifier = "AddressSearchResultCell"
 

@@ -9,12 +9,10 @@ import Foundation
 public struct AddressSearchResult: Equatable, Sendable {
     public let placeName: String
     public let roadAddress: String
-    public let jibunAddress: String
 
-    public init(placeName: String, roadAddress: String, jibunAddress: String) {
+    public init(placeName: String, roadAddress: String) {
         self.placeName = placeName
         self.roadAddress = roadAddress
-        self.jibunAddress = jibunAddress
     }
 }
 

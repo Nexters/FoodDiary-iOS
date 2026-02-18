@@ -29,7 +29,7 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
 
     private let viewModel: DetailViewModel<RecordRepo>
     private let onDismissWithDate: ((Date) -> Void)?
-    private let onEditRecord: ((FoodRecord) -> Void)?
+    private let editViewControllerFactory: ((FoodRecord) -> UIViewController)?
 
     // MARK: - UI Components
 
@@ -65,11 +65,11 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
     public init(
         viewModel: DetailViewModel<RecordRepo>,
         onDismissWithDate: ((Date) -> Void)? = nil,
-        onEditRecord: ((FoodRecord) -> Void)? = nil
+        editViewControllerFactory: ((FoodRecord) -> UIViewController)? = nil
     ) {
         self.viewModel = viewModel
         self.onDismissWithDate = onDismissWithDate
-        self.onEditRecord = onEditRecord
+        self.editViewControllerFactory = editViewControllerFactory
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -355,7 +355,9 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
     }
 
     private func handleEdit(record: FoodRecord) {
-        onEditRecord?(record)
+        guard let editVC = editViewControllerFactory?(record) else { return }
+        editVC.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(editVC, animated: true)
     }
 
     private func handleAddPhoto() {
