@@ -9,7 +9,7 @@ import Domain
 import Foundation
 
 public enum PhotosEndpoint {
-    case batchUploadTest(date: String, photos: [File])
+    case batchUpload(date: String, photos: [File], testMode: Bool)
 }
 
 extension PhotosEndpoint: Requestable {
@@ -17,34 +17,34 @@ extension PhotosEndpoint: Requestable {
         guard let url = Bundle.main.infoDictionary?["BASE_URL"] as? String else {
             fatalError("BASE_URL이 Info.plist에 설정되지 않았습니다.")
         }
-        
+
         return url
     }
-    
+
     public var path: String {
         switch self {
-        case .batchUploadTest:
+        case .batchUpload:
             "/photos/batch-upload"
         }
     }
-    
+
     public var httpMethod: HTTPMethod {
         switch self {
-        case .batchUploadTest:
+        case .batchUpload:
             .post
         }
     }
-    
+
     public var queryParameters: Encodable? {
         switch self {
-        case .batchUploadTest:
-            ["test_mode": "true"]
+        case let .batchUpload(_, _, testMode):
+            testMode ? ["test_mode": "true"] : nil
         }
     }
-    
+
     public var bodyParameters: HTTPBody {
         switch self {
-        case let .batchUploadTest(date, photos):
+        case let .batchUpload(date, photos, _):
             return .multipart(
                 MultipartFormData(
                     date: date,
@@ -53,10 +53,10 @@ extension PhotosEndpoint: Requestable {
             )
         }
     }
-    
+
     public var headers: [String : String] {
         switch self {
-        case .batchUploadTest:
+        case .batchUpload:
             [:]
         }
     }

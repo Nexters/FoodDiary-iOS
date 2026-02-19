@@ -85,7 +85,7 @@ private extension AppFlowController {
         }
 
         typealias WeeklyVM = WeeklyCalendarViewModel<
-            MockFoodRecordRepository,
+            FoodRecordRepositoryImpl,
             FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>,
             PhotoAuthorizationFetcher,
             UIImageLoader,
@@ -98,8 +98,8 @@ private extension AppFlowController {
             fatalError("WeeklyCalendarViewModel not registered")
         }
 
-        typealias DetailVM = DetailViewModel<MockFoodRecordRepository>
-        typealias EditVM = EditFoodRecordViewModel<MockFoodRecordRepository>
+        typealias DetailVM = DetailViewModel<FoodRecordRepositoryImpl>
+        typealias EditVM = EditFoodRecordViewModel<FoodRecordRepositoryImpl>
         typealias AddressSearchVM = AddressSearchViewModel<MockAddressSearchRepository>
 
         let addressSearchVCFactory: (String, @escaping (AddressSearchResult) -> Void) -> UIViewController = { [container] restaurantName, onSelect in
@@ -133,7 +133,7 @@ private extension AppFlowController {
         )
 
         typealias MonthlyVM = MonthlyCalendarViewModel<
-            MockFoodRecordRepository,
+            FoodRecordRepositoryImpl,
             PhotoAuthorizationFetcher
         >
 
