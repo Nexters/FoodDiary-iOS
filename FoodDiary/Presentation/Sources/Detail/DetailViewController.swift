@@ -29,6 +29,7 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
 
     private let viewModel: DetailViewModel<RecordRepo>
     private let onDismissWithDate: ((Date) -> Void)?
+    private let editViewControllerFactory: ((FoodRecord) -> UIViewController)?
 
     // MARK: - UI Components
 
@@ -63,10 +64,12 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
 
     public init(
         viewModel: DetailViewModel<RecordRepo>,
-        onDismissWithDate: ((Date) -> Void)? = nil
+        onDismissWithDate: ((Date) -> Void)? = nil,
+        editViewControllerFactory: ((FoodRecord) -> UIViewController)? = nil
     ) {
         self.viewModel = viewModel
         self.onDismissWithDate = onDismissWithDate
+        self.editViewControllerFactory = editViewControllerFactory
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -91,6 +94,7 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(false, animated: animated)
         navigationController?.hidesBarsOnSwipe = true
+        // TODO: edit 후 돌아왔을 때 변경된 데이터를 반영하도록 loadRecords 호출 필요
     }
 
     public override func viewWillDisappear(_ animated: Bool) {
@@ -243,8 +247,8 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
 
         breakfastSection.editTapPublisher
             .merge(with: lunchSection.editTapPublisher, dinnerSection.editTapPublisher, lateNightSection.editTapPublisher)
-            .sink { [weak self] mealType in
-                self?.handleEdit(mealType: mealType)
+            .sink { [weak self] record in
+                self?.handleEdit(record: record)
             }
             .store(in: &cancellables)
 
@@ -258,7 +262,7 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
 
     // MARK: - Private Methods
 
-    private func updateMealSections(_ recordsByMealType: [MealType: [FoodRecord]]) {
+    private func updateMealSections(_ recordsByMealType: [MealType: FoodRecord]) {
         let sections: [(MealType, MealSectionView)] = [
             (.breakfast, breakfastSection),
             (.lunch, lunchSection),
@@ -267,8 +271,11 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
         ]
 
         for (mealType, section) in sections {
-            let records = recordsByMealType[mealType] ?? []
-            let state: MealSectionView.State = records.isEmpty ? .empty : .recorded(records)
+            let state: MealSectionView.State = if let record = recordsByMealType[mealType] {
+                .recorded(record)
+            } else {
+                .empty
+            }
             section.configure(state: state)
         }
     }
@@ -351,8 +358,10 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
         // TODO: Show more options menu
     }
 
-    private func handleEdit(mealType: MealType) {
-        // TODO: Navigate to edit screen
+    private func handleEdit(record: FoodRecord) {
+        guard let editVC = editViewControllerFactory?(record) else { return }
+        editVC.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(editVC, animated: true)
     }
 
     private func handleAddPhoto() {

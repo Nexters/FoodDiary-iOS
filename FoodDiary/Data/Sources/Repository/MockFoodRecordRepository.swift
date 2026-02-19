@@ -43,6 +43,51 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
         return uploadId
     }
 
+    public func updateRecord(_ request: UpdateFoodRecordRequest) async throws -> FoodRecord {
+        for (dateKey, records) in mockRecords {
+            if let index = records.firstIndex(where: { $0.id == request.id }) {
+                let existing = records[index]
+                let combinedAddress: String? = if let address = request.address {
+                    if let detail = request.detailAddress, !detail.isEmpty {
+                        "\(address) \(detail)"
+                    } else {
+                        address
+                    }
+                } else {
+                    existing.address
+                }
+
+                let updated = FoodRecord(
+                    id: existing.id,
+                    date: existing.date,
+                    mealType: existing.mealType,
+                    genre: request.genre,
+                    imageURLs: request.existingImageURLs,
+                    restaurantName: existing.restaurantName,
+                    address: combinedAddress,
+                    hashtags: request.hashtags,
+                    createdAt: existing.createdAt
+                )
+                mockRecords[dateKey]?[index] = updated
+                return updated
+            }
+        }
+        throw NSError(domain: "MockFoodRecordRepository", code: 404, userInfo: [NSLocalizedDescriptionKey: "기록을 찾을 수 없습니다"])
+    }
+
+    public func deleteRecord(id: String) async throws {
+        for (dateKey, records) in mockRecords {
+            if let index = records.firstIndex(where: { $0.id == id }) {
+                mockRecords[dateKey]?.remove(at: index)
+                if mockRecords[dateKey]?.isEmpty == true {
+                    mockRecords.removeValue(forKey: dateKey)
+                }
+                return
+            }
+        }
+        throw NSError(domain: "MockFoodRecordRepository", code: 404, userInfo: [NSLocalizedDescriptionKey: "기록을 찾을 수 없습니다"])
+    }
+
     // MARK: - Mock Data Setup
 
     private static let mockImageURL = URL(
@@ -75,7 +120,12 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
                     imageURLs: [Self.mockImageURL, Self.mockImageURL2, Self.mockImageURL3],
                     restaurantName: "할머니 손칼국수",
                     address: "서울시 종로구 인사동길 12",
-                    hashtags: ["칼국수", "만두", "김치"],
+                    hashtags: [
+                        "칼국수", "만두", "김치", "맛집", "점심추천",
+                        "혼밥", "종로맛집", "인사동", "한식", "국물요리",
+                        "수제만두", "손칼국수", "겨울음식", "따뜻한", "가성비",
+                        "직장인점심", "노포", "전통맛집", "단골", "소울푸드"
+                    ],
                     createdAt: yesterdayLunch
                 )
             ]

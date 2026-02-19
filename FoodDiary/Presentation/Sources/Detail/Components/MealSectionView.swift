@@ -32,7 +32,7 @@ final class MealSectionView: UIView {
         shareTapSubject.eraseToAnyPublisher()
     }
 
-    var editTapPublisher: AnyPublisher<MealType, Never> {
+    var editTapPublisher: AnyPublisher<FoodRecord, Never> {
         editTapSubject.eraseToAnyPublisher()
     }
 
@@ -42,7 +42,7 @@ final class MealSectionView: UIView {
 
     private let copyTapSubject = PassthroughSubject<FoodRecord, Never>()
     private let shareTapSubject = PassthroughSubject<FoodRecord, Never>()
-    private let editTapSubject = PassthroughSubject<MealType, Never>()
+    private let editTapSubject = PassthroughSubject<FoodRecord, Never>()
     private let addButtonTapSubject = PassthroughSubject<Void, Never>()
     private var cancellables = Set<AnyCancellable>()
 
@@ -88,8 +88,8 @@ final class MealSectionView: UIView {
 
     private func setupUI() {
         addSubview(titleLabel)
-        addSubview(editButton)
         addSubview(contentContainerView)
+        addSubview(editButton)
     }
 
     private func setupConstraints() {
@@ -149,8 +149,8 @@ final class MealSectionView: UIView {
             showEmptyState()
         case .pending(let records):
             showPendingState(records: records)
-        case .recorded(let records):
-            showRecordedState(records: records)
+        case .recorded(let record):
+            showRecordedState(record: record)
         }
     }
 
@@ -187,11 +187,11 @@ final class MealSectionView: UIView {
         }
     }
 
-    private func showRecordedState(records: [FoodRecord]) {
+    private func showRecordedState(record: FoodRecord) {
         editButton.isHidden = false
 
         let recordedView = MealRecordedContentView(
-            records: records,
+            records: [record],
             onCopyTapped: { [weak self] record in
                 self?.copyTapSubject.send(record)
             },
@@ -211,7 +211,8 @@ final class MealSectionView: UIView {
     // MARK: - Actions
 
     @objc private func editTapped() {
-        editTapSubject.send(mealType)
+        guard case .recorded(let record) = currentState else { return }
+        editTapSubject.send(record)
     }
 }
 
@@ -221,6 +222,6 @@ extension MealSectionView {
     enum State: Equatable {
         case empty
         case pending([PendingFoodRecord])
-        case recorded([FoodRecord])
+        case recorded(FoodRecord)
     }
 }

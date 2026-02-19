@@ -21,4 +21,13 @@ public protocol FoodRecordRepository: Sendable {
     /// - Parameter request: 생성 요청 데이터
     /// - Returns: 서버에서 발급한 업로드 ID (Remote Push로 분석 결과 수신 시 매칭용)
     func uploadRecord(_ request: CreateFoodRecordRequest) async throws -> String
+
+    /// 음식 기록 수정
+    /// - Parameter request: 수정 요청 데이터
+    /// - Returns: 수정된 FoodRecord
+    func updateRecord(_ request: UpdateFoodRecordRequest) async throws -> FoodRecord
+
+    /// 음식 기록 삭제
+    /// - Parameter id: 삭제할 기록 ID
+    func deleteRecord(id: String) async throws
 }
