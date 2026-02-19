@@ -12,21 +12,21 @@ public struct MonthlyCalendarDay: Sendable, Equatable, Hashable {
     public let dayNumber: Int
     public let isCurrentMonth: Bool
     public let isToday: Bool
-    public let records: [FoodRecord]
+    public let imageURLs: [URL]
 
     public init(
         date: Date,
         dayNumber: Int,
         isCurrentMonth: Bool,
         isToday: Bool,
-        records: [FoodRecord]
+        imageURLs: [URL]
     ) {
         self.id = date.timeIntervalSince1970.description
         self.date = date
         self.dayNumber = dayNumber
         self.isCurrentMonth = isCurrentMonth
         self.isToday = isToday
-        self.records = records
+        self.imageURLs = imageURLs
     }
 
     public func hash(into hasher: inout Hasher) {
