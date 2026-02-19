@@ -14,6 +14,10 @@ public final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Se
     public init() {
         setupMockData()
     }
+    
+    public func fetchPhotoURLs(in dateRange: ClosedRange<Date>) async throws -> [Date : [URL]] {
+        return [:]
+    }
 
     public func fetchRecords(in dateRange: ClosedRange<Date>) async throws -> [Date: [FoodRecord]] {
         mockRecords.filter { dateRange.contains($0.key) }

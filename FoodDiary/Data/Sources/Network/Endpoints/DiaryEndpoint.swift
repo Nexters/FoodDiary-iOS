@@ -8,7 +8,7 @@
 import Foundation
 
 public enum DiaryEndpoint {
-    case fetchMonthlyTest(startDate: String, endDate: String)
+    case fetchMonthlyTest(startDate: String, endDate: String, testMode: Bool)
 }
 
 extension DiaryEndpoint: Requestable {
@@ -36,11 +36,11 @@ extension DiaryEndpoint: Requestable {
 
     public var queryParameters: Encodable? {
         switch self {
-        case let .fetchMonthlyTest(startDate, endDate):
+        case let .fetchMonthlyTest(startDate, endDate, testMode):
             [
                 "start_date": startDate,
                 "end_date": endDate,
-                "test_mode": "true",
+                "test_mode": "\(testMode)",
             ]
         }
     }

@@ -16,11 +16,30 @@ public struct FoodRecordRepositoryImpl<Client: HTTPClienting & Sendable, Storage
         self.httpClient = httpClient
         self.tokenStorage = tokenStorage
     }
+    
+    public func fetchPhotoURLs(in dateRange: ClosedRange<Date>) async throws -> [Date: [URL]] {
+        let endpoint = DiaryEndpoint.fetchMonthlyTest(
+            startDate: dateRange.lowerBound.apiDateString,
+            endDate: dateRange.upperBound.apiDateString,
+            testMode: true
+        )
+        let response: CalendarPhotoResponseDTO = try await httpClient.request(
+            endpoint,
+            accessToken: tokenStorage.get()
+        )
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+
+        return response.reduce(into: [Date: [URL]]()) { result, entry in
+            guard let date = formatter.date(from: entry.key) else { return }
+            result[date] = entry.value.photos.compactMap { URL(string: $0) }
+        }
+    }
 
     public func fetchRecords(in dateRange: ClosedRange<Date>) async throws -> [Date: [FoodRecord]] {
-        let endpoint = DiaryEndpoint.fetchMonthlyTest(startDate: dateRange.lowerBound.apiDateString, endDate: dateRange.upperBound.apiDateString)
-        let response: DiariesResponseDTO = try await httpClient.request(endpoint, accessToken: tokenStorage.get())
-        return response.toDomain()
+        return [:]
     }
 
     public func fetchRecords(for date: Date) async throws -> [FoodRecord] {
