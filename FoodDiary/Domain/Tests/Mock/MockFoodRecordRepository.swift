@@ -11,6 +11,10 @@ final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Sendable 
     var recordsToReturn: [FoodRecord] = []
     var uploadIdToReturn: String = UUID().uuidString
     var shouldThrowError: Bool = false
+    
+    func fetchPhotoURLs(in dateRange: ClosedRange<Date>) async throws -> [Date : [URL]] {
+        return [:]
+    }
 
     func fetchRecords(in dateRange: ClosedRange<Date>) async throws -> [Date: [FoodRecord]] {
         if shouldThrowError {
