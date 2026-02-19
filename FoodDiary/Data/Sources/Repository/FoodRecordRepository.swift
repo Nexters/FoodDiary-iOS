@@ -18,7 +18,7 @@ public struct FoodRecordRepositoryImpl<Client: HTTPClienting & Sendable, Storage
     }
     
     public func fetchPhotoURLs(in dateRange: ClosedRange<Date>) async throws -> [Date: [URL]] {
-        let endpoint = DiaryEndpoint.fetchMonthlyTest(
+        let endpoint = DiaryEndpoint.fetchMonthly(
             startDate: dateRange.lowerBound.apiDateString,
             endDate: dateRange.upperBound.apiDateString,
             testMode: true

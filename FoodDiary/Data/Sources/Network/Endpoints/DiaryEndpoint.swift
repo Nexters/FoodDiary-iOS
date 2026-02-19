@@ -8,7 +8,7 @@
 import Foundation
 
 public enum DiaryEndpoint {
-    case fetchMonthlyTest(startDate: String, endDate: String, testMode: Bool)
+    case fetchMonthly(startDate: String, endDate: String, testMode: Bool)
 }
 
 extension DiaryEndpoint: Requestable {
@@ -22,21 +22,21 @@ extension DiaryEndpoint: Requestable {
 
     public var path: String {
         switch self {
-        case .fetchMonthlyTest:
+        case .fetchMonthly:
             "/diaries"
         }
     }
 
     public var httpMethod: HTTPMethod {
         switch self {
-        case .fetchMonthlyTest:
+        case .fetchMonthly:
             .get
         }
     }
 
     public var queryParameters: Encodable? {
         switch self {
-        case let .fetchMonthlyTest(startDate, endDate, testMode):
+        case let .fetchMonthly(startDate, endDate, testMode):
             [
                 "start_date": startDate,
                 "end_date": endDate,
@@ -47,14 +47,14 @@ extension DiaryEndpoint: Requestable {
 
     public var bodyParameters: HTTPBody {
         switch self {
-        case .fetchMonthlyTest:
+        case .fetchMonthly:
             .none
         }
     }
 
     public var headers: [String: String] {
         switch self {
-        case .fetchMonthlyTest:
+        case .fetchMonthly:
             [:]
         }
     }
