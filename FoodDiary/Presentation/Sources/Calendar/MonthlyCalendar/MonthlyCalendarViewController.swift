@@ -262,7 +262,7 @@ public final class MonthlyCalendarViewController<
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard let day = dataSource?.itemIdentifier(for: indexPath) else { return }
 
-        let detailVC = MockFoodRecordDetailViewController(records: day.records, date: day.date)
+        let detailVC = MockFoodRecordDetailViewController(date: day.date)
         detailVC.modalPresentationStyle = .pageSheet
         present(detailVC, animated: true)
     }
