@@ -10,5 +10,6 @@ import Foundation
 public protocol AuthRepository {
     func login(_ request: LoginRequest) async throws -> LoginResult
     func logout() throws
+    func withdraw() async throws
 }
 
