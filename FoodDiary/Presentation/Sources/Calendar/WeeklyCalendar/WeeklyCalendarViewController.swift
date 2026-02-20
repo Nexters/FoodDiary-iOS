@@ -186,6 +186,13 @@ public final class WeeklyCalendarViewController<
             }
             .store(in: &cancellables)
 
+        // Foreground 복귀 시 데이터 갱신
+        NotificationCenter.default.publisher(for: UIScene.willEnterForegroundNotification)
+            .sink { [weak self] _ in
+                self?.viewModel.input.send(.refreshData)
+            }
+            .store(in: &cancellables)
+
         // Output: ViewModel → View (State 기반)
         viewModel.statePublisher
             .map(\.monthText)
@@ -241,8 +248,8 @@ public final class WeeklyCalendarViewController<
                     break
                 case .saveFailed(let error):
                     self?.showSaveErrorAlert(error)
-                case .loadFailed:
-                    break
+                case .loadFailed(let error):
+                    self?.showLoadErrorAlert(error)
                 case .analysisFailed(_, let reason):
                     self?.showAnalysisFailedAlert(reason: reason)
                 }
@@ -325,6 +332,16 @@ public final class WeeklyCalendarViewController<
         case .cancelled:
             navigationController?.popViewController(animated: true)
         }
+    }
+
+    private func showLoadErrorAlert(_ error: Error) {
+        let alert = UIAlertController(
+            title: "불러오기 실패",
+            message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
     }
 
     private func showSaveErrorAlert(_ error: Error) {

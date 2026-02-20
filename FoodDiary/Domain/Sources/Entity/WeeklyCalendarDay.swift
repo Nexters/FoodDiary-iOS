@@ -12,7 +12,7 @@ public struct WeeklyCalendarDay: Sendable, Equatable {
     public let dayNumber: String
     public let isToday: Bool
     public let isFuture: Bool
-    public let records: [FoodRecord]
+    public var records: [FoodRecord]
 
     public init(
         date: Date,

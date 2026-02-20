@@ -8,10 +8,8 @@ import Foundation
 
 // MARK: - Response DTOs
 
-/// GET /diaries 응답: { "2026-02-16": { "diaries": [...] } }
-public typealias DiariesResponseDTO = [String: DiaryDateResponseDTO]
-
-public struct DiaryDateResponseDTO: Decodable {
+/// GET /diaries 응답: { "diaries": [...] }
+public struct DiariesResponseDTO: Decodable {
     public let diaries: [DiaryResponseDTO]
 }
 
@@ -28,6 +26,14 @@ public struct DiaryResponseDTO: Decodable {
     public let createdAt: String
     public let photos: [DiaryPhotoDTO]
 
+    // 새 API 필드 (도메인에서 미사용)
+    public let restaurantUrl: String?
+    public let note: String?
+    public let photoCount: Int?
+    public let userId: String?
+    public let coverPhotoId: Int?
+    public let updatedAt: String?
+
     enum CodingKeys: String, CodingKey {
         case id
         case diaryDate = "diary_date"
@@ -40,6 +46,12 @@ public struct DiaryResponseDTO: Decodable {
         case tags
         case createdAt = "created_at"
         case photos
+        case restaurantUrl = "restaurant_url"
+        case note
+        case photoCount = "photo_count"
+        case userId = "user_id"
+        case coverPhotoId = "cover_photo_id"
+        case updatedAt = "updated_at"
     }
 }
 

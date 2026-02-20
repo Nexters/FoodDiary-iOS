@@ -28,6 +28,7 @@ public struct HTTPClient: HTTPClienting {
             applyAccessToken(accessToken, to: &urlRequest)
 
             logger.logRequest(urlRequest)
+            logger.logRequestBody(urlRequest.httpBody)
 
             let (data, response) = try await session.data(for: urlRequest)
 
@@ -37,6 +38,7 @@ public struct HTTPClient: HTTPClienting {
             }
 
             logger.logResponse(response, statusCode: httpResponse.statusCode)
+            logger.logResponseBody(data)
 
             try checkResponse(data, httpResponse)
 

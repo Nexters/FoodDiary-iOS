@@ -136,19 +136,12 @@ private extension FoodRecordRepositoryImpl {
     }
 
     func convertToRecordsByDate(_ response: DiariesResponseDTO) -> [Date: [FoodRecord]] {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        dateFormatter.timeZone = .current
-
         var result: [Date: [FoodRecord]] = [:]
 
-        for (dateString, dateResponse) in response {
-            guard let date = dateFormatter.date(from: dateString) else { continue }
-            let startOfDay = calendar.startOfDay(for: date)
-            let records = dateResponse.diaries.compactMap { $0.toFoodRecord() }
-            if !records.isEmpty {
-                result[startOfDay] = records
-            }
+        for dto in response.diaries {
+            guard let record = dto.toFoodRecord() else { continue }
+            let startOfDay = calendar.startOfDay(for: record.date)
+            result[startOfDay, default: []].append(record)
         }
 
         return result
