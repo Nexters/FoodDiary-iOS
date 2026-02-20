@@ -174,9 +174,7 @@ public final class WeeklyCalendarViewModel<
     private func updateDateContent(for date: Date) async {
         do {
             let startOfDay = calendar.startOfDay(for: date)
-            let records = state.weekDays
-                .first { calendar.isDate($0.date, inSameDayAs: startOfDay) }?
-                .records ?? []
+            let records = state.weekDays.records(for: startOfDay, calendar: calendar)
 
             let pendingRecords = try await loadPendingRecords(for: date)
 

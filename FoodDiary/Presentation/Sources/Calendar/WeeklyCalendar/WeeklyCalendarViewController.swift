@@ -27,7 +27,7 @@ public final class WeeklyCalendarViewController<
             RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, AnalysisRepo, PushObserver
         >
     private let imageProvider: ImageProvider
-    private let detailViewModelFactory: (Date) -> DetailViewModel<RecordRepo>
+    private let detailViewModelFactory: (Date, [FoodRecord]) -> DetailViewModel<RecordRepo>
     private let editViewControllerFactory: ((FoodRecord) -> UIViewController)?
 
     // MARK: - UI Components
@@ -70,7 +70,7 @@ public final class WeeklyCalendarViewController<
             RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, AnalysisRepo, PushObserver
         >,
         imageProvider: ImageProvider,
-        detailViewModelFactory: @escaping (Date) -> DetailViewModel<RecordRepo>,
+        detailViewModelFactory: @escaping (Date, [FoodRecord]) -> DetailViewModel<RecordRepo>,
         editViewControllerFactory: ((FoodRecord) -> UIViewController)? = nil
     ) {
         self.viewModel = viewModel
@@ -218,13 +218,14 @@ public final class WeeklyCalendarViewController<
             .receive(on: DispatchQueue.main)
             .sink { [weak self] content in
                 guard let self else { return }
-                let state: BottomContentView.State = if !content.records.isEmpty {
-                    .recorded(content.records)
-                } else if !content.pendingRecords.isEmpty {
-                    .pending(content.pendingRecords)
-                } else {
-                    .empty
-                }
+                let state: BottomContentView.State =
+                    if !content.records.isEmpty {
+                        .recorded(content.records)
+                    } else if !content.pendingRecords.isEmpty {
+                        .pending(content.pendingRecords)
+                    } else {
+                        .empty
+                    }
 
                 bottomContentView.configure(state: state)
             }
@@ -233,7 +234,7 @@ public final class WeeklyCalendarViewController<
         // 카드 스택 탭 → 상세 화면으로 이동
         bottomContentView.cardStackTapPublisher
             .sink { [weak self] record in
-                self?.navigateToDetail(with: record)
+                self?.navigateToDetail(for: record.date)
             }
             .store(in: &cancellables)
 
@@ -364,8 +365,10 @@ public final class WeeklyCalendarViewController<
         present(alert, animated: true)
     }
 
-    private func navigateToDetail(with record: FoodRecord) {
-        let detailViewModel = detailViewModelFactory(record.date)
+    private func navigateToDetail(for date: Date) {
+        let records = viewModel.state.weekDays.records(for: date)
+
+        let detailViewModel = detailViewModelFactory(date, records)
         let detailVC = DetailViewController(
             viewModel: detailViewModel,
             onDismissWithDate: { [weak self] date in

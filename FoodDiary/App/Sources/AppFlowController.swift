@@ -123,8 +123,8 @@ private extension AppFlowController {
         let weeklyCalendarVC = WeeklyCalendarViewController(
             viewModel: weeklyViewModel,
             imageProvider: imageProvider,
-            detailViewModelFactory: { [container] date in
-                guard let vm = try? container.resolve(DetailVM.self, argument: date) else {
+            detailViewModelFactory: { [container] date, records in
+                guard let vm = try? container.resolve(DetailVM.self, argument: (date, records)) else {
                     fatalError("DetailViewModel not registered")
                 }
                 return vm

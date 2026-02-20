@@ -38,6 +38,7 @@ public final class DetailViewModel<RecordRepo: FoodRecordRepository> {
 
     public init(
         initialDate: Date,
+        initialRecords: [FoodRecord],
         fetchRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
     ) {
         self.fetchRecordsUseCase = fetchRecordsUseCase
@@ -45,6 +46,7 @@ public final class DetailViewModel<RecordRepo: FoodRecordRepository> {
 
         let startOfDay = calendar.startOfDay(for: initialDate)
         self.stateSubject = CurrentValueSubject(State(currentDate: startOfDay))
+        stateSubject.value.recordsByMealType = groupRecordsByMealType(initialRecords)
 
         updateDateText()
         updateNextDayAvailability()

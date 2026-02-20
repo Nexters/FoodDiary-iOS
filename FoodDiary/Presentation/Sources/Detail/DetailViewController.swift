@@ -86,8 +86,6 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
         setupUI()
         setupConstraints()
         setupBindings()
-
-        viewModel.input.send(.loadRecords)
     }
 
     public override func viewWillAppear(_ animated: Bool) {

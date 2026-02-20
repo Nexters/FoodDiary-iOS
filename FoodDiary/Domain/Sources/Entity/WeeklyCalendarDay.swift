@@ -30,3 +30,11 @@ public struct WeeklyCalendarDay: Sendable, Equatable {
         self.records = records
     }
 }
+
+// MARK: - Array Convenience
+
+public extension Array where Element == WeeklyCalendarDay {
+    func records(for date: Date, calendar: Calendar = .current) -> [FoodRecord] {
+        first { calendar.isDate($0.date, inSameDayAs: date) }?.records ?? []
+    }
+}

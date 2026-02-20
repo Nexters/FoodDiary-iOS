@@ -363,9 +363,10 @@ private extension SceneDelegate {
 
         container.register(
             DetailVM.self,
-            argument: Date.self,
+            argument: (Date, [FoodRecord]).self,
             scope: .transient,
-            factory: { resolver, initialDate in
+            factory: { resolver, args in
+                let (initialDate, initialRecords) = args
                 guard let fetchRecordsUseCase = resolver.resolve(
                     FetchFoodRecordsUseCase<FoodRecordRepositoryImpl>.self
                 ) else {
@@ -374,6 +375,7 @@ private extension SceneDelegate {
 
                 return DetailViewModel(
                     initialDate: initialDate,
+                    initialRecords: initialRecords,
                     fetchRecordsUseCase: fetchRecordsUseCase
                 )
             }
