@@ -10,8 +10,8 @@ public enum AppNotification {
         public static let analysisResult = Notification.Name("AppNotification.Push.analysisResult")
 
         public enum Key {
-            public static let uploadId = "uploadId"
-            public static let date = "date"
+            public static let type = "type"
+            public static let diaryDate = "diaryDate"
         }
     }
 }

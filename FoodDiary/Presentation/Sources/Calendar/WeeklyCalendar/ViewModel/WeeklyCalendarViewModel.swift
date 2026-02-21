@@ -242,9 +242,9 @@ public final class WeeklyCalendarViewModel<
 
     private func handlePushNotification(_ notification: AnalysisResultNotification) async {
         do {
-            try await deletePendingRecordUseCase.execute(uploadIds: [notification.uploadId])
+            try await deletePendingRecordUseCase.execute(byDate: notification.diaryDate)
 
-            let notificationDate = calendar.startOfDay(for: notification.date)
+            let notificationDate = calendar.startOfDay(for: notification.diaryDate)
             let selectedDate = calendar.startOfDay(for: state.selectedDate)
             let (weekStart, weekEnd) = calendar.weekRange(for: currentWeekBaseDate)
             let currentWeekRange = weekStart...weekEnd

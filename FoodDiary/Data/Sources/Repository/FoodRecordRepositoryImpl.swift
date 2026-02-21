@@ -20,9 +20,9 @@ public struct FoodRecordRepositoryImpl<
     private let calendar = Calendar.current
 
     #if DEBUG
-        let testMode = true
+        let testMode = false
     #else
-        let testMode = true
+        let testMode = false
     #endif
 
     public init(httpClient: Client, tokenStorage: Storage, deviceId: String, imageConverter: PHAssetConverter) {
@@ -67,7 +67,7 @@ public struct FoodRecordRepositoryImpl<
             // print("[FakePush] 1초 대기 시작 (uploadId: \(diaryId))")
             // try? await Task.sleep(for: .seconds(1))
             // print("[FakePush] 가짜 푸시 발행 (uploadId: \(diaryId), date: \(date))")
-            // postFakeAnalysisNotification(uploadId: diaryId, date: date)
+            // postFakeAnalysisNotification(date: date)
             // print("[FakePush] 가짜 푸시 발행 완료")
         }
 
@@ -245,17 +245,18 @@ extension FoodRecordRepositoryImpl {
         return result
     }
 
-    private func postFakeAnalysisNotification(uploadId: String, date: Date) {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    private func postFakeAnalysisNotification(date: Date) {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
         let dateString = formatter.string(from: date)
 
         NotificationCenter.default.post(
             name: AppNotification.Push.analysisResult,
             object: nil,
             userInfo: [
-                AppNotification.Push.Key.uploadId: uploadId,
-                AppNotification.Push.Key.date: dateString,
+                AppNotification.Push.Key.type: "analysis_complete",
+                AppNotification.Push.Key.diaryDate: dateString,
             ]
         )
     }

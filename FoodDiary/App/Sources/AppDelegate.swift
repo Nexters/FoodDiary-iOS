@@ -53,6 +53,39 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
     }
+
+    func application(
+        _ application: UIApplication,
+        didReceiveRemoteNotification userInfo: [AnyHashable: Any],
+        fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
+    ) {
+        print("[Push] didReceiveRemoteNotification 호출됨")
+        handlePushNotification(userInfo)
+        completionHandler(.newData)
+    }
+
+    private func handlePushNotification(_ userInfo: [AnyHashable: Any]) {
+        print("[Push] 수신된 userInfo: \(userInfo)")
+
+        guard let type = userInfo["type"] as? String,
+              let diaryDate = userInfo["diary_date"] as? String
+        else {
+            print("[Push] 파싱 실패 - type 또는 diary_date 누락")
+            return
+        }
+
+        print("[Push] 파싱 성공 - type: \(type), diary_date: \(diaryDate)")
+
+        NotificationCenter.default.post(
+            name: AppNotification.Push.analysisResult,
+            object: nil,
+            userInfo: [
+                AppNotification.Push.Key.type: type,
+                AppNotification.Push.Key.diaryDate: diaryDate
+            ]
+        )
+        print("[Push] NotificationCenter로 전달 완료")
+    }
 }
 
 // MARK: - UNUserNotificationCenterDelegate
@@ -75,29 +108,6 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         handlePushNotification(notification.request.content.userInfo)
         completionHandler([])
     }
-
-    private func handlePushNotification(_ userInfo: [AnyHashable: Any]) {
-        print("[Push] 수신된 userInfo: \(userInfo)")
-
-        guard let uploadId = userInfo["uploadId"] as? String,
-              let dateString = userInfo["date"] as? String
-        else {
-            print("[Push] 파싱 실패 - uploadId 또는 date 누락")
-            return
-        }
-
-        print("[Push] 파싱 성공 - uploadId: \(uploadId), date: \(dateString)")
-
-        NotificationCenter.default.post(
-            name: AppNotification.Push.analysisResult,
-            object: nil,
-            userInfo: [
-                AppNotification.Push.Key.uploadId: uploadId,
-                AppNotification.Push.Key.date: dateString
-            ]
-        )
-        print("[Push] NotificationCenter로 전달 완료")
-    }
 }
 
 // MARK: - MessagingDelegate
@@ -105,6 +115,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
 extension AppDelegate: MessagingDelegate {
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         guard let fcmToken else { return }
+        print("[FCM] 토큰 수신: \(fcmToken)")
 
         // TODO: 서버 API로 fcmToken 전송
         // TODO: self.container로 사용해야 함.

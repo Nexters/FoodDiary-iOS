@@ -58,6 +58,15 @@ public actor PendingFoodRecordStorage<Storage: FileStorageServicing>: PendingFoo
         scheduleSave()
     }
 
+    public func delete(byDate date: Date) throws {
+        let calendar = Calendar.current
+        let targetDay = calendar.startOfDay(for: date)
+        records = records.filter { _, record in
+            calendar.startOfDay(for: record.date) != targetDay
+        }
+        scheduleSave()
+    }
+
     // MARK: - Private
 
     private func scheduleSave() {
