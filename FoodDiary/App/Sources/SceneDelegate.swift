@@ -131,7 +131,8 @@ private extension SceneDelegate {
                   let storage = resolver.resolve(AuthTokenStorage<KeychainService>.self) else {
                 fatalError("FoodRecordRepositoryImpl dependencies not registered")
             }
-            return FoodRecordRepositoryImpl(httpClient: client, tokenStorage: storage)
+            let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? ""
+            return FoodRecordRepositoryImpl(httpClient: client, tokenStorage: storage, deviceId: deviceId)
         }
 
         container.register(PhotoAuthorizationFetcher.self) { _ in
@@ -147,10 +148,6 @@ private extension SceneDelegate {
                 fatalError("FileStorageService not registered")
             }
             return PendingFoodRecordStorage(fileStorage: fileStorage)
-        }
-
-        container.register(MockAnalysisResultRepository.self) { _ in
-            MockAnalysisResultRepository()
         }
 
         container.register(PushNotificationObserver.self) { _ in
@@ -222,16 +219,12 @@ private extension SceneDelegate {
         }
 
         container.register(
-            SyncPendingAnalysisUseCase<PendingFoodRecordStorage<FileStorageService>, MockAnalysisResultRepository>.self
+            DeletePendingRecordUseCase<PendingFoodRecordStorage<FileStorageService>>.self
         ) { resolver in
-            guard let pendingRepo = resolver.resolve(PendingFoodRecordStorage<FileStorageService>.self),
-                  let analysisRepo = resolver.resolve(MockAnalysisResultRepository.self) else {
-                fatalError("Pending analysis dependencies not registered")
+            guard let pendingRepo = resolver.resolve(PendingFoodRecordStorage<FileStorageService>.self) else {
+                fatalError("PendingFoodRecordStorage not registered")
             }
-            return SyncPendingAnalysisUseCase(
-                pendingRepository: pendingRepo,
-                analysisRepository: analysisRepo
-            )
+            return DeletePendingRecordUseCase(repository: pendingRepo)
         }
 
         container.register(
@@ -325,7 +318,6 @@ private extension SceneDelegate {
             PhotoAuthorizationFetcher,
             UIImageLoader,
             PendingFoodRecordStorage<FileStorageService>,
-            MockAnalysisResultRepository,
             PushNotificationObserver
         >
 
@@ -342,8 +334,8 @@ private extension SceneDelegate {
                   let loadPendingUseCase = resolver.resolve(
                       LoadPendingRecordsUseCase<PendingFoodRecordStorage<FileStorageService>>.self
                   ),
-                  let syncPendingUseCase = resolver.resolve(
-                      SyncPendingAnalysisUseCase<PendingFoodRecordStorage<FileStorageService>, MockAnalysisResultRepository>.self
+                  let deletePendingUseCase = resolver.resolve(
+                      DeletePendingRecordUseCase<PendingFoodRecordStorage<FileStorageService>>.self
                   ),
                   let pushObserver = resolver.resolve(PushNotificationObserver.self) else {
                 fatalError("WeeklyCalendarViewModel dependencies not registered")
@@ -354,7 +346,7 @@ private extension SceneDelegate {
                 loadWeeklyCalendarDataUseCase: loadWeeklyUseCase,
                 saveFoodRecordUseCase: saveFoodRecordUseCase,
                 loadPendingRecordsUseCase: loadPendingUseCase,
-                syncPendingAnalysisUseCase: syncPendingUseCase,
+                deletePendingRecordUseCase: deletePendingUseCase,
                 pushNotificationObserver: pushObserver
             )
         }

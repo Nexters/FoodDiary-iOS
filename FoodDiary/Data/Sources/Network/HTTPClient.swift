@@ -44,7 +44,6 @@ public struct HTTPClient: HTTPClienting {
 
             do {
                 let model = try decoder.decode(T.self, from: data)
-                logger.logDecodedModel(model)
                 return model
             } catch {
                 logger.logError(error, context: "Decoding error")

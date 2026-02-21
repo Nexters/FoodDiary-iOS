@@ -14,6 +14,7 @@ public struct MultipartFormData {
 
     public init(
         date: String,
+        deviceId: String,
         photos: [File]
     ) {
         self.boundary = "Boundary-\(UUID().uuidString)"
@@ -24,6 +25,10 @@ public struct MultipartFormData {
         data.appendString("--\(boundary)\r\n")
         data.appendString("Content-Disposition: form-data; name=\"date\"\r\n\r\n")
         data.appendString("\(date)\r\n")
+
+        data.appendString("--\(boundary)\r\n")
+        data.appendString("Content-Disposition: form-data; name=\"device_id\"\r\n\r\n")
+        data.appendString("\(deviceId)\r\n")
 
         for file in photos {
             data.appendString("--\(boundary)\r\n")

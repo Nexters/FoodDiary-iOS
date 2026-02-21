@@ -11,11 +11,19 @@ import UIKit
 public final class FoodRecordRepositoryImpl: FoodRecordRepository, @unchecked Sendable {
     private let httpClient: any HTTPClienting
     private let tokenStorage: any AuthTokenStoring
+    private let deviceId: String
     private let calendar = Calendar.current
 
-    public init(httpClient: any HTTPClienting, tokenStorage: any AuthTokenStoring) {
+    #if DEBUG
+        let testMode = true
+    #else
+        let testMode = true
+    #endif
+
+    public init(httpClient: any HTTPClienting, tokenStorage: any AuthTokenStoring, deviceId: String) {
         self.httpClient = httpClient
         self.tokenStorage = tokenStorage
+        self.deviceId = deviceId
     }
 
     // MARK: - 서버 API 호출
@@ -28,14 +36,9 @@ public final class FoodRecordRepositoryImpl: FoodRecordRepository, @unchecked Se
         let dateString = formatDate(request.date)
         let files = try convertImagesToFiles(request.images)
 
-        #if DEBUG
-        let testMode = true
-        #else
-        let testMode = false
-        #endif
-
         let endpoint = PhotosEndpoint.batchUpload(
             date: dateString,
+            deviceId: deviceId,
             photos: files,
             testMode: testMode
         )
@@ -55,11 +58,11 @@ public final class FoodRecordRepositoryImpl: FoodRecordRepository, @unchecked Se
         // pending save 완료 후 서버 반영 시간을 확보하기 위해 delay 적용
         let date = request.date
         Task {
-            print("[FakePush] 1초 대기 시작 (uploadId: \(diaryId))")
-            try? await Task.sleep(for: .seconds(1))
-            print("[FakePush] 가짜 푸시 발행 (uploadId: \(diaryId), date: \(date))")
-            postFakeAnalysisNotification(uploadId: diaryId, date: date)
-            print("[FakePush] 가짜 푸시 발행 완료")
+            // print("[FakePush] 1초 대기 시작 (uploadId: \(diaryId))")
+            // try? await Task.sleep(for: .seconds(1))
+            // print("[FakePush] 가짜 푸시 발행 (uploadId: \(diaryId), date: \(date))")
+            // postFakeAnalysisNotification(uploadId: diaryId, date: date)
+            // print("[FakePush] 가짜 푸시 발행 완료")
         }
 
         return diaryId
@@ -72,12 +75,6 @@ public final class FoodRecordRepositoryImpl: FoodRecordRepository, @unchecked Se
 
         let startDateString = formatDate(dateRange.lowerBound)
         let endDateString = formatDate(dateRange.upperBound)
-
-        #if DEBUG
-        let testMode = true
-        #else
-        let testMode = false
-        #endif
 
         let endpoint = DiariesEndpoint.fetchByDateRange(
             startDate: startDateString,
@@ -103,26 +100,30 @@ public final class FoodRecordRepositoryImpl: FoodRecordRepository, @unchecked Se
 
     public func updateRecord(_ request: UpdateFoodRecordRequest) async throws -> FoodRecord {
         // TODO: 서버 API 연동
-        throw NSError(domain: "FoodRecordRepositoryImpl", code: 501, userInfo: [NSLocalizedDescriptionKey: "서버 API 미구현"])
+        throw NSError(
+            domain: "FoodRecordRepositoryImpl", code: 501,
+            userInfo: [NSLocalizedDescriptionKey: "서버 API 미구현"])
     }
 
     public func deleteRecord(id: String) async throws {
         // TODO: 서버 API 연동
-        throw NSError(domain: "FoodRecordRepositoryImpl", code: 501, userInfo: [NSLocalizedDescriptionKey: "서버 API 미구현"])
+        throw NSError(
+            domain: "FoodRecordRepositoryImpl", code: 501,
+            userInfo: [NSLocalizedDescriptionKey: "서버 API 미구현"])
     }
 }
 
 // MARK: - Private
 
-private extension FoodRecordRepositoryImpl {
-    func formatDate(_ date: Date) -> String {
+extension FoodRecordRepositoryImpl {
+    fileprivate func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         formatter.timeZone = .current
         return formatter.string(from: date)
     }
 
-    func convertImagesToFiles(_ images: [UIImage]) throws -> [File] {
+    fileprivate func convertImagesToFiles(_ images: [UIImage]) throws -> [File] {
         try images.enumerated().map { index, image in
             guard let jpegData = image.jpegData(compressionQuality: 0.8) else {
                 throw FoodRecordError.imageConversionFailed
@@ -135,7 +136,8 @@ private extension FoodRecordRepositoryImpl {
         }
     }
 
-    func convertToRecordsByDate(_ response: DiariesResponseDTO) -> [Date: [FoodRecord]] {
+    fileprivate func convertToRecordsByDate(_ response: DiariesResponseDTO) -> [Date: [FoodRecord]]
+    {
         var result: [Date: [FoodRecord]] = [:]
 
         for dto in response.diaries {
@@ -147,7 +149,7 @@ private extension FoodRecordRepositoryImpl {
         return result
     }
 
-    func postFakeAnalysisNotification(uploadId: String, date: Date) {
+    fileprivate func postFakeAnalysisNotification(uploadId: String, date: Date) {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         let dateString = formatter.string(from: date)
@@ -157,7 +159,7 @@ private extension FoodRecordRepositoryImpl {
             object: nil,
             userInfo: [
                 AppNotification.Push.Key.uploadId: uploadId,
-                AppNotification.Push.Key.date: dateString
+                AppNotification.Push.Key.date: dateString,
             ]
         )
     }

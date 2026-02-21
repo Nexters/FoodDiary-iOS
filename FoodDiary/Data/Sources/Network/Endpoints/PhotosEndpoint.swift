@@ -9,7 +9,7 @@ import Domain
 import Foundation
 
 public enum PhotosEndpoint {
-    case batchUpload(date: String, photos: [File], testMode: Bool)
+    case batchUpload(date: String, deviceId: String, photos: [File], testMode: Bool)
 }
 
 extension PhotosEndpoint: Requestable {
@@ -37,17 +37,18 @@ extension PhotosEndpoint: Requestable {
 
     public var queryParameters: Encodable? {
         switch self {
-        case let .batchUpload(_, _, testMode):
+        case let .batchUpload(_, _, _, testMode):
             testMode ? ["test_mode": "true"] : nil
         }
     }
 
     public var bodyParameters: HTTPBody {
         switch self {
-        case let .batchUpload(date, photos, _):
+        case let .batchUpload(date, deviceId, photos, _):
             return .multipart(
                 MultipartFormData(
                     date: date,
+                    deviceId: deviceId,
                     photos: photos
                 )
             )

@@ -32,12 +32,6 @@ public struct HTTPLogger {
         #endif
     }
 
-    func logDecodedModel<T>(_ model: T) {
-        #if DEBUG
-            logger.info("[Decoded] \(String(describing: type(of: model))): \(model)")
-        #endif
-    }
-
     func logRequestBody(_ body: Data?) {
         #if DEBUG
             guard let body else {

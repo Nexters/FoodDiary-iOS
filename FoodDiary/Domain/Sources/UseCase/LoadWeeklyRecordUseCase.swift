@@ -74,6 +74,19 @@ public struct LoadWeeklyRecordUseCase<
         return WeekData(weekDays: weekDays, monthText: monthText)
     }
 
+    /// 특정 날짜의 사진만 로드
+    public func loadPhotos(for date: Date) async throws -> [FoodImageAsset<AssetRepo.Asset>] {
+        let startOfDay = calendar.startOfDay(for: date)
+        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)
+
+        let photosByDate = try await fetchFoodImageAssetUseCase.execute(
+            from: startOfDay,
+            to: endOfDay
+        )
+
+        return photosByDate[startOfDay] ?? []
+    }
+
     /// 특정 날짜 데이터 로드
     public func loadDateData(for date: Date) async throws -> DateData {
         let startOfDay = calendar.startOfDay(for: date)

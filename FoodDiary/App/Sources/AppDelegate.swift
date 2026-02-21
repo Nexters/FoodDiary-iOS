@@ -77,9 +77,16 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
     }
 
     private func handlePushNotification(_ userInfo: [AnyHashable: Any]) {
+        print("[Push] 수신된 userInfo: \(userInfo)")
+
         guard let uploadId = userInfo["uploadId"] as? String,
               let dateString = userInfo["date"] as? String
-        else { return }
+        else {
+            print("[Push] 파싱 실패 - uploadId 또는 date 누락")
+            return
+        }
+
+        print("[Push] 파싱 성공 - uploadId: \(uploadId), date: \(dateString)")
 
         NotificationCenter.default.post(
             name: AppNotification.Push.analysisResult,
@@ -89,6 +96,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
                 AppNotification.Push.Key.date: dateString
             ]
         )
+        print("[Push] NotificationCenter로 전달 완료")
     }
 }
 

@@ -90,7 +90,6 @@ private extension AppFlowController {
             PhotoAuthorizationFetcher,
             UIImageLoader,
             PendingFoodRecordStorage<FileStorageService>,
-            MockAnalysisResultRepository,
             PushNotificationObserver
         >
 
