@@ -24,6 +24,10 @@ public final class MyPageViewModel {
         set { stateSubject.value = newValue }
     }
 
+    public var eventPublisher: AnyPublisher<Event, Never> {
+        eventSubject.eraseToAnyPublisher()
+    }
+
     // MARK: - Input
 
     public let input = PassthroughSubject<Input, Never>()
@@ -31,6 +35,7 @@ public final class MyPageViewModel {
     // MARK: - Private
 
     private let stateSubject: CurrentValueSubject<State, Never>
+    private let eventSubject = PassthroughSubject<Event, Never>()
     private var cancellables = Set<AnyCancellable>()
     private let updateDeviceNotificationSettingUseCase: UpdateDeviceNotificationSettingUseCase<DeviceRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>
     private let logoutUseCase: LogoutUseCase
@@ -88,6 +93,7 @@ public final class MyPageViewModel {
     private func logout() {
         do {
             try logoutUseCase.execute()
+            eventSubject.send(.didLogout)
         } catch {
             print("로그아웃 실패: \(error)")
         }
@@ -97,13 +103,14 @@ public final class MyPageViewModel {
     private func withdraw() async {
         do {
             try await withdrawUserUseCase.execute()
+            eventSubject.send(.didWithdraw)
         } catch {
             print("회원탈퇴 실패: \(error)")
         }
     }
 }
 
-// MARK: - State & Input
+// MARK: - State, Input & Event
 
 extension MyPageViewModel {
     public struct State: Equatable {
@@ -113,5 +120,10 @@ extension MyPageViewModel {
         case updateNotificationSetting
         case logout
         case withdraw
+    }
+
+    public enum Event {
+        case didLogout
+        case didWithdraw
     }
 }
