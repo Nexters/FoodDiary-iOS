@@ -37,8 +37,8 @@ public struct HTTPClient: HTTPClienting {
                 throw NetworkError.invalidResponse
             }
 
-            logger.logResponse(response, statusCode: httpResponse.statusCode)
-            logger.logResponseBody(data)
+            //logger.logResponse(response, statusCode: httpResponse.statusCode)
+            //logger.logResponseBody(data)
 
             try checkResponse(data, httpResponse)
 
