@@ -63,11 +63,13 @@ public final class PHAssetConverter: @unchecked Sendable {
             cachingManager.requestImageDataAndOrientation(
                 for: asset,
                 options: options
-            ) { data, _, _, _ in
+            ) { data, _, _, info in
                 if let data {
                     continuation.resume(returning: data)
                 } else {
-                    continuation.resume(throwing: PHImageLoaderError.imageLoadFailed)
+                    let isCloudError = (info?[PHImageErrorKey] as? NSError)?.domain == "CloudPhotoLibraryErrorDomain"
+                    let error: PHImageLoaderError = isCloudError ? .iCloudDownloadFailed : .imageLoadFailed
+                    continuation.resume(throwing: error)
                 }
             }
         }
@@ -154,11 +156,14 @@ public final class PHAssetConverter: @unchecked Sendable {
 
 public enum PHImageLoaderError: LocalizedError {
     case imageLoadFailed
+    case iCloudDownloadFailed
 
     public var errorDescription: String? {
         switch self {
         case .imageLoadFailed:
             return "이미지를 불러올 수 없습니다."
+        case .iCloudDownloadFailed:
+            return "iCloud에서 원본 이미지를 다운로드할 수 없습니다. 기기에서 직접 촬영한 사진으로 시도해 주세요."
         }
     }
 }

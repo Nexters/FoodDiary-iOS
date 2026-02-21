@@ -62,7 +62,6 @@ public struct HTTPClient: HTTPClienting {
             applyAccessToken(accessToken, to: &urlRequest)
 
             logger.logRequest(urlRequest)
-            logger.logRequestBody(urlRequest.httpBody)
 
             let (data, response) = try await session.data(for: urlRequest)
 
@@ -71,8 +70,7 @@ public struct HTTPClient: HTTPClienting {
                 throw NetworkError.invalidResponse
             }
 
-            logger.logResponse(response, statusCode: httpResponse.statusCode)
-            logger.logResponseBody(data)
+            logger.logResponse(response, statusCode: httpResponse.statusCode, data: data)
 
             try checkResponse(data, httpResponse)
         } catch let error as NetworkError {

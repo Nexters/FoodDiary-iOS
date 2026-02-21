@@ -20,9 +20,9 @@ public struct FoodRecordRepositoryImpl<
     private let calendar = Calendar.current
 
     #if DEBUG
-        let testMode = false
+        let testMode = true
     #else
-        let testMode = false
+        let testMode = true
     #endif
 
     public init(httpClient: Client, tokenStorage: Storage, deviceId: String, imageConverter: PHAssetConverter) {

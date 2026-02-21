@@ -320,7 +320,7 @@ public final class WeeklyCalendarViewController<
 
             navigationController?.pushViewController(picker, animated: true)
         } catch {
-            // 에러 처리
+            showLoadErrorAlert(error)
         }
     }
 
