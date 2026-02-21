@@ -53,6 +53,18 @@ public final class MyPageViewController: UIViewController {
         case logout
     }
 
+    // MARK: - Output
+
+    public var didLogoutPublisher: AnyPublisher<Void, Never> {
+        viewModel.eventPublisher
+            .compactMap { event -> Void? in
+                switch event {
+                case .didLogout, .didWithdraw: return ()
+                }
+            }
+            .eraseToAnyPublisher()
+    }
+
     // MARK: - Dependencies
 
     private let viewModel: MyPageViewModel
@@ -365,13 +377,26 @@ extension MyPageViewController: UITableViewDelegate {
         case .notificationSetting:
             openAppSettings()
         case .logout:
-            viewModel.input.send(.logout)
+            showLogoutAlert()
         default:
             break
         }
     }
 
     // MARK: - Actions
+
+    private func showLogoutAlert() {
+        let alert = UIAlertController(
+            title: "로그아웃",
+            message: "로그아웃을 진행하시겠습니까?",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: "로그아웃", style: .destructive) { [weak self] _ in
+            self?.viewModel.input.send(.logout)
+        })
+        present(alert, animated: true)
+    }
 
     private func openAppSettings() {
         guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
