@@ -21,7 +21,7 @@ final class WithdrawalFooterView: UIView {
         addSubview(withdrawalLabel)
 
         withdrawalLabel.snp.makeConstraints {
-            $0.trailing.equalToSuperview().offset(-20)
+            $0.trailing.equalToSuperview().offset(-28)
             $0.centerY.equalToSuperview()
         }
     }

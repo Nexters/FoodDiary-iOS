@@ -97,7 +97,6 @@ public final class WeeklyCalendarViewController<
 
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        navigationController?.setNavigationBarHidden(true, animated: animated)
     }
 
     // MARK: - Setup
