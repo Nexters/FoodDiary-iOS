@@ -39,6 +39,11 @@ public final class EditFoodRecordViewController<
     private let viewModel: EditFoodRecordViewModel<RecordRepo>
     private let onDismissWithResult: ((EditResult) -> Void)?
     private let addressSearchViewControllerFactory: ((Int, @escaping (AddressSearchResult) -> Void) -> UIViewController)?
+    private let presentImagePickerHandler: (
+        (_ navigationController: UINavigationController,
+         _ date: Date,
+         _ onSelected: @escaping ([any ImageAssetable], [UIImage]) -> Void
+        ) -> Void)?
 
     // MARK: - UI Components
 
@@ -114,11 +119,13 @@ public final class EditFoodRecordViewController<
     public init(
         viewModel: EditFoodRecordViewModel<RecordRepo>,
         onDismissWithResult: ((EditResult) -> Void)? = nil,
-        addressSearchViewControllerFactory: ((Int, @escaping (AddressSearchResult) -> Void) -> UIViewController)? = nil
+        addressSearchViewControllerFactory: ((Int, @escaping (AddressSearchResult) -> Void) -> UIViewController)? = nil,
+        presentImagePickerHandler: ((UINavigationController, Date, @escaping ([any ImageAssetable], [UIImage]) -> Void) -> Void)? = nil
     ) {
         self.viewModel = viewModel
         self.onDismissWithResult = onDismissWithResult
         self.addressSearchViewControllerFactory = addressSearchViewControllerFactory
+        self.presentImagePickerHandler = presentImagePickerHandler
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -383,7 +390,10 @@ public final class EditFoodRecordViewController<
     }
 
     private func presentImagePicker() {
-        // TODO: todo
+        guard let nav = navigationController else { return }
+        presentImagePickerHandler?(nav, viewModel.state.originalRecord.date) { [weak self] assets, previewImages in
+            self?.viewModel.input.send(.addImages(assets: assets, previewImages: previewImages))
+        }
     }
 
     private func presentAddTagAlert() {
