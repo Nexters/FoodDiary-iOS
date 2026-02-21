@@ -4,6 +4,7 @@
 //
 
 import DesignSystem
+import Kingfisher
 import UIKit
 
 /// 한 장 또는 겹쳐진 폴라로이드 스타일 이미지 카드 뷰
@@ -118,6 +119,21 @@ final class PolaroidImageCardsView: UIView {
         backCardView.isHidden = false
         setNeedsLayout()
     }
+
+    /// URL로 단일 카드 이미지 설정 (Kingfisher)
+    func configure(imageURL: URL) {
+        frontCardView.setImage(with: imageURL)
+        backCardView.isHidden = true
+        setNeedsLayout()
+    }
+
+    /// URL로 겹쳐진 카드 이미지 설정 (Kingfisher)
+    func configure(backImageURL: URL, frontImageURL: URL) {
+        backCardView.setImage(with: backImageURL)
+        frontCardView.setImage(with: frontImageURL)
+        backCardView.isHidden = false
+        setNeedsLayout()
+    }
 }
 
 // MARK: - PolaroidCardView
@@ -189,5 +205,12 @@ private final class PolaroidCardView: UIView {
 
     func setImage(_ image: UIImage?) {
         imageView.image = image
+    }
+
+    func setImage(with url: URL) {
+        imageView.kf.setImage(
+            with: url,
+            placeholder: DesignSystemAsset.foodPlaceholder.image
+        )
     }
 }

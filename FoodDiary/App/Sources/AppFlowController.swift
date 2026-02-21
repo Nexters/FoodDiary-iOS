@@ -132,7 +132,7 @@ private extension AppFlowController {
         )
 
         typealias MonthlyVM = MonthlyCalendarViewModel<
-            FoodRecordRepositoryImpl,
+            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
             PhotoAuthorizationFetcher
         >
 

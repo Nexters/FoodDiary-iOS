@@ -7,8 +7,6 @@ import UIKit
 public final class MockFoodRecordDetailViewController: UIViewController {
 
     // MARK: - Properties
-
-    private let records: [FoodRecord]
     private let date: Date
 
     // MARK: - UI Components
@@ -29,8 +27,7 @@ public final class MockFoodRecordDetailViewController: UIViewController {
 
     // MARK: - Init
 
-    public init(records: [FoodRecord], date: Date) {
-        self.records = records
+    public init(date: Date) {
         self.date = date
         super.init(nibName: nil, bundle: nil)
     }
