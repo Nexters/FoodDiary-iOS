@@ -127,6 +127,7 @@ public final class MyPageViewController: UIViewController {
         setupTableFooter()
         setupBindings()
         setupNotifications()
+        viewModel.input.send(.viewDidLoad)
     }
 
     public override func viewWillAppear(_ animated: Bool) {
@@ -147,7 +148,7 @@ public final class MyPageViewController: UIViewController {
 
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .sdBase
+        appearance.backgroundColor = .sd700
         appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
         appearance.shadowColor = .clear
         navigationController?.navigationBar.standardAppearance = appearance
@@ -198,7 +199,20 @@ public final class MyPageViewController: UIViewController {
     }
 
     @objc private func withdrawalTapped() {
-        viewModel.input.send(.withdraw)
+        showWithdrawalAlert()
+    }
+
+    private func showWithdrawalAlert() {
+        let alert = UIAlertController(
+            title: "회원탈퇴",
+            message: "탈퇴를 진행하시겠습니까?",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: "탈퇴", style: .destructive) { [weak self] _ in
+            self?.viewModel.input.send(.withdraw)
+        })
+        present(alert, animated: true)
     }
 
     // MARK: - Bindings
@@ -206,8 +220,12 @@ public final class MyPageViewController: UIViewController {
     private func setupBindings() {
         viewModel.statePublisher
             .receive(on: DispatchQueue.main)
+            .map(\.isNotificationEnabled)
+            .removeDuplicates()
             .sink { [weak self] _ in
-                _ = self
+                guard let self else { return }
+                let indexPath = IndexPath(row: 0, section: Section.notifications.rawValue)
+                tableView.reloadRows(at: [indexPath], with: .none)
             }
             .store(in: &cancellables)
     }
@@ -247,8 +265,11 @@ public final class MyPageViewController: UIViewController {
             let font = UIFont.systemFont(ofSize: 14)
             let textWidth = (text as NSString).size(withAttributes: [.font: font]).width
 
-            // ON 배지 추가
-            let badge = makeBadgeLabel(text: "ON")
+            // 알림 권한 상태에 따라 배지 텍스트/색상 결정
+            let isEnabled = viewModel.state.isNotificationEnabled
+            let badgeText = isEnabled ? "ON" : "OFF"
+
+            let badge = makeBadgeLabel(text: badgeText, backgroundColor: DesignSystemAsset.sd800.color)
             badge.tag = 999
             badge.translatesAutoresizingMaskIntoConstraints = false
             cell.contentView.addSubview(badge)
@@ -291,12 +312,12 @@ public final class MyPageViewController: UIViewController {
         return iv
     }
 
-    private func makeBadgeLabel(text: String) -> UILabel {
+    private func makeBadgeLabel(text: String, backgroundColor: UIColor) -> UILabel {
         let label = UILabel()
         label.text = text
         label.font = .systemFont(ofSize: 11, weight: .semibold)
         label.textColor = .white
-        label.backgroundColor = .sd800
+        label.backgroundColor = backgroundColor
         label.layer.cornerRadius = 10
         label.clipsToBounds = true
         label.textAlignment = .center
