@@ -22,10 +22,13 @@ public struct FoodRecordRepositoryImpl<
     #if DEBUG
         let testMode: Bool = true
     #else
-        let testMode = true
+        let testMode = false
     #endif
 
-    public init(httpClient: Client, tokenStorage: Storage, deviceId: String, imageConverter: PHAssetConverter) {
+    public init(
+        httpClient: Client, tokenStorage: Storage, deviceId: String,
+        imageConverter: PHAssetConverter
+    ) {
         self.httpClient = httpClient
         self.tokenStorage = tokenStorage
         self.deviceId = deviceId
@@ -218,11 +221,14 @@ extension FoodRecordRepositoryImpl {
                         from: phAsset,
                         targetSize: CGSize(width: 1200, height: 1200)
                     )
-                    return (index, File(
-                        fileName: "photo_\(index).jpg",
-                        mimeType: "image/jpeg",
-                        data: data
-                    ))
+                    return (
+                        index,
+                        File(
+                            fileName: "photo_\(index).jpg",
+                            mimeType: "image/jpeg",
+                            data: data
+                        )
+                    )
                 }
             }
 
