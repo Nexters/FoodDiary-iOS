@@ -222,10 +222,16 @@ public final class MyPageViewController: UIViewController {
             .receive(on: DispatchQueue.main)
             .map(\.isNotificationEnabled)
             .removeDuplicates()
-            .sink { [weak self] _ in
+            .sink { [weak self] isEnabled in
                 guard let self else { return }
                 let indexPath = IndexPath(row: 0, section: Section.notifications.rawValue)
-                tableView.reloadRows(at: [indexPath], with: .none)
+                if let cell = tableView.cellForRow(at: indexPath),
+                   let badge = cell.contentView.viewWithTag(999) as? UILabel {
+                    badge.text = isEnabled ? "ON" : "OFF"
+                    badge.backgroundColor = isEnabled ? DesignSystemAsset.primary.color : DesignSystemAsset.gray600.color
+                } else {
+                    tableView.reloadRows(at: [indexPath], with: .none)
+                }
             }
             .store(in: &cancellables)
     }
@@ -268,8 +274,9 @@ public final class MyPageViewController: UIViewController {
             // 알림 권한 상태에 따라 배지 텍스트/색상 결정
             let isEnabled = viewModel.state.isNotificationEnabled
             let badgeText = isEnabled ? "ON" : "OFF"
+            let badgeColor = isEnabled ? DesignSystemAsset.primary.color : DesignSystemAsset.gray600.color
 
-            let badge = makeBadgeLabel(text: badgeText, backgroundColor: DesignSystemAsset.sd800.color)
+            let badge = makeBadgeLabel(text: badgeText, backgroundColor: badgeColor)
             badge.tag = 999
             badge.translatesAutoresizingMaskIntoConstraints = false
             cell.contentView.addSubview(badge)
