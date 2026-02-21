@@ -104,6 +104,15 @@ public final class MonthlyCalendarViewController<
         view.addSubview(monthYearHeaderView)
         view.addSubview(containerView)
         containerView.addSubview(stackView)
+
+        let mypageButton = UIBarButtonItem(
+            image: DesignSystemAsset.iconMypage.image,
+            style: .plain,
+            target: nil,
+            action: nil
+        )
+        
+        navigationItem.rightBarButtonItem = mypageButton
     }
 
     private func setupConstraints() {
@@ -119,6 +128,7 @@ public final class MonthlyCalendarViewController<
 
         containerView.snp.makeConstraints {
             $0.top.equalTo(monthYearHeaderView.snp.bottom).offset(Constants.containerTopOffset)
+            $0.bottom.equalTo(view.safeAreaLayoutGuide).offset(Constants.containerBottomOffset)
             $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
         }
 
@@ -126,10 +136,6 @@ public final class MonthlyCalendarViewController<
             $0.top.equalToSuperview().inset(Constants.stackTopInset)
             $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
             $0.bottom.equalToSuperview().inset(Constants.stackBottomInset)
-        }
-
-        collectionView.snp.makeConstraints {
-            collectionViewHeightConstraint = $0.height.equalTo(0).constraint
         }
     }
 
@@ -256,7 +262,7 @@ public final class MonthlyCalendarViewController<
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard let day = dataSource?.itemIdentifier(for: indexPath) else { return }
 
-        let detailVC = MockFoodRecordDetailViewController(records: day.records, date: day.date)
+        let detailVC = MockFoodRecordDetailViewController(date: day.date)
         detailVC.modalPresentationStyle = .pageSheet
         present(detailVC, animated: true)
     }
@@ -270,8 +276,9 @@ extension MonthlyCalendarViewController {
         static var containerCornerRadius: CGFloat { 16 }
         static var containerBorderWidth: CGFloat { 1 }
         static var recordPromptTopOffset: CGFloat { 28 }
-        static var monthYearHeaderTopOffset: CGFloat { 36 }
+        static var monthYearHeaderTopOffset: CGFloat { 32 }
         static var containerTopOffset: CGFloat { 18 }
+        static var containerBottomOffset: CGFloat { -38 }
         static var stackSpacing: CGFloat { 16 }
         static var stackTopInset: CGFloat { 24 }
         static var stackBottomInset: CGFloat { 18 }

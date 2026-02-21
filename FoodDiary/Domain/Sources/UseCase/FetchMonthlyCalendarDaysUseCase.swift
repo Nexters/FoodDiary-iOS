@@ -15,9 +15,7 @@ public struct FetchMonthlyCalendarDaysUseCase<Repository: FoodRecordRepository>:
 
     public func execute(for period: DateInterval, currentMonth: Date) async throws -> [MonthlyCalendarDay] {
         let calendar = Calendar.seoul
-
-        // 음식 기록 조회
-        let recordsByDate = try await repository.fetchRecords(in: period.start...period.end)
+        let recordsByDate = try await repository.fetchPhotoURLs(in: period.start...period.end)
 
         // 캘린더 날짜 배열 생성 (records 포함)
         return generateCalendarDays(
@@ -34,7 +32,7 @@ public struct FetchMonthlyCalendarDaysUseCase<Repository: FoodRecordRepository>:
         for period: DateInterval,
         currentMonth: Date,
         calendar: Calendar,
-        recordsByDate: [Date: [FoodRecord]]
+        recordsByDate: [Date: [URL]]
     ) -> [MonthlyCalendarDay] {
         let today = calendar.startOfDay(for: Date())
         let currentMonthComponents = calendar.dateComponents([.year, .month], from: currentMonth)
@@ -48,14 +46,14 @@ public struct FetchMonthlyCalendarDaysUseCase<Repository: FoodRecordRepository>:
                                  dateComponents.month == currentMonthComponents.month
 
             let dayStart = calendar.startOfDay(for: currentDate)
-            let records = recordsByDate[dayStart] ?? []
+            let photoURLs = recordsByDate[dayStart] ?? []
 
             days.append(MonthlyCalendarDay(
                 date: currentDate,
                 dayNumber: calendar.component(.day, from: currentDate),
                 isCurrentMonth: isCurrentMonth,
                 isToday: calendar.isDate(currentDate, inSameDayAs: today),
-                records: records
+                imageURLs: photoURLs
             ))
             guard let next = calendar.date(byAdding: .day, value: 1, to: currentDate) else { break }
             currentDate = next
