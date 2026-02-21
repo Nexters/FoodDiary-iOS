@@ -10,6 +10,7 @@ import Foundation
 public struct UpdateDeviceNotificationSettingUseCase<Repository: DeviceRepository> {
     private let repository: Repository
     private let notificationAuthorizationProvider: NotificationAuthorizationProviding
+    private let pushTokenProvider: PushTokenStoring
     private let appVersion: String
     private let deviceID: String?
     private let osVersion: String
@@ -17,12 +18,14 @@ public struct UpdateDeviceNotificationSettingUseCase<Repository: DeviceRepositor
     public init(
         repository: Repository,
         notificationAuthorizationProvider: NotificationAuthorizationProviding,
+        pushTokenProvider: PushTokenStoring,
         appVersion: String,
         deviceID: String?,
         osVersion: String
     ) {
         self.repository = repository
         self.notificationAuthorizationProvider = notificationAuthorizationProvider
+        self.pushTokenProvider = pushTokenProvider
         self.appVersion = appVersion
         self.deviceID = deviceID
         self.osVersion = osVersion
@@ -37,7 +40,7 @@ public struct UpdateDeviceNotificationSettingUseCase<Repository: DeviceRepositor
         let request = UpdateDeviceNotificationRequest(
             appVersion: appVersion,
             deviceID: deviceID,
-            deviceToken: nil,
+            deviceToken: pushTokenProvider.get(),
             isActive: isActive,
             osVersion: osVersion
         )

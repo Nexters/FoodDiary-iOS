@@ -327,6 +327,7 @@ private extension SceneDelegate {
             UpdateDeviceNotificationSettingUseCase<DeviceRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>.self
         ) { resolver in
             guard let repository = resolver.resolve(DeviceRepository.self),
+                  let pushTokenProvider = resolver.resolve(PushTokenStoring.self),
                   let notificationAuthProvider = resolver.resolve(NotificationAuthorizationProviding.self),
                   let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String else {
                 fatalError("UpdateDeviceNotificationSettingUseCase dependencies not registered")
@@ -342,6 +343,7 @@ private extension SceneDelegate {
             return UpdateDeviceNotificationSettingUseCase(
                 repository: concreteRepository,
                 notificationAuthorizationProvider: notificationAuthProvider,
+                pushTokenProvider: pushTokenProvider,
                 appVersion: appVersion,
                 deviceID: deviceID,
                 osVersion: osVersion
