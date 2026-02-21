@@ -27,5 +27,11 @@ public struct AuthRepositoryImpl<Storage: AuthTokenStoring, Client: HTTPClientin
     public func logout() throws {
         try tokenStorage.clear()
     }
+
+    public func withdraw() async throws {
+        let endpoint = UserEndpoint.withdraw
+        let _: EmptyResponse = try await httpClient.request(endpoint, accessToken: tokenStorage.get())
+        try tokenStorage.clear()
+    }
 }
 

@@ -9,6 +9,7 @@ import UIKit
 import Combine
 import DesignSystem
 import SnapKit
+import DI
 
 public final class CalendarViewController: UIViewController {
     public enum ViewMode {
@@ -19,10 +20,16 @@ public final class CalendarViewController: UIViewController {
     private let weeklyVC: UIViewController
     private let monthlyVC: UIViewController
     private let currentModeSubject = CurrentValueSubject<ViewMode, Never>(.weekly)
+    private let didLogoutSubject = PassthroughSubject<Void, Never>()
     private var currentChild: UIViewController?
+    private var myPageCancellable: AnyCancellable?
 
     public var currentModePublisher: AnyPublisher<ViewMode, Never> {
         currentModeSubject.eraseToAnyPublisher()
+    }
+
+    public var didLogoutPublisher: AnyPublisher<Void, Never> {
+        didLogoutSubject.eraseToAnyPublisher()
     }
 
     public init(weeklyVC: UIViewController, monthlyVC: UIViewController) {
@@ -41,6 +48,11 @@ public final class CalendarViewController: UIViewController {
         showViewController(for: currentModeSubject.value)
     }
 
+    public override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: animated)
+    }
+
     private func setupNavigationBar() {
         let mypageButton = UIBarButtonItem(
             image: DesignSystemAsset.iconMypage.image,
@@ -48,11 +60,25 @@ public final class CalendarViewController: UIViewController {
             target: self,
             action: #selector(mypageButtonTapped)
         )
+        
         navigationItem.rightBarButtonItem = mypageButton
     }
 
     @objc private func mypageButtonTapped() {
-        // TODO: 마이페이지 화면으로 이동
+        guard let myPageVM = try? DIContainer.shared.resolve(MyPageViewModel.self) else {
+            print("MyPageViewModel resolve 실패")
+            return
+        }
+
+        let myPageVC = MyPageViewController(viewModel: myPageVM)
+        myPageVC.hidesBottomBarWhenPushed = true
+
+        myPageCancellable = myPageVC.didLogoutPublisher
+            .sink { [weak self] in
+                self?.didLogoutSubject.send()
+            }
+
+        navigationController?.pushViewController(myPageVC, animated: true)
     }
 
     public func toggleViewMode() {
