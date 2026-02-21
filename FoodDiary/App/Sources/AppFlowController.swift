@@ -142,7 +142,20 @@ private extension AppFlowController {
 
         let monthlyCalendarVC = MonthlyCalendarViewController(viewModel: monthlyViewModel)
 
-        let tabBarVC = RootTabBarController(weeklyVC: weeklyCalendarVC, monthlyVC: monthlyCalendarVC, insightVC: UIViewController())
+        let tabBarVC = RootTabBarController(
+            weeklyVC: weeklyCalendarVC,
+            monthlyVC: monthlyCalendarVC,
+            insightVC: UIViewController()
+        )
+
+        tabBarVC.didLogoutPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in
+                guard let self else { return }
+                transition(to: createLoginView())
+            }
+            .store(in: &cancellables)
+
         return tabBarVC
     }
 
