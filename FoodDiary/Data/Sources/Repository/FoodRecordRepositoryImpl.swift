@@ -8,9 +8,12 @@ import Foundation
 import UIKit
 
 /// FoodRecordRepository 구현체
-public final class FoodRecordRepositoryImpl: FoodRecordRepository, @unchecked Sendable {
-    private let httpClient: any HTTPClienting
-    private let tokenStorage: any AuthTokenStoring
+public struct FoodRecordRepositoryImpl<
+    Client: HTTPClienting & Sendable,
+    Storage: AuthTokenStoring & Sendable
+>: FoodRecordRepository {
+    private let httpClient: Client
+    private let tokenStorage: Storage
     private let deviceId: String
     private let calendar = Calendar.current
 
@@ -20,7 +23,7 @@ public final class FoodRecordRepositoryImpl: FoodRecordRepository, @unchecked Se
         let testMode = true
     #endif
 
-    public init(httpClient: any HTTPClienting, tokenStorage: any AuthTokenStoring, deviceId: String) {
+    public init(httpClient: Client, tokenStorage: Storage, deviceId: String) {
         self.httpClient = httpClient
         self.tokenStorage = tokenStorage
         self.deviceId = deviceId
@@ -76,7 +79,7 @@ public final class FoodRecordRepositoryImpl: FoodRecordRepository, @unchecked Se
         let startDateString = formatDate(dateRange.lowerBound)
         let endDateString = formatDate(dateRange.upperBound)
 
-        let endpoint = DiariesEndpoint.fetchByDateRange(
+        let endpoint = DiaryEndpoint.byDateRange(
             startDate: startDateString,
             endDate: endDateString,
             testMode: testMode
@@ -94,6 +97,34 @@ public final class FoodRecordRepositoryImpl: FoodRecordRepository, @unchecked Se
         let startOfDay = calendar.startOfDay(for: date)
         let records = try await fetchRecords(in: startOfDay...startOfDay)
         return records[startOfDay] ?? []
+    }
+
+    public func fetchPhotoURLs(in dateRange: ClosedRange<Date>) async throws -> [Date: [URL]] {
+        guard let accessToken = tokenStorage.get() else {
+            throw FoodRecordError.noAccessToken
+        }
+
+        let startDateString = formatDate(dateRange.lowerBound)
+        let endDateString = formatDate(dateRange.upperBound)
+
+        let endpoint = DiaryEndpoint.byDateRangeSummary(
+            startDate: startDateString,
+            endDate: endDateString,
+            testMode: testMode
+        )
+
+        let response: DiariesByDateRangeSummaryResponseDTO = try await httpClient.request(
+            endpoint,
+            accessToken: accessToken
+        )
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+
+        return response.reduce(into: [Date: [URL]]()) { result, entry in
+            guard let date = formatter.date(from: entry.key) else { return }
+            result[date] = entry.value.photos.compactMap { URL(string: $0) }
+        }
     }
 
     // MARK: - Mock 구현 (서버 API 미구현)
@@ -116,14 +147,14 @@ public final class FoodRecordRepositoryImpl: FoodRecordRepository, @unchecked Se
 // MARK: - Private
 
 extension FoodRecordRepositoryImpl {
-    fileprivate func formatDate(_ date: Date) -> String {
+    private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         formatter.timeZone = .current
         return formatter.string(from: date)
     }
 
-    fileprivate func convertImagesToFiles(_ images: [UIImage]) throws -> [File] {
+    private func convertImagesToFiles(_ images: [UIImage]) throws -> [File] {
         try images.enumerated().map { index, image in
             guard let jpegData = image.jpegData(compressionQuality: 0.8) else {
                 throw FoodRecordError.imageConversionFailed
@@ -136,7 +167,7 @@ extension FoodRecordRepositoryImpl {
         }
     }
 
-    fileprivate func convertToRecordsByDate(_ response: DiariesResponseDTO) -> [Date: [FoodRecord]]
+    private func convertToRecordsByDate(_ response: DiariesResponseDTO) -> [Date: [FoodRecord]]
     {
         var result: [Date: [FoodRecord]] = [:]
 
@@ -149,7 +180,7 @@ extension FoodRecordRepositoryImpl {
         return result
     }
 
-    fileprivate func postFakeAnalysisNotification(uploadId: String, date: Date) {
+    private func postFakeAnalysisNotification(uploadId: String, date: Date) {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         let dateString = formatter.string(from: date)
