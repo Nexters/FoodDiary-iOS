@@ -67,6 +67,45 @@ public struct DiaryPhotoDTO: Decodable {
     }
 }
 
+// MARK: - Suggestion DTOs
+
+/// GET /diaries/{diary_id}/suggestions 응답
+public struct DiarySuggestionsResponseDTO: Decodable {
+    public let restaurantCandidates: [RestaurantCandidateDTO]
+    public let categoryCandidates: [String]
+    public let menuCandidates: [String]
+
+    enum CodingKeys: String, CodingKey {
+        case restaurantCandidates = "restaurant_candidates"
+        case categoryCandidates = "category_candidates"
+        case menuCandidates = "menu_candidates"
+    }
+}
+
+public struct RestaurantCandidateDTO: Decodable {
+    public let name: String
+    public let confidence: Double
+    public let address: String?
+    public let url: String?
+    public let roadAddress: String?
+    public let zoneNo: String?
+
+    enum CodingKeys: String, CodingKey {
+        case name, confidence, address, url
+        case roadAddress = "road_address"
+        case zoneNo = "zone_no"
+    }
+}
+
+/// POST /diaries/{diary_id}/photos 응답
+public struct AddDiaryPhotosResponseDTO: Decodable {
+    public let photoIds: [Int]
+
+    enum CodingKeys: String, CodingKey {
+        case photoIds = "photo_ids"
+    }
+}
+
 // MARK: - DTO → Entity 변환
 
 extension DiaryResponseDTO {
@@ -82,7 +121,10 @@ extension DiaryResponseDTO {
         createdAtFormatter.timeZone = .current
         let createdDate = createdAtFormatter.date(from: createdAt) ?? date
 
-        let imageURLs = photos.compactMap { URL(string: $0.imageUrl) }
+        let photoInfos = photos.compactMap { dto -> PhotoInfo? in
+            guard let url = URL(string: dto.imageUrl) else { return nil }
+            return PhotoInfo(id: dto.photoId, imageURL: url)
+        }
         let mealType = MealType.from(serverValue: timeType)
         let genre = category.flatMap { FoodGenre(rawValue: $0) } ?? .etc
 
@@ -91,7 +133,7 @@ extension DiaryResponseDTO {
             date: date,
             mealType: mealType,
             genre: genre,
-            imageURLs: imageURLs,
+            photos: photoInfos,
             restaurantName: restaurantName,
             address: roadAddress,
             hashtags: tags ?? [],

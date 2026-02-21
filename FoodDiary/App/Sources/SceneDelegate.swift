@@ -154,8 +154,12 @@ private extension SceneDelegate {
             PushNotificationObserver()
         }
 
-        container.register(MockAddressSearchRepository.self) { _ in
-            MockAddressSearchRepository()
+        container.register(AddressSearchRepositoryImpl.self) { resolver in
+            guard let client = resolver.resolve(HTTPClient.self),
+                  let storage = resolver.resolve(AuthTokenStorage<KeychainService>.self) else {
+                fatalError("AddressSearchRepositoryImpl dependencies not registered")
+            }
+            return AddressSearchRepositoryImpl(httpClient: client, tokenStorage: storage)
         }
     }
     
@@ -293,10 +297,10 @@ private extension SceneDelegate {
         }
 
         container.register(
-            SearchAddressUseCase<MockAddressSearchRepository>.self
+            SearchAddressUseCase<AddressSearchRepositoryImpl>.self
         ) { resolver in
-            guard let addressRepo = resolver.resolve(MockAddressSearchRepository.self) else {
-                fatalError("MockAddressSearchRepository not registered")
+            guard let addressRepo = resolver.resolve(AddressSearchRepositoryImpl.self) else {
+                fatalError("AddressSearchRepositoryImpl not registered")
             }
             return SearchAddressUseCase(repository: addressRepo)
         }
@@ -397,21 +401,21 @@ private extension SceneDelegate {
             }
         )
 
-        typealias AddressSearchVM = AddressSearchViewModel<MockAddressSearchRepository>
+        typealias AddressSearchVM = AddressSearchViewModel<AddressSearchRepositoryImpl>
 
         container.register(
             AddressSearchVM.self,
-            argument: String.self,
+            argument: Int.self,
             scope: .transient,
-            factory: { resolver, restaurantName in
+            factory: { resolver, diaryId in
                 guard let searchUseCase = resolver.resolve(
-                    SearchAddressUseCase<MockAddressSearchRepository>.self
+                    SearchAddressUseCase<AddressSearchRepositoryImpl>.self
                 ) else {
                     fatalError("SearchAddressUseCase not registered")
                 }
                 return AddressSearchViewModel(
                     searchAddressUseCase: searchUseCase,
-                    restaurantName: restaurantName
+                    diaryId: diaryId
                 )
             }
         )

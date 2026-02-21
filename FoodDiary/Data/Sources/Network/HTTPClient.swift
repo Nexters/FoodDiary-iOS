@@ -57,6 +57,34 @@ public struct HTTPClient: HTTPClienting {
             throw NetworkError.requestFailed
         }
     }
+
+    public func requestVoid(_ request: some Requestable, accessToken: String? = nil) async throws {
+        do {
+            var urlRequest = try request.makeURLRequest()
+            applyAccessToken(accessToken, to: &urlRequest)
+
+            logger.logRequest(urlRequest)
+            logger.logRequestBody(urlRequest.httpBody)
+
+            let (data, response) = try await session.data(for: urlRequest)
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                logger.logError(NetworkError.invalidResponse, context: "Network error")
+                throw NetworkError.invalidResponse
+            }
+
+            logger.logResponse(response, statusCode: httpResponse.statusCode)
+            logger.logResponseBody(data)
+
+            try checkResponse(data, httpResponse)
+        } catch let error as NetworkError {
+            logger.logError(error, context: "Network error")
+            throw error
+        } catch {
+            logger.logError(error, context: "Request error")
+            throw NetworkError.requestFailed
+        }
+    }
 }
 
 // MARK: - Private Method

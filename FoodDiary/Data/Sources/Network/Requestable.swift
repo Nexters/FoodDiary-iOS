@@ -81,6 +81,8 @@ extension Requestable {
             return encodedBody
         case let .multipart(data):
             return data.body
+        case let .photosMultipart(data):
+            return data.body
         case .none:
             return nil
         }
@@ -109,6 +111,8 @@ extension Requestable {
 
         switch body {
         case let .multipart(formData):
+            request.setValue(formData.contentType, forHTTPHeaderField: "Content-Type")
+        case let .photosMultipart(formData):
             request.setValue(formData.contentType, forHTTPHeaderField: "Content-Type")
         case .json:
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")

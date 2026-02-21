@@ -38,7 +38,7 @@ public final class EditFoodRecordViewController<
 
     private let viewModel: EditFoodRecordViewModel<RecordRepo>
     private let onDismissWithResult: ((EditResult) -> Void)?
-    private let addressSearchViewControllerFactory: ((String, @escaping (AddressSearchResult) -> Void) -> UIViewController)?
+    private let addressSearchViewControllerFactory: ((Int, @escaping (AddressSearchResult) -> Void) -> UIViewController)?
 
     // MARK: - UI Components
 
@@ -114,7 +114,7 @@ public final class EditFoodRecordViewController<
     public init(
         viewModel: EditFoodRecordViewModel<RecordRepo>,
         onDismissWithResult: ((EditResult) -> Void)? = nil,
-        addressSearchViewControllerFactory: ((String, @escaping (AddressSearchResult) -> Void) -> UIViewController)? = nil
+        addressSearchViewControllerFactory: ((Int, @escaping (AddressSearchResult) -> Void) -> UIViewController)? = nil
     ) {
         self.viewModel = viewModel
         self.onDismissWithResult = onDismissWithResult
@@ -375,8 +375,8 @@ public final class EditFoodRecordViewController<
     }
 
     private func presentAddressSearchModal() {
-        let restaurantName = viewModel.state.originalRecord.restaurantName ?? ""
-        guard let addressSearchVC = addressSearchViewControllerFactory?(restaurantName, { [weak self] result in
+        guard let diaryId = Int(viewModel.state.originalRecord.id) else { return }
+        guard let addressSearchVC = addressSearchViewControllerFactory?(diaryId, { [weak self] result in
             self?.viewModel.input.send(.selectAddress(result))
         }) else { return }
         present(addressSearchVC, animated: true)

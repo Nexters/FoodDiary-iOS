@@ -99,10 +99,10 @@ private extension AppFlowController {
 
         typealias DetailVM = DetailViewModel<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>
         typealias EditVM = EditFoodRecordViewModel<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>
-        typealias AddressSearchVM = AddressSearchViewModel<MockAddressSearchRepository>
+        typealias AddressSearchVM = AddressSearchViewModel<AddressSearchRepositoryImpl>
 
-        let addressSearchVCFactory: (String, @escaping (AddressSearchResult) -> Void) -> UIViewController = { [container] restaurantName, onSelect in
-            guard let addressVM = try? container.resolve(AddressSearchVM.self, argument: restaurantName) else {
+        let addressSearchVCFactory: (Int, @escaping (AddressSearchResult) -> Void) -> UIViewController = { [container] diaryId, onSelect in
+            guard let addressVM = try? container.resolve(AddressSearchVM.self, argument: diaryId) else {
                 fatalError("AddressSearchViewModel not registered")
             }
             return AddressSearchViewController(viewModel: addressVM, onAddressSelected: onSelect)

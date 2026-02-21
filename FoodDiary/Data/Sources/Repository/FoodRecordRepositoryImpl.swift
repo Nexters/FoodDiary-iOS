@@ -18,9 +18,9 @@ public struct FoodRecordRepositoryImpl<
     private let calendar = Calendar.current
 
     #if DEBUG
-        let testMode = true
+        let testMode = false
     #else
-        let testMode = true
+        let testMode = false
     #endif
 
     public init(httpClient: Client, tokenStorage: Storage, deviceId: String) {
@@ -127,20 +127,69 @@ public struct FoodRecordRepositoryImpl<
         }
     }
 
-    // MARK: - Mock 구현 (서버 API 미구현)
+    // MARK: - 수정/삭제 API
 
     public func updateRecord(_ request: UpdateFoodRecordRequest) async throws -> FoodRecord {
-        // TODO: 서버 API 연동
-        throw NSError(
-            domain: "FoodRecordRepositoryImpl", code: 501,
-            userInfo: [NSLocalizedDescriptionKey: "서버 API 미구현"])
+        guard let accessToken = tokenStorage.get() else {
+            throw FoodRecordError.noAccessToken
+        }
+
+        guard let diaryId = Int(request.id) else {
+            throw FoodRecordError.emptyResponse
+        }
+
+        // 1. 새 이미지가 있으면 사진 업로드 → 새 photo_id 획득
+        var newPhotoIds: [Int] = []
+        if !request.newImages.isEmpty {
+            let files = try convertImagesToFiles(request.newImages)
+            let uploadEndpoint = DiariesEndpoint.addPhotos(diaryId: diaryId, photos: files)
+            let uploadResponse: AddDiaryPhotosResponseDTO = try await httpClient.request(
+                uploadEndpoint,
+                accessToken: accessToken
+            )
+            newPhotoIds = uploadResponse.photoIds
+        }
+
+        // 2. 기존 유지할 photo_ids + 새 photo_ids 합침
+        let allPhotoIds = request.existingPhotoIds + newPhotoIds
+
+        // 3. PATCH /diaries/{diary_id} 호출
+        let updateBody = DiaryUpdateRequestDTO(
+            category: request.genre.rawValue,
+            restaurantName: request.restaurantName,
+            restaurantUrl: request.restaurantURL,
+            roadAddress: request.address,
+            tags: request.hashtags,
+            note: request.note,
+            coverPhotoId: request.coverPhotoId ?? allPhotoIds.first,
+            photoIds: allPhotoIds
+        )
+
+        let updateEndpoint = DiariesEndpoint.update(diaryId: diaryId, body: updateBody)
+        let response: DiaryResponseDTO = try await httpClient.request(
+            updateEndpoint,
+            accessToken: accessToken
+        )
+
+        // 4. 응답 → FoodRecord 변환
+        guard let record = response.toFoodRecord() else {
+            throw FoodRecordError.emptyResponse
+        }
+
+        return record
     }
 
     public func deleteRecord(id: String) async throws {
-        // TODO: 서버 API 연동
-        throw NSError(
-            domain: "FoodRecordRepositoryImpl", code: 501,
-            userInfo: [NSLocalizedDescriptionKey: "서버 API 미구현"])
+        guard let accessToken = tokenStorage.get() else {
+            throw FoodRecordError.noAccessToken
+        }
+
+        guard let diaryId = Int(id) else {
+            throw FoodRecordError.emptyResponse
+        }
+
+        let endpoint = DiariesEndpoint.delete(diaryId: diaryId)
+        try await httpClient.requestVoid(endpoint, accessToken: accessToken)
     }
 }
 

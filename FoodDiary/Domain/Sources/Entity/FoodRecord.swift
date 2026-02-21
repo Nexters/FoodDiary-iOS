@@ -5,24 +5,40 @@
 
 import Foundation
 
+/// 사진 정보 (ID + URL)
+public struct PhotoInfo: Equatable, Sendable {
+    public let id: Int
+    public let imageURL: URL
+
+    public init(id: Int, imageURL: URL) {
+        self.id = id
+        self.imageURL = imageURL
+    }
+}
+
 /// 서버에서 받아온 음식 기록 정보
 public struct FoodRecord: Identifiable, Equatable, Sendable {
     public let id: String
     public let date: Date
     public let mealType: MealType
     public let genre: FoodGenre
-    public let imageURLs: [URL]
+    public let photos: [PhotoInfo]
     public let restaurantName: String?
     public let address: String?
     public let hashtags: [String]
     public let createdAt: Date
+
+    /// 하위 호환용 computed property
+    public var imageURLs: [URL] {
+        photos.map(\.imageURL)
+    }
 
     public init(
         id: String,
         date: Date,
         mealType: MealType,
         genre: FoodGenre,
-        imageURLs: [URL],
+        photos: [PhotoInfo],
         restaurantName: String? = nil,
         address: String? = nil,
         hashtags: [String] = [],
@@ -32,7 +48,7 @@ public struct FoodRecord: Identifiable, Equatable, Sendable {
         self.date = date
         self.mealType = mealType
         self.genre = genre
-        self.imageURLs = imageURLs
+        self.photos = photos
         self.restaurantName = restaurantName
         self.address = address
         self.hashtags = hashtags

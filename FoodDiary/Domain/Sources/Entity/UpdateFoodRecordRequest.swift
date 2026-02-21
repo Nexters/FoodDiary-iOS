@@ -10,27 +10,36 @@ import UIKit
 public struct UpdateFoodRecordRequest: Sendable {
     public let id: String
     public let genre: FoodGenre
-    public let existingImageURLs: [URL]
+    public let existingPhotoIds: [Int]
     public let newImages: [UIImage]
     public let address: String?
-    public let detailAddress: String?
+    public let restaurantName: String?
+    public let restaurantURL: String?
     public let hashtags: [String]
+    public let note: String?
+    public let coverPhotoId: Int?
 
     public init(
         id: String,
         genre: FoodGenre,
-        existingImageURLs: [URL],
+        existingPhotoIds: [Int],
         newImages: [UIImage],
         address: String?,
-        detailAddress: String?,
-        hashtags: [String]
+        restaurantName: String?,
+        restaurantURL: String?,
+        hashtags: [String],
+        note: String? = nil,
+        coverPhotoId: Int? = nil
     ) {
         self.id = id
         self.genre = genre
-        self.existingImageURLs = existingImageURLs
+        self.existingPhotoIds = existingPhotoIds
         self.newImages = newImages
         self.address = address
-        self.detailAddress = detailAddress
+        self.restaurantName = restaurantName
+        self.restaurantURL = restaurantURL
         self.hashtags = hashtags
+        self.note = note
+        self.coverPhotoId = coverPhotoId
     }
 }

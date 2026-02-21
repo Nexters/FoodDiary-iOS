@@ -53,11 +53,12 @@ public final class EditFoodRecordViewModel<RecordRepo: FoodRecordRepository> {
         self.stateSubject = CurrentValueSubject(
             State(
                 originalRecord: record,
-                imageURLs: record.imageURLs,
+                photos: record.photos,
                 newImages: [],
                 selectedGenre: record.genre,
                 address: record.address,
                 detailAddress: record.restaurantName ?? "",
+                restaurantURL: nil,
                 hashtags: record.hashtags,
                 isSaving: false
             )
@@ -83,8 +84,8 @@ public final class EditFoodRecordViewModel<RecordRepo: FoodRecordRepository> {
     private func handleInput(_ action: Input) async {
         switch action {
         case .removeExistingImage(let index):
-            guard index < state.imageURLs.count else { return }
-            state.imageURLs.remove(at: index)
+            guard index < state.photos.count else { return }
+            state.photos.remove(at: index)
 
         case .removeNewImage(let index):
             guard index < state.newImages.count else { return }
@@ -99,6 +100,7 @@ public final class EditFoodRecordViewModel<RecordRepo: FoodRecordRepository> {
         case .selectAddress(let result):
             state.address = result.roadAddress
             state.detailAddress = result.placeName
+            state.restaurantURL = result.url
 
         case .updateDetailAddress(let text):
             state.detailAddress = text
@@ -130,10 +132,11 @@ public final class EditFoodRecordViewModel<RecordRepo: FoodRecordRepository> {
         let request = UpdateFoodRecordRequest(
             id: state.originalRecord.id,
             genre: state.selectedGenre,
-            existingImageURLs: state.imageURLs,
+            existingPhotoIds: state.photos.map(\.id),
             newImages: state.newImages,
             address: state.address,
-            detailAddress: state.detailAddress.isEmpty ? nil : state.detailAddress,
+            restaurantName: state.detailAddress.isEmpty ? nil : state.detailAddress,
+            restaurantURL: state.restaurantURL,
             hashtags: state.hashtags
         )
 
@@ -161,21 +164,28 @@ public final class EditFoodRecordViewModel<RecordRepo: FoodRecordRepository> {
 extension EditFoodRecordViewModel {
     public struct State: Equatable {
         public var originalRecord: FoodRecord
-        public var imageURLs: [URL]
+        public var photos: [PhotoInfo]
         public var newImages: [UIImage]
         public var selectedGenre: FoodGenre
         public var address: String?
         public var detailAddress: String
+        public var restaurantURL: String?
         public var hashtags: [String]
         public var isSaving: Bool
 
+        /// 하위 호환용 computed property
+        public var imageURLs: [URL] {
+            photos.map(\.imageURL)
+        }
+
         public static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.originalRecord == rhs.originalRecord
-                && lhs.imageURLs == rhs.imageURLs
+                && lhs.photos == rhs.photos
                 && lhs.newImages.count == rhs.newImages.count
                 && lhs.selectedGenre == rhs.selectedGenre
                 && lhs.address == rhs.address
                 && lhs.detailAddress == rhs.detailAddress
+                && lhs.restaurantURL == rhs.restaurantURL
                 && lhs.hashtags == rhs.hashtags
                 && lhs.isSaving == rhs.isSaving
         }

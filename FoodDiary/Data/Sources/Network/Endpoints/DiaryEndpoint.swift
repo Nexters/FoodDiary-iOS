@@ -10,6 +10,10 @@ import Foundation
 public enum DiaryEndpoint {
     case byDateRange(startDate: String, endDate: String, testMode: Bool)
     case byDateRangeSummary(startDate: String, endDate: String, testMode: Bool)
+    case update(diaryId: Int, body: DiaryUpdateRequestDTO)
+    case suggestions(diaryId: Int)
+    case delete(diaryId: Int)
+    case addPhotos(diaryId: Int, photos: [File])
 }
 
 extension DiaryEndpoint: Requestable {
@@ -27,6 +31,14 @@ extension DiaryEndpoint: Requestable {
             "/diaries"
         case .byDateRangeSummary:
             "/diaries/summary"
+        case .update(let diaryId, _):
+            "/diaries/\(diaryId)"
+        case .delete(let diaryId):
+            "/diaries/\(diaryId)"
+        case .suggestions(let diaryId):
+            "/diaries/\(diaryId)/suggestions"
+        case .addPhotos(let diaryId, _):
+            "/diaries/\(diaryId)/photos"
         }
     }
 
@@ -34,6 +46,12 @@ extension DiaryEndpoint: Requestable {
         switch self {
         case .byDateRange, .byDateRangeSummary:
             .get
+        case .update:
+            .patch
+        case .delete:
+            .delete
+        case .addPhotos:
+            .post
         }
     }
 
@@ -57,20 +75,23 @@ extension DiaryEndpoint: Requestable {
                 params["test_mode"] = "true"
             }
             return params
+        case .update, .delete, .suggestions, .addPhotos:
+            return nil
         }
     }
 
     public var bodyParameters: HTTPBody {
         switch self {
-        case .byDateRange, .byDateRangeSummary:
+        case .byDateRange, .byDateRangeSummary, .delete, .suggestions:
             .none
+        case .update(_, let body):
+            .json(body)
+        case .addPhotos(_, let photos):
+            .photosMultipart(PhotosMultipartFormData(photos: photos))
         }
     }
 
     public var headers: [String: String] {
-        switch self {
-        case .byDateRange, .byDateRangeSummary:
-            [:]
-        }
+        [:]
     }
 }

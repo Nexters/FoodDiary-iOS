@@ -16,7 +16,7 @@ public struct SearchAddressUseCase<Repository: AddressSearchRepository>: Sendabl
         try await repository.searchAddress(keyword: keyword, page: page)
     }
 
-    public func fetchSuggestions(restaurantName: String) async throws -> [AddressSearchResult] {
-        try await repository.fetchSuggestions(restaurantName: restaurantName)
+    public func fetchSuggestions(diaryId: Int) async throws -> [AddressSearchResult] {
+        try await repository.fetchSuggestions(diaryId: diaryId)
     }
 }
