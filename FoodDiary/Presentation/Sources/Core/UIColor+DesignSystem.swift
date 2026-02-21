@@ -42,6 +42,7 @@ public extension UIColor {
     static let grayBasic = DesignSystemAsset.grayBasic.color
     static let gray900 = DesignSystemAsset.gray900.color
     static let gray800 = DesignSystemAsset.gray800.color
+    static let gray750 = DesignSystemAsset.gray750.color
     static let gray700 = DesignSystemAsset.gray700.color
     static let gray600 = DesignSystemAsset.gray600.color
     static let gray500 = DesignSystemAsset.gray500.color
