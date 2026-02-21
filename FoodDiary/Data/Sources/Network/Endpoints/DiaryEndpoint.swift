@@ -8,6 +8,7 @@
 import Foundation
 
 public enum DiaryEndpoint {
+    case byDateRange(startDate: String, endDate: String, testMode: Bool)
     case byDateRangeSummary(startDate: String, endDate: String, testMode: Bool)
 }
 
@@ -22,6 +23,8 @@ extension DiaryEndpoint: Requestable {
 
     public var path: String {
         switch self {
+        case .byDateRange:
+            "/diaries"
         case .byDateRangeSummary:
             "/diaries/summary"
         }
@@ -29,13 +32,19 @@ extension DiaryEndpoint: Requestable {
 
     public var httpMethod: HTTPMethod {
         switch self {
-        case .byDateRangeSummary:
+        case .byDateRange, .byDateRangeSummary:
             .get
         }
     }
 
     public var queryParameters: Encodable? {
         switch self {
+        case let .byDateRange(startDate, endDate, testMode):
+            [
+                "start_date": startDate,
+                "end_date": endDate,
+                "test_mode": "\(testMode)",
+            ]
         case let .byDateRangeSummary(startDate, endDate, testMode):
             [
                 "start_date": startDate,
@@ -47,14 +56,14 @@ extension DiaryEndpoint: Requestable {
 
     public var bodyParameters: HTTPBody {
         switch self {
-        case .byDateRangeSummary:
+        case .byDateRange, .byDateRangeSummary:
             .none
         }
     }
 
     public var headers: [String: String] {
         switch self {
-        case .byDateRangeSummary:
+        case .byDateRange, .byDateRangeSummary:
             [:]
         }
     }
