@@ -123,7 +123,7 @@ final class MealSectionView: UIView {
             title = "점심"
         case .dinner:
             title = "저녁"
-        case .lateNight:
+        case .snack:
             title = "야식"
         }
         titleLabel.setText(title, style: .hd20, color: .white)

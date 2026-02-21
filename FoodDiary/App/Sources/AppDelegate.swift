@@ -108,6 +108,29 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         handlePushNotification(notification.request.content.userInfo)
         completionHandler([])
     }
+
+    private func handlePushNotification(_ userInfo: [AnyHashable: Any]) {
+        print("[Push] 수신된 userInfo: \(userInfo)")
+
+        guard let uploadId = userInfo["uploadId"] as? String,
+              let dateString = userInfo["date"] as? String
+        else {
+            print("[Push] 파싱 실패 - uploadId 또는 date 누락")
+            return
+        }
+
+        print("[Push] 파싱 성공 - uploadId: \(uploadId), date: \(dateString)")
+
+        NotificationCenter.default.post(
+            name: AppNotification.Push.analysisResult,
+            object: nil,
+            userInfo: [
+                AppNotification.Push.Key.uploadId: uploadId,
+                AppNotification.Push.Key.date: dateString
+            ]
+        )
+        print("[Push] NotificationCenter로 전달 완료")
+    }
 }
 
 // MARK: - MessagingDelegate
