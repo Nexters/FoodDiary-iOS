@@ -44,7 +44,7 @@ extension DiaryEndpoint: Requestable {
 
     public var httpMethod: HTTPMethod {
         switch self {
-        case .byDateRange, .byDateRangeSummary:
+        case .byDateRange, .byDateRangeSummary, .suggestions:
             .get
         case .update:
             .patch

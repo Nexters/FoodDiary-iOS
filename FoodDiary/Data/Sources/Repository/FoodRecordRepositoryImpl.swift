@@ -142,7 +142,7 @@ public struct FoodRecordRepositoryImpl<
         var newPhotoIds: [Int] = []
         if !request.newImages.isEmpty {
             let files = try convertImagesToFiles(request.newImages)
-            let uploadEndpoint = DiariesEndpoint.addPhotos(diaryId: diaryId, photos: files)
+            let uploadEndpoint = DiaryEndpoint.addPhotos(diaryId: diaryId, photos: files)
             let uploadResponse: AddDiaryPhotosResponseDTO = try await httpClient.request(
                 uploadEndpoint,
                 accessToken: accessToken
@@ -165,7 +165,7 @@ public struct FoodRecordRepositoryImpl<
             photoIds: allPhotoIds
         )
 
-        let updateEndpoint = DiariesEndpoint.update(diaryId: diaryId, body: updateBody)
+        let updateEndpoint = DiaryEndpoint.update(diaryId: diaryId, body: updateBody)
         let response: DiaryResponseDTO = try await httpClient.request(
             updateEndpoint,
             accessToken: accessToken
@@ -188,7 +188,7 @@ public struct FoodRecordRepositoryImpl<
             throw FoodRecordError.emptyResponse
         }
 
-        let endpoint = DiariesEndpoint.delete(diaryId: diaryId)
+        let endpoint = DiaryEndpoint.delete(diaryId: diaryId)
         try await httpClient.requestVoid(endpoint, accessToken: accessToken)
     }
 }
@@ -216,8 +216,7 @@ extension FoodRecordRepositoryImpl {
         }
     }
 
-    private func convertToRecordsByDate(_ response: DiariesResponseDTO) -> [Date: [FoodRecord]]
-    {
+    private func convertToRecordsByDate(_ response: DiariesResponseDTO) -> [Date: [FoodRecord]] {
         var result: [Date: [FoodRecord]] = [:]
 
         for dto in response.diaries {

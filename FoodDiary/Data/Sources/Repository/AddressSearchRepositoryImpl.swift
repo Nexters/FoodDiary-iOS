@@ -21,7 +21,7 @@ public struct AddressSearchRepositoryImpl: AddressSearchRepository {
             throw FoodRecordError.noAccessToken
         }
 
-        let endpoint = DiariesEndpoint.suggestions(diaryId: diaryId)
+        let endpoint = DiaryEndpoint.suggestions(diaryId: diaryId)
         let response: DiarySuggestionsResponseDTO = try await httpClient.request(
             endpoint,
             accessToken: accessToken
