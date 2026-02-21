@@ -14,10 +14,9 @@ public final class WeeklyCalendarViewModel<
     RecordRepo: FoodRecordRepository,
     AssetRepo: FoodImageAssetRepository,
     AuthRepo: PhotoAuthorizationRepository,
-    ImageProvider: RenderableImageRepository,
     PendingRepo: PendingFoodRecordRepository,
     PushObserver: PushNotificationObserving
-> where ImageProvider.Asset == AssetRepo.Asset {
+> {
     // MARK: - Output
 
     public var statePublisher: AnyPublisher<State, Never> {
@@ -49,7 +48,7 @@ public final class WeeklyCalendarViewModel<
 
     private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>
     private let loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase<RecordRepo, AssetRepo>
-    private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, ImageProvider, PendingRepo>
+    private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, PendingRepo>
     private let loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>
     private let deletePendingRecordUseCase: DeletePendingRecordUseCase<PendingRepo>
     private let pushNotificationObserver: PushObserver
@@ -59,7 +58,7 @@ public final class WeeklyCalendarViewModel<
     public init(
         requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>,
         loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase<RecordRepo, AssetRepo>,
-        saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, ImageProvider, PendingRepo>,
+        saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, PendingRepo>,
         loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>,
         deletePendingRecordUseCase: DeletePendingRecordUseCase<PendingRepo>,
         pushNotificationObserver: PushObserver

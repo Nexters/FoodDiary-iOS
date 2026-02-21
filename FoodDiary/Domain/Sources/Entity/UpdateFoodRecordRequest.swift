@@ -4,14 +4,13 @@
 //
 
 import Foundation
-import UIKit
 
 /// 음식 기록 수정 요청 데이터
 public struct UpdateFoodRecordRequest: Sendable {
     public let id: String
     public let genre: FoodGenre
     public let existingPhotoIds: [Int]
-    public let newImages: [UIImage]
+    public let newAssets: [any ImageAssetable]
     public let address: String?
     public let restaurantName: String?
     public let restaurantURL: String?
@@ -23,7 +22,7 @@ public struct UpdateFoodRecordRequest: Sendable {
         id: String,
         genre: FoodGenre,
         existingPhotoIds: [Int],
-        newImages: [UIImage],
+        newAssets: [any ImageAssetable],
         address: String?,
         restaurantName: String?,
         restaurantURL: String?,
@@ -34,7 +33,7 @@ public struct UpdateFoodRecordRequest: Sendable {
         self.id = id
         self.genre = genre
         self.existingPhotoIds = existingPhotoIds
-        self.newImages = newImages
+        self.newAssets = newAssets
         self.address = address
         self.restaurantName = restaurantName
         self.restaurantURL = restaurantURL

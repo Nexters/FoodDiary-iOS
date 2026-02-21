@@ -5,6 +5,7 @@
 
 import Domain
 import Foundation
+import Photos
 import UIKit
 
 /// FoodRecordRepository 구현체
@@ -15,6 +16,7 @@ public struct FoodRecordRepositoryImpl<
     private let httpClient: Client
     private let tokenStorage: Storage
     private let deviceId: String
+    private let imageConverter: PHAssetConverter
     private let calendar = Calendar.current
 
     #if DEBUG
@@ -23,10 +25,11 @@ public struct FoodRecordRepositoryImpl<
         let testMode = false
     #endif
 
-    public init(httpClient: Client, tokenStorage: Storage, deviceId: String) {
+    public init(httpClient: Client, tokenStorage: Storage, deviceId: String, imageConverter: PHAssetConverter) {
         self.httpClient = httpClient
         self.tokenStorage = tokenStorage
         self.deviceId = deviceId
+        self.imageConverter = imageConverter
     }
 
     // MARK: - 서버 API 호출
@@ -37,7 +40,7 @@ public struct FoodRecordRepositoryImpl<
         }
 
         let dateString = formatDate(request.date)
-        let files = try convertImagesToFiles(request.images)
+        let files = try await convertAssetsToFiles(request.assets)
 
         let endpoint = PhotosEndpoint.batchUpload(
             date: dateString,
@@ -140,8 +143,8 @@ public struct FoodRecordRepositoryImpl<
 
         // 1. 새 이미지가 있으면 사진 업로드 → 새 photo_id 획득
         var newPhotoIds: [Int] = []
-        if !request.newImages.isEmpty {
-            let files = try convertImagesToFiles(request.newImages)
+        if !request.newAssets.isEmpty {
+            let files = try await convertAssetsToFiles(request.newAssets)
             let uploadEndpoint = DiaryEndpoint.addPhotos(diaryId: diaryId, photos: files)
             let uploadResponse: AddDiaryPhotosResponseDTO = try await httpClient.request(
                 uploadEndpoint,
@@ -203,16 +206,30 @@ extension FoodRecordRepositoryImpl {
         return formatter.string(from: date)
     }
 
-    private func convertImagesToFiles(_ images: [UIImage]) throws -> [File] {
-        try images.enumerated().map { index, image in
-            guard let jpegData = image.jpegData(compressionQuality: 0.8) else {
-                throw FoodRecordError.imageConversionFailed
+    private func convertAssetsToFiles(_ assets: [any ImageAssetable]) async throws -> [File] {
+        try await withThrowingTaskGroup(of: (Int, File).self) { group in
+            for (index, asset) in assets.enumerated() {
+                group.addTask {
+                    guard let phAsset = asset as? PHAsset else {
+                        throw FoodRecordError.imageConversionFailed
+                    }
+                    let data = try await imageConverter.convertToJPEGData(
+                        from: phAsset,
+                        targetSize: CGSize(width: 1200, height: 1200)
+                    )
+                    return (index, File(
+                        fileName: "photo_\(index).jpg",
+                        mimeType: "image/jpeg",
+                        data: data
+                    ))
+                }
             }
-            return File(
-                fileName: "photo_\(index).jpg",
-                mimeType: "image/jpeg",
-                data: jpegData
-            )
+
+            var results: [(Int, File)] = []
+            for try await result in group {
+                results.append(result)
+            }
+            return results.sorted(by: { $0.0 < $1.0 }).map { $0.1 }
         }
     }
 

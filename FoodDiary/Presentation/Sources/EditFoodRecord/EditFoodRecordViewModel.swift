@@ -54,7 +54,8 @@ public final class EditFoodRecordViewModel<RecordRepo: FoodRecordRepository> {
             State(
                 originalRecord: record,
                 photos: record.photos,
-                newImages: [],
+                newAssets: [],
+                newPreviewImages: [],
                 selectedGenre: record.genre,
                 address: record.address,
                 detailAddress: record.restaurantName ?? "",
@@ -88,11 +89,13 @@ public final class EditFoodRecordViewModel<RecordRepo: FoodRecordRepository> {
             state.photos.remove(at: index)
 
         case .removeNewImage(let index):
-            guard index < state.newImages.count else { return }
-            state.newImages.remove(at: index)
+            guard index < state.newAssets.count else { return }
+            state.newAssets.remove(at: index)
+            state.newPreviewImages.remove(at: index)
 
-        case .addImages(let images):
-            state.newImages.append(contentsOf: images)
+        case .addImages(let assets, let previewImages):
+            state.newAssets.append(contentsOf: assets)
+            state.newPreviewImages.append(contentsOf: previewImages)
 
         case .selectGenre(let genre):
             state.selectedGenre = genre
@@ -133,7 +136,7 @@ public final class EditFoodRecordViewModel<RecordRepo: FoodRecordRepository> {
             id: state.originalRecord.id,
             genre: state.selectedGenre,
             existingPhotoIds: state.photos.map(\.id),
-            newImages: state.newImages,
+            newAssets: state.newAssets,
             address: state.address,
             restaurantName: state.detailAddress.isEmpty ? nil : state.detailAddress,
             restaurantURL: state.restaurantURL,
@@ -165,7 +168,8 @@ extension EditFoodRecordViewModel {
     public struct State: Equatable {
         public var originalRecord: FoodRecord
         public var photos: [PhotoInfo]
-        public var newImages: [UIImage]
+        public var newAssets: [any ImageAssetable]
+        public var newPreviewImages: [UIImage]
         public var selectedGenre: FoodGenre
         public var address: String?
         public var detailAddress: String
@@ -181,7 +185,7 @@ extension EditFoodRecordViewModel {
         public static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.originalRecord == rhs.originalRecord
                 && lhs.photos == rhs.photos
-                && lhs.newImages.count == rhs.newImages.count
+                && lhs.newAssets.count == rhs.newAssets.count
                 && lhs.selectedGenre == rhs.selectedGenre
                 && lhs.address == rhs.address
                 && lhs.detailAddress == rhs.detailAddress
@@ -194,7 +198,7 @@ extension EditFoodRecordViewModel {
     public enum Input {
         case removeExistingImage(at: Int)
         case removeNewImage(at: Int)
-        case addImages([UIImage])
+        case addImages(assets: [any ImageAssetable], previewImages: [UIImage])
         case selectGenre(FoodGenre)
         case selectAddress(AddressSearchResult)
         case updateDetailAddress(String)

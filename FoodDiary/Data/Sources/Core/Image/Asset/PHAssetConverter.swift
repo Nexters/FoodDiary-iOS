@@ -3,8 +3,10 @@
 //  Data
 //
 
+import ImageIO
 import Photos
 import UIKit
+import UniformTypeIdentifiers
 
 public final class PHAssetConverter: @unchecked Sendable {
     private let cachingManager = PHCachingImageManager()
@@ -31,6 +33,88 @@ public final class PHAssetConverter: @unchecked Sendable {
                 }
             }
         }
+    }
+
+    /// 리사이즈 + 압축된 JPEG Data를 반환하되, 원본 EXIF 메타데이터를 보존
+    public func convertToJPEGData(
+        from asset: PHAsset,
+        targetSize: CGSize,
+        compressionQuality: CGFloat = 0.8
+    ) async throws -> Data {
+        // 1. 원본 Data에서 EXIF 추출
+        let originalData = try await requestOriginalData(from: asset)
+        let metadata = extractMetadata(from: originalData)
+
+        // 2. 리사이즈된 UIImage 획득
+        let resizedImage = try await convert(from: asset, targetSize: targetSize)
+
+        // 3. 리사이즈된 이미지에 원본 EXIF 주입
+        return try embedMetadata(metadata, into: resizedImage, compressionQuality: compressionQuality)
+    }
+
+    // MARK: - EXIF Helpers
+
+    private func requestOriginalData(from asset: PHAsset) async throws -> Data {
+        try await withCheckedThrowingContinuation { continuation in
+            let options = PHImageRequestOptions()
+            options.isNetworkAccessAllowed = true
+            options.isSynchronous = false
+
+            cachingManager.requestImageDataAndOrientation(
+                for: asset,
+                options: options
+            ) { data, _, _, _ in
+                if let data {
+                    continuation.resume(returning: data)
+                } else {
+                    continuation.resume(throwing: PHImageLoaderError.imageLoadFailed)
+                }
+            }
+        }
+    }
+
+    private func extractMetadata(from data: Data) -> CFDictionary? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+        return CGImageSourceCopyPropertiesAtIndex(source, 0, nil)
+    }
+
+    private func embedMetadata(
+        _ metadata: CFDictionary?,
+        into image: UIImage,
+        compressionQuality: CGFloat
+    ) throws -> Data {
+        guard let cgImage = image.cgImage else {
+            throw PHImageLoaderError.imageLoadFailed
+        }
+
+        let mutableData = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(
+            mutableData,
+            UTType.jpeg.identifier as CFString,
+            1,
+            nil
+        ) else {
+            throw PHImageLoaderError.imageLoadFailed
+        }
+
+        var properties: [CFString: Any] = [
+            kCGImageDestinationLossyCompressionQuality: compressionQuality
+        ]
+
+        // 원본 EXIF 메타데이터 주입
+        if let metadata = metadata as? [CFString: Any] {
+            for (key, value) in metadata {
+                properties[key] = value
+            }
+        }
+
+        CGImageDestinationAddImage(destination, cgImage, properties as CFDictionary)
+
+        guard CGImageDestinationFinalize(destination) else {
+            throw PHImageLoaderError.imageLoadFailed
+        }
+
+        return mutableData as Data
     }
 
     // MARK: - Prefetching (Internal)

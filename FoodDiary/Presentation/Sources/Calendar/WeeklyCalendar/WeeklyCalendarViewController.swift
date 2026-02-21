@@ -23,7 +23,7 @@ public final class WeeklyCalendarViewController<
 
     private let viewModel:
         WeeklyCalendarViewModel<
-            RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, PushObserver
+            RecordRepo, AssetRepo, AuthRepo, PendingRepo, PushObserver
         >
     private let imageProvider: ImageProvider
     private let detailViewModelFactory: (Date, [FoodRecord]) -> DetailViewModel<RecordRepo>
@@ -66,7 +66,7 @@ public final class WeeklyCalendarViewController<
 
     public init(
         viewModel: WeeklyCalendarViewModel<
-            RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, PushObserver
+            RecordRepo, AssetRepo, AuthRepo, PendingRepo, PushObserver
         >,
         imageProvider: ImageProvider,
         detailViewModelFactory: @escaping (Date, [FoodRecord]) -> DetailViewModel<RecordRepo>,

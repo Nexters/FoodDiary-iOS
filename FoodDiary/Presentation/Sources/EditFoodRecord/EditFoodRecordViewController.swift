@@ -264,10 +264,10 @@ public final class EditFoodRecordViewController<
             .store(in: &cancellables)
 
         viewModel.statePublisher
-            .map { ($0.imageURLs, $0.newImages) }
+            .map { ($0.imageURLs, $0.newPreviewImages) }
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] urls, newImages in
-                self?.imageSectionView.configure(existingImageURLs: urls, newImages: newImages)
+            .sink { [weak self] urls, newPreviewImages in
+                self?.imageSectionView.configure(existingImageURLs: urls, newImages: newPreviewImages)
             }
             .store(in: &cancellables)
 

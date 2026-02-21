@@ -4,15 +4,14 @@
 //
 
 import Foundation
-import UIKit
 
 /// 음식 기록 생성 요청 데이터
 public struct CreateFoodRecordRequest: Sendable {
     public let date: Date
-    public let images: [UIImage]
+    public let assets: [any ImageAssetable]
 
-    public init(date: Date, images: [UIImage]) {
+    public init(date: Date, assets: [any ImageAssetable]) {
         self.date = date
-        self.images = images
+        self.assets = assets
     }
 }

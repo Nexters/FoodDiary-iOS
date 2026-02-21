@@ -128,11 +128,12 @@ private extension SceneDelegate {
 
         container.register(FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>.self) { resolver in
             guard let client = resolver.resolve(HTTPClient.self),
-                  let storage = resolver.resolve(AuthTokenStorage<KeychainService>.self) else {
+                  let storage = resolver.resolve(AuthTokenStorage<KeychainService>.self),
+                  let imageConverter = resolver.resolve(PHAssetConverter.self) else {
                 fatalError("FoodRecordRepositoryImpl dependencies not registered")
             }
             let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? ""
-            return FoodRecordRepositoryImpl(httpClient: client, tokenStorage: storage, deviceId: deviceId)
+            return FoodRecordRepositoryImpl(httpClient: client, tokenStorage: storage, deviceId: deviceId, imageConverter: imageConverter)
         }
 
         container.register(PhotoAuthorizationFetcher.self) { _ in
@@ -232,16 +233,14 @@ private extension SceneDelegate {
         }
 
         container.register(
-            SaveFoodRecordUseCase<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>, UIImageLoader, PendingFoodRecordStorage<FileStorageService>>.self
+            SaveFoodRecordUseCase<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>, PendingFoodRecordStorage<FileStorageService>>.self
         ) { resolver in
             guard let recordRepo = resolver.resolve(FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>.self),
-                  let imageLoader = resolver.resolve(UIImageLoader.self),
                   let pendingRepo = resolver.resolve(PendingFoodRecordStorage<FileStorageService>.self) else {
                 fatalError("SaveFoodRecordUseCase dependencies not registered")
             }
             return SaveFoodRecordUseCase(
                 repository: recordRepo,
-                imageProvider: imageLoader,
                 pendingRepository: pendingRepo
             )
         }
@@ -320,7 +319,6 @@ private extension SceneDelegate {
             FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
             FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>,
             PhotoAuthorizationFetcher,
-            UIImageLoader,
             PendingFoodRecordStorage<FileStorageService>,
             PushNotificationObserver
         >
@@ -333,7 +331,7 @@ private extension SceneDelegate {
                       LoadWeeklyRecordUseCase<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>, FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>.self
                   ),
                   let saveFoodRecordUseCase = resolver.resolve(
-                      SaveFoodRecordUseCase<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>, UIImageLoader, PendingFoodRecordStorage<FileStorageService>>.self
+                      SaveFoodRecordUseCase<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>, PendingFoodRecordStorage<FileStorageService>>.self
                   ),
                   let loadPendingUseCase = resolver.resolve(
                       LoadPendingRecordsUseCase<PendingFoodRecordStorage<FileStorageService>>.self

@@ -88,7 +88,6 @@ private extension AppFlowController {
             FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
             FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>,
             PhotoAuthorizationFetcher,
-            UIImageLoader,
             PendingFoodRecordStorage<FileStorageService>,
             PushNotificationObserver
         >
