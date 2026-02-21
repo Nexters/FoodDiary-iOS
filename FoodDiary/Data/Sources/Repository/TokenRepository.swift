@@ -21,7 +21,7 @@ public struct TokenRepositoryImpl<Client: HTTPClienting, Storage: AuthTokenStori
         guard let accessToken = storage.get() else {
             return false
         }
-        
+        print("[TokenRepository] Access Token found: \(accessToken)")
         guard let _: ValidateResponseDTO = try? await httpClient.request(AuthEndpoint.verify, accessToken: accessToken) else {
             return false
         }

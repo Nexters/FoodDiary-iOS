@@ -32,9 +32,21 @@ public struct HTTPLogger {
         #endif
     }
 
-    func logDecodedModel<T>(_ model: T) {
+    func logRequestBody(_ body: Data?) {
         #if DEBUG
-            logger.info("[Decoded] \(String(describing: type(of: model))): \(model)")
+            guard let body else {
+                logger.info("[Request Body] (empty)")
+                return
+            }
+            let bodyString = String(data: body, encoding: .utf8) ?? "(binary \(body.count) bytes)"
+            logger.info("[Request Body] \(bodyString)")
+        #endif
+    }
+
+    func logResponseBody(_ data: Data) {
+        #if DEBUG
+            let bodyString = String(data: data, encoding: .utf8) ?? "(binary \(data.count) bytes)"
+            logger.info("[Response Body] \(bodyString)")
         #endif
     }
 

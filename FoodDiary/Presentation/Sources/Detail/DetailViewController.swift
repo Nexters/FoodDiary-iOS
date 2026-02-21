@@ -54,7 +54,7 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
     private let breakfastSection = MealSectionView(mealType: .breakfast)
     private let lunchSection = MealSectionView(mealType: .lunch)
     private let dinnerSection = MealSectionView(mealType: .dinner)
-    private let lateNightSection = MealSectionView(mealType: .lateNight)
+    private let snackSection = MealSectionView(mealType: .snack)
 
     // MARK: - State
 
@@ -86,8 +86,6 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
         setupUI()
         setupConstraints()
         setupBindings()
-
-        viewModel.input.send(.loadRecords)
     }
 
     public override func viewWillAppear(_ animated: Bool) {
@@ -130,7 +128,7 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
         mealSectionsStackView.addArrangedSubview(breakfastSection)
         mealSectionsStackView.addArrangedSubview(lunchSection)
         mealSectionsStackView.addArrangedSubview(dinnerSection)
-        mealSectionsStackView.addArrangedSubview(lateNightSection)
+        mealSectionsStackView.addArrangedSubview(snackSection)
     }
 
     private func setupConstraints() {
@@ -232,28 +230,28 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
 
     private func setupCardEventBindings() {
         breakfastSection.copyTapPublisher
-            .merge(with: lunchSection.copyTapPublisher, dinnerSection.copyTapPublisher, lateNightSection.copyTapPublisher)
+            .merge(with: lunchSection.copyTapPublisher, dinnerSection.copyTapPublisher, snackSection.copyTapPublisher)
             .sink { [weak self] record in
                 self?.handleCopy(record: record)
             }
             .store(in: &cancellables)
 
         breakfastSection.shareTapPublisher
-            .merge(with: lunchSection.shareTapPublisher, dinnerSection.shareTapPublisher, lateNightSection.shareTapPublisher)
+            .merge(with: lunchSection.shareTapPublisher, dinnerSection.shareTapPublisher, snackSection.shareTapPublisher)
             .sink { [weak self] record in
                 self?.handleShare(record: record)
             }
             .store(in: &cancellables)
 
         breakfastSection.editTapPublisher
-            .merge(with: lunchSection.editTapPublisher, dinnerSection.editTapPublisher, lateNightSection.editTapPublisher)
+            .merge(with: lunchSection.editTapPublisher, dinnerSection.editTapPublisher, snackSection.editTapPublisher)
             .sink { [weak self] record in
                 self?.handleEdit(record: record)
             }
             .store(in: &cancellables)
 
         breakfastSection.addButtonTapPublisher
-            .merge(with: lunchSection.addButtonTapPublisher, dinnerSection.addButtonTapPublisher, lateNightSection.addButtonTapPublisher)
+            .merge(with: lunchSection.addButtonTapPublisher, dinnerSection.addButtonTapPublisher, snackSection.addButtonTapPublisher)
             .sink { [weak self] in
                 self?.handleAddPhoto()
             }
@@ -267,7 +265,7 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
             (.breakfast, breakfastSection),
             (.lunch, lunchSection),
             (.dinner, dinnerSection),
-            (.lateNight, lateNightSection),
+            (.snack, snackSection),
         ]
 
         for (mealType, section) in sections {

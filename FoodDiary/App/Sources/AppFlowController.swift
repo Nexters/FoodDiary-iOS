@@ -85,12 +85,11 @@ private extension AppFlowController {
         }
 
         typealias WeeklyVM = WeeklyCalendarViewModel<
-            MockFoodRecordRepository,
+            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
             FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>,
             PhotoAuthorizationFetcher,
             UIImageLoader,
             PendingFoodRecordStorage<FileStorageService>,
-            MockAnalysisResultRepository,
             PushNotificationObserver
         >
 
@@ -98,8 +97,8 @@ private extension AppFlowController {
             fatalError("WeeklyCalendarViewModel not registered")
         }
 
-        typealias DetailVM = DetailViewModel<MockFoodRecordRepository>
-        typealias EditVM = EditFoodRecordViewModel<MockFoodRecordRepository>
+        typealias DetailVM = DetailViewModel<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>
+        typealias EditVM = EditFoodRecordViewModel<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>
         typealias AddressSearchVM = AddressSearchViewModel<MockAddressSearchRepository>
 
         let addressSearchVCFactory: (String, @escaping (AddressSearchResult) -> Void) -> UIViewController = { [container] restaurantName, onSelect in
@@ -123,8 +122,8 @@ private extension AppFlowController {
         let weeklyCalendarVC = WeeklyCalendarViewController(
             viewModel: weeklyViewModel,
             imageProvider: imageProvider,
-            detailViewModelFactory: { [container] date in
-                guard let vm = try? container.resolve(DetailVM.self, argument: date) else {
+            detailViewModelFactory: { [container] date, records in
+                guard let vm = try? container.resolve(DetailVM.self, argument: (date, records)) else {
                     fatalError("DetailViewModel not registered")
                 }
                 return vm

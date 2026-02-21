@@ -12,7 +12,7 @@ public struct WeeklyCalendarDay: Sendable, Equatable {
     public let dayNumber: String
     public let isToday: Bool
     public let isFuture: Bool
-    public let records: [FoodRecord]
+    public var records: [FoodRecord]
 
     public init(
         date: Date,
@@ -28,5 +28,13 @@ public struct WeeklyCalendarDay: Sendable, Equatable {
         self.isToday = isToday
         self.isFuture = isFuture
         self.records = records
+    }
+}
+
+// MARK: - Array Convenience
+
+public extension Array where Element == WeeklyCalendarDay {
+    func records(for date: Date, calendar: Calendar = .current) -> [FoodRecord] {
+        first { calendar.isDate($0.date, inSameDayAs: date) }?.records ?? []
     }
 }

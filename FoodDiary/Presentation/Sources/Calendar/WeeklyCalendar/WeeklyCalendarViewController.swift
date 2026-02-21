@@ -16,7 +16,6 @@ public final class WeeklyCalendarViewController<
     AuthRepo: PhotoAuthorizationRepository,
     ImageProvider: RenderableImageRepository,
     PendingRepo: PendingFoodRecordRepository,
-    AnalysisRepo: AnalysisResultRepository,
     PushObserver: PushNotificationObserving
 >: UIViewController where ImageProvider.Asset == AssetRepo.Asset {
 
@@ -24,10 +23,10 @@ public final class WeeklyCalendarViewController<
 
     private let viewModel:
         WeeklyCalendarViewModel<
-            RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, AnalysisRepo, PushObserver
+            RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, PushObserver
         >
     private let imageProvider: ImageProvider
-    private let detailViewModelFactory: (Date) -> DetailViewModel<RecordRepo>
+    private let detailViewModelFactory: (Date, [FoodRecord]) -> DetailViewModel<RecordRepo>
     private let editViewControllerFactory: ((FoodRecord) -> UIViewController)?
 
     // MARK: - UI Components
@@ -67,10 +66,10 @@ public final class WeeklyCalendarViewController<
 
     public init(
         viewModel: WeeklyCalendarViewModel<
-            RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, AnalysisRepo, PushObserver
+            RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, PushObserver
         >,
         imageProvider: ImageProvider,
-        detailViewModelFactory: @escaping (Date) -> DetailViewModel<RecordRepo>,
+        detailViewModelFactory: @escaping (Date, [FoodRecord]) -> DetailViewModel<RecordRepo>,
         editViewControllerFactory: ((FoodRecord) -> UIViewController)? = nil
     ) {
         self.viewModel = viewModel
@@ -186,6 +185,13 @@ public final class WeeklyCalendarViewController<
             }
             .store(in: &cancellables)
 
+        // Foreground 복귀 시 데이터 갱신
+        NotificationCenter.default.publisher(for: UIScene.willEnterForegroundNotification)
+            .sink { [weak self] _ in
+                self?.viewModel.input.send(.refreshData)
+            }
+            .store(in: &cancellables)
+
         // Output: ViewModel → View (State 기반)
         viewModel.statePublisher
             .map(\.monthText)
@@ -211,13 +217,14 @@ public final class WeeklyCalendarViewController<
             .receive(on: DispatchQueue.main)
             .sink { [weak self] content in
                 guard let self else { return }
-                let state: BottomContentView.State = if !content.records.isEmpty {
-                    .recorded(content.records)
-                } else if !content.pendingRecords.isEmpty {
-                    .pending(content.pendingRecords)
-                } else {
-                    .empty
-                }
+                let state: BottomContentView.State =
+                    if !content.records.isEmpty {
+                        .recorded(content.records)
+                    } else if !content.pendingRecords.isEmpty {
+                        .pending(content.pendingRecords)
+                    } else {
+                        .empty
+                    }
 
                 bottomContentView.configure(state: state)
             }
@@ -226,7 +233,7 @@ public final class WeeklyCalendarViewController<
         // 카드 스택 탭 → 상세 화면으로 이동
         bottomContentView.cardStackTapPublisher
             .sink { [weak self] record in
-                self?.navigateToDetail(with: record)
+                self?.navigateToDetail(for: record.date)
             }
             .store(in: &cancellables)
 
@@ -241,8 +248,8 @@ public final class WeeklyCalendarViewController<
                     break
                 case .saveFailed(let error):
                     self?.showSaveErrorAlert(error)
-                case .loadFailed:
-                    break
+                case .loadFailed(let error):
+                    self?.showLoadErrorAlert(error)
                 case .analysisFailed(_, let reason):
                     self?.showAnalysisFailedAlert(reason: reason)
                 }
@@ -327,6 +334,16 @@ public final class WeeklyCalendarViewController<
         }
     }
 
+    private func showLoadErrorAlert(_ error: Error) {
+        let alert = UIAlertController(
+            title: "불러오기 실패",
+            message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
+    }
+
     private func showSaveErrorAlert(_ error: Error) {
         let alert = UIAlertController(
             title: "저장 실패",
@@ -347,8 +364,10 @@ public final class WeeklyCalendarViewController<
         present(alert, animated: true)
     }
 
-    private func navigateToDetail(with record: FoodRecord) {
-        let detailViewModel = detailViewModelFactory(record.date)
+    private func navigateToDetail(for date: Date) {
+        let records = viewModel.state.weekDays.records(for: date)
+
+        let detailViewModel = detailViewModelFactory(date, records)
         let detailVC = DetailViewController(
             viewModel: detailViewModel,
             onDismissWithDate: { [weak self] date in
