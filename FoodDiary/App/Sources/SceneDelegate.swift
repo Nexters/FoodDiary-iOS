@@ -23,6 +23,13 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         saveDebugImageToPhotoLibrary()
         #endif
         guard let windowScene = scene as? UIWindowScene else { return }
+        
+        guard let tokenStore = try? container.resolve(AuthTokenStorage<KeychainService>.self) else {
+            fatalError()
+        }
+        
+        try! tokenStore.clear()
+        
         window = UIWindow(windowScene: windowScene)
         window?.rootViewController = AppFlowController(container: container)
         window?.makeKeyAndVisible()
