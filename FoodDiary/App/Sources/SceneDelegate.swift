@@ -489,6 +489,7 @@ private extension SceneDelegate {
             guard let updateDeviceUseCase = resolver.resolve(
                 UpdateDeviceNotificationSettingUseCase<DeviceRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>.self
             ),
+                  let notificationAuthProvider = resolver.resolve(NotificationAuthorizationProviding.self),
                   let logoutUseCase = resolver.resolve(LogoutUseCase.self),
                   let withdrawUserUseCase = resolver.resolve(WithdrawUserUseCase.self) else {
                 fatalError("MyPageViewModel dependencies not registered")
@@ -496,6 +497,7 @@ private extension SceneDelegate {
 
             return MyPageViewModel(
                 updateDeviceNotificationSettingUseCase: updateDeviceUseCase,
+                notificationAuthorizationProvider: notificationAuthProvider,
                 logoutUseCase: logoutUseCase,
                 withdrawUserUseCase: withdrawUserUseCase
             )

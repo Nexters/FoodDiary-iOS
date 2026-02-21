@@ -38,6 +38,7 @@ public final class MyPageViewModel {
     private let eventSubject = PassthroughSubject<Event, Never>()
     private var cancellables = Set<AnyCancellable>()
     private let updateDeviceNotificationSettingUseCase: UpdateDeviceNotificationSettingUseCase<DeviceRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>
+    private let notificationAuthorizationProvider: NotificationAuthorizationProviding
     private let logoutUseCase: LogoutUseCase
     private let withdrawUserUseCase: WithdrawUserUseCase
 
@@ -45,11 +46,13 @@ public final class MyPageViewModel {
 
     public init(
         updateDeviceNotificationSettingUseCase: UpdateDeviceNotificationSettingUseCase<DeviceRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>,
+        notificationAuthorizationProvider: NotificationAuthorizationProviding,
         logoutUseCase: LogoutUseCase,
         withdrawUserUseCase: WithdrawUserUseCase
     ) {
         self.stateSubject = CurrentValueSubject(State())
         self.updateDeviceNotificationSettingUseCase = updateDeviceNotificationSettingUseCase
+        self.notificationAuthorizationProvider = notificationAuthorizationProvider
         self.logoutUseCase = logoutUseCase
         self.withdrawUserUseCase = withdrawUserUseCase
         setupBindings()
@@ -71,6 +74,8 @@ public final class MyPageViewModel {
     @MainActor
     private func handleInput(_ action: Input) async {
         switch action {
+        case .viewDidLoad:
+            await fetchNotificationStatus()
         case .updateNotificationSetting:
             await updateNotificationSetting()
         case .logout:
@@ -81,7 +86,15 @@ public final class MyPageViewModel {
     }
 
     @MainActor
+    private func fetchNotificationStatus() async {
+        let isEnabled = await notificationAuthorizationProvider.isNotificationEnabled()
+        state.isNotificationEnabled = isEnabled
+    }
+
+    @MainActor
     private func updateNotificationSetting() async {
+        let isEnabled = await notificationAuthorizationProvider.isNotificationEnabled()
+        state.isNotificationEnabled = isEnabled
         do {
             try await updateDeviceNotificationSettingUseCase.execute()
         } catch {
@@ -114,9 +127,11 @@ public final class MyPageViewModel {
 
 extension MyPageViewModel {
     public struct State: Equatable {
+        public var isNotificationEnabled: Bool = true
     }
 
     public enum Input {
+        case viewDidLoad
         case updateNotificationSetting
         case logout
         case withdraw
