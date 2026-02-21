@@ -23,7 +23,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     ) {
         registerDependencies()
         #if DEBUG
-            saveDebugImageToPhotoLibrary()
+            // saveDebugImageToPhotoLibrary()
         #endif
         guard let windowScene = scene as? UIWindowScene else { return }
         window = UIWindow(windowScene: windowScene)
@@ -539,13 +539,16 @@ extension SceneDelegate {
                 guard status == .authorized || status == .limited else { return }
 
                 guard let path = Bundle.main.path(forResource: "food", ofType: "jpg"),
-                      let image = UIImage(contentsOfFile: path) else { return }
+                    let image = UIImage(contentsOfFile: path)
+                else { return }
 
                 let calendar = Calendar.current
                 let today = calendar.startOfDay(for: Date())
 
                 for dayOffset in 0..<7 {
-                    guard let targetDate = calendar.date(byAdding: .day, value: -dayOffset, to: today) else { continue }
+                    guard
+                        let targetDate = calendar.date(byAdding: .day, value: -dayOffset, to: today)
+                    else { continue }
                     PHPhotoLibrary.shared().performChanges {
                         let request = PHAssetChangeRequest.creationRequestForAsset(from: image)
                         request.creationDate = targetDate

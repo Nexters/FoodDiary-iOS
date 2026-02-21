@@ -36,15 +36,5 @@ public enum MealType: String, Sendable, CaseIterable, Equatable, Codable {
         default: return .lunch
         }
     }
-
-    /// 서버 API 값으로부터 변환 (breakfast, lunch, dinner, late_night)
-    public static func from(serverValue: String) -> MealType {
-        switch serverValue {
-        case "breakfast": return .breakfast
-        case "lunch": return .lunch
-        case "dinner": return .dinner
-        case "late_night": return .lateNight
-        default: return .lunch
-        }
-    }
 }
+    
