@@ -57,7 +57,7 @@ public struct HTTPClient: HTTPClienting {
         }
     }
 
-    public func requestVoid(_ request: some Requestable, accessToken: String? = nil) async throws {
+    public func request(_ request: some Requestable, accessToken: String? = nil) async throws {
         do {
             var urlRequest = try request.makeURLRequest()
             applyAccessToken(accessToken, to: &urlRequest)

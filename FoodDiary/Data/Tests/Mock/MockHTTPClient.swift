@@ -18,15 +18,23 @@ final class MockHTTPClient: HTTPClienting {
     
     func request<T: Decodable>(_ request: some Requestable, accessToken: String? = nil) async throws -> T {
         callCount += 1
-        
+
         if throwError {
             throw NetworkError.httpError(statusCode: 400, data: nil)
         }
-        
+
         if let response = stubResponse as? T {
             return response
         }
-        
+
         fatalError("MockHTTPClient.request should not be called without configuring stubAuthResponse")
+    }
+
+    func request(_ request: some Requestable, accessToken: String? = nil) async throws {
+        callCount += 1
+
+        if throwError {
+            throw NetworkError.httpError(statusCode: 400, data: nil)
+        }
     }
 }

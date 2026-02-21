@@ -196,7 +196,7 @@ public struct FoodRecordRepositoryImpl<
         }
 
         let endpoint = DiaryEndpoint.delete(diaryId: diaryId)
-        try await httpClient.requestVoid(endpoint, accessToken: accessToken)
+        try await httpClient.request(endpoint, accessToken: accessToken)
     }
 }
 
