@@ -7,7 +7,7 @@
 
 import Foundation
 
-public typealias CalendarPhotoResponseDTO = [String: CalendarPhotoDTO]
+public typealias DiariesByDateRangeSummaryResponseDTO = [String: CalendarPhotoDTO]
 
 public struct CalendarPhotoDTO: Decodable {
     public let photos: [String]

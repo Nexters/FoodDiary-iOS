@@ -18,19 +18,20 @@ public struct FoodRecordRepositoryImpl<Client: HTTPClienting & Sendable, Storage
     }
     
     public func fetchPhotoURLs(in dateRange: ClosedRange<Date>) async throws -> [Date: [URL]] {
-        let endpoint = DiaryEndpoint.summary(
+        let endpoint = DiaryEndpoint.byDateRangeSummary(
             startDate: dateRange.lowerBound.apiDateString,
             endDate: dateRange.upperBound.apiDateString,
             testMode: true
         )
-        let response: CalendarPhotoResponseDTO = try await httpClient.request(
+        
+        let response: DiariesByDateRangeSummaryResponseDTO = try await httpClient.request(
             endpoint,
             accessToken: tokenStorage.get()
         )
 
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
-
+        
         return response.reduce(into: [Date: [URL]]()) { result, entry in
             guard let date = formatter.date(from: entry.key) else { return }
             result[date] = entry.value.photos.compactMap { URL(string: $0) }
