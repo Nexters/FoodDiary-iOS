@@ -11,7 +11,10 @@ final class WithdrawalFooterView: UIView {
 
     private let withdrawalLabel: UILabel = {
         let label = UILabel()
-        label.setText("탈퇴", style: .p12, color: .gray050)
+        let base = Typography.p12.styled("탈퇴", color: .gray050)
+        let mutable = NSMutableAttributedString(attributedString: base)
+        mutable.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: 0, length: mutable.length))
+        label.attributedText = mutable
         return label
     }()
 
