@@ -56,18 +56,6 @@ public struct FoodRecordRepositoryImpl<
         }
 
         let diaryId = String(firstResult.diaryId)
-
-        // 서버 푸시가 아직 구현되지 않았으므로 로컬에서 가짜 푸시 발행
-        // pending save 완료 후 서버 반영 시간을 확보하기 위해 delay 적용
-        let date = request.date
-        Task {
-            // print("[FakePush] 1초 대기 시작 (uploadId: \(diaryId))")
-            // try? await Task.sleep(for: .seconds(1))
-            // print("[FakePush] 가짜 푸시 발행 (uploadId: \(diaryId), date: \(date))")
-            // postFakeAnalysisNotification(uploadId: diaryId, date: date)
-            // print("[FakePush] 가짜 푸시 발행 완료")
-        }
-
         return diaryId
     }
 
@@ -167,8 +155,7 @@ extension FoodRecordRepositoryImpl {
         }
     }
 
-    private func convertToRecordsByDate(_ response: DiariesResponseDTO) -> [Date: [FoodRecord]]
-    {
+    private func convertToRecordsByDate(_ response: DiariesResponseDTO) -> [Date: [FoodRecord]] {
         var result: [Date: [FoodRecord]] = [:]
 
         for dto in response.diaries {

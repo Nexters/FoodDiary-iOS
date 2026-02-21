@@ -39,22 +39,22 @@ extension DiaryEndpoint: Requestable {
 
     public var queryParameters: Encodable? {
         switch self {
-        case let .byDateRange(startDate, endDate, testMode):
+        case .byDateRange(let startDate, let endDate, let testMode):
             var params: [String: String] = [
                 "start_date": startDate,
-                "end_date": endDate
+                "end_date": endDate,
             ]
             if testMode {
-                params["test_mode"] = "true"
+                params["test_mode"] = String(testMode)
             }
             return params
-        case let .byDateRangeSummary(startDate, endDate, testMode):
+        case .byDateRangeSummary(let startDate, let endDate, let testMode):
             var params: [String: String] = [
                 "start_date": startDate,
-                "end_date": endDate
+                "end_date": endDate,
             ]
             if testMode {
-                params["test_mode"] = "true"
+                params["test_mode"] = String(testMode)
             }
             return params
         }

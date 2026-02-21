@@ -10,7 +10,7 @@ public enum MealType: String, Sendable, CaseIterable, Equatable, Codable {
     case breakfast = "조식"
     case lunch = "중식"
     case dinner = "석식"
-    case lateNight = "야식"
+    case snack = "야식"
 
     public var displayName: String {
         rawValue
@@ -22,7 +22,7 @@ public enum MealType: String, Sendable, CaseIterable, Equatable, Codable {
         case 5..<11: return .breakfast
         case 11..<15: return .lunch
         case 15..<21: return .dinner
-        default: return .lateNight
+        default: return .snack
         }
     }
 
@@ -32,7 +32,7 @@ public enum MealType: String, Sendable, CaseIterable, Equatable, Codable {
         case "breakfast": return .breakfast
         case "lunch": return .lunch
         case "dinner": return .dinner
-        case "late_night": return .lateNight
+        case "late_night", "snack": return .snack
         default: return .lunch
         }
     }
