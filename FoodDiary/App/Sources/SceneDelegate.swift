@@ -19,6 +19,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         registerDependencies()
+
         #if DEBUG
         saveDebugImageToPhotoLibrary()
         #endif
@@ -27,7 +28,6 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.rootViewController = AppFlowController(container: container)
         window?.makeKeyAndVisible()
     }
-
 }
 
 private extension SceneDelegate {
@@ -156,6 +156,14 @@ private extension SceneDelegate {
 
         container.register(MockAddressSearchRepository.self) { _ in
             MockAddressSearchRepository()
+        }
+
+        container.register(DeviceRepository.self) { resolver in
+            guard let client = resolver.resolve(HTTPClient.self),
+                  let storage = resolver.resolve(AuthTokenStorage<KeychainService>.self) else {
+                fatalError("DeviceRepository dependencies not registered")
+            }
+            return DeviceRepositoryImpl(httpClient: client, tokenStorage: storage)
         }
     }
     
@@ -300,6 +308,45 @@ private extension SceneDelegate {
             }
             return SearchAddressUseCase(repository: addressRepo)
         }
+
+        container.register(LogoutUseCase.self) { resolver in
+            guard let authRepository = resolver.resolve(AuthRepository.self) else {
+                fatalError("AuthRepository not registered")
+            }
+            return LogoutUseCase(authRepository: authRepository)
+        }
+
+        container.register(WithdrawUserUseCase.self) { resolver in
+            guard let authRepository = resolver.resolve(AuthRepository.self) else {
+                fatalError("AuthRepository not registered")
+            }
+            return WithdrawUserUseCase(authRepository: authRepository)
+        }
+
+        container.register(
+            UpdateDeviceNotificationSettingUseCase<DeviceRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>.self
+        ) { resolver in
+            guard let repository = resolver.resolve(DeviceRepository.self),
+                  let notificationAuthProvider = resolver.resolve(NotificationAuthorizationProviding.self),
+                  let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String else {
+                fatalError("UpdateDeviceNotificationSettingUseCase dependencies not registered")
+            }
+
+            guard let concreteRepository = repository as? DeviceRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>> else {
+                fatalError("DeviceRepository is not of expected type")
+            }
+
+            let deviceID = UIDevice.current.identifierForVendor?.uuidString
+            let osVersion = UIDevice.current.systemVersion
+
+            return UpdateDeviceNotificationSettingUseCase(
+                repository: concreteRepository,
+                notificationAuthorizationProvider: notificationAuthProvider,
+                appVersion: appVersion,
+                deviceID: deviceID,
+                osVersion: osVersion
+            )
+        }
     }
     
     func registerPresentation() {
@@ -437,13 +484,29 @@ private extension SceneDelegate {
                 requestPhotoAuthorizationUseCase: requestPhotoAuthUseCase
             )
         }
+
+        container.register(MyPageViewModel.self, scope: .transient) { resolver in
+            guard let updateDeviceUseCase = resolver.resolve(
+                UpdateDeviceNotificationSettingUseCase<DeviceRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>.self
+            ),
+                  let logoutUseCase = resolver.resolve(LogoutUseCase.self),
+                  let withdrawUserUseCase = resolver.resolve(WithdrawUserUseCase.self) else {
+                fatalError("MyPageViewModel dependencies not registered")
+            }
+
+            return MyPageViewModel(
+                updateDeviceNotificationSettingUseCase: updateDeviceUseCase,
+                logoutUseCase: logoutUseCase,
+                withdrawUserUseCase: withdrawUserUseCase
+            )
+        }
     }
 
     #if DEBUG
     func saveDebugImageToPhotoLibrary() {
         // PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
         //     guard status == .authorized || status == .limited else { return }
-    
+
         //     PHPhotoLibrary.shared().performChanges {
         //         guard let path = Bundle.main.path(forResource: "food", ofType: "jpg"),
         //               let image = UIImage(contentsOfFile: path) else { return }
