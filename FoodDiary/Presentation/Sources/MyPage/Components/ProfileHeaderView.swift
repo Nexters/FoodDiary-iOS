@@ -12,7 +12,7 @@ final class ProfileHeaderView: UIView {
 
     private let characterImageView: UIImageView = {
         let iv = UIImageView()
-        iv.image = DesignSystemAsset.character.image
+        iv.image = DesignSystemAsset.mypageCharacter.image
         iv.contentMode = .scaleAspectFit
         iv.layer.cornerRadius = 36
         iv.clipsToBounds = true
