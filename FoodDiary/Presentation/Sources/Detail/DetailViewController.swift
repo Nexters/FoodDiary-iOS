@@ -92,7 +92,7 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(false, animated: animated)
         navigationController?.hidesBarsOnSwipe = true
-        // TODO: edit 후 돌아왔을 때 변경된 데이터를 반영하도록 loadRecords 호출 필요
+        viewModel.input.send(.loadRecords)
     }
 
     public override func viewWillDisappear(_ animated: Bool) {
