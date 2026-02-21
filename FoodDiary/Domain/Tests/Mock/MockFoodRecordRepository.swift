@@ -9,9 +9,11 @@ import Foundation
 final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Sendable {
     var recordsByDateToReturn: [Date: [FoodRecord]] = [:]
     var recordsToReturn: [FoodRecord] = []
-    var uploadIdToReturn: String = UUID().uuidString
+    var uploadResultsToReturn: [UploadResult] = [
+        UploadResult(uploadId: UUID().uuidString, mealType: .lunch)
+    ]
     var shouldThrowError: Bool = false
-    
+
     func fetchPhotoURLs(in dateRange: ClosedRange<Date>) async throws -> [Date : [URL]] {
         return [:]
     }
@@ -30,11 +32,24 @@ final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Sendable 
         return recordsToReturn
     }
 
-    func uploadRecord(_ request: CreateFoodRecordRequest) async throws -> String {
+    func uploadRecord(_ request: CreateFoodRecordRequest) async throws -> [UploadResult] {
         if shouldThrowError {
             throw MockError.testError
         }
-        return uploadIdToReturn
+        return uploadResultsToReturn
+    }
+
+    func updateRecord(_ request: UpdateFoodRecordRequest) async throws -> FoodRecord {
+        if shouldThrowError {
+            throw MockError.testError
+        }
+        fatalError("Not implemented in mock")
+    }
+
+    func deleteRecord(id: String) async throws {
+        if shouldThrowError {
+            throw MockError.testError
+        }
     }
 }
 

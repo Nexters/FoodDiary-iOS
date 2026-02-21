@@ -36,14 +36,14 @@ final class MealSectionView: UIView {
         editTapSubject.eraseToAnyPublisher()
     }
 
-    var addButtonTapPublisher: AnyPublisher<Void, Never> {
+    var addButtonTapPublisher: AnyPublisher<MealType, Never> {
         addButtonTapSubject.eraseToAnyPublisher()
     }
 
     private let copyTapSubject = PassthroughSubject<FoodRecord, Never>()
     private let shareTapSubject = PassthroughSubject<FoodRecord, Never>()
     private let editTapSubject = PassthroughSubject<FoodRecord, Never>()
-    private let addButtonTapSubject = PassthroughSubject<Void, Never>()
+    private let addButtonTapSubject = PassthroughSubject<MealType, Never>()
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - State
@@ -169,7 +169,8 @@ final class MealSectionView: UIView {
 
         emptyView.addButtonTapPublisher
             .sink { [weak self] in
-                self?.addButtonTapSubject.send()
+                guard let self else { return }
+                self.addButtonTapSubject.send(self.mealType)
             }
             .store(in: &cancellables)
     }

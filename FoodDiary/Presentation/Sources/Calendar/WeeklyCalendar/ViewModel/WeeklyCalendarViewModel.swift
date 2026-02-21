@@ -186,12 +186,14 @@ public final class WeeklyCalendarViewModel<
 
         do {
             // 이미지 로드 → 서버 업로드 → PendingRecord 저장 (Repository)
-            let pendingRecord = try await saveFoodRecordUseCase.execute(
+            let pendingRecords = try await saveFoodRecordUseCase.execute(
                 from: assets,
                 date: state.selectedDate
             )
             await updateDateContent(for: state.selectedDate)
-            eventSubject.send(.uploadCompleted(pendingRecord))
+            if let firstRecord = pendingRecords.first {
+                eventSubject.send(.uploadCompleted(firstRecord))
+            }
         } catch {
             eventSubject.send(.saveFailed(error))
         }

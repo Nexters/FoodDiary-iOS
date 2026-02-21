@@ -34,7 +34,7 @@ public struct FoodRecordRepositoryImpl<
 
     // MARK: - 서버 API 호출
 
-    public func uploadRecord(_ request: CreateFoodRecordRequest) async throws -> String {
+    public func uploadRecord(_ request: CreateFoodRecordRequest) async throws -> [UploadResult] {
         guard let accessToken = tokenStorage.get() else {
             throw FoodRecordError.noAccessToken
         }
@@ -54,24 +54,25 @@ public struct FoodRecordRepositoryImpl<
             accessToken: accessToken
         )
 
-        guard let firstResult = response.results.first else {
+        guard !response.results.isEmpty else {
             throw FoodRecordError.emptyResponse
         }
 
-        let diaryId = String(firstResult.diaryId)
-
-        // 서버 푸시가 아직 구현되지 않았으므로 로컬에서 가짜 푸시 발행
-        // pending save 완료 후 서버 반영 시간을 확보하기 위해 delay 적용
-        let date = request.date
-        Task {
-            // print("[FakePush] 1초 대기 시작 (uploadId: \(diaryId))")
-            // try? await Task.sleep(for: .seconds(1))
-            // print("[FakePush] 가짜 푸시 발행 (uploadId: \(diaryId), date: \(date))")
-            // postFakeAnalysisNotification(date: date)
-            // print("[FakePush] 가짜 푸시 발행 완료")
+        // diaryId 기준으로 중복 제거 (같은 diary에 여러 사진이 속할 수 있음)
+        var seen = Set<Int>()
+        var uploadResults: [UploadResult] = []
+        for result in response.results {
+            if seen.insert(result.diaryId).inserted {
+                uploadResults.append(
+                    UploadResult(
+                        uploadId: String(result.diaryId),
+                        mealType: MealType.from(serverValue: result.timeType)
+                    )
+                )
+            }
         }
 
-        return diaryId
+        return uploadResults
     }
 
     public func fetchRecords(in dateRange: ClosedRange<Date>) async throws -> [Date: [FoodRecord]] {

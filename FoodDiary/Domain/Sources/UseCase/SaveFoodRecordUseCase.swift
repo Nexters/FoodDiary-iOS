@@ -22,23 +22,27 @@ public struct SaveFoodRecordUseCase<
         self.pendingRepository = pendingRepository
     }
 
-    /// 서버 업로드 → 로컬 저장 → PendingFoodRecord 반환
+    /// 서버 업로드 → 로컬 저장 → PendingFoodRecord 배열 반환
     /// 분석 완료 시 Remote Push로 결과 수신
     public func execute(
         from assets: [any ImageAssetable],
         date: Date
-    ) async throws -> PendingFoodRecord {
+    ) async throws -> [PendingFoodRecord] {
         let request = CreateFoodRecordRequest(date: date, assets: assets)
-        let uploadId = try await repository.uploadRecord(request)
+        let uploadResults = try await repository.uploadRecord(request)
 
-        let pendingRecord = PendingFoodRecord(
-            uploadId: uploadId,
-            date: date
-        )
+        var pendingRecords: [PendingFoodRecord] = []
+        for result in uploadResults {
+            let pendingRecord = PendingFoodRecord(
+                uploadId: result.uploadId,
+                mealType: result.mealType,
+                date: date
+            )
+            // 로컬에 저장해서 앱 재시작 시 복원 가능하도록 함
+            try await pendingRepository.save(pendingRecord)
+            pendingRecords.append(pendingRecord)
+        }
 
-        // 로컬에 저장해서 앱 재시작 시 복원 가능하도록 함
-        try await pendingRepository.save(pendingRecord)
-
-        return pendingRecord
+        return pendingRecords
     }
 }

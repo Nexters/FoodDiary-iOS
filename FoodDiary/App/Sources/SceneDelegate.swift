@@ -426,7 +426,9 @@ extension SceneDelegate {
         }
 
         typealias DetailVM = DetailViewModel<
-            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
+            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
+            PendingFoodRecordStorage<FileStorageService>,
+            PushNotificationObserver
         >
 
         container.register(
@@ -440,15 +442,32 @@ extension SceneDelegate {
                         FetchFoodRecordsUseCase<
                             FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
                         >.self
-                    )
+                    ),
+                    let saveFoodRecordUseCase = resolver.resolve(
+                        SaveFoodRecordUseCase<
+                            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
+                            PendingFoodRecordStorage<FileStorageService>
+                        >.self
+                    ),
+                    let loadPendingUseCase = resolver.resolve(
+                        LoadPendingRecordsUseCase<PendingFoodRecordStorage<FileStorageService>>.self
+                    ),
+                    let deletePendingUseCase = resolver.resolve(
+                        DeletePendingRecordUseCase<PendingFoodRecordStorage<FileStorageService>>.self
+                    ),
+                    let pushObserver = resolver.resolve(PushNotificationObserver.self)
                 else {
-                    fatalError("FetchFoodRecordsUseCase not registered")
+                    fatalError("DetailViewModel dependencies not registered")
                 }
 
                 return DetailViewModel(
                     initialDate: initialDate,
                     initialRecords: initialRecords,
-                    fetchRecordsUseCase: fetchRecordsUseCase
+                    fetchRecordsUseCase: fetchRecordsUseCase,
+                    saveFoodRecordUseCase: saveFoodRecordUseCase,
+                    loadPendingRecordsUseCase: loadPendingUseCase,
+                    deletePendingRecordUseCase: deletePendingUseCase,
+                    pushNotificationObserver: pushObserver
                 )
             }
         )

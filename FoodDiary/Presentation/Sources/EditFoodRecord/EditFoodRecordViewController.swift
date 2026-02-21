@@ -24,7 +24,7 @@ private enum EditFoodRecordConstants {
 
 public final class EditFoodRecordViewController<
     RecordRepo: FoodRecordRepository
->: UIViewController {
+>: UIViewController, UIGestureRecognizerDelegate {
 
     // MARK: - Types
 
@@ -113,6 +113,7 @@ public final class EditFoodRecordViewController<
     // MARK: - State
 
     private var cancellables = Set<AnyCancellable>()
+    private var didSendDismissResult = false
 
     // MARK: - Init
 
@@ -148,12 +149,28 @@ public final class EditFoodRecordViewController<
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(false, animated: animated)
+        navigationController?.interactivePopGestureRecognizer?.delegate = self
+    }
+
+    public override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if isMovingFromParent, !didSendDismissResult {
+            onDismissWithResult?(.cancelled)
+        }
     }
 
     // MARK: - Setup
 
     private func setupNavigation() {
         title = "수정"
+
+        let backButton = UIBarButtonItem(
+            image: UIImage(systemName: "chevron.left"),
+            style: .plain,
+            target: self,
+            action: #selector(backButtonTapped)
+        )
+        navigationItem.leftBarButtonItem = backButton
     }
 
     private func setupUI() {
@@ -413,7 +430,31 @@ public final class EditFoodRecordViewController<
         present(alert, animated: true)
     }
 
+    private func showUnsavedChangesAlert() {
+        let alert = UIAlertController(
+            title: "나가시겠어요?",
+            message: "저장하지 않으면 수정이 완료되지 않아요",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: "나가기", style: .destructive) { [weak self] _ in
+            self?.popWithCancelled()
+        })
+        present(alert, animated: true)
+    }
+
+    private func popWithCancelled() {
+        didSendDismissResult = true
+        onDismissWithResult?(.cancelled)
+        navigationController?.popViewController(animated: true)
+    }
+
     // MARK: - Actions
+
+    @objc private func backButtonTapped() {
+        guard !viewModel.state.isSaving else { return }
+        showUnsavedChangesAlert()
+    }
 
     @objc private func deleteButtonTapped() {
         let alert = UIAlertController(
@@ -430,5 +471,13 @@ public final class EditFoodRecordViewController<
 
     @objc private func saveButtonTapped() {
         viewModel.input.send(.save)
+    }
+
+    // MARK: - UIGestureRecognizerDelegate
+
+    public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        guard !viewModel.state.isSaving else { return false }
+        showUnsavedChangesAlert()
+        return false
     }
 }
