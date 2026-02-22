@@ -43,9 +43,8 @@ public final class ToastView: UIView {
     // MARK: - UI Components
 
     private let blurView: UIVisualEffectView = {
-        let blur = UIBlurEffect(style: .systemUltraThinMaterialDark)
+        let blur = UIBlurEffect(style: .systemThinMaterialDark)
         let view = UIVisualEffectView(effect: blur)
-        view.alpha = 0.4
         return view
     }()
 
@@ -74,16 +73,32 @@ public final class ToastView: UIView {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
+    public override func layoutSubviews() {
+        super.layoutSubviews()
+        applyGradientBorder(
+            colors: [
+                .white.withAlphaComponent(0.11),
+                .white.withAlphaComponent(0),
+                .white.withAlphaComponent(0.05)
+            ],
+            locations: [0.0, 0.33, 0.67],
+            borderWidth: 1,
+            cornerRadius: Constants.cornerRadius
+        )
+    }
 
     // MARK: - Setup
 
     private func setupUI() {
-        backgroundColor = .gray750.withAlphaComponent(0.7)
         layer.cornerRadius = Constants.cornerRadius
-        layer.borderWidth = 1
-        layer.borderColor = UIColor.white.withAlphaComponent(0.1).cgColor
+        let overlay = UIView()
+        overlay.backgroundColor = .gray750.withAlphaComponent(0.3)
+        
         blurView.layer.cornerRadius = Constants.cornerRadius
         blurView.clipsToBounds = true
+        
+        blurView.contentView.addSubview(overlay)
         addSubview(blurView)
         addSubview(iconImageView)
         addSubview(messageLabel)
