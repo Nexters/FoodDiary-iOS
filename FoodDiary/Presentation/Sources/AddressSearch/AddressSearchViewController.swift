@@ -234,7 +234,15 @@ public final class AddressSearchViewController<
         resultsTableView.reloadData()
         resultsContainerView.isHidden = displayResults.isEmpty
 
-        emptyResultLabel.isHidden = !(state.mode == .searchResults && displayResults.isEmpty)
+        if displayResults.isEmpty {
+            switch state.mode {
+            case .suggestions:
+                emptyResultLabel.setText("추천 목록이 없습니다.", style: .p14, color: .gray400)
+            case .searchResults:
+                emptyResultLabel.setText("검색 결과가 없습니다.", style: .p14, color: .gray400)
+            }
+        }
+        emptyResultLabel.isHidden = !displayResults.isEmpty
 
         Task { @MainActor [weak self] in
             guard let self else { return }

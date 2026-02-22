@@ -22,10 +22,10 @@ public protocol FoodRecordRepository: Sendable {
     /// - Returns: 해당 날짜의 음식 기록 배열
     func fetchRecords(for date: Date) async throws -> [FoodRecord]
 
-    /// 음식 기록 업로드 (서버 업로드 → 업로드 ID 반환, AI 분석은 비동기로 진행)
+    /// 음식 기록 업로드 (서버 업로드 → 업로드 결과 반환, AI 분석은 비동기로 진행)
     /// - Parameter request: 생성 요청 데이터
-    /// - Returns: 서버에서 발급한 업로드 ID (Remote Push로 분석 결과 수신 시 매칭용)
-    func uploadRecord(_ request: CreateFoodRecordRequest) async throws -> String
+    /// - Returns: 업로드 결과 배열 (각 결과에 uploadId + mealType 포함)
+    func uploadRecord(_ request: CreateFoodRecordRequest) async throws -> [UploadResult]
 
     /// 음식 기록 수정
     /// - Parameter request: 수정 요청 데이터

@@ -10,5 +10,6 @@ import Foundation
 public enum HTTPBody {
     case json(Encodable)
     case multipart(MultipartFormData)
+    case photosMultipart(PhotosMultipartFormData)
     case none
 }

@@ -8,12 +8,12 @@ import Foundation
 
 /// 분석 완료 푸시 알림 데이터
 public struct AnalysisResultNotification: Sendable {
-    public let uploadId: String
-    public let date: Date
+    public let type: String
+    public let diaryDate: Date
 
-    public init(uploadId: String, date: Date) {
-        self.uploadId = uploadId
-        self.date = date
+    public init(type: String, diaryDate: Date) {
+        self.type = type
+        self.diaryDate = diaryDate
     }
 }
 

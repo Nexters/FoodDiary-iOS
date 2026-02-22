@@ -29,16 +29,16 @@ public final class AddressSearchViewModel<AddressRepo: AddressSearchRepository> 
     private let eventSubject = PassthroughSubject<Event, Never>()
     private var cancellables = Set<AnyCancellable>()
     private let searchAddressUseCase: SearchAddressUseCase<AddressRepo>
-    private let restaurantName: String
+    private let diaryId: Int
 
     // MARK: - Init
 
     public init(
         searchAddressUseCase: SearchAddressUseCase<AddressRepo>,
-        restaurantName: String
+        diaryId: Int
     ) {
         self.searchAddressUseCase = searchAddressUseCase
-        self.restaurantName = restaurantName
+        self.diaryId = diaryId
         self.stateSubject = CurrentValueSubject(State(
             suggestions: [],
             searchResults: [],
@@ -98,7 +98,7 @@ public final class AddressSearchViewModel<AddressRepo: AddressSearchRepository> 
         Task(priority: .userInitiated) {
             do {
                 let suggestions = try await searchAddressUseCase.fetchSuggestions(
-                    restaurantName: restaurantName
+                    diaryId: diaryId
                 )
                 await MainActor.run {
                     state.suggestions = suggestions

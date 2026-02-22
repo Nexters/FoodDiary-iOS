@@ -23,11 +23,12 @@ public final class WeeklyCalendarViewController<
 
     private let viewModel:
         WeeklyCalendarViewModel<
-            RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, PushObserver
+            RecordRepo, AssetRepo, AuthRepo, PendingRepo, PushObserver
         >
     private let imageProvider: ImageProvider
-    private let detailViewModelFactory: (Date, [FoodRecord]) -> DetailViewModel<RecordRepo>
+    private let detailViewModelFactory: (Date, [FoodRecord]) -> DetailViewModel<RecordRepo, PendingRepo, PushObserver>
     private let editViewControllerFactory: ((FoodRecord) -> UIViewController)?
+    private let presentImagePickerHandler: ((UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void) -> Void)?
 
     // MARK: - UI Components
 
@@ -66,16 +67,18 @@ public final class WeeklyCalendarViewController<
 
     public init(
         viewModel: WeeklyCalendarViewModel<
-            RecordRepo, AssetRepo, AuthRepo, ImageProvider, PendingRepo, PushObserver
+            RecordRepo, AssetRepo, AuthRepo, PendingRepo, PushObserver
         >,
         imageProvider: ImageProvider,
-        detailViewModelFactory: @escaping (Date, [FoodRecord]) -> DetailViewModel<RecordRepo>,
-        editViewControllerFactory: ((FoodRecord) -> UIViewController)? = nil
+        detailViewModelFactory: @escaping (Date, [FoodRecord]) -> DetailViewModel<RecordRepo, PendingRepo, PushObserver>,
+        editViewControllerFactory: ((FoodRecord) -> UIViewController)? = nil,
+        presentImagePickerHandler: ((UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void) -> Void)? = nil
     ) {
         self.viewModel = viewModel
         self.imageProvider = imageProvider
         self.detailViewModelFactory = detailViewModelFactory
         self.editViewControllerFactory = editViewControllerFactory
+        self.presentImagePickerHandler = presentImagePickerHandler
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -319,7 +322,7 @@ public final class WeeklyCalendarViewController<
 
             navigationController?.pushViewController(picker, animated: true)
         } catch {
-            // 에러 처리
+            showLoadErrorAlert(error)
         }
     }
 
@@ -372,7 +375,8 @@ public final class WeeklyCalendarViewController<
             onDismissWithDate: { [weak self] date in
                 self?.viewModel.input.send(.selectDate(date))
             },
-            editViewControllerFactory: editViewControllerFactory
+            editViewControllerFactory: editViewControllerFactory,
+            presentImagePickerHandler: presentImagePickerHandler
         )
         navigationController?.pushViewController(detailVC, animated: true)
     }

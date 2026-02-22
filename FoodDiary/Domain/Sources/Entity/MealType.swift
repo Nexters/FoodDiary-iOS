@@ -37,3 +37,4 @@ public enum MealType: String, Sendable, CaseIterable, Equatable, Codable {
         }
     }
 }
+    

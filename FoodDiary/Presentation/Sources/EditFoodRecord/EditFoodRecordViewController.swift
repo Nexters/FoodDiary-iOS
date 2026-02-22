@@ -24,7 +24,7 @@ private enum EditFoodRecordConstants {
 
 public final class EditFoodRecordViewController<
     RecordRepo: FoodRecordRepository
->: UIViewController {
+>: UIViewController, UIGestureRecognizerDelegate {
 
     // MARK: - Types
 
@@ -38,7 +38,12 @@ public final class EditFoodRecordViewController<
 
     private let viewModel: EditFoodRecordViewModel<RecordRepo>
     private let onDismissWithResult: ((EditResult) -> Void)?
-    private let addressSearchViewControllerFactory: ((String, @escaping (AddressSearchResult) -> Void) -> UIViewController)?
+    private let addressSearchViewControllerFactory: ((Int, @escaping (AddressSearchResult) -> Void) -> UIViewController)?
+    private let presentImagePickerHandler: (
+        (_ navigationController: UINavigationController,
+         _ date: Date,
+         _ onSelected: @escaping ([any ImageAssetable], [UIImage]) -> Void
+        ) -> Void)?
 
     // MARK: - UI Components
 
@@ -108,17 +113,20 @@ public final class EditFoodRecordViewController<
     // MARK: - State
 
     private var cancellables = Set<AnyCancellable>()
+    private var didSendDismissResult = false
 
     // MARK: - Init
 
     public init(
         viewModel: EditFoodRecordViewModel<RecordRepo>,
         onDismissWithResult: ((EditResult) -> Void)? = nil,
-        addressSearchViewControllerFactory: ((String, @escaping (AddressSearchResult) -> Void) -> UIViewController)? = nil
+        addressSearchViewControllerFactory: ((Int, @escaping (AddressSearchResult) -> Void) -> UIViewController)? = nil,
+        presentImagePickerHandler: ((UINavigationController, Date, @escaping ([any ImageAssetable], [UIImage]) -> Void) -> Void)? = nil
     ) {
         self.viewModel = viewModel
         self.onDismissWithResult = onDismissWithResult
         self.addressSearchViewControllerFactory = addressSearchViewControllerFactory
+        self.presentImagePickerHandler = presentImagePickerHandler
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -141,12 +149,28 @@ public final class EditFoodRecordViewController<
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(false, animated: animated)
+        navigationController?.interactivePopGestureRecognizer?.delegate = self
+    }
+
+    public override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if isMovingFromParent, !didSendDismissResult {
+            onDismissWithResult?(.cancelled)
+        }
     }
 
     // MARK: - Setup
 
     private func setupNavigation() {
         title = "수정"
+
+        let backButton = UIBarButtonItem(
+            image: UIImage(systemName: "chevron.left"),
+            style: .plain,
+            target: self,
+            action: #selector(backButtonTapped)
+        )
+        navigationItem.leftBarButtonItem = backButton
     }
 
     private func setupUI() {
@@ -264,10 +288,10 @@ public final class EditFoodRecordViewController<
             .store(in: &cancellables)
 
         viewModel.statePublisher
-            .map { ($0.imageURLs, $0.newImages) }
+            .map { ($0.imageURLs, $0.newPreviewImages) }
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] urls, newImages in
-                self?.imageSectionView.configure(existingImageURLs: urls, newImages: newImages)
+            .sink { [weak self] urls, newPreviewImages in
+                self?.imageSectionView.configure(existingImageURLs: urls, newImages: newPreviewImages)
             }
             .store(in: &cancellables)
 
@@ -375,15 +399,18 @@ public final class EditFoodRecordViewController<
     }
 
     private func presentAddressSearchModal() {
-        let restaurantName = viewModel.state.originalRecord.restaurantName ?? ""
-        guard let addressSearchVC = addressSearchViewControllerFactory?(restaurantName, { [weak self] result in
+        guard let diaryId = Int(viewModel.state.originalRecord.id) else { return }
+        guard let addressSearchVC = addressSearchViewControllerFactory?(diaryId, { [weak self] result in
             self?.viewModel.input.send(.selectAddress(result))
         }) else { return }
         present(addressSearchVC, animated: true)
     }
 
     private func presentImagePicker() {
-        // TODO: todo
+        guard let nav = navigationController else { return }
+        presentImagePickerHandler?(nav, viewModel.state.originalRecord.date) { [weak self] assets, previewImages in
+            self?.viewModel.input.send(.addImages(assets: assets, previewImages: previewImages))
+        }
     }
 
     private func presentAddTagAlert() {
@@ -403,7 +430,31 @@ public final class EditFoodRecordViewController<
         present(alert, animated: true)
     }
 
+    private func showUnsavedChangesAlert() {
+        let alert = UIAlertController(
+            title: "나가시겠어요?",
+            message: "저장하지 않으면 수정이 완료되지 않아요",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: "나가기", style: .destructive) { [weak self] _ in
+            self?.popWithCancelled()
+        })
+        present(alert, animated: true)
+    }
+
+    private func popWithCancelled() {
+        didSendDismissResult = true
+        onDismissWithResult?(.cancelled)
+        navigationController?.popViewController(animated: true)
+    }
+
     // MARK: - Actions
+
+    @objc private func backButtonTapped() {
+        guard !viewModel.state.isSaving else { return }
+        showUnsavedChangesAlert()
+    }
 
     @objc private func deleteButtonTapped() {
         let alert = UIAlertController(
@@ -420,5 +471,13 @@ public final class EditFoodRecordViewController<
 
     @objc private func saveButtonTapped() {
         viewModel.input.send(.save)
+    }
+
+    // MARK: - UIGestureRecognizerDelegate
+
+    public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        guard !viewModel.state.isSaving else { return false }
+        showUnsavedChangesAlert()
+        return false
     }
 }

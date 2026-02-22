@@ -14,10 +14,9 @@ public final class WeeklyCalendarViewModel<
     RecordRepo: FoodRecordRepository,
     AssetRepo: FoodImageAssetRepository,
     AuthRepo: PhotoAuthorizationRepository,
-    ImageProvider: RenderableImageRepository,
     PendingRepo: PendingFoodRecordRepository,
     PushObserver: PushNotificationObserving
-> where ImageProvider.Asset == AssetRepo.Asset {
+> {
     // MARK: - Output
 
     public var statePublisher: AnyPublisher<State, Never> {
@@ -49,7 +48,7 @@ public final class WeeklyCalendarViewModel<
 
     private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>
     private let loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase<RecordRepo, AssetRepo>
-    private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, ImageProvider, PendingRepo>
+    private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, PendingRepo>
     private let loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>
     private let deletePendingRecordUseCase: DeletePendingRecordUseCase<PendingRepo>
     private let pushNotificationObserver: PushObserver
@@ -59,7 +58,7 @@ public final class WeeklyCalendarViewModel<
     public init(
         requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>,
         loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase<RecordRepo, AssetRepo>,
-        saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, ImageProvider, PendingRepo>,
+        saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, PendingRepo>,
         loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>,
         deletePendingRecordUseCase: DeletePendingRecordUseCase<PendingRepo>,
         pushNotificationObserver: PushObserver
@@ -187,12 +186,14 @@ public final class WeeklyCalendarViewModel<
 
         do {
             // 이미지 로드 → 서버 업로드 → PendingRecord 저장 (Repository)
-            let pendingRecord = try await saveFoodRecordUseCase.execute(
+            let pendingRecords = try await saveFoodRecordUseCase.execute(
                 from: assets,
                 date: state.selectedDate
             )
             await updateDateContent(for: state.selectedDate)
-            eventSubject.send(.uploadCompleted(pendingRecord))
+            if let firstRecord = pendingRecords.first {
+                eventSubject.send(.uploadCompleted(firstRecord))
+            }
         } catch {
             eventSubject.send(.saveFailed(error))
         }
@@ -243,9 +244,9 @@ public final class WeeklyCalendarViewModel<
 
     private func handlePushNotification(_ notification: AnalysisResultNotification) async {
         do {
-            try await deletePendingRecordUseCase.execute(uploadIds: [notification.uploadId])
+            try await deletePendingRecordUseCase.execute(byDate: notification.diaryDate)
 
-            let notificationDate = calendar.startOfDay(for: notification.date)
+            let notificationDate = calendar.startOfDay(for: notification.diaryDate)
             let selectedDate = calendar.startOfDay(for: state.selectedDate)
             let (weekStart, weekEnd) = calendar.weekRange(for: currentWeekBaseDate)
             let currentWeekRange = weekStart...weekEnd

@@ -5,6 +5,7 @@
 
 import Domain
 import Foundation
+import Photos
 import UIKit
 
 /// FoodRecordRepository 구현체
@@ -15,29 +16,34 @@ public struct FoodRecordRepositoryImpl<
     private let httpClient: Client
     private let tokenStorage: Storage
     private let deviceId: String
+    private let imageConverter: PHAssetConverter
     private let calendar = Calendar.current
 
     #if DEBUG
-        let testMode = true
+        let testMode: Bool = true
     #else
-        let testMode = true
+        let testMode = false
     #endif
 
-    public init(httpClient: Client, tokenStorage: Storage, deviceId: String) {
+    public init(
+        httpClient: Client, tokenStorage: Storage, deviceId: String,
+        imageConverter: PHAssetConverter
+    ) {
         self.httpClient = httpClient
         self.tokenStorage = tokenStorage
         self.deviceId = deviceId
+        self.imageConverter = imageConverter
     }
 
     // MARK: - 서버 API 호출
 
-    public func uploadRecord(_ request: CreateFoodRecordRequest) async throws -> String {
+    public func uploadRecord(_ request: CreateFoodRecordRequest) async throws -> [UploadResult] {
         guard let accessToken = tokenStorage.get() else {
             throw FoodRecordError.noAccessToken
         }
 
         let dateString = formatDate(request.date)
-        let files = try convertImagesToFiles(request.images)
+        let files = try await convertAssetsToFiles(request.assets)
 
         let endpoint = PhotosEndpoint.batchUpload(
             date: dateString,
@@ -51,12 +57,25 @@ public struct FoodRecordRepositoryImpl<
             accessToken: accessToken
         )
 
-        guard let firstResult = response.results.first else {
+        guard !response.results.isEmpty else {
             throw FoodRecordError.emptyResponse
         }
 
-        let diaryId = String(firstResult.diaryId)
-        return diaryId
+        // diaryId 기준으로 중복 제거 (같은 diary에 여러 사진이 속할 수 있음)
+        var seen = Set<Int>()
+        var uploadResults: [UploadResult] = []
+        for result in response.results {
+            if seen.insert(result.diaryId).inserted {
+                uploadResults.append(
+                    UploadResult(
+                        uploadId: String(result.diaryId),
+                        mealType: MealType.from(serverValue: result.timeType)
+                    )
+                )
+            }
+        }
+
+        return uploadResults
     }
 
     public func fetchRecords(in dateRange: ClosedRange<Date>) async throws -> [Date: [FoodRecord]] {
@@ -115,20 +134,69 @@ public struct FoodRecordRepositoryImpl<
         }
     }
 
-    // MARK: - Mock 구현 (서버 API 미구현)
+    // MARK: - 수정/삭제 API
 
     public func updateRecord(_ request: UpdateFoodRecordRequest) async throws -> FoodRecord {
-        // TODO: 서버 API 연동
-        throw NSError(
-            domain: "FoodRecordRepositoryImpl", code: 501,
-            userInfo: [NSLocalizedDescriptionKey: "서버 API 미구현"])
+        guard let accessToken = tokenStorage.get() else {
+            throw FoodRecordError.noAccessToken
+        }
+
+        guard let diaryId = Int(request.id) else {
+            throw FoodRecordError.emptyResponse
+        }
+
+        // 1. 새 이미지가 있으면 사진 업로드 → 새 photo_id 획득
+        var newPhotoIds: [Int] = []
+        if !request.newAssets.isEmpty {
+            let files = try await convertAssetsToFiles(request.newAssets)
+            let uploadEndpoint = DiaryEndpoint.addPhotos(diaryId: diaryId, photos: files)
+            let uploadResponse: AddDiaryPhotosResponseDTO = try await httpClient.request(
+                uploadEndpoint,
+                accessToken: accessToken
+            )
+            newPhotoIds = uploadResponse.photoIds
+        }
+
+        // 2. 기존 유지할 photo_ids + 새 photo_ids 합침
+        let allPhotoIds = request.existingPhotoIds + newPhotoIds
+
+        // 3. PATCH /diaries/{diary_id} 호출
+        let updateBody = DiaryUpdateRequestDTO(
+            category: request.genre.rawValue,
+            restaurantName: request.restaurantName,
+            restaurantUrl: request.restaurantURL,
+            roadAddress: request.address,
+            tags: request.hashtags,
+            note: request.note,
+            coverPhotoId: request.coverPhotoId ?? allPhotoIds.first,
+            photoIds: allPhotoIds
+        )
+
+        let updateEndpoint = DiaryEndpoint.update(diaryId: diaryId, body: updateBody)
+        let response: DiaryResponseDTO = try await httpClient.request(
+            updateEndpoint,
+            accessToken: accessToken
+        )
+
+        // 4. 응답 → FoodRecord 변환
+        guard let record = response.toFoodRecord() else {
+            throw FoodRecordError.emptyResponse
+        }
+
+        return record
     }
 
     public func deleteRecord(id: String) async throws {
-        // TODO: 서버 API 연동
-        throw NSError(
-            domain: "FoodRecordRepositoryImpl", code: 501,
-            userInfo: [NSLocalizedDescriptionKey: "서버 API 미구현"])
+        guard let accessToken = tokenStorage.get() else {
+            throw FoodRecordError.noAccessToken
+        }
+
+        guard let diaryId = Int(id) else {
+            throw FoodRecordError.emptyResponse
+        }
+
+        let endpoint = DiaryEndpoint.delete(diaryId: diaryId)
+        try await httpClient.request(endpoint, accessToken: accessToken)
     }
 }
 
@@ -142,16 +210,33 @@ extension FoodRecordRepositoryImpl {
         return formatter.string(from: date)
     }
 
-    private func convertImagesToFiles(_ images: [UIImage]) throws -> [File] {
-        try images.enumerated().map { index, image in
-            guard let jpegData = image.jpegData(compressionQuality: 0.8) else {
-                throw FoodRecordError.imageConversionFailed
+    private func convertAssetsToFiles(_ assets: [any ImageAssetable]) async throws -> [File] {
+        try await withThrowingTaskGroup(of: (Int, File).self) { group in
+            for (index, asset) in assets.enumerated() {
+                group.addTask {
+                    guard let phAsset = asset as? PHAsset else {
+                        throw FoodRecordError.imageConversionFailed
+                    }
+                    let data = try await imageConverter.convertToJPEGData(
+                        from: phAsset,
+                        targetSize: CGSize(width: 1200, height: 1200)
+                    )
+                    return (
+                        index,
+                        File(
+                            fileName: "photo_\(index).jpg",
+                            mimeType: "image/jpeg",
+                            data: data
+                        )
+                    )
+                }
             }
-            return File(
-                fileName: "photo_\(index).jpg",
-                mimeType: "image/jpeg",
-                data: jpegData
-            )
+
+            var results: [(Int, File)] = []
+            for try await result in group {
+                results.append(result)
+            }
+            return results.sorted(by: { $0.0 < $1.0 }).map { $0.1 }
         }
     }
 
@@ -167,17 +252,18 @@ extension FoodRecordRepositoryImpl {
         return result
     }
 
-    private func postFakeAnalysisNotification(uploadId: String, date: Date) {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    private func postFakeAnalysisNotification(date: Date) {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
         let dateString = formatter.string(from: date)
 
         NotificationCenter.default.post(
             name: AppNotification.Push.analysisResult,
             object: nil,
             userInfo: [
-                AppNotification.Push.Key.uploadId: uploadId,
-                AppNotification.Push.Key.date: dateString,
+                AppNotification.Push.Key.type: "analysis_complete",
+                AppNotification.Push.Key.diaryDate: dateString,
             ]
         )
     }

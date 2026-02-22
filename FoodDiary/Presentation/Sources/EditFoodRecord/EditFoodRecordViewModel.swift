@@ -53,11 +53,13 @@ public final class EditFoodRecordViewModel<RecordRepo: FoodRecordRepository> {
         self.stateSubject = CurrentValueSubject(
             State(
                 originalRecord: record,
-                imageURLs: record.imageURLs,
-                newImages: [],
+                photos: record.photos,
+                newAssets: [],
+                newPreviewImages: [],
                 selectedGenre: record.genre,
                 address: record.address,
                 detailAddress: record.restaurantName ?? "",
+                restaurantURL: nil,
                 hashtags: record.hashtags,
                 isSaving: false
             )
@@ -83,15 +85,17 @@ public final class EditFoodRecordViewModel<RecordRepo: FoodRecordRepository> {
     private func handleInput(_ action: Input) async {
         switch action {
         case .removeExistingImage(let index):
-            guard index < state.imageURLs.count else { return }
-            state.imageURLs.remove(at: index)
+            guard index < state.photos.count else { return }
+            state.photos.remove(at: index)
 
         case .removeNewImage(let index):
-            guard index < state.newImages.count else { return }
-            state.newImages.remove(at: index)
+            guard index < state.newAssets.count else { return }
+            state.newAssets.remove(at: index)
+            state.newPreviewImages.remove(at: index)
 
-        case .addImages(let images):
-            state.newImages.append(contentsOf: images)
+        case .addImages(let assets, let previewImages):
+            state.newAssets.append(contentsOf: assets)
+            state.newPreviewImages.append(contentsOf: previewImages)
 
         case .selectGenre(let genre):
             state.selectedGenre = genre
@@ -99,6 +103,7 @@ public final class EditFoodRecordViewModel<RecordRepo: FoodRecordRepository> {
         case .selectAddress(let result):
             state.address = result.roadAddress
             state.detailAddress = result.placeName
+            state.restaurantURL = result.url
 
         case .updateDetailAddress(let text):
             state.detailAddress = text
@@ -130,10 +135,11 @@ public final class EditFoodRecordViewModel<RecordRepo: FoodRecordRepository> {
         let request = UpdateFoodRecordRequest(
             id: state.originalRecord.id,
             genre: state.selectedGenre,
-            existingImageURLs: state.imageURLs,
-            newImages: state.newImages,
+            existingPhotoIds: state.photos.map(\.id),
+            newAssets: state.newAssets,
             address: state.address,
-            detailAddress: state.detailAddress.isEmpty ? nil : state.detailAddress,
+            restaurantName: state.detailAddress.isEmpty ? nil : state.detailAddress,
+            restaurantURL: state.restaurantURL,
             hashtags: state.hashtags
         )
 
@@ -161,21 +167,29 @@ public final class EditFoodRecordViewModel<RecordRepo: FoodRecordRepository> {
 extension EditFoodRecordViewModel {
     public struct State: Equatable {
         public var originalRecord: FoodRecord
-        public var imageURLs: [URL]
-        public var newImages: [UIImage]
+        public var photos: [PhotoInfo]
+        public var newAssets: [any ImageAssetable]
+        public var newPreviewImages: [UIImage]
         public var selectedGenre: FoodGenre
         public var address: String?
         public var detailAddress: String
+        public var restaurantURL: String?
         public var hashtags: [String]
         public var isSaving: Bool
 
+        /// 하위 호환용 computed property
+        public var imageURLs: [URL] {
+            photos.map(\.imageURL)
+        }
+
         public static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.originalRecord == rhs.originalRecord
-                && lhs.imageURLs == rhs.imageURLs
-                && lhs.newImages.count == rhs.newImages.count
+                && lhs.photos == rhs.photos
+                && lhs.newAssets.count == rhs.newAssets.count
                 && lhs.selectedGenre == rhs.selectedGenre
                 && lhs.address == rhs.address
                 && lhs.detailAddress == rhs.detailAddress
+                && lhs.restaurantURL == rhs.restaurantURL
                 && lhs.hashtags == rhs.hashtags
                 && lhs.isSaving == rhs.isSaving
         }
@@ -184,7 +198,7 @@ extension EditFoodRecordViewModel {
     public enum Input {
         case removeExistingImage(at: Int)
         case removeNewImage(at: Int)
-        case addImages([UIImage])
+        case addImages(assets: [any ImageAssetable], previewImages: [UIImage])
         case selectGenre(FoodGenre)
         case selectAddress(AddressSearchResult)
         case updateDetailAddress(String)

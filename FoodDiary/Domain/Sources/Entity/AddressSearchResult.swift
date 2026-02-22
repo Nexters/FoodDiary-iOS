@@ -9,9 +9,11 @@ import Foundation
 public struct AddressSearchResult: Equatable, Sendable {
     public let placeName: String
     public let roadAddress: String
+    public let url: String?
 
-    public init(placeName: String, roadAddress: String) {
+    public init(placeName: String, roadAddress: String, url: String? = nil) {
         self.placeName = placeName
         self.roadAddress = roadAddress
+        self.url = url
     }
 }

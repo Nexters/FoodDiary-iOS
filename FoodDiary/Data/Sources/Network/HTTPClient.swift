@@ -37,8 +37,7 @@ public struct HTTPClient: HTTPClienting {
                 throw NetworkError.invalidResponse
             }
 
-            logger.logResponse(response, statusCode: httpResponse.statusCode)
-            logger.logResponseBody(data)
+            logger.logResponse(response, statusCode: httpResponse.statusCode, data: data)
 
             try checkResponse(data, httpResponse)
 
@@ -49,6 +48,32 @@ public struct HTTPClient: HTTPClienting {
                 logger.logError(error, context: "Decoding error")
                 throw NetworkError.decodingError
             }
+        } catch let error as NetworkError {
+            logger.logError(error, context: "Network error")
+            throw error
+        } catch {
+            logger.logError(error, context: "Request error")
+            throw NetworkError.requestFailed
+        }
+    }
+
+    public func request(_ request: some Requestable, accessToken: String? = nil) async throws {
+        do {
+            var urlRequest = try request.makeURLRequest()
+            applyAccessToken(accessToken, to: &urlRequest)
+
+            logger.logRequest(urlRequest)
+
+            let (data, response) = try await session.data(for: urlRequest)
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                logger.logError(NetworkError.invalidResponse, context: "Network error")
+                throw NetworkError.invalidResponse
+            }
+
+            logger.logResponse(response, statusCode: httpResponse.statusCode, data: data)
+
+            try checkResponse(data, httpResponse)
         } catch let error as NetworkError {
             logger.logError(error, context: "Network error")
             throw error

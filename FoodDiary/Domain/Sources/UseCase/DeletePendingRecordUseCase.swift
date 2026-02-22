@@ -16,4 +16,8 @@ public struct DeletePendingRecordUseCase<Repo: PendingFoodRecordRepository>: Sen
     public func execute(uploadIds: [String]) async throws {
         try await repository.delete(byUploadIds: uploadIds)
     }
+
+    public func execute(byDate date: Date) async throws {
+        try await repository.delete(byDate: date)
+    }
 }

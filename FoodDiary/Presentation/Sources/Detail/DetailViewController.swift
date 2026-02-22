@@ -10,7 +10,11 @@ import Kingfisher
 import SnapKit
 import UIKit
 
-public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIViewController {
+public final class DetailViewController<
+    RecordRepo: FoodRecordRepository,
+    PendingRepo: PendingFoodRecordRepository,
+    PushObserver: PushNotificationObserving
+>: UIViewController {
 
     // MARK: - Constants
 
@@ -27,9 +31,10 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
 
     // MARK: - Dependencies
 
-    private let viewModel: DetailViewModel<RecordRepo>
+    private let viewModel: DetailViewModel<RecordRepo, PendingRepo, PushObserver>
     private let onDismissWithDate: ((Date) -> Void)?
     private let editViewControllerFactory: ((FoodRecord) -> UIViewController)?
+    private let presentImagePickerHandler: ((UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void) -> Void)?
 
     // MARK: - UI Components
 
@@ -63,13 +68,15 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
     // MARK: - Init
 
     public init(
-        viewModel: DetailViewModel<RecordRepo>,
+        viewModel: DetailViewModel<RecordRepo, PendingRepo, PushObserver>,
         onDismissWithDate: ((Date) -> Void)? = nil,
-        editViewControllerFactory: ((FoodRecord) -> UIViewController)? = nil
+        editViewControllerFactory: ((FoodRecord) -> UIViewController)? = nil,
+        presentImagePickerHandler: ((UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void) -> Void)? = nil
     ) {
         self.viewModel = viewModel
         self.onDismissWithDate = onDismissWithDate
         self.editViewControllerFactory = editViewControllerFactory
+        self.presentImagePickerHandler = presentImagePickerHandler
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -92,7 +99,7 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(false, animated: animated)
         navigationController?.hidesBarsOnSwipe = true
-        // TODO: edit 후 돌아왔을 때 변경된 데이터를 반영하도록 loadRecords 호출 필요
+        viewModel.input.send(.loadRecords)
     }
 
     public override func viewWillDisappear(_ animated: Bool) {
@@ -215,12 +222,27 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
             }
             .store(in: &cancellables)
 
-        viewModel.statePublisher
-            .map(\.recordsByMealType)
-            .removeDuplicates()
+        let recordsPublisher = viewModel.statePublisher.map(\.recordsByMealType)
+        let pendingPublisher = viewModel.statePublisher.map(\.pendingRecords)
+
+        Publishers.CombineLatest(recordsPublisher, pendingPublisher)
+            .removeDuplicates { $0.0 == $1.0 && $0.1 == $1.1 }
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] recordsByMealType in
-                self?.updateMealSections(recordsByMealType)
+            .sink { [weak self] records, pending in
+                self?.updateMealSections(records, pendingRecords: pending)
+            }
+            .store(in: &cancellables)
+
+        // Event: ViewModel → View
+        viewModel.eventPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] event in
+                switch event {
+                case .uploadCompleted:
+                    break
+                case .saveFailed(let error):
+                    self?.showSaveErrorAlert(error)
+                }
             }
             .store(in: &cancellables)
 
@@ -252,15 +274,20 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
 
         breakfastSection.addButtonTapPublisher
             .merge(with: lunchSection.addButtonTapPublisher, dinnerSection.addButtonTapPublisher, snackSection.addButtonTapPublisher)
-            .sink { [weak self] in
-                self?.handleAddPhoto()
+            .sink { [weak self] mealType in
+                self?.handleAddPhoto(for: mealType)
             }
             .store(in: &cancellables)
     }
 
     // MARK: - Private Methods
 
-    private func updateMealSections(_ recordsByMealType: [MealType: FoodRecord]) {
+    private func updateMealSections(
+        _ recordsByMealType: [MealType: FoodRecord],
+        pendingRecords: [PendingFoodRecord]
+    ) {
+        let pendingByMealType = Dictionary(grouping: pendingRecords, by: \.mealType)
+
         let sections: [(MealType, MealSectionView)] = [
             (.breakfast, breakfastSection),
             (.lunch, lunchSection),
@@ -269,10 +296,13 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
         ]
 
         for (mealType, section) in sections {
-            let state: MealSectionView.State = if let record = recordsByMealType[mealType] {
-                .recorded(record)
+            let state: MealSectionView.State
+            if let record = recordsByMealType[mealType] {
+                state = .recorded(record)
+            } else if let pendings = pendingByMealType[mealType], !pendings.isEmpty {
+                state = .pending(pendings)
             } else {
-                .empty
+                state = .empty
             }
             section.configure(state: state)
         }
@@ -362,7 +392,22 @@ public final class DetailViewController<RecordRepo: FoodRecordRepository>: UIVie
         navigationController?.pushViewController(editVC, animated: true)
     }
 
-    private func handleAddPhoto() {
-        // TODO: Navigate to add photo screen
+    private func handleAddPhoto(for mealType: MealType) {
+        guard let nav = navigationController else { return }
+        let date = viewModel.state.currentDate
+
+        presentImagePickerHandler?(nav, date) { [weak self] assets in
+            self?.viewModel.input.send(.saveSelectedPhotos(assets))
+        }
+    }
+
+    private func showSaveErrorAlert(_ error: Error) {
+        let alert = UIAlertController(
+            title: "저장 실패",
+            message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
     }
 }

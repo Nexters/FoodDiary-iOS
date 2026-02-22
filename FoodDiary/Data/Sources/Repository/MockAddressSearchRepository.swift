@@ -38,22 +38,16 @@ public struct MockAddressSearchRepository: AddressSearchRepository {
         return filtered
     }
 
-    public func fetchSuggestions(restaurantName: String) async throws -> [AddressSearchResult] {
-        // TODO: 서버 API 확정 후 실제 구현체로 교체
-        // 서버에서 AI 분석 기반으로 확률 높은 후보군을 반환하는 API
-        guard !restaurantName.isEmpty else { return [] }
+    public func fetchSuggestions(diaryId: Int) async throws -> [AddressSearchResult] {
+        // Mock: diary_id 기반으로 후보군 반환
         return [
             AddressSearchResult(
-                placeName: "\(restaurantName) 본점",
+                placeName: "Mock 식당 본점",
                 roadAddress: "서울특별시 성동구 광나루로 4가길 12-7 1층"
             ),
             AddressSearchResult(
-                placeName: "\(restaurantName) 2호점",
+                placeName: "Mock 식당 2호점",
                 roadAddress: "서울특별시 성동구 광나루로 4가길 12-7 2층"
-            ),
-            AddressSearchResult(
-                placeName: "\(restaurantName) 3호점",
-                roadAddress: "서울특별시 성동구 광나루로 4가길 12-7 3층"
             ),
         ]
     }
