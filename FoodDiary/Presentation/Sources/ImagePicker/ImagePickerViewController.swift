@@ -56,6 +56,34 @@ public final class ImagePickerViewController<
 >:
     UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
 
+    // MARK: - Section
+
+    private enum PhotoSection: Int, CaseIterable {
+        case food
+        case all
+
+        var headerTitle: String {
+            switch self {
+            case .food: return "음식"
+            case .all: return "전체"
+            }
+        }
+    }
+
+    // MARK: - SelectAll Button State
+
+    private enum SelectAllButtonState {
+        case selectAllFood
+        case deselectAll
+
+        var title: String {
+            switch self {
+            case .selectAllFood: return "모두선택(음식만)"
+            case .deselectAll: return "모두해제"
+            }
+        }
+    }
+
     // MARK: - Public Publisher
 
     /// 피커 결과 Publisher
@@ -77,13 +105,31 @@ public final class ImagePickerViewController<
 
     private var selectedPhotoIds: Set<String> = []
 
+    // MARK: - Computed Properties
+
+    private var foodPhotos: [Asset] { photos.filter { preselectedIds.contains($0.id) } }
+    private var otherPhotos: [Asset] { photos.filter { !preselectedIds.contains($0.id) } }
+
+    private func photosInSection(_ section: PhotoSection) -> [Asset] {
+        switch section {
+        case .food: return foodPhotos
+        case .all: return otherPhotos
+        }
+    }
+
+    private var selectAllButtonState: SelectAllButtonState {
+        let food = foodPhotos
+        guard !food.isEmpty else { return .selectAllFood }
+        return food.allSatisfy { selectedPhotoIds.contains($0.id) } ? .deselectAll : .selectAllFood
+    }
+
     // MARK: - UI Components
 
     private lazy var collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.minimumInteritemSpacing = 8
         layout.minimumLineSpacing = 8
-        layout.sectionInset = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
+        layout.sectionInset = UIEdgeInsets(top: 12, left: 16, bottom: 16, right: 16)
 
         let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
         cv.backgroundColor = .clear
@@ -93,6 +139,11 @@ public final class ImagePickerViewController<
         cv.register(
             ImagePickerCell.self,
             forCellWithReuseIdentifier: ImagePickerCell.reuseIdentifier
+        )
+        cv.register(
+            ImagePickerSectionHeaderView.self,
+            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
+            withReuseIdentifier: ImagePickerSectionHeaderView.reuseIdentifier
         )
         return cv
     }()
@@ -132,7 +183,7 @@ public final class ImagePickerViewController<
     /// 이미지 피커 초기화
     /// - Parameters:
     ///   - photos: 표시할 사진 목록
-    ///   - preselectedIds: 미리 선택될 사진 ID 집합
+    ///   - preselectedIds: 미리 선택될 사진 ID 집합 (음식 섹션으로 분류됨)
     ///   - imageProvider: 이미지 로딩 제공자
     ///   - configuration: 피커 설정
     public init(
@@ -157,6 +208,7 @@ public final class ImagePickerViewController<
 
     public override func viewDidLoad() {
         super.viewDidLoad()
+        setupNavigationBar()
         setupUI()
         setupConstraints()
         applyPreselection()
@@ -168,6 +220,30 @@ public final class ImagePickerViewController<
     }
 
     // MARK: - Setup
+
+    private func setupNavigationBar() {
+        let backButton = UIBarButtonItem(
+            image: UIImage(systemName: "chevron.left"),
+            style: .plain,
+            target: self,
+            action: #selector(handleCancel)
+        )
+        backButton.tintColor = .white
+        navigationItem.leftBarButtonItem = backButton
+
+        let selectAllButton = UIBarButtonItem(
+            title: selectAllButtonState.title,
+            style: .plain,
+            target: self,
+            action: #selector(selectAllButtonTapped)
+        )
+        selectAllButton.tintColor = .white
+        navigationItem.rightBarButtonItem = selectAllButton
+
+        if let maxCount = configuration.maxSelectionCount {
+            title = "\(maxCount)장까지 선택할 수 있어요."
+        }
+    }
 
     private func setupUI() {
         view.backgroundColor = DesignSystemAsset.sdBase.color
@@ -202,25 +278,24 @@ public final class ImagePickerViewController<
 
     private func applyPreselection() {
         for photo in photos where preselectedIds.contains(photo.id) {
-            // 최대 선택 수 확인
             if let maxCount = configuration.maxSelectionCount,
                selectedPhotoIds.count >= maxCount {
                 break
             }
             selectedPhotoIds.insert(photo.id)
         }
-        updateConfirmButton()
+        updateUI()
     }
 
     // MARK: - Selection
 
     private func toggleSelection(at indexPath: IndexPath) {
-        let photo = photos[indexPath.item]
+        guard let section = PhotoSection(rawValue: indexPath.section) else { return }
+        let photo = photosInSection(section)[indexPath.item]
 
         if selectedPhotoIds.contains(photo.id) {
             selectedPhotoIds.remove(photo.id)
         } else {
-            // 최대 선택 수 확인
             if let maxCount = configuration.maxSelectionCount,
                selectedPhotoIds.count >= maxCount {
                 return
@@ -228,36 +303,56 @@ public final class ImagePickerViewController<
             selectedPhotoIds.insert(photo.id)
         }
 
-        // 셀 업데이트
         if let cell = collectionView.cellForItem(at: indexPath) as? ImagePickerCell {
             cell.setSelected(selectedPhotoIds.contains(photo.id))
         }
 
-        updateConfirmButton()
+        updateUI()
     }
 
-    private func updateConfirmButton() {
+    private func updateUI() {
         let count = selectedPhotoIds.count
         confirmButton.isEnabled = count > 0
-        let title = count > 0 ? "\(count)장 올리기" : configuration.confirmButtonTitle
+        let title = count > 0 ? "선택하기(\(count))" : configuration.confirmButtonTitle
         confirmButton.setTitle(title, for: .normal)
+        navigationItem.rightBarButtonItem?.title = selectAllButtonState.title
     }
 
     // MARK: - Actions
+
+    @objc private func selectAllButtonTapped() {
+        switch selectAllButtonState {
+        case .selectAllFood:
+            for photo in foodPhotos {
+                if let maxCount = configuration.maxSelectionCount,
+                   selectedPhotoIds.count >= maxCount { break }
+                selectedPhotoIds.insert(photo.id)
+            }
+        case .deselectAll:
+            selectedPhotoIds.removeAll()
+        }
+        collectionView.reloadData()
+        updateUI()
+    }
 
     @objc private func confirmButtonTapped() {
         let selectedAssets = photos.filter { selectedPhotoIds.contains($0.id) }
         resultSubject.send(.selected(selectedAssets))
     }
 
-    private func handleCancel() {
+    @objc private func handleCancel() {
         resultSubject.send(.cancelled)
     }
 
     // MARK: - UICollectionViewDataSource
 
+    public func numberOfSections(in collectionView: UICollectionView) -> Int {
+        return PhotoSection.allCases.count
+    }
+
     public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return photos.count
+        guard let photoSection = PhotoSection(rawValue: section) else { return 0 }
+        return photosInSection(photoSection).count
     }
 
     public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -266,7 +361,8 @@ public final class ImagePickerViewController<
             for: indexPath
         ) as! ImagePickerCell
 
-        let photo = photos[indexPath.item]
+        guard let photoSection = PhotoSection(rawValue: indexPath.section) else { return cell }
+        let photo = photosInSection(photoSection)[indexPath.item]
         let isSelected = selectedPhotoIds.contains(photo.id)
 
         cell.configure(
@@ -274,10 +370,28 @@ public final class ImagePickerViewController<
             configuration: configuration
         )
 
-        // 이미지 로딩(비동기)
         loadImage(for: photo, cell: cell, at: indexPath)
 
         return cell
+    }
+
+    public func collectionView(
+        _ collectionView: UICollectionView,
+        viewForSupplementaryElementOfKind kind: String,
+        at indexPath: IndexPath
+    ) -> UICollectionReusableView {
+        guard kind == UICollectionView.elementKindSectionHeader,
+              let header = collectionView.dequeueReusableSupplementaryView(
+                  ofKind: kind,
+                  withReuseIdentifier: ImagePickerSectionHeaderView.reuseIdentifier,
+                  for: indexPath
+              ) as? ImagePickerSectionHeaderView,
+              let photoSection = PhotoSection(rawValue: indexPath.section)
+        else {
+            return UICollectionReusableView()
+        }
+        header.configure(title: photoSection.headerTitle)
+        return header
     }
 
     private func loadImage(for photo: Asset, cell: ImagePickerCell, at indexPath: IndexPath) {
@@ -288,7 +402,6 @@ public final class ImagePickerViewController<
                     targetSize: CGSize(width: 300, height: 300)
                 )
                 await MainActor.run {
-                    // 셀이 여전히 같은 indexPath에 있는지 확인
                     guard let currentIndexPath = self.collectionView.indexPath(for: cell),
                           currentIndexPath == indexPath else {
                         return
@@ -315,9 +428,21 @@ public final class ImagePickerViewController<
         layout collectionViewLayout: UICollectionViewLayout,
         sizeForItemAt indexPath: IndexPath
     ) -> CGSize {
-        let padding: CGFloat = 16 * 2 + 8 * 2 // section padding + spacing
+        let padding: CGFloat = 16 * 2 + 8 * 2
         let availableWidth = collectionView.bounds.width - padding
         let itemWidth = availableWidth / 3
         return CGSize(width: itemWidth, height: itemWidth)
+    }
+
+    public func collectionView(
+        _ collectionView: UICollectionView,
+        layout collectionViewLayout: UICollectionViewLayout,
+        referenceSizeForHeaderInSection section: Int
+    ) -> CGSize {
+        guard let photoSection = PhotoSection(rawValue: section),
+              !photosInSection(photoSection).isEmpty else {
+            return .zero
+        }
+        return CGSize(width: collectionView.bounds.width, height: 44)
     }
 }
