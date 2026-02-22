@@ -110,14 +110,15 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
 
     // MARK: - Configuration
 
-    func configure(with day: MonthlyCalendarDay, isSelected: Bool) {
+    func configure(with day: MonthlyCalendarDay) {
+        isUserInteractionEnabled = day.isCurrentMonth
+
         applyRecordStyle(photoURLs: day.imageURLs, isCurrentMonth: day.isCurrentMonth)
 
         applyDayNumberStyle(
             dayNumber: day.dayNumber,
             isCurrentMonth: day.isCurrentMonth,
             isToday: day.isToday,
-            isSelected: isSelected
         )
 
         if day.isToday {
@@ -126,6 +127,7 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
     }
     
     private func resetCellState() {
+        isUserInteractionEnabled = true
         dashedBorderView.backgroundColor = .clear
         containerView.backgroundColor = .clear
         containerView.removeGradient()
@@ -139,7 +141,6 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
 
     private func applyTodayStyle() {
         containerView.backgroundColor = .primary
-        containerView.applyPrimaryGradient(cornerRadius: Constants.cornerRadius)
         containerView.layer.borderWidth = Constants.todayBorderWidth
         containerView.layer.borderColor = UIColor.white.withAlphaComponent(0.3).cgColor
         containerView.applyGlow(

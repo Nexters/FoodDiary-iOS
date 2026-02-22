@@ -134,6 +134,12 @@ final class PolaroidImageCardsView: UIView {
         backCardView.isHidden = false
         setNeedsLayout()
     }
+
+    /// 진행 중인 이미지 다운로드를 취소하고 이미지를 초기화합니다.
+    func cancelImageLoading() {
+        frontCardView.cancelImageLoading()
+        backCardView.cancelImageLoading()
+    }
 }
 
 // MARK: - PolaroidCardView
