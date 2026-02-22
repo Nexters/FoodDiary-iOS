@@ -21,7 +21,7 @@ public final class MonthlyCalendarViewController<
     // MARK: - Dependencies
 
     private let viewModel: MonthlyCalendarViewModel<RecordRepo, AuthRepo>
-    private let detailViewControllerFactory: ((Date, [FoodRecord]) -> UIViewController)?
+    private let detailViewControllerFactory: ((Date, [FoodRecord]) -> UIViewController)
 
     // MARK: - UI Components
 
@@ -69,7 +69,7 @@ public final class MonthlyCalendarViewController<
 
     public init(
         viewModel: MonthlyCalendarViewModel<RecordRepo, AuthRepo>,
-        detailViewControllerFactory: ((Date, [FoodRecord]) -> UIViewController)? = nil
+        detailViewControllerFactory: @escaping ((Date, [FoodRecord]) -> UIViewController)
     ) {
         self.viewModel = viewModel
         self.detailViewControllerFactory = detailViewControllerFactory
@@ -285,7 +285,7 @@ public final class MonthlyCalendarViewController<
     // MARK: - Navigation
 
     private func navigateToDetail(date: Date, records: [FoodRecord]) {
-        guard let detailVC = detailViewControllerFactory?(date, records) else { return }
+        let detailVC = detailViewControllerFactory(date, records)
         detailVC.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(detailVC, animated: true)
     }
