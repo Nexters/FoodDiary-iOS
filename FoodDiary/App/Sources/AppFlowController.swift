@@ -58,9 +58,12 @@ extension AppFlowController {
     fileprivate func proceedToNextScreen() {
         Task {
             let isLogin = await validateToken()
-            routeToAppropriateScreen(isLogin: isLogin)
-            networkCancellable?.cancel()
-            networkCancellable = nil
+            await MainActor.run { [weak self] in
+                guard let self else { return }
+                routeToAppropriateScreen(isLogin: isLogin)
+                networkCancellable?.cancel()
+                networkCancellable = nil
+            }
         }
     }
 
@@ -245,8 +248,8 @@ extension AppFlowController {
                     fatalError("ImagePicker dependencies not registered")
                 }
 
-                guard authUseCase.isAuthorized() else {
-                    Task { @MainActor in
+                Task { @MainActor in
+                    if !authUseCase.isAuthorized() {
                         let status = await authUseCase.execute()
                         if status == .denied || status == .restricted {
                             let alert = UIAlertController(
@@ -262,12 +265,10 @@ extension AppFlowController {
                                     }
                                 })
                             nav.topViewController?.present(alert, animated: true)
+                            return
                         }
                     }
-                    return
-                }
 
-                Task { @MainActor in
                     do {
                         let calendar = Calendar.current
                         let startOfDay = calendar.startOfDay(for: date)
@@ -298,6 +299,7 @@ extension AppFlowController {
                                 }
                             }
 
+                        picker.hidesBottomBarWhenPushed = true
                         nav.pushViewController(picker, animated: true)
                     } catch {
                         let alert = UIAlertController(
@@ -330,8 +332,8 @@ extension AppFlowController {
                 fatalError("ImagePicker dependencies not registered")
             }
 
-            guard authUseCase.isAuthorized() else {
-                Task { @MainActor in
+            Task { @MainActor in
+                if !authUseCase.isAuthorized() {
                     let status = await authUseCase.execute()
                     if status == .denied || status == .restricted {
                         let alert = UIAlertController(
@@ -346,12 +348,10 @@ extension AppFlowController {
                             }
                         })
                         nav.topViewController?.present(alert, animated: true)
+                        return
                     }
                 }
-                return
-            }
 
-            Task { @MainActor in
                 do {
                     let calendar = Calendar.current
                     let startOfDay = calendar.startOfDay(for: date)
@@ -381,6 +381,7 @@ extension AppFlowController {
                             }
                         }
 
+                    picker.hidesBottomBarWhenPushed = true
                     nav.pushViewController(picker, animated: true)
                 } catch {
                     let alert = UIAlertController(

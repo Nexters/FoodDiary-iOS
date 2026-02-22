@@ -54,7 +54,9 @@ public final class ImagePickerViewController<
     Asset: ImageAssetable,
     ImageProvider: RenderableImageRepository<Asset>
 >:
-    UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
+    UIViewController, UICollectionViewDataSource, UICollectionViewDelegate,
+    UICollectionViewDelegateFlowLayout
+{
 
     // MARK: - Section
 
@@ -78,7 +80,7 @@ public final class ImagePickerViewController<
 
         var title: String {
             switch self {
-            case .selectAllFood: return "모두선택(음식만)"
+            case .selectAllFood: return "모두선택"
             case .deselectAll: return "모두해제"
             }
         }
@@ -240,29 +242,26 @@ public final class ImagePickerViewController<
         selectAllButton.tintColor = .white
         navigationItem.rightBarButtonItem = selectAllButton
 
-        if let maxCount = configuration.maxSelectionCount {
-            title = "\(maxCount)장까지 선택할 수 있어요."
-        }
     }
 
     private func setupUI() {
         view.backgroundColor = DesignSystemAsset.sdBase.color
 
-        view.addSubview(collectionView)
-        view.addSubview(emptyView)
         view.addSubview(confirmButton)
+        view.addSubview(emptyView)
 
-        emptyView.isHidden = !photos.isEmpty
-        collectionView.isHidden = photos.isEmpty
-    }
-
-    private func setupConstraints() {
+        view.addSubview(collectionView)
         collectionView.snp.makeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide)
             $0.leading.trailing.equalToSuperview()
             $0.bottom.equalTo(confirmButton.snp.top).offset(-16)
         }
 
+        emptyView.isHidden = !photos.isEmpty
+        collectionView.isHidden = photos.isEmpty
+    }
+
+    private func setupConstraints() {
         emptyView.snp.makeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide)
             $0.leading.trailing.equalToSuperview()
@@ -279,7 +278,8 @@ public final class ImagePickerViewController<
     private func applyPreselection() {
         for photo in photos where preselectedIds.contains(photo.id) {
             if let maxCount = configuration.maxSelectionCount,
-               selectedPhotoIds.count >= maxCount {
+                selectedPhotoIds.count >= maxCount
+            {
                 break
             }
             selectedPhotoIds.insert(photo.id)
@@ -297,7 +297,8 @@ public final class ImagePickerViewController<
             selectedPhotoIds.remove(photo.id)
         } else {
             if let maxCount = configuration.maxSelectionCount,
-               selectedPhotoIds.count >= maxCount {
+                selectedPhotoIds.count >= maxCount
+            {
                 return
             }
             selectedPhotoIds.insert(photo.id)
@@ -325,7 +326,10 @@ public final class ImagePickerViewController<
         case .selectAllFood:
             for photo in foodPhotos {
                 if let maxCount = configuration.maxSelectionCount,
-                   selectedPhotoIds.count >= maxCount { break }
+                    selectedPhotoIds.count >= maxCount
+                {
+                    break
+                }
                 selectedPhotoIds.insert(photo.id)
             }
         case .deselectAll:
@@ -350,16 +354,21 @@ public final class ImagePickerViewController<
         return PhotoSection.allCases.count
     }
 
-    public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+    public func collectionView(
+        _ collectionView: UICollectionView, numberOfItemsInSection section: Int
+    ) -> Int {
         guard let photoSection = PhotoSection(rawValue: section) else { return 0 }
         return photosInSection(photoSection).count
     }
 
-    public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(
-            withReuseIdentifier: ImagePickerCell.reuseIdentifier,
-            for: indexPath
-        ) as! ImagePickerCell
+    public func collectionView(
+        _ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath
+    ) -> UICollectionViewCell {
+        let cell =
+            collectionView.dequeueReusableCell(
+                withReuseIdentifier: ImagePickerCell.reuseIdentifier,
+                for: indexPath
+            ) as! ImagePickerCell
 
         guard let photoSection = PhotoSection(rawValue: indexPath.section) else { return cell }
         let photo = photosInSection(photoSection)[indexPath.item]
@@ -381,16 +390,19 @@ public final class ImagePickerViewController<
         at indexPath: IndexPath
     ) -> UICollectionReusableView {
         guard kind == UICollectionView.elementKindSectionHeader,
-              let header = collectionView.dequeueReusableSupplementaryView(
-                  ofKind: kind,
-                  withReuseIdentifier: ImagePickerSectionHeaderView.reuseIdentifier,
-                  for: indexPath
-              ) as? ImagePickerSectionHeaderView,
-              let photoSection = PhotoSection(rawValue: indexPath.section)
+            let header = collectionView.dequeueReusableSupplementaryView(
+                ofKind: kind,
+                withReuseIdentifier: ImagePickerSectionHeaderView.reuseIdentifier,
+                for: indexPath
+            ) as? ImagePickerSectionHeaderView,
+            let photoSection = PhotoSection(rawValue: indexPath.section)
         else {
             return UICollectionReusableView()
         }
-        header.configure(title: photoSection.headerTitle)
+        let guideText: String? = photoSection == .food
+            ? configuration.maxSelectionCount.map { "\($0)장까지 선택할 수 있어요." }
+            : nil
+        header.configure(title: photoSection.headerTitle, guideText: guideText)
         return header
     }
 
@@ -403,7 +415,8 @@ public final class ImagePickerViewController<
                 )
                 await MainActor.run {
                     guard let currentIndexPath = self.collectionView.indexPath(for: cell),
-                          currentIndexPath == indexPath else {
+                        currentIndexPath == indexPath
+                    else {
                         return
                     }
                     cell.setImage(image)
@@ -416,7 +429,9 @@ public final class ImagePickerViewController<
 
     // MARK: - UICollectionViewDelegate
 
-    public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+    public func collectionView(
+        _ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath
+    ) {
         collectionView.deselectItem(at: indexPath, animated: false)
         toggleSelection(at: indexPath)
     }
@@ -440,9 +455,11 @@ public final class ImagePickerViewController<
         referenceSizeForHeaderInSection section: Int
     ) -> CGSize {
         guard let photoSection = PhotoSection(rawValue: section),
-              !photosInSection(photoSection).isEmpty else {
+            !photosInSection(photoSection).isEmpty
+        else {
             return .zero
         }
-        return CGSize(width: collectionView.bounds.width, height: 44)
+        let height: CGFloat = photoSection == .food && configuration.maxSelectionCount != nil ? 72 : 44
+        return CGSize(width: collectionView.bounds.width, height: height)
     }
 }
