@@ -388,7 +388,6 @@ public final class DetailViewController<
 
     private func handleEdit(record: FoodRecord) {
         guard let editVC = editViewControllerFactory?(record) else { return }
-        editVC.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(editVC, animated: true)
     }
 

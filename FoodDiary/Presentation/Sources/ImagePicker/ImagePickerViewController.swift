@@ -199,7 +199,6 @@ public final class ImagePickerViewController<
         self.imageProvider = imageProvider
         self.configuration = configuration
         super.init(nibName: nil, bundle: nil)
-        hidesBottomBarWhenPushed = true
     }
 
     @available(*, unavailable)

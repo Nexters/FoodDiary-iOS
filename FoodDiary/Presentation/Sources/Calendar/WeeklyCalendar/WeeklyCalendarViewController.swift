@@ -378,7 +378,6 @@ public final class WeeklyCalendarViewController<
             editViewControllerFactory: editViewControllerFactory,
             presentImagePickerHandler: presentImagePickerHandler
         )
-        detailVC.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(detailVC, animated: true)
     }
 }

@@ -108,7 +108,18 @@ extension AppFlowController {
             }
             .store(in: &cancellables)
 
-        return tabBarVC
+        let navController = UINavigationController(rootViewController: tabBarVC)
+        let navAppearance = UINavigationBarAppearance()
+        navAppearance.configureWithOpaqueBackground()
+        navAppearance.backgroundColor = .sdBase
+        navAppearance.titleTextAttributes = [.foregroundColor: UIColor(white: 1, alpha: 1)]
+        navAppearance.shadowColor = .clear
+
+        navController.navigationBar.standardAppearance = navAppearance
+        navController.navigationBar.scrollEdgeAppearance = navAppearance
+        navController.navigationBar.tintColor = UIColor(white: 1, alpha: 1)
+
+        return navController
     }
 
     fileprivate func makeWeeklyCalendarVC() -> UIViewController {
