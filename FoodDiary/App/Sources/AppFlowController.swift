@@ -330,7 +330,20 @@ extension AppFlowController {
             fatalError("MonthlyCalendarViewModel not registered")
         }
 
-        let monthlyCalendarVC = MonthlyCalendarViewController(viewModel: monthlyViewModel)
+        let monthlyCalendarVC = MonthlyCalendarViewController(
+            viewModel: monthlyViewModel,
+            detailViewControllerFactory: { [container, editVCFactory, detailImagePickerHandler] date, records in
+                guard let vm = try? container.resolve(DetailVM.self, argument: (date, records)) else {
+                    fatalError("DetailViewModel not registered")
+                }
+                return DetailViewController(
+                    viewModel: vm,
+                    onDismissWithDate: nil,
+                    editViewControllerFactory: editVCFactory,
+                    presentImagePickerHandler: detailImagePickerHandler
+                )
+            }
+        )
 
         let tabBarVC = RootTabBarController(
             weeklyVC: weeklyCalendarVC,

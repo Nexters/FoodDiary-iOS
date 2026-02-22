@@ -73,11 +73,6 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
         resetCellState()
     }
 
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        containerView.updateGradientFrame()
-    }
-
     // MARK: - Setup
 
     private func setupUI() {
@@ -172,7 +167,6 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
         dayNumber: Int,
         isCurrentMonth: Bool,
         isToday: Bool,
-        isSelected: Bool
     ) {
         let formattedDayNumber = String(format: "%02d", dayNumber)
         if isCurrentMonth {

@@ -21,6 +21,7 @@ public final class MonthlyCalendarViewController<
     // MARK: - Dependencies
 
     private let viewModel: MonthlyCalendarViewModel<RecordRepo, AuthRepo>
+    private let detailViewControllerFactory: ((Date, [FoodRecord]) -> UIViewController)?
 
     // MARK: - UI Components
 
@@ -66,8 +67,12 @@ public final class MonthlyCalendarViewController<
 
     // MARK: - Init
 
-    public init(viewModel: MonthlyCalendarViewModel<RecordRepo, AuthRepo>) {
+    public init(
+        viewModel: MonthlyCalendarViewModel<RecordRepo, AuthRepo>,
+        detailViewControllerFactory: ((Date, [FoodRecord]) -> UIViewController)? = nil
+    ) {
         self.viewModel = viewModel
+        self.detailViewControllerFactory = detailViewControllerFactory
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -176,7 +181,7 @@ public final class MonthlyCalendarViewController<
                 return UICollectionViewCell()
             }
 
-            cell.configure(with: day, isSelected: false)
+            cell.configure(with: day)
             return cell
         }
     }
@@ -203,6 +208,17 @@ public final class MonthlyCalendarViewController<
             .receive(on: DispatchQueue.main)
             .sink { [weak self] state in
                 self?.updateCalendar(days: state.monthDays, numberOfWeeks: state.numberOfWeeks)
+            }
+            .store(in: &cancellables)
+
+        // Event: ViewModel → View
+        viewModel.eventPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] event in
+                switch event {
+                case .navigateToDetail(let date, let records):
+                    self?.navigateToDetail(date: date, records: records)
+                }
             }
             .store(in: &cancellables)
     }
@@ -261,10 +277,15 @@ public final class MonthlyCalendarViewController<
 
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard let day = dataSource?.itemIdentifier(for: indexPath) else { return }
+        viewModel.input.send(.selectDay(day.date))
+    }
 
-        let detailVC = MockFoodRecordDetailViewController(date: day.date)
-        detailVC.modalPresentationStyle = .pageSheet
-        present(detailVC, animated: true)
+    // MARK: - Navigation
+
+    private func navigateToDetail(date: Date, records: [FoodRecord]) {
+        guard let detailVC = detailViewControllerFactory?(date, records) else { return }
+        detailVC.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(detailVC, animated: true)
     }
 }
 

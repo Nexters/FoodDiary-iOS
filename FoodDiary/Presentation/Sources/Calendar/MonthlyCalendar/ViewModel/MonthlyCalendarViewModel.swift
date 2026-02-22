@@ -26,24 +26,34 @@ public final class MonthlyCalendarViewModel<
 
     let input = PassthroughSubject<Input, Never>()
 
+    // MARK: - Output (Event)
+
+    public var eventPublisher: AnyPublisher<Event, Never> {
+        eventSubject.eraseToAnyPublisher()
+    }
+
     // MARK: - Private
 
     private let stateSubject: CurrentValueSubject<State, Never>
+    private let eventSubject = PassthroughSubject<Event, Never>()
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Dependencies
 
     private let fetchMonthlyCalendarDaysUseCase: FetchMonthlyCalendarDaysUseCase<RecordRepo>
     private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>
+    private let fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
 
     // MARK: - Init
 
     public init(
         fetchMonthlyCalendarDaysUseCase: FetchMonthlyCalendarDaysUseCase<RecordRepo>,
-        requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>
+        requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>,
+        fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
     ) {
         self.fetchMonthlyCalendarDaysUseCase = fetchMonthlyCalendarDaysUseCase
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
+        self.fetchFoodRecordsUseCase = fetchFoodRecordsUseCase
 
         let today = Date()
         self.stateSubject = CurrentValueSubject(State(currentDisplayDate: today))
@@ -74,6 +84,14 @@ public final class MonthlyCalendarViewModel<
         case .selectMonth(let date):
             state.currentDisplayDate = date
             await loadMonth(for: state.currentDisplayDate)
+
+        case .selectDay(let date):
+            do {
+                let records = try await fetchFoodRecordsUseCase.execute(for: date)
+                eventSubject.send(.navigateToDetail(date: date, records: records))
+            } catch {
+                print("Failed to fetch records for date: \(error)")
+            }
         }
     }
 
@@ -119,8 +137,13 @@ extension MonthlyCalendarViewModel {
         }
     }
 
-    enum Input {
+    public enum Input {
         case loadInitialData
         case selectMonth(Date)
+        case selectDay(Date)
+    }
+
+    public enum Event {
+        case navigateToDetail(date: Date, records: [FoodRecord])
     }
 }
