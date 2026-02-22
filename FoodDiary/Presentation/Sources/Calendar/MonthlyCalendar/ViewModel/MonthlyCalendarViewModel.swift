@@ -17,14 +17,14 @@ public final class MonthlyCalendarViewModel<
         stateSubject.eraseToAnyPublisher()
     }
 
-    private(set) var state: State {
+    public private(set) var state: State {
         get { stateSubject.value }
         set { stateSubject.value = newValue }
     }
 
     // MARK: - Input
 
-    let input = PassthroughSubject<Input, Never>()
+    public let input = PassthroughSubject<Input, Never>()
 
     // MARK: - Output (Event)
 
@@ -124,13 +124,13 @@ public final class MonthlyCalendarViewModel<
 // MARK: - State & Input
 
 extension MonthlyCalendarViewModel {
-    struct State: Equatable {
-        var currentDisplayDate: Date
+    public struct State: Equatable {
+        public internal(set) var currentDisplayDate: Date
         var monthDays: [MonthlyCalendarDay] = []
         var numberOfWeeks: Int = 5
         var monthYearText: String = ""
 
-        static func == (lhs: Self, rhs: Self) -> Bool {
+        public static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.monthDays == rhs.monthDays
                 && lhs.numberOfWeeks == rhs.numberOfWeeks
                 && lhs.monthYearText == rhs.monthYearText

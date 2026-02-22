@@ -332,13 +332,20 @@ extension AppFlowController {
 
         let monthlyCalendarVC = MonthlyCalendarViewController(
             viewModel: monthlyViewModel,
-            detailViewControllerFactory: { [container, editVCFactory, detailImagePickerHandler] date, records in
+            detailViewControllerFactory: { [container, editVCFactory, detailImagePickerHandler, weak monthlyViewModel] date, records in
                 guard let vm = try? container.resolve(DetailVM.self, argument: (date, records)) else {
                     fatalError("DetailViewModel not registered")
                 }
                 return DetailViewController(
                     viewModel: vm,
-                    onDismissWithDate: nil,
+                    onDismissWithDate: { dismissedDate in
+                        guard let monthlyViewModel else { return }
+                        let currentDisplay = monthlyViewModel.state.currentDisplayDate
+                        let isSameMonth = Calendar.current.isDate(dismissedDate, equalTo: currentDisplay, toGranularity: .month)
+                        if !isSameMonth {
+                            monthlyViewModel.input.send(.selectMonth(dismissedDate))
+                        }
+                    },
                     editViewControllerFactory: editVCFactory,
                     presentImagePickerHandler: detailImagePickerHandler
                 )
