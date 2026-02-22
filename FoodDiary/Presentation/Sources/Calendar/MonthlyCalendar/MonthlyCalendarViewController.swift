@@ -218,6 +218,8 @@ public final class MonthlyCalendarViewController<
                 switch event {
                 case .navigateToDetail(let date, let records):
                     self?.navigateToDetail(date: date, records: records)
+                case .showError(let error):
+                    self?.showErrorAlert(error)
                 }
             }
             .store(in: &cancellables)
@@ -286,6 +288,12 @@ public final class MonthlyCalendarViewController<
         guard let detailVC = detailViewControllerFactory?(date, records) else { return }
         detailVC.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(detailVC, animated: true)
+    }
+
+    private func showErrorAlert(_ error: Error) {
+        let alert = UIAlertController(title: "오류", message: error.localizedDescription, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
     }
 }
 

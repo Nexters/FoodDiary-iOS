@@ -90,7 +90,7 @@ public final class MonthlyCalendarViewModel<
                 let records = try await fetchFoodRecordsUseCase.execute(for: date)
                 eventSubject.send(.navigateToDetail(date: date, records: records))
             } catch {
-                print("Failed to fetch records for date: \(error)")
+                eventSubject.send(.showError(error))
             }
         }
     }
@@ -145,5 +145,6 @@ extension MonthlyCalendarViewModel {
 
     public enum Event {
         case navigateToDetail(date: Date, records: [FoodRecord])
+        case showError(Error)
     }
 }
