@@ -27,7 +27,8 @@ public extension ProjectDescription.Scheme {
             .scheme(
                 name: "release",
                 buildAction: .buildAction(targets: [.target("App")]),
-                runAction: .runAction(configuration: "Release")
+                runAction: .runAction(configuration: "Release"),
+                archiveAction: .archiveAction(configuration: "Release")
             ),
         ]
     }
