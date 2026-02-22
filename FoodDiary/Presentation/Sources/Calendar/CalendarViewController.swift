@@ -60,8 +60,11 @@ public final class CalendarViewController: UIViewController {
             target: self,
             action: #selector(mypageButtonTapped)
         )
-        
         navigationItem.rightBarButtonItem = mypageButton
+
+        let logoImageView = UIImageView(image: DesignSystemAsset.iconNavLogo.image)
+        logoImageView.contentMode = .scaleAspectFit
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: logoImageView)
     }
 
     @objc private func mypageButtonTapped() {
