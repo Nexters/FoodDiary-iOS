@@ -6,12 +6,12 @@
 //
 
 import Combine
-import UIKit
-import SnapKit
 import DI
-import Presentation
-import Domain
 import Data
+import Domain
+import Presentation
+import SnapKit
+import UIKit
 
 final class AppFlowController: UIViewController {
     private var currentChild: UIViewController?
@@ -34,14 +34,14 @@ final class AppFlowController: UIViewController {
     }
 }
 
-private extension AppFlowController {
-    func setupNetworkMonitoring() {
+extension AppFlowController {
+    fileprivate func setupNetworkMonitoring() {
         guard let networkMonitor = try? container.resolve(NetworkMonitoring.self) else {
             fatalError("NetworkMonitoring not registered")
         }
 
         networkMonitor.startMonitoring()
-        
+
         networkCancellable = networkMonitor.networkStatusPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] isConnected in
@@ -49,13 +49,13 @@ private extension AppFlowController {
             }
     }
 
-    func handleNetworkStatusChange(isConnected: Bool) {
+    fileprivate func handleNetworkStatusChange(isConnected: Bool) {
         if isConnected {
             proceedToNextScreen()
         }
     }
 
-    func proceedToNextScreen() {
+    fileprivate func proceedToNextScreen() {
         Task {
             let isLogin = await validateToken()
             routeToAppropriateScreen(isLogin: isLogin)
@@ -64,22 +64,26 @@ private extension AppFlowController {
         }
     }
 
-    func routeToAppropriateScreen(isLogin: Bool) {
+    fileprivate func routeToAppropriateScreen(isLogin: Bool) {
         let destinationVC = isLogin ? createMainView() : createLoginView()
         transition(to: destinationVC)
     }
-    
-    func validateToken() async -> Bool {
-        guard let validateAccessTokenUseCase = try? container.resolve(
-            ValidateAccessTokenUseCase<TokenRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>.self
-        ) else {
+
+    fileprivate func validateToken() async -> Bool {
+        guard
+            let validateAccessTokenUseCase = try? container.resolve(
+                ValidateAccessTokenUseCase<
+                    TokenRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
+                >.self
+            )
+        else {
             fatalError("ValidateAccessTokenUseCase Failed Resolve")
         }
 
         return await validateAccessTokenUseCase.execute()
     }
-    
-    func createMainView() -> UIViewController {
+
+    fileprivate func createMainView() -> UIViewController {
         guard let imageProvider = try? container.resolve(UIImageLoader.self) else {
             fatalError("UIImageLoader not registered")
         }
@@ -101,15 +105,22 @@ private extension AppFlowController {
             PendingFoodRecordStorage<FileStorageService>,
             PushNotificationObserver
         >
-        typealias EditVM = EditFoodRecordViewModel<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>
+        typealias EditVM = EditFoodRecordViewModel<
+            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
+        >
         typealias AddressSearchVM = AddressSearchViewModel<AddressSearchRepositoryImpl>
 
-        let addressSearchVCFactory: (Int, @escaping (AddressSearchResult) -> Void) -> UIViewController = { [container] diaryId, onSelect in
-            guard let addressVM = try? container.resolve(AddressSearchVM.self, argument: diaryId) else {
-                fatalError("AddressSearchViewModel not registered")
+        let addressSearchVCFactory:
+            (Int, @escaping (AddressSearchResult) -> Void) -> UIViewController = {
+                [container] diaryId, onSelect in
+                guard
+                    let addressVM = try? container.resolve(AddressSearchVM.self, argument: diaryId)
+                else {
+                    fatalError("AddressSearchViewModel not registered")
+                }
+                return AddressSearchViewController(
+                    viewModel: addressVM, onAddressSelected: onSelect)
             }
-            return AddressSearchViewController(viewModel: addressVM, onAddressSelected: onSelect)
-        }
 
         let editVCFactory: (FoodRecord) -> UIViewController = { [container] record in
             guard let editVM = try? container.resolve(EditVM.self, argument: record) else {
@@ -120,10 +131,117 @@ private extension AppFlowController {
             typealias FetchUseCase = FetchFoodImageAssetUseCase<AssetFetcher>
             typealias AuthUseCase = RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>
 
-            let presentImagePickerHandler: (UINavigationController, Date, @escaping ([any ImageAssetable], [UIImage]) -> Void) -> Void = { [container] nav, date, onSelected in
+            let presentImagePickerHandler:
+                (UINavigationController, Date, @escaping ([any ImageAssetable], [UIImage]) -> Void)
+                    -> Void = { [container] nav, date, onSelected in
+                        guard let fetchUseCase = try? container.resolve(FetchUseCase.self),
+                            let imageProvider = try? container.resolve(UIImageLoader.self),
+                            let authUseCase = try? container.resolve(AuthUseCase.self)
+                        else {
+                            fatalError("ImagePicker dependencies not registered")
+                        }
+
+                        guard authUseCase.isAuthorized() else {
+                            Task { @MainActor in
+                                let status = await authUseCase.execute()
+                                if status == .denied || status == .restricted {
+                                    let alert = UIAlertController(
+                                        title: "사진 접근 권한 필요",
+                                        message:
+                                            "음식 사진을 추가하려면 사진 라이브러리 접근 권한이 필요합니다. 설정에서 권한을 허용해 주세요.",
+                                        preferredStyle: .alert
+                                    )
+                                    alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+                                    alert.addAction(
+                                        UIAlertAction(title: "설정으로 이동", style: .default) { _ in
+                                            if let url = URL(
+                                                string: UIApplication.openSettingsURLString)
+                                            {
+                                                UIApplication.shared.open(url)
+                                            }
+                                        })
+                                    nav.topViewController?.present(alert, animated: true)
+                                }
+                            }
+                            return
+                        }
+
+                        Task { @MainActor in
+                            do {
+                                let calendar = Calendar.current
+                                let startOfDay = calendar.startOfDay(for: date)
+                                let endOfDay = calendar.date(
+                                    byAdding: .day, value: 1, to: startOfDay)
+                                let photosByDate = try await fetchUseCase.execute(
+                                    from: startOfDay, to: endOfDay)
+                                let foodImageAssets = photosByDate[startOfDay] ?? []
+                                let photos = foodImageAssets.map { $0.imageAsset }
+
+                                let picker = ImagePickerViewController(
+                                    photos: photos,
+                                    imageProvider: imageProvider,
+                                    configuration: .default
+                                )
+
+                                var cancellable: AnyCancellable?
+                                cancellable = picker.resultPublisher
+                                    .sink { [weak nav] result in
+                                        defer { cancellable = nil }
+                                        switch result {
+                                        case .selected(let assets):
+                                            nav?.popViewController(animated: true)
+                                            Task { @MainActor in
+                                                var previewImages: [UIImage] = []
+                                                for asset in assets {
+                                                    if let image =
+                                                        try? await imageProvider.loadImage(
+                                                            for: asset,
+                                                            targetSize: CGSize(
+                                                                width: 300, height: 300)
+                                                        )
+                                                    {
+                                                        previewImages.append(image)
+                                                    }
+                                                }
+                                                onSelected(assets, previewImages)
+                                            }
+                                        case .cancelled:
+                                            nav?.popViewController(animated: true)
+                                        }
+                                    }
+
+                                nav.pushViewController(picker, animated: true)
+                            } catch {
+                                let alert = UIAlertController(
+                                    title: "사진 불러오기 실패",
+                                    message: error.localizedDescription,
+                                    preferredStyle: .alert
+                                )
+                                alert.addAction(UIAlertAction(title: "확인", style: .default))
+                                nav.topViewController?.present(alert, animated: true)
+                            }
+                        }
+                    }
+
+            return EditFoodRecordViewController(
+                viewModel: editVM,
+                onDismissWithResult: { _ in },
+                addressSearchViewControllerFactory: addressSearchVCFactory,
+                presentImagePickerHandler: presentImagePickerHandler
+            )
+        }
+
+        typealias AssetFetcher = FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>
+        typealias FetchUseCase = FetchFoodImageAssetUseCase<AssetFetcher>
+        typealias AuthUseCase = RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>
+
+        let detailImagePickerHandler:
+            (UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void) -> Void = {
+                [container] nav, date, onSelected in
                 guard let fetchUseCase = try? container.resolve(FetchUseCase.self),
-                      let imageProvider = try? container.resolve(UIImageLoader.self),
-                      let authUseCase = try? container.resolve(AuthUseCase.self) else {
+                    let imageProvider = try? container.resolve(UIImageLoader.self),
+                    let authUseCase = try? container.resolve(AuthUseCase.self)
+                else {
                     fatalError("ImagePicker dependencies not registered")
                 }
 
@@ -137,11 +255,12 @@ private extension AppFlowController {
                                 preferredStyle: .alert
                             )
                             alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-                            alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { _ in
-                                if let url = URL(string: UIApplication.openSettingsURLString) {
-                                    UIApplication.shared.open(url)
-                                }
-                            })
+                            alert.addAction(
+                                UIAlertAction(title: "설정으로 이동", style: .default) { _ in
+                                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                                        UIApplication.shared.open(url)
+                                    }
+                                })
                             nav.topViewController?.present(alert, animated: true)
                         }
                     }
@@ -153,7 +272,8 @@ private extension AppFlowController {
                         let calendar = Calendar.current
                         let startOfDay = calendar.startOfDay(for: date)
                         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)
-                        let photosByDate = try await fetchUseCase.execute(from: startOfDay, to: endOfDay)
+                        let photosByDate = try await fetchUseCase.execute(
+                            from: startOfDay, to: endOfDay)
                         let foodImageAssets = photosByDate[startOfDay] ?? []
                         let photos = foodImageAssets.map { $0.imageAsset }
 
@@ -170,18 +290,7 @@ private extension AppFlowController {
                                 switch result {
                                 case .selected(let assets):
                                     nav?.popViewController(animated: true)
-                                    Task { @MainActor in
-                                        var previewImages: [UIImage] = []
-                                        for asset in assets {
-                                            if let image = try? await imageProvider.loadImage(
-                                                for: asset,
-                                                targetSize: CGSize(width: 300, height: 300)
-                                            ) {
-                                                previewImages.append(image)
-                                            }
-                                        }
-                                        onSelected(assets, previewImages)
-                                    }
+                                    onSelected(assets)
                                 case .cancelled:
                                     nav?.popViewController(animated: true)
                                 }
@@ -200,92 +309,12 @@ private extension AppFlowController {
                 }
             }
 
-            return EditFoodRecordViewController(
-                viewModel: editVM,
-                onDismissWithResult: { _ in },
-                addressSearchViewControllerFactory: addressSearchVCFactory,
-                presentImagePickerHandler: presentImagePickerHandler
-            )
-        }
-
-        typealias AssetFetcher = FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>
-        typealias FetchUseCase = FetchFoodImageAssetUseCase<AssetFetcher>
-        typealias AuthUseCase = RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>
-
-        let detailImagePickerHandler: (UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void) -> Void = { [container] nav, date, onSelected in
-            guard let fetchUseCase = try? container.resolve(FetchUseCase.self),
-                  let imageProvider = try? container.resolve(UIImageLoader.self),
-                  let authUseCase = try? container.resolve(AuthUseCase.self) else {
-                fatalError("ImagePicker dependencies not registered")
-            }
-
-            guard authUseCase.isAuthorized() else {
-                Task { @MainActor in
-                    let status = await authUseCase.execute()
-                    if status == .denied || status == .restricted {
-                        let alert = UIAlertController(
-                            title: "사진 접근 권한 필요",
-                            message: "음식 사진을 추가하려면 사진 라이브러리 접근 권한이 필요합니다. 설정에서 권한을 허용해 주세요.",
-                            preferredStyle: .alert
-                        )
-                        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-                        alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { _ in
-                            if let url = URL(string: UIApplication.openSettingsURLString) {
-                                UIApplication.shared.open(url)
-                            }
-                        })
-                        nav.topViewController?.present(alert, animated: true)
-                    }
-                }
-                return
-            }
-
-            Task { @MainActor in
-                do {
-                    let calendar = Calendar.current
-                    let startOfDay = calendar.startOfDay(for: date)
-                    let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)
-                    let photosByDate = try await fetchUseCase.execute(from: startOfDay, to: endOfDay)
-                    let foodImageAssets = photosByDate[startOfDay] ?? []
-                    let photos = foodImageAssets.map { $0.imageAsset }
-
-                    let picker = ImagePickerViewController(
-                        photos: photos,
-                        imageProvider: imageProvider,
-                        configuration: .default
-                    )
-
-                    var cancellable: AnyCancellable?
-                    cancellable = picker.resultPublisher
-                        .sink { [weak nav] result in
-                            defer { cancellable = nil }
-                            switch result {
-                            case .selected(let assets):
-                                nav?.popViewController(animated: true)
-                                onSelected(assets)
-                            case .cancelled:
-                                nav?.popViewController(animated: true)
-                            }
-                        }
-
-                    nav.pushViewController(picker, animated: true)
-                } catch {
-                    let alert = UIAlertController(
-                        title: "사진 불러오기 실패",
-                        message: error.localizedDescription,
-                        preferredStyle: .alert
-                    )
-                    alert.addAction(UIAlertAction(title: "확인", style: .default))
-                    nav.topViewController?.present(alert, animated: true)
-                }
-            }
-        }
-
         let weeklyCalendarVC = WeeklyCalendarViewController(
             viewModel: weeklyViewModel,
             imageProvider: imageProvider,
             detailViewModelFactory: { [container] date, records in
-                guard let vm = try? container.resolve(DetailVM.self, argument: (date, records)) else {
+                guard let vm = try? container.resolve(DetailVM.self, argument: (date, records))
+                else {
                     fatalError("DetailViewModel not registered")
                 }
                 return vm
@@ -322,21 +351,45 @@ private extension AppFlowController {
         return tabBarVC
     }
 
-    func createOnboardingView() -> UIViewController {
+    fileprivate func createOnboardingView() -> UIViewController {
         let onboardingVC = OnboardingViewController()
 
         onboardingVC.didCompletePublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 guard let self else { return }
-                transition(to: createMainView())
+                let mainVC = createMainView()
+                transition(to: mainVC)
+                showCoachmarkOverlay(on: mainVC)
             }
             .store(in: &cancellables)
 
         return UINavigationController(rootViewController: onboardingVC)
     }
 
-    func createLoginView() -> UIViewController {
+    fileprivate func showCoachmarkOverlay(on viewController: UIViewController) {
+        let overlay = CoachmarkOverlayView()
+        viewController.view.addSubview(overlay)
+        overlay.snp.makeConstraints { $0.edges.equalToSuperview() }
+        overlay.alpha = 0
+        UIView.animate(withDuration: 0.3) { overlay.alpha = 1 }
+
+        overlay.didDismissPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { _ in
+                UIView.animate(
+                    withDuration: 0.3,
+                    animations: {
+                        overlay.alpha = 0
+                    },
+                    completion: { _ in
+                        overlay.removeFromSuperview()
+                    })
+            }
+            .store(in: &cancellables)
+    }
+
+    fileprivate func createLoginView() -> UIViewController {
         guard let viewModel = try? container.resolve(LoginViewModel.self) else {
             fatalError("LoginViewModel Failed Resolve")
         }
@@ -353,12 +406,12 @@ private extension AppFlowController {
 
         return loginVC
     }
-    
-    func handleLoginResult(_ loginResult: LoginResult) {
+
+    fileprivate func handleLoginResult(_ loginResult: LoginResult) {
         transition(to: loginResult.isFirst ? createOnboardingView() : createMainView())
     }
-    
-    func transition(to viewController: UIViewController) {
+
+    fileprivate func transition(to viewController: UIViewController) {
         let previousChild = currentChild
 
         addChild(viewController)
@@ -385,4 +438,3 @@ private extension AppFlowController {
         )
     }
 }
-
