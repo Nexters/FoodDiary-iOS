@@ -183,7 +183,7 @@ private final class PolaroidCardView: UIView {
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
         imageView.layer.cornerRadius = Constants.imageCornerRadius
-        imageView.backgroundColor = DesignSystemAsset.gray200.color // 이미지 로딩 전 배경색
+        imageView.backgroundColor = DesignSystemAsset.gray400.color
         addSubview(imageView)
     }
 
@@ -208,9 +208,11 @@ private final class PolaroidCardView: UIView {
     }
 
     func setImage(with url: URL) {
-        imageView.kf.setImage(
-            with: url,
-            placeholder: DesignSystemAsset.foodPlaceholder.image
-        )
+        imageView.kf.setImage(with: url)
+    }
+
+    func cancelImageLoading() {
+        imageView.kf.cancelDownloadTask()
+        imageView.image = nil
     }
 }
