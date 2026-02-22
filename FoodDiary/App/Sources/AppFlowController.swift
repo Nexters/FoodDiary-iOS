@@ -97,7 +97,7 @@ extension AppFlowController {
         let tabBarVC = RootTabBarController(
             weeklyVC: weeklyCalendarVC,
             monthlyVC: monthlyCalendarVC,
-            insightVC: UIViewController()
+            insightVC: InsightViewController()
         )
 
         tabBarVC.didLogoutPublisher
