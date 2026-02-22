@@ -283,7 +283,7 @@ extension AppFlowController {
                             photos: photos,
                             preselectedIds: foodPhotoIds,
                             imageProvider: imageProvider,
-                            configuration: .default
+                            configuration: .withMaxSelectionCount(10)
                         )
 
                         var cancellable: AnyCancellable?
@@ -299,7 +299,6 @@ extension AppFlowController {
                                 }
                             }
 
-                        picker.hidesBottomBarWhenPushed = true
                         nav.pushViewController(picker, animated: true)
                     } catch {
                         let alert = UIAlertController(
@@ -365,7 +364,7 @@ extension AppFlowController {
                         photos: photos,
                         preselectedIds: foodPhotoIds,
                         imageProvider: imageProvider,
-                        configuration: .default
+                        configuration: .withMaxSelectionCount(10)
                     )
 
                     var cancellable: AnyCancellable?
@@ -381,7 +380,6 @@ extension AppFlowController {
                             }
                         }
 
-                    picker.hidesBottomBarWhenPushed = true
                     nav.pushViewController(picker, animated: true)
                 } catch {
                     let alert = UIAlertController(

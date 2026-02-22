@@ -27,6 +27,17 @@ public struct ImagePickerConfiguration: Sendable {
     /// 확인 버튼 타이틀
     public let confirmButtonTitle: String
 
+    /// 기본 설정에서 최대 선택 수만 변경한 설정 반환
+    public static func withMaxSelectionCount(_ count: Int) -> ImagePickerConfiguration {
+        ImagePickerConfiguration(
+            primaryColor: DesignSystemAsset.primary.color,
+            buttonTextColor: .white,
+            buttonDisabledColor: DesignSystemAsset.gray400.color,
+            maxSelectionCount: count,
+            confirmButtonTitle: "추가하기"
+        )
+    }
+
     /// 기본 설정
     public static let `default` = ImagePickerConfiguration(
         primaryColor: DesignSystemAsset.primary.color,

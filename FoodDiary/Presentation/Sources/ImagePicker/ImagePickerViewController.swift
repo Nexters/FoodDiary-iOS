@@ -199,6 +199,7 @@ public final class ImagePickerViewController<
         self.imageProvider = imageProvider
         self.configuration = configuration
         super.init(nibName: nil, bundle: nil)
+        hidesBottomBarWhenPushed = true
     }
 
     @available(*, unavailable)
@@ -241,27 +242,26 @@ public final class ImagePickerViewController<
         )
         selectAllButton.tintColor = .white
         navigationItem.rightBarButtonItem = selectAllButton
-
     }
 
     private func setupUI() {
         view.backgroundColor = DesignSystemAsset.sdBase.color
 
-        view.addSubview(confirmButton)
-        view.addSubview(emptyView)
-
         view.addSubview(collectionView)
-        collectionView.snp.makeConstraints {
-            $0.top.equalTo(view.safeAreaLayoutGuide)
-            $0.leading.trailing.equalToSuperview()
-            $0.bottom.equalTo(confirmButton.snp.top).offset(-16)
-        }
+        view.addSubview(emptyView)
+        view.addSubview(confirmButton)
 
         emptyView.isHidden = !photos.isEmpty
         collectionView.isHidden = photos.isEmpty
     }
 
     private func setupConstraints() {
+        collectionView.snp.makeConstraints {
+            $0.top.equalTo(view.safeAreaLayoutGuide)
+            $0.leading.trailing.equalToSuperview()
+            $0.bottom.equalTo(confirmButton.snp.top).offset(-16)
+        }
+
         emptyView.snp.makeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide)
             $0.leading.trailing.equalToSuperview()
@@ -399,7 +399,8 @@ public final class ImagePickerViewController<
         else {
             return UICollectionReusableView()
         }
-        let guideText: String? = photoSection == .food
+        let guideText: String? =
+            photoSection == .food
             ? configuration.maxSelectionCount.map { "\($0)장까지 선택할 수 있어요." }
             : nil
         header.configure(title: photoSection.headerTitle, guideText: guideText)
@@ -459,7 +460,8 @@ public final class ImagePickerViewController<
         else {
             return .zero
         }
-        let height: CGFloat = photoSection == .food && configuration.maxSelectionCount != nil ? 72 : 44
+        let height: CGFloat =
+            photoSection == .food && configuration.maxSelectionCount != nil ? 72 : 44
         return CGSize(width: collectionView.bounds.width, height: height)
     }
 }
