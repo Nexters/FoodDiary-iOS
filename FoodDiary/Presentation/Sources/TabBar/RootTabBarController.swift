@@ -59,6 +59,9 @@ public final class RootTabBarController: UITabBarController {
 
         let insightNav = UINavigationController(rootViewController: insightVC)
         insightNav.tabBarItem = UITabBarItem(title: "인사이트", image: DesignSystemAsset.iconInsight.image, tag: 1)
+        insightNav.navigationBar.standardAppearance = navAppearance
+        insightNav.navigationBar.scrollEdgeAppearance = navAppearance
+        insightNav.navigationBar.tintColor = .white
 
         let toggleVC = UIViewController()
         toggleVC.tabBarItem = UITabBarItem(tabBarSystemItem: .search, tag: 2)
