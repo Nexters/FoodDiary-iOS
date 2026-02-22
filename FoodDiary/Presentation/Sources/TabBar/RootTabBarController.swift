@@ -14,6 +14,10 @@ public final class RootTabBarController: UITabBarController {
     let insightVC: UIViewController
     private var cancellables = Set<AnyCancellable>()
 
+    public var didLogoutPublisher: AnyPublisher<Void, Never> {
+        calendarVC.didLogoutPublisher
+    }
+
     public init(weeklyVC: UIViewController, monthlyVC: UIViewController, insightVC: UIViewController) {
         self.calendarVC = CalendarViewController(weeklyVC: weeklyVC, monthlyVC: monthlyVC)
         self.insightVC = insightVC
