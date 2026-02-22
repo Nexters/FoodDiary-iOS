@@ -129,6 +129,7 @@ jobs:
       # ── Archive ──
       - name: Archive
         run: |
+          set -o pipefail
           BUILD_NUMBER=${{ github.run_number }}
           VERSION=${{ github.event.inputs.version }}
           ARCHIVE_PATH=$RUNNER_TEMP/App.xcarchive
@@ -145,7 +146,7 @@ jobs:
             DEVELOPMENT_TEAM=W35T2QAC67 \
             CODE_SIGN_IDENTITY="iPhone Distribution" \
             OTHER_CODE_SIGN_FLAGS="--keychain ${{ env.KEYCHAIN_PATH }}" \
-            | xcpretty --color
+            2>&1 | tee "$RUNNER_TEMP/archive.log" | xcpretty --color
 
           echo "ARCHIVE_PATH=$ARCHIVE_PATH" >> $GITHUB_ENV
           echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
@@ -154,7 +155,7 @@ jobs:
       # ── Export IPA ──
       - name: Create ExportOptions.plist
         run: |
-          cat > $RUNNER_TEMP/ExportOptions.plist << 'PLIST'
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<'PLIST'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
             "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -178,18 +179,25 @@ jobs:
           </dict>
           </plist>
           PLIST
+          # heredoc 들여쓰기 제거
+          sed -i '' 's/^          //' "$RUNNER_TEMP/ExportOptions.plist"
+          echo "=== ExportOptions.plist ==="
+          cat "$RUNNER_TEMP/ExportOptions.plist"
 
       - name: Export IPA
         run: |
+          set -o pipefail
           EXPORT_PATH=$RUNNER_TEMP/export
 
           xcodebuild -exportArchive \
             -archivePath "${{ env.ARCHIVE_PATH }}" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
             -exportPath "$EXPORT_PATH" \
-            | xcpretty --color
+            2>&1 | tee "$RUNNER_TEMP/export.log" | xcpretty --color
 
           echo "EXPORT_PATH=$EXPORT_PATH" >> $GITHUB_ENV
+          echo "=== Exported files ==="
+          ls -la "$EXPORT_PATH"
 
       # ── TestFlight 업로드 ──
       - name: Upload to TestFlight
@@ -227,7 +235,9 @@ jobs:
         if: failure()
         with:
           name: build-log
-          path: /var/folders/**/xcodebuild_*.log
+          path: |
+            ${{ runner.temp }}/archive.log
+            ${{ runner.temp }}/export.log
           retention-days: 7
 
       # ── 정리 ──
