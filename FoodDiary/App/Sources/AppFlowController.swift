@@ -14,6 +14,10 @@ import SnapKit
 import UIKit
 
 final class AppFlowController: UIViewController {
+    private typealias AssetFetcher = FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>
+    private typealias FetchUseCase = FetchFoodImageAssetUseCase<AssetFetcher>
+    private typealias AuthUseCase = RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>
+
     private var currentChild: UIViewController?
     private var networkCancellable: AnyCancellable?
     private var cancellables = Set<AnyCancellable>()
@@ -87,6 +91,27 @@ extension AppFlowController {
     }
 
     fileprivate func createMainView() -> UIViewController {
+        let weeklyCalendarVC = makeWeeklyCalendarVC()
+        let monthlyCalendarVC = makeMonthlyCalendarVC()
+
+        let tabBarVC = RootTabBarController(
+            weeklyVC: weeklyCalendarVC,
+            monthlyVC: monthlyCalendarVC,
+            insightVC: UIViewController()
+        )
+
+        tabBarVC.didLogoutPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in
+                guard let self else { return }
+                transition(to: createLoginView())
+            }
+            .store(in: &cancellables)
+
+        return tabBarVC
+    }
+
+    fileprivate func makeWeeklyCalendarVC() -> UIViewController {
         guard let imageProvider = try? container.resolve(UIImageLoader.self) else {
             fatalError("UIImageLoader not registered")
         }
@@ -125,105 +150,26 @@ extension AppFlowController {
                     viewModel: addressVM, onAddressSelected: onSelect)
             }
 
-        let editVCFactory: (FoodRecord) -> UIViewController = { [container] record in
+        let editVCFactory: (FoodRecord) -> UIViewController = { [weak self, container] record in
+            guard let self else { return UIViewController() }
             guard let editVM = try? container.resolve(EditVM.self, argument: record) else {
                 fatalError("EditFoodRecordViewModel not registered")
             }
 
-            typealias AssetFetcher = FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>
-            typealias FetchUseCase = FetchFoodImageAssetUseCase<AssetFetcher>
-            typealias AuthUseCase = RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>
-
             let presentImagePickerHandler:
                 (UINavigationController, Date, @escaping ([any ImageAssetable], [UIImage]) -> Void)
-                    -> Void = { [container] nav, date, onSelected in
-                        guard let fetchUseCase = try? container.resolve(FetchUseCase.self),
-                            let imageProvider = try? container.resolve(UIImageLoader.self),
-                            let authUseCase = try? container.resolve(AuthUseCase.self)
-                        else {
-                            fatalError("ImagePicker dependencies not registered")
-                        }
-
-                        guard authUseCase.isAuthorized() else {
-                            Task { @MainActor in
-                                let status = await authUseCase.execute()
-                                if status == .denied || status == .restricted {
-                                    let alert = UIAlertController(
-                                        title: "사진 접근 권한 필요",
-                                        message:
-                                            "음식 사진을 추가하려면 사진 라이브러리 접근 권한이 필요합니다. 설정에서 권한을 허용해 주세요.",
-                                        preferredStyle: .alert
-                                    )
-                                    alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-                                    alert.addAction(
-                                        UIAlertAction(title: "설정으로 이동", style: .default) { _ in
-                                            if let url = URL(
-                                                string: UIApplication.openSettingsURLString)
-                                            {
-                                                UIApplication.shared.open(url)
-                                            }
-                                        })
-                                    nav.topViewController?.present(alert, animated: true)
-                                }
+                    -> Void = { [weak self] nav, date, onSelected in
+                        guard let self else { return }
+                        self.presentImagePicker(
+                            from: nav,
+                            date: date,
+                            configuration: ImagePickerConfiguration.default,
+                            autoPreselectByProbability: false,
+                            loadPreviewImages: true,
+                            onSelected: { assets, previewImages in
+                                onSelected(assets, previewImages)
                             }
-                            return
-                        }
-
-                        Task { @MainActor in
-                            do {
-                                let calendar = Calendar.current
-                                let startOfDay = calendar.startOfDay(for: date)
-                                let endOfDay = calendar.date(
-                                    byAdding: .day, value: 1, to: startOfDay)
-                                let photosByDate = try await fetchUseCase.execute(
-                                    from: startOfDay, to: endOfDay)
-                                let foodImageAssets = photosByDate[startOfDay] ?? []
-                                let photos = foodImageAssets.map { $0.imageAsset }
-
-                                let picker = ImagePickerViewController(
-                                    photos: photos,
-                                    imageProvider: imageProvider,
-                                    configuration: .default
-                                )
-
-                                var cancellable: AnyCancellable?
-                                cancellable = picker.resultPublisher
-                                    .sink { [weak nav] result in
-                                        defer { cancellable = nil }
-                                        switch result {
-                                        case .selected(let assets):
-                                            nav?.popViewController(animated: true)
-                                            Task { @MainActor in
-                                                var previewImages: [UIImage] = []
-                                                for asset in assets {
-                                                    if let image =
-                                                        try? await imageProvider.loadImage(
-                                                            for: asset,
-                                                            targetSize: CGSize(
-                                                                width: 300, height: 300)
-                                                        )
-                                                    {
-                                                        previewImages.append(image)
-                                                    }
-                                                }
-                                                onSelected(assets, previewImages)
-                                            }
-                                        case .cancelled:
-                                            nav?.popViewController(animated: true)
-                                        }
-                                    }
-
-                                nav.pushViewController(picker, animated: true)
-                            } catch {
-                                let alert = UIAlertController(
-                                    title: "사진 불러오기 실패",
-                                    message: error.localizedDescription,
-                                    preferredStyle: .alert
-                                )
-                                alert.addAction(UIAlertAction(title: "확인", style: .default))
-                                nav.topViewController?.present(alert, animated: true)
-                            }
-                        }
+                        )
                     }
 
             return EditFoodRecordViewController(
@@ -234,80 +180,23 @@ extension AppFlowController {
             )
         }
 
-        typealias AssetFetcher = FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>
-        typealias FetchUseCase = FetchFoodImageAssetUseCase<AssetFetcher>
-        typealias AuthUseCase = RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>
-
-        let detailImagePickerHandler: (UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void) -> Void = { [container] nav, date, onSelected in
-            guard let fetchUseCase = try? container.resolve(FetchUseCase.self),
-                  let imageProvider = try? container.resolve(UIImageLoader.self),
-                  let authUseCase = try? container.resolve(AuthUseCase.self) else {
-                fatalError("ImagePicker dependencies not registered")
-            }
-
-            Task { @MainActor in
-                if !authUseCase.isAuthorized() {
-                    let status = await authUseCase.execute()
-                    if status == .denied || status == .restricted {
-                        let alert = UIAlertController(
-                            title: "사진 접근 권한 필요",
-                            message: "음식 사진을 추가하려면 사진 라이브러리 접근 권한이 필요합니다. 설정에서 권한을 허용해 주세요.",
-                            preferredStyle: .alert
-                        )
-                        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-                        alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { _ in
-                            if let url = URL(string: UIApplication.openSettingsURLString) {
-                                UIApplication.shared.open(url)
-                            }
-                        })
-                        nav.topViewController?.present(alert, animated: true)
-                        return
-                    }
-                }
-
-                do {
-                    let calendar = Calendar.current
-                    let startOfDay = calendar.startOfDay(for: date)
-                    let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)
-                    let photosByDate = try await fetchUseCase.execute(from: startOfDay, to: endOfDay)
-                    let foodImageAssets = photosByDate[startOfDay] ?? []
-                    let photos = foodImageAssets.map { $0.imageAsset }
-                    let foodPhotoIds = Set(foodImageAssets.filter { $0.foodProbability >= 0.5 }.map { $0.id })
-
-                    let picker = ImagePickerViewController(
-                        photos: photos,
-                        preselectedIds: foodPhotoIds,
-                        imageProvider: imageProvider,
-                        configuration: .withMaxSelectionCount(10)
-                    )
-
-                    var cancellable: AnyCancellable?
-                    cancellable = picker.resultPublisher
-                        .sink { [weak nav] result in
-                            defer { cancellable = nil }
-                            switch result {
-                            case .selected(let assets):
-                                nav?.popViewController(animated: true)
-                                onSelected(assets)
-                            case .cancelled:
-                                nav?.popViewController(animated: true)
-                            }
+        let detailImagePickerHandler:
+            (UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void)
+                -> Void = { [weak self] nav, date, onSelected in
+                    guard let self else { return }
+                    self.presentImagePicker(
+                        from: nav,
+                        date: date,
+                        configuration: .withMaxSelectionCount(10),
+                        autoPreselectByProbability: true,
+                        loadPreviewImages: false,
+                        onSelected: { assets, _ in
+                            onSelected(assets)
                         }
-
-                    nav.pushViewController(picker, animated: true)
-                } catch {
-                    let alert = UIAlertController(
-                        title: "사진 불러오기 실패",
-                        message: error.localizedDescription,
-                        preferredStyle: .alert
                     )
-                    alert.addAction(UIAlertAction(title: "확인", style: .default))
-                    nav.topViewController?.present(alert, animated: true)
                 }
-            }
-        }
 
-        let weeklyCalendarVC = WeeklyCalendarViewController(
+        return WeeklyCalendarViewController(
             viewModel: weeklyViewModel,
             imageProvider: imageProvider,
             detailViewModelFactory: { [container] date, records in
@@ -320,7 +209,9 @@ extension AppFlowController {
             editViewControllerFactory: editVCFactory,
             presentImagePickerHandler: detailImagePickerHandler
         )
+    }
 
+    fileprivate func makeMonthlyCalendarVC() -> UIViewController {
         typealias MonthlyVM = MonthlyCalendarViewModel<
             FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
             PhotoAuthorizationFetcher
@@ -330,43 +221,7 @@ extension AppFlowController {
             fatalError("MonthlyCalendarViewModel not registered")
         }
 
-        let monthlyCalendarVC = MonthlyCalendarViewController(
-            viewModel: monthlyViewModel,
-            detailViewControllerFactory: { [container, editVCFactory, detailImagePickerHandler, weak monthlyViewModel] date, records in
-                guard let vm = try? container.resolve(DetailVM.self, argument: (date, records)) else {
-                    fatalError("DetailViewModel not registered")
-                }
-                return DetailViewController(
-                    viewModel: vm,
-                    onDismissWithDate: { dismissedDate in
-                        guard let monthlyViewModel else { return }
-                        let currentDisplay = monthlyViewModel.state.currentDisplayDate
-                        let isSameMonth = Calendar.current.isDate(dismissedDate, equalTo: currentDisplay, toGranularity: .month)
-                        if !isSameMonth {
-                            monthlyViewModel.input.send(.selectMonth(dismissedDate))
-                        }
-                    },
-                    editViewControllerFactory: editVCFactory,
-                    presentImagePickerHandler: detailImagePickerHandler
-                )
-            }
-        )
-
-        let tabBarVC = RootTabBarController(
-            weeklyVC: weeklyCalendarVC,
-            monthlyVC: monthlyCalendarVC,
-            insightVC: UIViewController()
-        )
-
-        tabBarVC.didLogoutPublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] in
-                guard let self else { return }
-                transition(to: createLoginView())
-            }
-            .store(in: &cancellables)
-
-        return tabBarVC
+        return MonthlyCalendarViewController(viewModel: monthlyViewModel)
     }
 
     fileprivate func createOnboardingView() -> UIViewController {
@@ -454,5 +309,112 @@ extension AppFlowController {
                 self.currentChild = viewController
             }
         )
+    }
+}
+
+// MARK: - Image Picker
+
+extension AppFlowController {
+    fileprivate func presentImagePicker(
+        from nav: UINavigationController,
+        date: Date,
+        configuration: ImagePickerConfiguration,
+        autoPreselectByProbability: Bool,
+        loadPreviewImages: Bool,
+        onSelected: @escaping ([any ImageAssetable], [UIImage]) -> Void
+    ) {
+        guard let fetchUseCase = try? container.resolve(FetchUseCase.self),
+              let imageProvider = try? container.resolve(UIImageLoader.self),
+              let authUseCase = try? container.resolve(AuthUseCase.self)
+        else {
+            fatalError("ImagePicker dependencies not registered")
+        }
+
+        Task { @MainActor in
+            if !authUseCase.isAuthorized() {
+                let status = await authUseCase.execute()
+                if status == .denied || status == .restricted {
+                    Self.presentPhotoAccessDeniedAlert(on: nav)
+                    return
+                }
+            }
+
+            do {
+                let calendar = Calendar.current
+                let startOfDay = calendar.startOfDay(for: date)
+                let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)
+                let photosByDate = try await fetchUseCase.execute(from: startOfDay, to: endOfDay)
+                let foodImageAssets = photosByDate[startOfDay] ?? []
+                let photos = foodImageAssets.map { $0.imageAsset }
+
+                let preselectedIds: Set<String> = autoPreselectByProbability
+                    ? Set(foodImageAssets.filter { $0.foodProbability >= 0.5 }.map { $0.id })
+                    : []
+
+                let picker = ImagePickerViewController(
+                    photos: photos,
+                    preselectedIds: preselectedIds,
+                    imageProvider: imageProvider,
+                    configuration: configuration
+                )
+
+                var cancellable: AnyCancellable?
+                cancellable = picker.resultPublisher
+                    .sink { [weak nav] result in
+                        defer { cancellable = nil }
+                        switch result {
+                        case .selected(let assets):
+                            nav?.popViewController(animated: true)
+                            if loadPreviewImages {
+                                Task { @MainActor in
+                                    var previewImages: [UIImage] = []
+                                    for asset in assets {
+                                        if let image = try? await imageProvider.loadImage(
+                                            for: asset,
+                                            targetSize: CGSize(width: 300, height: 300)
+                                        ) {
+                                            previewImages.append(image)
+                                        }
+                                    }
+                                    onSelected(assets, previewImages)
+                                }
+                            } else {
+                                onSelected(assets, [])
+                            }
+                        case .cancelled:
+                            nav?.popViewController(animated: true)
+                        }
+                    }
+
+                nav.pushViewController(picker, animated: true)
+            } catch {
+                Self.presentPhotoLoadFailedAlert(error: error, on: nav)
+            }
+        }
+    }
+
+    private static func presentPhotoAccessDeniedAlert(on nav: UINavigationController) {
+        let alert = UIAlertController(
+            title: "사진 접근 권한 필요",
+            message: "음식 사진을 추가하려면 사진 라이브러리 접근 권한이 필요합니다. 설정에서 권한을 허용해 주세요.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { _ in
+            if let url = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(url)
+            }
+        })
+        nav.topViewController?.present(alert, animated: true)
+    }
+
+    private static func presentPhotoLoadFailedAlert(error: Error, on nav: UINavigationController) {
+        let alert = UIAlertController(
+            title: "사진 불러오기 실패",
+            message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        nav.topViewController?.present(alert, animated: true)
     }
 }
