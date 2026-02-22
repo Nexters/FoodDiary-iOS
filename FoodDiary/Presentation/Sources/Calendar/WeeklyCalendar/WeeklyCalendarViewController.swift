@@ -311,7 +311,7 @@ public final class WeeklyCalendarViewController<
                 photos: selectedPhotos,
                 preselectedIds: preselectedIds,
                 imageProvider: imageProvider,
-                configuration: .default
+                configuration: .withMaxSelectionCount(10)
             )
 
             picker.resultPublisher
@@ -378,6 +378,7 @@ public final class WeeklyCalendarViewController<
             editViewControllerFactory: editViewControllerFactory,
             presentImagePickerHandler: presentImagePickerHandler
         )
+        detailVC.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(detailVC, animated: true)
     }
 }

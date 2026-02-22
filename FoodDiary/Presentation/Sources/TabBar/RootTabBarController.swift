@@ -47,6 +47,16 @@ public final class RootTabBarController: UITabBarController {
         let calendarNav = UINavigationController(rootViewController: calendarVC)
         calendarNav.tabBarItem = UITabBarItem(title: "홈", image: DesignSystemAsset.iconHome.image, tag: 0)
 
+        let navAppearance = UINavigationBarAppearance()
+        navAppearance.configureWithOpaqueBackground()
+        navAppearance.backgroundColor = .sdBase
+        navAppearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+        navAppearance.shadowColor = .clear
+        
+        calendarNav.navigationBar.standardAppearance = navAppearance
+        calendarNav.navigationBar.scrollEdgeAppearance = navAppearance
+        calendarNav.navigationBar.tintColor = .white
+
         let insightNav = UINavigationController(rootViewController: insightVC)
         insightNav.tabBarItem = UITabBarItem(title: "인사이트", image: DesignSystemAsset.iconInsight.image, tag: 1)
 
