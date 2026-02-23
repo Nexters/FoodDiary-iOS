@@ -26,18 +26,9 @@ public final class EditFoodRecordViewController<
     RecordRepo: FoodRecordRepository
 >: UIViewController, UIGestureRecognizerDelegate {
 
-    // MARK: - Types
-
-    public enum EditResult {
-        case updated(FoodRecord)
-        case deleted
-        case cancelled
-    }
-
     // MARK: - Dependencies
 
     private let viewModel: EditFoodRecordViewModel<RecordRepo>
-    private let onDismissWithResult: ((EditResult) -> Void)?
     private let addressSearchViewControllerFactory: ((Int, @escaping (AddressSearchResult) -> Void) -> UIViewController)?
     private let presentImagePickerHandler: (
         (_ navigationController: UINavigationController,
@@ -113,18 +104,15 @@ public final class EditFoodRecordViewController<
     // MARK: - State
 
     private var cancellables = Set<AnyCancellable>()
-    private var didSendDismissResult = false
 
     // MARK: - Init
 
     public init(
         viewModel: EditFoodRecordViewModel<RecordRepo>,
-        onDismissWithResult: ((EditResult) -> Void)? = nil,
         addressSearchViewControllerFactory: ((Int, @escaping (AddressSearchResult) -> Void) -> UIViewController)? = nil,
         presentImagePickerHandler: ((UINavigationController, Date, @escaping ([any ImageAssetable], [UIImage]) -> Void) -> Void)? = nil
     ) {
         self.viewModel = viewModel
-        self.onDismissWithResult = onDismissWithResult
         self.addressSearchViewControllerFactory = addressSearchViewControllerFactory
         self.presentImagePickerHandler = presentImagePickerHandler
         super.init(nibName: nil, bundle: nil)
@@ -154,9 +142,6 @@ public final class EditFoodRecordViewController<
 
     public override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        if isMovingFromParent, !didSendDismissResult {
-            onDismissWithResult?(.cancelled)
-        }
     }
 
     // MARK: - Setup
@@ -379,12 +364,11 @@ public final class EditFoodRecordViewController<
 
     private func handleEvent(_ event: EditFoodRecordViewModel<RecordRepo>.Event) {
         switch event {
-        case .saveCompleted(let record):
-            onDismissWithResult?(.updated(record))
+        case .saveCompleted:
+            ToastView.show(type: .infoUpdate)
             navigationController?.popViewController(animated: true)
 
         case .deleteCompleted:
-            onDismissWithResult?(.deleted)
             navigationController?.popViewController(animated: true)
 
         case .error(let error):
@@ -444,8 +428,6 @@ public final class EditFoodRecordViewController<
     }
 
     private func popWithCancelled() {
-        didSendDismissResult = true
-        onDismissWithResult?(.cancelled)
         navigationController?.popViewController(animated: true)
     }
 
