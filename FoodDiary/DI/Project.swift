@@ -12,7 +12,7 @@ let project = Project(
     targets: [
         .target(
             name: "DI",
-            destinations: .iOS,
+            destinations: [.iPhone],
             product: .framework,
             bundleId: "com.fooddiary.di",
             deploymentTargets: .iOS("18.0"),
