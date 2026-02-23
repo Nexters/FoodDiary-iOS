@@ -181,22 +181,16 @@ public final class MyPageViewController: UIViewController {
     private func setupTableFooter() {
         let footer = WithdrawalFooterView()
         footer.frame = CGRect(x: 0, y: 0, width: tableView.frame.width, height: 44)
-        footer.isUserInteractionEnabled = true
-
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(withdrawalTapped))
-        footer.addGestureRecognizer(tapGesture)
-
+        footer.onTap = { [weak self] in
+            self?.showWithdrawalAlert()
+        }
         tableView.tableFooterView = footer
-    }
-
-    @objc private func withdrawalTapped() {
-        showWithdrawalAlert()
     }
 
     private func showWithdrawalAlert() {
         let alert = UIAlertController(
             title: "회원탈퇴",
-            message: "탈퇴를 진행하시겠습니까?",
+            message: "탈퇴를 진행하시겠습니까?\n\n1.탈퇴 시 모든 데이터가 삭제됩니다.\n2.탈퇴 시 한달동안 재가입이 어렵습니다.",
             preferredStyle: .alert
         )
         alert.addAction(UIAlertAction(title: "취소", style: .cancel))
