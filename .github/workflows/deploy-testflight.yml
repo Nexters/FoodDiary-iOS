@@ -170,7 +170,6 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM=W35T2QAC67 \
             CODE_SIGN_IDENTITY="iPhone Distribution" \
-            PROVISIONING_PROFILE_SPECIFIER="FoodDiary" \
             OTHER_CODE_SIGN_FLAGS="--keychain ${{ env.KEYCHAIN_PATH }}" \
             2>&1 | tee "$RUNNER_TEMP/archive.log" | xcpretty --color
 
@@ -196,7 +195,7 @@ jobs:
               <key>provisioningProfiles</key>
               <dict>
                   <key>com.fooddiary.ios.app</key>
-                  <string>FoodDiary</string>
+                  <string>FoodDiary-Distribution</string>
               </dict>
               <key>uploadSymbols</key>
               <true/>
