@@ -103,10 +103,19 @@ public final class PHAssetConverter: @unchecked Sendable {
             kCGImageDestinationLossyCompressionQuality: compressionQuality
         ]
 
-        // 원본 EXIF 메타데이터 주입
+        // 원본 EXIF 메타데이터 주입 (orientation 제거하여 이중 회전 방지)
         if let metadata = metadata as? [CFString: Any] {
             for (key, value) in metadata {
                 properties[key] = value
+            }
+
+            // requestImage()가 이미 올바른 방향으로 회전된 이미지를 반환하므로
+            // orientation 메타데이터를 제거하여 이중 회전을 방지
+            properties.removeValue(forKey: kCGImagePropertyOrientation)
+
+            if var tiffDict = properties[kCGImagePropertyTIFFDictionary] as? [CFString: Any] {
+                tiffDict.removeValue(forKey: kCGImagePropertyTIFFOrientation)
+                properties[kCGImagePropertyTIFFDictionary] = tiffDict
             }
         }
 
