@@ -103,11 +103,12 @@ final class DayCellView: UIView {
             dayOfWeek: dayData.dayOfWeek,
             dayNumber: dayData.dayNumber,
             isToday: dayData.isToday,
+            isFuture: dayData.isFuture,
             isSelected: isSelected
         )
     }
 
-    private func applyStyle(dayOfWeek: String, dayNumber: String, isToday: Bool, isSelected: Bool) {
+    private func applyStyle(dayOfWeek: String, dayNumber: String, isToday: Bool, isFuture: Bool, isSelected: Bool) {
         if isSelected {
             containerView.backgroundColor = DesignSystemAsset.primary.color
             containerView.layer.cornerRadius = Constants.cornerRadius
@@ -119,6 +120,13 @@ final class DayCellView: UIView {
             dayOfWeekLabel.setText(dayOfWeek, style: .p12, color: .white)
             dayNumberLabel.setText(dayNumber, style: .p12, color: .white)
             recordIndicator.backgroundColor = .white
+        } else if isFuture {
+            containerView.backgroundColor = .clear
+            containerView.layer.cornerRadius = Constants.cornerRadius
+            containerView.removeGlow()
+            dayOfWeekLabel.setText(dayOfWeek, style: .p12, color: .gray700)
+            dayNumberLabel.setText(dayNumber, style: .p12, color: .gray700)
+            recordIndicator.isHidden = true
         } else if isToday {
             containerView.backgroundColor = DesignSystemAsset.primary.color.withAlphaComponent(0.2)
             containerView.layer.cornerRadius = Constants.cornerRadius
