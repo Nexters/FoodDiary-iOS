@@ -43,9 +43,11 @@ public final class ToastView: UIView {
     // MARK: - UI Components
 
     private let blurView: UIVisualEffectView = {
-        let blur = UIBlurEffect(style: .systemThinMaterialDark)
-        let view = UIVisualEffectView(effect: blur)
-        return view
+        if #available(iOS 26, *) {
+            return UIVisualEffectView(effect: UIGlassEffect())
+        } else {
+            return UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterialDark))
+        }
     }()
 
     private let iconImageView: UIImageView = {
@@ -76,29 +78,35 @@ public final class ToastView: UIView {
     
     public override func layoutSubviews() {
         super.layoutSubviews()
-        applyGradientBorder(
-            colors: [
-                .white.withAlphaComponent(0.11),
-                .white.withAlphaComponent(0),
-                .white.withAlphaComponent(0.05)
-            ],
-            locations: [0.0, 0.33, 0.67],
-            borderWidth: 1,
-            cornerRadius: Constants.cornerRadius
-        )
+        if #unavailable(iOS 26) {
+            applyGradientBorder(
+                colors: [
+                    .white.withAlphaComponent(0.11),
+                    .white.withAlphaComponent(0),
+                    .white.withAlphaComponent(0.05)
+                ],
+                locations: [0.0, 0.33, 0.67],
+                borderWidth: 1,
+                cornerRadius: Constants.cornerRadius
+            )
+        }
     }
 
     // MARK: - Setup
 
     private func setupUI() {
         layer.cornerRadius = Constants.cornerRadius
-        let overlay = UIView()
-        overlay.backgroundColor = .gray750.withAlphaComponent(0.3)
-        
+        clipsToBounds = true
+
         blurView.layer.cornerRadius = Constants.cornerRadius
         blurView.clipsToBounds = true
-        
-        blurView.contentView.addSubview(overlay)
+
+        if #unavailable(iOS 26) {
+            let overlay = UIView()
+            overlay.backgroundColor = .gray750.withAlphaComponent(0.3)
+            blurView.contentView.addSubview(overlay)
+        }
+
         addSubview(blurView)
         addSubview(iconImageView)
         addSubview(messageLabel)
@@ -158,6 +166,7 @@ public final class ToastView: UIView {
             toast.transform = CGAffineTransform(translationX: 0, y: targetOffsetY)
         } completion: { _ in
             UIView.animate(withDuration: 0.3, delay: 1.0) {
+                toast.transform = .identity
                 toast.alpha = 0
             } completion: { _ in
                 toast.removeFromSuperview()
