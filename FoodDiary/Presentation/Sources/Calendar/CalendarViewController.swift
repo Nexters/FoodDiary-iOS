@@ -37,6 +37,7 @@ public final class CalendarViewController: UIViewController {
 
     public override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = .sdBase
         showViewController(for: currentModeSubject.value)
     }
 
