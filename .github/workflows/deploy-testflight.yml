@@ -232,16 +232,23 @@ jobs:
         run: |
           IPA_PATH=$(ls ${{ env.EXPORT_PATH }}/*.ipa)
 
-          xcrun altool --upload-app \
+          OUTPUT=$(xcrun altool --upload-app \
             --type ios \
             --file "$IPA_PATH" \
             --apiKey "$ASC_KEY_ID" \
-            --apiIssuer "$ASC_ISSUER_ID"
+            --apiIssuer "$ASC_ISSUER_ID" 2>&1) || true
 
-      # ── 아티팩트 다운로드 ──
+          echo "$OUTPUT"
+
+          if echo "$OUTPUT" | grep -q "UPLOAD FAILED\|ERROR:"; then
+            echo "::error::TestFlight 업로드 실패"
+            exit 1
+          fi
+
+      # ── 아티팩트 업로드 ──
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
-        if: success()
+        if: always()
         with:
           name: FoodDiary-${{ env.VERSION }}-${{ env.BUILD_NUMBER }}.ipa
           path: ${{ env.EXPORT_PATH }}/*.ipa
@@ -249,7 +256,7 @@ jobs:
 
       - name: Upload dSYM Artifact
         uses: actions/upload-artifact@v4
-        if: success()
+        if: always()
         with:
           name: dSYMs-${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
           path: ${{ env.ARCHIVE_PATH }}/dSYMs/
