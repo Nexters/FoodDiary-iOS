@@ -9,12 +9,15 @@ import UIKit
 
 final class WithdrawalFooterView: UIView {
 
+    var onTap: (() -> Void)?
+
     private let withdrawalLabel: UILabel = {
         let label = UILabel()
         let base = Typography.p12.styled("탈퇴", color: .gray050)
         let mutable = NSMutableAttributedString(attributedString: base)
         mutable.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: 0, length: mutable.length))
         label.attributedText = mutable
+        label.isUserInteractionEnabled = true
         return label
     }()
 
@@ -27,6 +30,13 @@ final class WithdrawalFooterView: UIView {
             $0.trailing.equalToSuperview().offset(-28)
             $0.centerY.equalToSuperview()
         }
+
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(labelTapped))
+        withdrawalLabel.addGestureRecognizer(tapGesture)
+    }
+
+    @objc private func labelTapped() {
+        onTap?()
     }
 
     @available(*, unavailable)

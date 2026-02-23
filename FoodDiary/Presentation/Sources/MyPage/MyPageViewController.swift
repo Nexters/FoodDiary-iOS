@@ -181,16 +181,10 @@ public final class MyPageViewController: UIViewController {
     private func setupTableFooter() {
         let footer = WithdrawalFooterView()
         footer.frame = CGRect(x: 0, y: 0, width: tableView.frame.width, height: 44)
-        footer.isUserInteractionEnabled = true
-
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(withdrawalTapped))
-        footer.addGestureRecognizer(tapGesture)
-
+        footer.onTap = { [weak self] in
+            self?.showWithdrawalAlert()
+        }
         tableView.tableFooterView = footer
-    }
-
-    @objc private func withdrawalTapped() {
-        showWithdrawalAlert()
     }
 
     private func showWithdrawalAlert() {
