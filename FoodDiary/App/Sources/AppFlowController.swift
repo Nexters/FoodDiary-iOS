@@ -211,11 +211,6 @@ extension AppFlowController {
 
             return EditFoodRecordViewController(
                 viewModel: editVM,
-                onDismissWithResult: { result in
-                    if case .updated = result {
-                        ToastView.show(type: .infoUpdate)
-                    }
-                },
                 addressSearchViewControllerFactory: addressSearchVCFactory,
                 presentImagePickerHandler: presentImagePickerHandler
             )
