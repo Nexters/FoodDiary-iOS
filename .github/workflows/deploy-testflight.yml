@@ -1,13 +1,9 @@
 name: Deploy to TestFlight
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
-    inputs:
-      version:
-        description: '앱 버전 (MARKETING_VERSION)'
-        required: true
-        default: '1.0.0'
-        type: string
 
 concurrency:
   group: deploy-testflight
@@ -156,7 +152,6 @@ jobs:
         run: |
           set -o pipefail
           BUILD_NUMBER=${{ github.run_number }}
-          VERSION=${{ github.event.inputs.version }}
           ARCHIVE_PATH=$RUNNER_TEMP/App.xcarchive
 
           xcodebuild archive \
@@ -165,13 +160,15 @@ jobs:
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath "$ARCHIVE_PATH" \
-            MARKETING_VERSION="$VERSION" \
             CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM=W35T2QAC67 \
             CODE_SIGN_IDENTITY="iPhone Distribution" \
             OTHER_CODE_SIGN_FLAGS="--keychain ${{ env.KEYCHAIN_PATH }}" \
             2>&1 | tee "$RUNNER_TEMP/archive.log" | xcpretty --color
+
+          # 아카이브에서 버전 추출
+          VERSION=$(/usr/libexec/PlistBuddy -c "Print :ApplicationProperties:CFBundleShortVersionString" "$ARCHIVE_PATH/Info.plist")
 
           echo "ARCHIVE_PATH=$ARCHIVE_PATH" >> $GITHUB_ENV
           echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
@@ -244,6 +241,17 @@ jobs:
             echo "::error::TestFlight 업로드 실패"
             exit 1
           fi
+
+      # ── Git 태그 생성 ──
+      - name: Create Git Tag
+        run: |
+          TAG="v${{ env.VERSION }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            TAG="v${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
+          fi
+          git tag "$TAG"
+          git push origin "$TAG"
+          echo "TAG=$TAG" >> $GITHUB_ENV
 
       # ── 아티팩트 업로드 ──
       - name: Upload IPA Artifact
