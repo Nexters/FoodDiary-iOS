@@ -23,10 +23,6 @@ public final class DetailViewController<
         static var dateNavigatorTopPadding: CGFloat { 32 }
         static var dateNavigatorBottomSpacing: CGFloat { 16 }
         static var bottomPadding: CGFloat { 32 }
-        static var toastCornerRadius: CGFloat { 16 }
-        static var toastHeight: CGFloat { 32 }
-        static var toastMinWidth: CGFloat { 150 }
-        static var toastBottomOffset: CGFloat { 32 }
     }
 
     // MARK: - Dependencies
@@ -326,9 +322,7 @@ public final class DetailViewController<
     private func handleCopy(record: FoodRecord) {
         let text = formatRecordForCopy(record)
         UIPasteboard.general.string = text
-
-        // Show toast
-        showToast(message: "클립보드에 복사되었습니다")
+        ToastView.show(type: .copyComplete)
     }
 
     private func handleShare(record: FoodRecord) {
@@ -343,42 +337,6 @@ public final class DetailViewController<
         present(activityVC, animated: true)
     }
 
-    // TODO: 임시로 걍 대충 떼워놓음
-    private func showToast(message: String) {
-        let toastLabel = UILabel()
-        toastLabel.backgroundColor = UIColor.black.withAlphaComponent(0.7)
-        toastLabel.textColor = .white
-        toastLabel.textAlignment = .center
-        toastLabel.font = .systemFont(ofSize: 14)
-        toastLabel.text = message
-        toastLabel.alpha = 0
-        toastLabel.layer.cornerRadius = Constants.toastCornerRadius
-        toastLabel.clipsToBounds = true
-
-        view.addSubview(toastLabel)
-        toastLabel.snp.makeConstraints {
-            $0.centerX.equalToSuperview()
-            $0.bottom.equalTo(view.safeAreaLayoutGuide).offset(-Constants.toastBottomOffset)
-            $0.height.equalTo(Constants.toastHeight)
-            $0.width.greaterThanOrEqualTo(Constants.toastMinWidth)
-        }
-
-        UIView.animate(
-            withDuration: 0.3,
-            animations: {
-                toastLabel.alpha = 1
-            }
-        ) { _ in
-            UIView.animate(
-                withDuration: 0.3, delay: 1.5, options: [],
-                animations: {
-                    toastLabel.alpha = 0
-                }
-            ) { _ in
-                toastLabel.removeFromSuperview()
-            }
-        }
-    }
 
     // MARK: - Actions
 

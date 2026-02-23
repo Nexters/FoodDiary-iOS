@@ -11,6 +11,7 @@ public final class ToastView: UIView {
     public enum ToastType {
         case infoUpdate
         case imageUploadComplete
+        case copyComplete
 
         var message: String {
             switch self {
@@ -18,15 +19,19 @@ public final class ToastView: UIView {
                 return "정보 수정을 완료했습니다."
             case .imageUploadComplete:
                 return "AI가 기록을 완료했습니다."
+            case .copyComplete:
+                return "클립보드에 복사되었습니다."
             }
         }
-        
+
         var image: UIImage {
             switch self {
             case .infoUpdate:
                 return DesignSystemAsset.iconCom.image
             case .imageUploadComplete:
                 return DesignSystemAsset.iconAi.image
+            case .copyComplete:
+                return DesignSystemAsset.iconCom.image
             }
         }
     }
@@ -148,6 +153,9 @@ public final class ToastView: UIView {
             .compactMap({ $0 as? UIWindowScene })
             .flatMap({ $0.windows })
             .first(where: { $0.isKeyWindow }) else { return }
+
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
 
         let toast = ToastView(type: type)
         window.addSubview(toast)
