@@ -86,6 +86,31 @@ jobs:
           cp "$PROFILE_PATH" \
             ~/Library/MobileDevice/Provisioning\ Profiles/${PROFILE_UUID}.mobileprovision
 
+          echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
+
+      - name: Verify Provisioning Profile
+        run: |
+          echo "=== Installed Provisioning Profiles ==="
+          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/
+
+          PROFILE_PATH=$(ls ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision)
+          PROFILE_INFO=$(security cms -D -i "$PROFILE_PATH")
+
+          echo "=== Profile Name ==="
+          echo "$PROFILE_INFO" | /usr/libexec/PlistBuddy -c "Print Name" /dev/stdin
+
+          echo "=== Profile UUID ==="
+          echo "$PROFILE_INFO" | /usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin
+
+          echo "=== Team Identifier ==="
+          echo "$PROFILE_INFO" | /usr/libexec/PlistBuddy -c "Print TeamIdentifier:0" /dev/stdin
+
+          echo "=== Expiration Date ==="
+          echo "$PROFILE_INFO" | /usr/libexec/PlistBuddy -c "Print ExpirationDate" /dev/stdin
+
+          echo "=== App ID ==="
+          echo "$PROFILE_INFO" | /usr/libexec/PlistBuddy -c "Print Entitlements:application-identifier" /dev/stdin
+
       # ── 설정 파일 생성 ──
       - name: Create Config Files
         env:
@@ -145,6 +170,7 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM=W35T2QAC67 \
             CODE_SIGN_IDENTITY="iPhone Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER="FoodDiary" \
             OTHER_CODE_SIGN_FLAGS="--keychain ${{ env.KEYCHAIN_PATH }}" \
             2>&1 | tee "$RUNNER_TEMP/archive.log" | xcpretty --color
 
