@@ -36,6 +36,16 @@ final class AppFlowController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .sdBase
         setupNetworkMonitoring()
+        setupAnalysisCompletionToast()
+    }
+
+    private func setupAnalysisCompletionToast() {
+        NotificationCenter.default.publisher(for: AppNotification.Push.analysisResult)
+            .receive(on: DispatchQueue.main)
+            .sink { _ in
+                ToastView.show(type: .imageUploadComplete)
+            }
+            .store(in: &cancellables)
     }
 }
 
@@ -201,7 +211,11 @@ extension AppFlowController {
 
             return EditFoodRecordViewController(
                 viewModel: editVM,
-                onDismissWithResult: { _ in },
+                onDismissWithResult: { result in
+                    if case .updated = result {
+                        ToastView.show(type: .infoUpdate)
+                    }
+                },
                 addressSearchViewControllerFactory: addressSearchVCFactory,
                 presentImagePickerHandler: presentImagePickerHandler
             )
