@@ -145,15 +145,6 @@ public final class MyPageViewController: UIViewController {
     private func setupNavigation() {
         title = "마이페이지"
         navigationController?.navigationBar.prefersLargeTitles = false
-
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .sd700
-        appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
-        appearance.shadowColor = .clear
-        navigationController?.navigationBar.standardAppearance = appearance
-        navigationController?.navigationBar.scrollEdgeAppearance = appearance
-        navigationController?.navigationBar.tintColor = .white
     }
 
     private func setupUI() {
