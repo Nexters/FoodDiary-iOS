@@ -36,6 +36,12 @@ final class ProfileHeaderView: UIView {
         return label
     }()
 
+    private let separatorView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .sd800
+        return view
+    }()
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
@@ -49,7 +55,7 @@ final class ProfileHeaderView: UIView {
 
     private func setupUI() {
         backgroundColor = .sd700
-        [characterImageView, greetingLabel, nameLabel].forEach { addSubview($0) }
+        [characterImageView, greetingLabel, nameLabel, separatorView].forEach { addSubview($0) }
     }
 
     private func setupConstraints() {
@@ -71,6 +77,11 @@ final class ProfileHeaderView: UIView {
         nameLabel.snp.makeConstraints {
             $0.top.equalTo(greetingLabel.snp.bottom).offset(3)
             $0.centerX.equalToSuperview()
+        }
+
+        separatorView.snp.makeConstraints {
+            $0.leading.trailing.bottom.equalToSuperview()
+            $0.height.equalTo(1)
         }
     }
 }
