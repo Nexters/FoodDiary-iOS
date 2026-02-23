@@ -34,6 +34,7 @@ final class AppFlowController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = .sdBase
         setupNetworkMonitoring()
     }
 }
