@@ -94,10 +94,25 @@ extension AppFlowController {
         let weeklyCalendarVC = makeWeeklyCalendarVC()
         let monthlyCalendarVC = makeMonthlyCalendarVC()
 
+        let myPageVCFactory: (@escaping () -> Void) -> UIViewController = { [container] onLogout in
+            guard let vm = try? container.resolve(MyPageViewModel.self) else {
+                fatalError("MyPageViewModel not registered")
+            }
+            let vc = MyPageViewController(viewModel: vm)
+            var cancellable: AnyCancellable?
+            cancellable = vc.didLogoutPublisher
+                .sink {
+                    onLogout()
+                    _ = cancellable
+                }
+            return vc
+        }
+
         let tabBarVC = RootTabBarController(
             weeklyVC: weeklyCalendarVC,
             monthlyVC: monthlyCalendarVC,
-            insightVC: InsightViewController()
+            insightVC: InsightViewController(),
+            myPageViewControllerFactory: myPageVCFactory
         )
 
         tabBarVC.didLogoutPublisher

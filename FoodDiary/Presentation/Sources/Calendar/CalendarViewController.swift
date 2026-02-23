@@ -54,7 +54,7 @@ public final class CalendarViewController: UIViewController {
             currentChild.view.removeFromSuperview()
             currentChild.removeFromParent()
         }
-        
+
         addChild(targetVC)
         view.addSubview(targetVC.view)
         targetVC.view.snp.makeConstraints { $0.edges.equalToSuperview() }
