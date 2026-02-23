@@ -12,7 +12,7 @@ let project = Project(
     targets: [
         .target(
             name: "Data",
-            destinations: .iOS,
+            destinations: [.iPhone],
             product: .framework,
             bundleId: "com.fooddiary.data",
             deploymentTargets: .iOS("18.0"),
@@ -26,7 +26,7 @@ let project = Project(
         ),
         .target(
             name: "DataTests",
-            destinations: .iOS,
+            destinations: [.iPhone],
             product: .unitTests,
             bundleId: "com.fooddiary.data.tests",
             deploymentTargets: .iOS("18.0"),
