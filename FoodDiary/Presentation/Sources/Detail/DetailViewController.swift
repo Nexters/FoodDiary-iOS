@@ -332,10 +332,7 @@ public final class DetailViewController<
     }
 
     private func formatRecordForShare(_ record: FoodRecord) -> String {
-        guard let name = record.restaurantName,
-              let address = record.address else { return "" }
-
-        return "\(name) 맛을 기억하시나요?\n뭐먹었지에서 확인해보세요.\n\n\(address)"
+        return "\(record.restaurantName ?? "Null") 맛을 기억하시나요?\n뭐먹었지에서 확인해보세요.\n\n\(record.restaurantUrl ?? "Null")"
     }
 
     private func presentShareSheet(items: [Any]) {
