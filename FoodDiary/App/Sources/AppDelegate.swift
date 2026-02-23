@@ -17,11 +17,20 @@ import DI
 class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        logBuildConfiguration()
         FirebaseApp.configure()
         Messaging.messaging().delegate = self
         setupAppearance()
         registerForRemoteNotifications(application)
         return true
+    }
+
+    private func logBuildConfiguration() {
+        #if DEBUG
+        print("[App] 빌드 설정: DEBUG")
+        #else
+        print("[App] 빌드 설정: RELEASE")
+        #endif
     }
 
     private func setupAppearance() {
