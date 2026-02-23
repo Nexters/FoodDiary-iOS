@@ -391,7 +391,7 @@ extension SceneDelegate {
         }
 
         container.register(
-            UpdateDeviceNotificationSettingUseCase<DeviceRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>.self
+            UpdateDeviceNotificationSettingUseCase.self
         ) { resolver in
             guard let repository = resolver.resolve(DeviceRepository.self),
                   let pushTokenProvider = resolver.resolve(PushTokenStoring.self),
@@ -608,7 +608,7 @@ extension SceneDelegate {
 
         container.register(MyPageViewModel.self, scope: .transient) { resolver in
             guard let updateDeviceUseCase = resolver.resolve(
-                UpdateDeviceNotificationSettingUseCase<DeviceRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>.self
+                UpdateDeviceNotificationSettingUseCase.self
             ),
                   let notificationAuthProvider = resolver.resolve(NotificationAuthorizationProviding.self),
                   let logoutUseCase = resolver.resolve(LogoutUseCase.self),

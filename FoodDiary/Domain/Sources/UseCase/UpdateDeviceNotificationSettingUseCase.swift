@@ -7,8 +7,8 @@
 
 import Foundation
 
-public struct UpdateDeviceNotificationSettingUseCase<Repository: DeviceRepository> {
-    private let repository: Repository
+public struct UpdateDeviceNotificationSettingUseCase {
+    private let repository: DeviceRepository
     private let notificationAuthorizationProvider: NotificationAuthorizationProviding
     private let pushTokenProvider: PushTokenStoring
     private let appVersion: String
@@ -16,7 +16,7 @@ public struct UpdateDeviceNotificationSettingUseCase<Repository: DeviceRepositor
     private let osVersion: String
 
     public init(
-        repository: Repository,
+        repository: DeviceRepository,
         notificationAuthorizationProvider: NotificationAuthorizationProviding,
         pushTokenProvider: PushTokenStoring,
         appVersion: String,

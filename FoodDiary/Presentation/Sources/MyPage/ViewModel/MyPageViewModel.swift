@@ -6,7 +6,6 @@
 //
 
 import Combine
-import Data
 import Domain
 import Foundation
 import UIKit
@@ -37,7 +36,7 @@ public final class MyPageViewModel {
     private let stateSubject: CurrentValueSubject<State, Never>
     private let eventSubject = PassthroughSubject<Event, Never>()
     private var cancellables = Set<AnyCancellable>()
-    private let updateDeviceNotificationSettingUseCase: UpdateDeviceNotificationSettingUseCase<DeviceRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>
+    private let updateDeviceNotificationSettingUseCase: UpdateDeviceNotificationSettingUseCase
     private let notificationAuthorizationProvider: NotificationAuthorizationProviding
     private let logoutUseCase: LogoutUseCase
     private let withdrawUserUseCase: WithdrawUserUseCase
@@ -45,7 +44,7 @@ public final class MyPageViewModel {
     // MARK: - Init
 
     public init(
-        updateDeviceNotificationSettingUseCase: UpdateDeviceNotificationSettingUseCase<DeviceRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>,
+        updateDeviceNotificationSettingUseCase: UpdateDeviceNotificationSettingUseCase,
         notificationAuthorizationProvider: NotificationAuthorizationProviding,
         logoutUseCase: LogoutUseCase,
         withdrawUserUseCase: WithdrawUserUseCase
