@@ -326,7 +326,16 @@ public final class DetailViewController<
     }
 
     private func handleShare(record: FoodRecord) {
-        // TODO: 공유할 콘텐츠 구성
+        let shareText = formatRecordForShare(record)
+        guard !shareText.isEmpty else { return }
+        presentShareSheet(items: [shareText])
+    }
+
+    private func formatRecordForShare(_ record: FoodRecord) -> String {
+        guard let name = record.restaurantName,
+              let address = record.address else { return "" }
+
+        return "\(name) 맛을 기억하시나요?\n뭐먹었지에서 확인해보세요.\n\n\(address)"
     }
 
     private func presentShareSheet(items: [Any]) {
