@@ -7,23 +7,28 @@
 
 import UIKit
 import DesignSystem
-import DI
 import Combine
 
 public final class RootTabBarController: UITabBarController {
     let calendarVC: CalendarViewController
-    let insightVC: InsightViewController
+    let insightVC: UIViewController
+    private let myPageViewControllerFactory: (@escaping () -> Void) -> UIViewController
     private let didLogoutSubject = PassthroughSubject<Void, Never>()
-    private var myPageCancellable: AnyCancellable?
     private var cancellables = Set<AnyCancellable>()
 
     public var didLogoutPublisher: AnyPublisher<Void, Never> {
         didLogoutSubject.eraseToAnyPublisher()
     }
 
-    public init(weeklyVC: UIViewController, monthlyVC: UIViewController, insightVC: InsightViewController) {
+    public init(
+        weeklyVC: UIViewController,
+        monthlyVC: UIViewController,
+        insightVC: UIViewController,
+        myPageViewControllerFactory: @escaping (@escaping () -> Void) -> UIViewController
+    ) {
         self.calendarVC = CalendarViewController(weeklyVC: weeklyVC, monthlyVC: monthlyVC)
         self.insightVC = insightVC
+        self.myPageViewControllerFactory = myPageViewControllerFactory
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -78,18 +83,10 @@ public final class RootTabBarController: UITabBarController {
     }
 
     @objc private func mypageButtonTapped() {
-        guard let myPageVM = try? DIContainer.shared.resolve(MyPageViewModel.self) else {
-            print("MyPageViewModel resolve 실패")
-            return
+        let myPageVC = myPageViewControllerFactory { [weak self] in
+            self?.didLogoutSubject.send()
         }
-
-        let myPageVC = MyPageViewController(viewModel: myPageVM)
-
-        myPageCancellable = myPageVC.didLogoutPublisher
-            .sink { [weak self] in
-                self?.didLogoutSubject.send()
-            }
-
+        myPageVC.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(myPageVC, animated: true)
     }
     
