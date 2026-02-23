@@ -133,12 +133,18 @@ public final class MyPageViewController: UIViewController {
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(false, animated: animated)
-        navigationController?.navigationBar.backgroundColor = .sd700
+        let appearance = navigationController?.navigationBar.standardAppearance.copy() as? UINavigationBarAppearance ?? UINavigationBarAppearance()
+        appearance.backgroundColor = .sd700
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
     }
 
     public override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        navigationController?.navigationBar.backgroundColor = .sdBase
+        let appearance = navigationController?.navigationBar.standardAppearance.copy() as? UINavigationBarAppearance ?? UINavigationBarAppearance()
+        appearance.backgroundColor = .sdBase
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
     }
 
     public override func viewDidLayoutSubviews() {
