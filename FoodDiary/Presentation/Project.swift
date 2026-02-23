@@ -21,6 +21,7 @@ let project = Project(
             resources: ["Resources/**"],
             dependencies: [
                 .project(target: "Domain", path: "../Domain"),
+                .project(target: "Data", path: "../Data"),
                 .project(target: "DesignSystem", path: "../DesignSystem"),
                 .project(target: "DI", path: "../DI"),
                 .external(name: "Kingfisher"),
