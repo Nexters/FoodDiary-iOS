@@ -589,6 +589,11 @@ extension SceneDelegate {
                 ),
                 let requestPhotoAuthUseCase = resolver.resolve(
                     RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>.self
+                ),
+                let fetchFoodRecordsUseCase = resolver.resolve(
+                    FetchFoodRecordsUseCase<
+                        FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
+                    >.self
                 )
             else {
                 fatalError("MonthlyCalendarViewModel dependencies not registered")
@@ -596,7 +601,8 @@ extension SceneDelegate {
 
             return MonthlyCalendarViewModel(
                 fetchMonthlyCalendarDaysUseCase: fetchMonthlyUseCase,
-                requestPhotoAuthorizationUseCase: requestPhotoAuthUseCase
+                requestPhotoAuthorizationUseCase: requestPhotoAuthUseCase,
+                fetchFoodRecordsUseCase: fetchFoodRecordsUseCase
             )
         }
 
