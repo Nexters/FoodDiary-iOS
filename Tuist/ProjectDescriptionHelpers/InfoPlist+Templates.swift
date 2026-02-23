@@ -29,10 +29,6 @@ public extension InfoPlist {
                 ],
                 "NSPhotoLibraryUsageDescription": "음식 사진을 분류하기 위해 사진 라이브러리 접근 권한이 필요합니다.",
                 "NSUserNotificationsUsageDescription": "음식 분석 완료 알림을 받기 위해 알림 권한이 필요합니다.",
-                "UIAppFonts": [
-                    "Pretendard-Regular.otf",
-                    "Pretendard-SemiBold.otf"
-                ],
                 "BASE_URL": "$(BASE_URL)",
                 "NSAppTransportSecurity": [
                     "NSAllowsArbitraryLoads": true

@@ -301,7 +301,7 @@ public final class MonthlyCalendarViewController<
 
 extension MonthlyCalendarViewController {
     enum Constants {
-        static var horizontalInset: CGFloat { 16 }
+        static var horizontalInset: CGFloat { 20 }
         static var containerCornerRadius: CGFloat { 16 }
         static var containerBorderWidth: CGFloat { 1 }
         static var recordPromptTopOffset: CGFloat { 28 }

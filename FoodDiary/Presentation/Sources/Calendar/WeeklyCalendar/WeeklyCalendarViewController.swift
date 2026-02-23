@@ -108,19 +108,18 @@ public final class WeeklyCalendarViewController<
 
         contentView.snp.makeConstraints {
             $0.verticalEdges.equalToSuperview()
-            $0.horizontalEdges.equalToSuperview().inset(16)
-            $0.width.equalToSuperview().offset(-32)
+            $0.horizontalEdges.equalToSuperview().inset(20)
+            $0.width.equalToSuperview().offset(-40)
         }
 
         recordPromptHeaderView.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(16)
+            $0.top.equalToSuperview().offset(28)
             $0.leading.trailing.equalToSuperview()
         }
 
         headerView.snp.makeConstraints {
             $0.top.equalTo(recordPromptHeaderView.snp.bottom).offset(32)
             $0.leading.trailing.equalToSuperview()
-            $0.height.equalTo(44)
         }
 
         weekGridView.snp.makeConstraints {
@@ -133,7 +132,7 @@ public final class WeeklyCalendarViewController<
         bottomContentView.snp.makeConstraints {
             $0.top.equalTo(weekGridView.snp.bottom).offset(18)
             $0.leading.trailing.equalToSuperview()
-            $0.bottom.equalTo(view.safeAreaLayoutGuide)
+            $0.bottom.equalTo(view.safeAreaLayoutGuide).offset(-34)
         }
     }
 

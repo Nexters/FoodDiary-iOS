@@ -81,13 +81,13 @@ final class WeeklyCalendarHeaderView: UIView {
 
     private func setupConstraints() {
         monthLabel.snp.makeConstraints {
-            $0.leading.equalToSuperview().offset(16)
+            $0.leading.equalToSuperview()
             $0.centerY.equalToSuperview()
         }
 
         navigationStack.snp.makeConstraints {
-            $0.trailing.equalToSuperview().offset(-16)
-            $0.centerY.equalToSuperview()
+            $0.trailing.equalToSuperview()
+            $0.top.bottom.equalToSuperview()
         }
 
         previousButton.snp.makeConstraints {
@@ -107,7 +107,7 @@ final class WeeklyCalendarHeaderView: UIView {
     // MARK: - Public Methods
 
     func setMonthText(_ text: String) {
-        monthLabel.setText(text, style: .hd18)
+        monthLabel.setText(text, style: .p18, color: .gray050)
     }
 
     // MARK: - Actions
