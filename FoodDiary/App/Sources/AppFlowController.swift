@@ -227,12 +227,26 @@ extension AppFlowController {
             FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
             PhotoAuthorizationFetcher
         >
+        typealias DetailVM = DetailViewModel<
+            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
+            PendingFoodRecordStorage<FileStorageService>,
+            PushNotificationObserver
+        >
 
         guard let monthlyViewModel = try? container.resolve(MonthlyVM.self) else {
             fatalError("MonthlyCalendarViewModel not registered")
         }
 
-        return MonthlyCalendarViewController(viewModel: monthlyViewModel)
+        return MonthlyCalendarViewController(
+            viewModel: monthlyViewModel,
+            detailViewControllerFactory: { [container] date, records in
+                guard let detailVM = try? container.resolve(DetailVM.self, argument: (date, records))
+                else {
+                    fatalError("DetailViewModel not registered")
+                }
+                return DetailViewController(viewModel: detailVM)
+            }
+        )
     }
 
     fileprivate func createOnboardingView() -> UIViewController {
