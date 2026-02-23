@@ -40,21 +40,7 @@ public final class WeeklyCalendarViewController<
 
     private let contentView = UIView()
 
-    private let subtitleLabel: UILabel = {
-        let label = UILabel()
-        label.setText("이번주 음식을 기록해 보세요", style: .p12)
-        label.textColor = .white
-        return label
-    }()
-
-    private let titleLabel: UILabel = {
-        let label = UILabel()
-        label.numberOfLines = 2
-        label.setText("길동님의 음식 기록,\n지금 바로 쓸 수 있어요", style: .hd20)
-        label.textColor = .white
-        return label
-    }()
-
+    private let recordPromptHeaderView = RecordPromptHeaderView()
     private let headerView = WeeklyCalendarHeaderView()
     private let weekGridView = WeekGridView()
     private let bottomContentView = BottomContentView()
@@ -109,14 +95,10 @@ public final class WeeklyCalendarViewController<
 
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
-        contentView.addSubview(subtitleLabel)
-        contentView.addSubview(titleLabel)
+        contentView.addSubview(recordPromptHeaderView)
         contentView.addSubview(headerView)
         contentView.addSubview(weekGridView)
         view.addSubview(bottomContentView)
-
-        // 사용자 이름 설정 (추후 실제 데이터로 교체)
-        titleLabel.setText("길동님의 음식 기록,\n지금 바로 쓸 수 있어요", style: .hd20)
     }
 
     private func setupConstraints() {
@@ -130,18 +112,13 @@ public final class WeeklyCalendarViewController<
             $0.width.equalToSuperview().offset(-32)
         }
 
-        subtitleLabel.snp.makeConstraints {
+        recordPromptHeaderView.snp.makeConstraints {
             $0.top.equalToSuperview().offset(16)
-            $0.leading.equalToSuperview()
-        }
-
-        titleLabel.snp.makeConstraints {
-            $0.top.equalTo(subtitleLabel.snp.bottom).offset(8)
             $0.leading.trailing.equalToSuperview()
         }
 
         headerView.snp.makeConstraints {
-            $0.top.equalTo(titleLabel.snp.bottom).offset(32)
+            $0.top.equalTo(recordPromptHeaderView.snp.bottom).offset(32)
             $0.leading.trailing.equalToSuperview()
             $0.height.equalTo(44)
         }
