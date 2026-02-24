@@ -16,7 +16,7 @@ final class BottomContentView: UIView {
     private enum Constants {
         static let containerCornerRadius: CGFloat = 24
         static let containerBorderWidth: CGFloat = 1
-        static let containerHorizontalInset: CGFloat = 16
+        static let containerHorizontalInset: CGFloat = 0
         static let containerBackgroundAlpha: CGFloat = 0.05
         static let cardHorizontalInset: CGFloat = 40
         static let pendingCardHorizontalInset: CGFloat = 60

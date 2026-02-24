@@ -131,7 +131,7 @@ public final class WeeklyCalendarViewController<
 
         bottomContentView.snp.makeConstraints {
             $0.top.equalTo(weekGridView.snp.bottom).offset(18)
-            $0.leading.trailing.equalToSuperview()
+            $0.leading.trailing.equalToSuperview().inset(20)
             $0.bottom.equalTo(view.safeAreaLayoutGuide).offset(-34)
         }
     }

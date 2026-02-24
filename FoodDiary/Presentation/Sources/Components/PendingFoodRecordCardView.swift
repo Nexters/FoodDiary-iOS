@@ -42,6 +42,14 @@ public final class PendingFoodRecordCardView: UIView {
         return label
     }()
 
+    private let contentStackView: UIStackView = {
+        let sv = UIStackView()
+        sv.axis = .vertical
+        sv.alignment = .center
+        sv.spacing = Constants.pendingLabelTopSpacing
+        return sv
+    }()
+
     // MARK: - Init
 
     public init(record: PendingFoodRecord) {
@@ -71,8 +79,9 @@ public final class PendingFoodRecordCardView: UIView {
 
     private func setupUI() {
         addSubview(containerView)
-        containerView.addSubview(pendingIconView)
-        containerView.addSubview(pendingLabel)
+        containerView.addSubview(contentStackView)
+        contentStackView.addArrangedSubview(pendingIconView)
+        contentStackView.addArrangedSubview(pendingLabel)
     }
 
     private func setupConstraints() {
@@ -80,15 +89,13 @@ public final class PendingFoodRecordCardView: UIView {
             $0.edges.equalToSuperview()
         }
 
-        pendingIconView.snp.makeConstraints {
-            $0.centerX.equalToSuperview()
-            $0.centerY.equalToSuperview().offset(-20)
-            $0.size.equalTo(Constants.pendingIconSize)
+        contentStackView.snp.makeConstraints {
+            $0.centerY.equalToSuperview()
+            $0.centerX.equalToSuperview().offset(-8)
         }
 
-        pendingLabel.snp.makeConstraints {
-            $0.top.equalTo(pendingIconView.snp.bottom).offset(Constants.pendingLabelTopSpacing)
-            $0.centerX.equalToSuperview()
+        pendingIconView.snp.makeConstraints {
+            $0.size.equalTo(Constants.pendingIconSize)
         }
     }
 

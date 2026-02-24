@@ -76,9 +76,11 @@ public enum Typography {
         -0.015 * font.pointSize
     }
 
-    public func styled(_ text: String, color: UIColor = .white) -> NSAttributedString {
+    public func styled(_ text: String, color: UIColor = .white, alignment: NSTextAlignment = .natural, lineSpacing: CGFloat = 0) -> NSAttributedString {
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.lineHeightMultiple = lineHeightMultiple
+        paragraphStyle.alignment = alignment
+        paragraphStyle.lineSpacing = lineSpacing
 
         return NSAttributedString(string: text, attributes: [
             .font: font,
@@ -101,7 +103,7 @@ public extension UILabel {
     /// label.setText("뭐먹었지", style: .hd24)
     /// label.setText("뭐먹었지", style: .hd24, color: .black)
     /// ```
-    func setText(_ text: String, style: Typography, color: UIColor = .white) {
-        self.attributedText = style.styled(text, color: color)
+    func setText(_ text: String, style: Typography, color: UIColor = .white, alignment: NSTextAlignment = .natural, lineSpacing: CGFloat = 0) {
+        self.attributedText = style.styled(text, color: color, alignment: alignment, lineSpacing: lineSpacing)
     }
 }
