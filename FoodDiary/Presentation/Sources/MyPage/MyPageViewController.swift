@@ -117,8 +117,6 @@ public final class MyPageViewController: UIViewController {
         NotificationCenter.default.removeObserver(self)
     }
 
-    // MARK: - Lifecycle
-
     public override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigation()
@@ -128,23 +126,6 @@ public final class MyPageViewController: UIViewController {
         setupBindings()
         setupNotifications()
         viewModel.input.send(.viewDidLoad)
-    }
-
-    public override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        navigationController?.setNavigationBarHidden(false, animated: animated)
-        let appearance = navigationController?.navigationBar.standardAppearance.copy() as? UINavigationBarAppearance ?? UINavigationBarAppearance()
-        appearance.backgroundColor = .sd700
-        navigationController?.navigationBar.standardAppearance = appearance
-        navigationController?.navigationBar.scrollEdgeAppearance = appearance
-    }
-
-    public override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        let appearance = navigationController?.navigationBar.standardAppearance.copy() as? UINavigationBarAppearance ?? UINavigationBarAppearance()
-        appearance.backgroundColor = .sdBase
-        navigationController?.navigationBar.standardAppearance = appearance
-        navigationController?.navigationBar.scrollEdgeAppearance = appearance
     }
 
     public override func viewDidLayoutSubviews() {
@@ -172,7 +153,7 @@ public final class MyPageViewController: UIViewController {
         }
 
         profileHeaderView.snp.makeConstraints {
-            $0.top.equalTo(scrollView.contentLayoutGuide)
+            $0.top.equalTo(view.snp.top)
             $0.leading.trailing.equalTo(scrollView.frameLayoutGuide)
         }
 

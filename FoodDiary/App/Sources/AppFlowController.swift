@@ -136,8 +136,8 @@ extension AppFlowController {
 
         let navController = UINavigationController(rootViewController: tabBarVC)
         let navAppearance = UINavigationBarAppearance()
-        navAppearance.configureWithOpaqueBackground()
-        navAppearance.backgroundColor = .sdBase
+        navAppearance.configureWithTransparentBackground()
+        navAppearance.backgroundColor = .clear
         navAppearance.titleTextAttributes = [.foregroundColor: UIColor(white: 1, alpha: 1)]
         navAppearance.shadowColor = .clear
 
