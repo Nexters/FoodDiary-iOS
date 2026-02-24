@@ -154,11 +154,17 @@ public final class DetailViewController<
         title = "상세보기"
 
         // More button
+        let deleteAllAction = UIAction(
+            title: "전체삭제",
+            image: UIImage(systemName: "trash"),
+            attributes: .destructive
+        ) { [weak self] _ in
+            self?.showDeleteAllConfirmation()
+        }
+
         navigationItem.rightBarButtonItem = UIBarButtonItem(
             image: UIImage(systemName: "ellipsis"),
-            style: .plain,
-            target: self,
-            action: #selector(moreButtonTapped)
+            menu: UIMenu(children: [deleteAllAction])
         )
     }
 
@@ -411,23 +417,6 @@ public final class DetailViewController<
 
 
     // MARK: - Actions
-
-    @objc private func moreButtonTapped() {
-        let actionSheet = UIAlertController(
-            title: nil,
-            message: nil,
-            preferredStyle: .actionSheet
-        )
-
-        actionSheet.addAction(
-            UIAlertAction(title: "전체삭제", style: .destructive) { [weak self] _ in
-                self?.showDeleteAllConfirmation()
-            }
-        )
-        actionSheet.addAction(UIAlertAction(title: "취소", style: .cancel))
-
-        present(actionSheet, animated: true)
-    }
 
     private func showDeleteAllConfirmation() {
         let alert = UIAlertController(
