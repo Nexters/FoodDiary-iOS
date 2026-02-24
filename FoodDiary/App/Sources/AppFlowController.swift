@@ -73,6 +73,9 @@ extension AppFlowController {
     fileprivate func proceedToNextScreen() {
         Task {
             let isLogin = await validateToken()
+            
+            try? await fetchUserProfile()
+            
             await MainActor.run { [weak self] in
                 guard let self else { return }
                 routeToAppropriateScreen(isLogin: isLogin)
@@ -99,6 +102,21 @@ extension AppFlowController {
         }
 
         return await validateAccessTokenUseCase.execute()
+    }
+
+    fileprivate func fetchUserProfile() async throws {
+        guard
+            let fetchUserProfileUseCase = try? container.resolve(
+                FetchUserProfileUseCase<
+                    UserRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
+                    NicknameStorage
+                >.self
+            )
+        else {
+            fatalError("FetchUserProfileUseCase Failed Resolve")
+        }
+
+        try await fetchUserProfileUseCase.execute()
     }
 
     fileprivate func createMainView() -> UIViewController {
@@ -331,7 +349,10 @@ extension AppFlowController {
     }
 
     fileprivate func handleLoginResult(_ loginResult: LoginResult) {
-        transition(to: loginResult.isFirst ? createOnboardingView() : createMainView())
+        Task {
+            try? await fetchUserProfile()
+            transition(to: loginResult.isFirst ? createOnboardingView() : createMainView())
+        }
     }
 
     fileprivate func transition(to viewController: UIViewController) {

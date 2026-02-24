@@ -43,22 +43,26 @@ public final class MonthlyCalendarViewModel<
     private let fetchMonthlyCalendarDaysUseCase: FetchMonthlyCalendarDaysUseCase<RecordRepo>
     private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>
     private let fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
+    private let getNicknameUseCase: GetNicknameUseCase
 
     // MARK: - Init
 
     public init(
         fetchMonthlyCalendarDaysUseCase: FetchMonthlyCalendarDaysUseCase<RecordRepo>,
         requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>,
-        fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
+        fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>,
+        getNicknameUseCase: GetNicknameUseCase
     ) {
         self.fetchMonthlyCalendarDaysUseCase = fetchMonthlyCalendarDaysUseCase
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
         self.fetchFoodRecordsUseCase = fetchFoodRecordsUseCase
+        self.getNicknameUseCase = getNicknameUseCase
 
         let today = Date()
         self.stateSubject = CurrentValueSubject(State(currentDisplayDate: today))
 
         setupBindings()
+        input.send(.loadNickname)
     }
 
     // MARK: - Setup
@@ -77,6 +81,9 @@ public final class MonthlyCalendarViewModel<
     @MainActor
     private func handleInput(_ action: Input) async {
         switch action {
+        case .loadNickname:
+            state.nickname = getNicknameUseCase.execute()
+
         case .loadInitialData:
             await requestPhotoAuthorizationIfNeeded()
             await loadMonth(for: state.currentDisplayDate)
@@ -129,15 +136,18 @@ extension MonthlyCalendarViewModel {
         var monthDays: [MonthlyCalendarDay] = []
         var numberOfWeeks: Int = 5
         var monthYearText: String = ""
+        var nickname: String? = nil
 
         public static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.monthDays == rhs.monthDays
                 && lhs.numberOfWeeks == rhs.numberOfWeeks
                 && lhs.monthYearText == rhs.monthYearText
+                && lhs.nickname == rhs.nickname
         }
     }
 
     public enum Input {
+        case loadNickname
         case loadInitialData
         case selectMonth(Date)
         case selectDay(Date)

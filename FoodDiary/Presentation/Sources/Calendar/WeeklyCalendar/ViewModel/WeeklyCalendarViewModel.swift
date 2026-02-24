@@ -52,6 +52,7 @@ public final class WeeklyCalendarViewModel<
     private let loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>
     private let deletePendingRecordUseCase: DeletePendingRecordUseCase<PendingRepo>
     private let pushNotificationObserver: PushObserver
+    private let getNicknameUseCase: GetNicknameUseCase
 
     // MARK: - Init
 
@@ -61,7 +62,8 @@ public final class WeeklyCalendarViewModel<
         saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, PendingRepo>,
         loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>,
         deletePendingRecordUseCase: DeletePendingRecordUseCase<PendingRepo>,
-        pushNotificationObserver: PushObserver
+        pushNotificationObserver: PushObserver,
+        getNicknameUseCase: GetNicknameUseCase
     ) {
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
         self.loadWeeklyCalendarDataUseCase = loadWeeklyCalendarDataUseCase
@@ -69,6 +71,7 @@ public final class WeeklyCalendarViewModel<
         self.loadPendingRecordsUseCase = loadPendingRecordsUseCase
         self.deletePendingRecordUseCase = deletePendingRecordUseCase
         self.pushNotificationObserver = pushNotificationObserver
+        self.getNicknameUseCase = getNicknameUseCase
 
         self.calendar = Calendar.current
 
@@ -77,6 +80,7 @@ public final class WeeklyCalendarViewModel<
         self.stateSubject = CurrentValueSubject(State(selectedDate: today))
 
         setupBindings()
+        input.send(.loadNickname)
     }
 
     // MARK: - Setup
@@ -101,6 +105,9 @@ public final class WeeklyCalendarViewModel<
     @MainActor
     private func handleInput(_ action: Input) async {
         switch action {
+        case .loadNickname:
+            state.nickname = getNicknameUseCase.execute()
+
         case .loadInitialData:
             await requestPhotoAuthorizationIfNeeded()
             await loadWeekData(for: currentWeekBaseDate)
@@ -280,9 +287,11 @@ extension WeeklyCalendarViewModel {
         public internal(set) var monthText: String = ""
         public internal(set) var isLoading: Bool = false
         public internal(set) var dateContent: DateContent?
+        public internal(set) var nickname: String? = nil
     }
 
     public enum Input {
+        case loadNickname
         case loadInitialData
         case requestPhotoAuthorization
         case goToPreviousWeek

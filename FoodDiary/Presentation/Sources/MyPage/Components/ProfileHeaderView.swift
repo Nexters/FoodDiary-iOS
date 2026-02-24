@@ -59,6 +59,10 @@ final class ProfileHeaderView: UIView {
         return view
     }()
 
+    func configure(nickname: String) {
+        nameLabel.setText("\(nickname)님", style: .hd18, color: .white)
+    }
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()

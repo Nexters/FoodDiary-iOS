@@ -40,7 +40,7 @@ public final class WeeklyCalendarViewController<
 
     private let contentView = UIView()
 
-    private let recordPromptHeaderView = RecordPromptHeaderView()
+    private lazy var recordPromptHeaderView = RecordPromptHeaderView()
     private let headerView = WeeklyCalendarHeaderView()
     private let weekGridView = WeekGridView()
     private let bottomContentView = BottomContentView()
@@ -171,6 +171,16 @@ public final class WeeklyCalendarViewController<
             .store(in: &cancellables)
 
         // Output: ViewModel → View (State 기반)
+        viewModel.statePublisher
+            .map(\.nickname)
+            .compactMap { $0 }
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] nickname in
+                self?.recordPromptHeaderView.configure(nickname: nickname)
+            }
+            .store(in: &cancellables)
+
         viewModel.statePublisher
             .map(\.monthText)
             .removeDuplicates()

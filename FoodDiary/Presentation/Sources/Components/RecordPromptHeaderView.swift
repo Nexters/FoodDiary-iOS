@@ -29,7 +29,7 @@ public final class RecordPromptHeaderView: UIStackView {
 
     // MARK: - Initialization
 
-    public init(userName: String = "길동") {
+    public init(userName: String = "") {
         self.userName = userName
         super.init(frame: .zero)
         setupUI()
@@ -38,6 +38,12 @@ public final class RecordPromptHeaderView: UIStackView {
     @available(*, unavailable)
     required init(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    // MARK: - Configuration
+
+    public func configure(nickname: String) {
+        titleLabel.setText("\(nickname)님의 음식 기록,\n지금 바로 쓸 수 있어요", style: .hd20, color: DesignSystemAsset.gray050.color)
     }
 
     // MARK: - Setup
