@@ -23,6 +23,9 @@ public final class DetailViewController<
         static var dateNavigatorTopPadding: CGFloat { 32 }
         static var dateNavigatorBottomSpacing: CGFloat { 16 }
         static var bottomPadding: CGFloat { 32 }
+        static var floatingButtonSize: CGFloat { 56 }
+        static var floatingButtonBottomInset: CGFloat { 32 }
+        static var floatingButtonTrailingInset: CGFloat { 20 }
     }
 
     // MARK: - Dependencies
@@ -37,7 +40,7 @@ public final class DetailViewController<
     private let scrollView: UIScrollView = {
         let sv = UIScrollView()
         sv.showsVerticalScrollIndicator = false
-
+        sv.alwaysBounceVertical = true
         return sv
     }()
 
@@ -50,6 +53,24 @@ public final class DetailViewController<
         stack.axis = .vertical
         stack.spacing = 0
         return stack
+    }()
+
+    private lazy var floatingAddButton: UIButton = {
+        let button: UIButton
+        if #available(iOS 26, *) {
+            var config = UIButton.Configuration.glass()
+            config.image = UIImage(systemName: "plus", withConfiguration: UIImage.SymbolConfiguration(pointSize: 20, weight: .medium))
+            config.cornerStyle = .capsule
+            button = UIButton(configuration: config)
+        } else {
+            var config = UIButton.Configuration.plain()
+            config.image = UIImage(systemName: "plus", withConfiguration: UIImage.SymbolConfiguration(pointSize: 20, weight: .medium))
+            config.background.visualEffect = UIBlurEffect(style: .systemMaterialDark)
+            config.cornerStyle = .capsule
+            button = UIButton(configuration: config)
+        }
+        button.tintColor = .white
+        return button
     }()
 
     private let breakfastSection = MealSectionView(mealType: .breakfast)
@@ -127,6 +148,7 @@ public final class DetailViewController<
         scrollView.addSubview(contentView)
         contentView.addSubview(mealSectionsStackView)
         view.addSubview(dateNavigatorView)
+        view.addSubview(floatingAddButton)
 
         mealSectionsStackView.addArrangedSubview(breakfastSection)
         mealSectionsStackView.addArrangedSubview(lunchSection)
@@ -159,6 +181,12 @@ public final class DetailViewController<
             $0.top.equalToSuperview()
             $0.leading.trailing.equalToSuperview()
             $0.bottom.equalToSuperview().offset(-Constants.bottomPadding)
+        }
+
+        floatingAddButton.snp.makeConstraints {
+            $0.size.equalTo(Constants.floatingButtonSize)
+            $0.trailing.equalToSuperview().inset(Constants.floatingButtonTrailingInset)
+            $0.bottom.equalTo(view.safeAreaLayoutGuide).inset(Constants.floatingButtonBottomInset)
         }
     }
 
@@ -244,6 +272,9 @@ public final class DetailViewController<
 
         // Card events
         setupCardEventBindings()
+
+        // Floating add button
+        floatingAddButton.addTarget(self, action: #selector(floatingAddButtonTapped), for: .touchUpInside)
     }
 
     private func setupCardEventBindings() {
@@ -292,15 +323,15 @@ public final class DetailViewController<
         ]
 
         for (mealType, section) in sections {
-            let state: MealSectionView.State
             if let record = recordsByMealType[mealType] {
-                state = .recorded(record)
+                section.configure(state: .recorded(record))
+                section.isHidden = false
             } else if let pendings = pendingByMealType[mealType], !pendings.isEmpty {
-                state = .pending(pendings)
+                section.configure(state: .pending(pendings))
+                section.isHidden = false
             } else {
-                state = .empty
+                section.isHidden = true
             }
-            section.configure(state: state)
         }
     }
 
@@ -349,13 +380,21 @@ public final class DetailViewController<
         navigationController?.pushViewController(editVC, animated: true)
     }
 
-    private func handleAddPhoto(for mealType: MealType) {
+    @objc private func floatingAddButtonTapped() {
+        handleAddPhoto()
+    }
+
+    private func handleAddPhoto() {
         guard let nav = navigationController else { return }
         let date = viewModel.state.currentDate
 
         presentImagePickerHandler?(nav, date) { [weak self] assets in
             self?.viewModel.input.send(.saveSelectedPhotos(assets))
         }
+    }
+
+    private func handleAddPhoto(for mealType: MealType) {
+        handleAddPhoto()
     }
 
     private func showSaveErrorAlert(_ error: Error) {

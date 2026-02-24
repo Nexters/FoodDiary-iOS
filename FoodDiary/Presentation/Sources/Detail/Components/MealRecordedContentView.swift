@@ -47,6 +47,7 @@ final class MealRecordedContentView: UIView {
         let cv = UICollectionView(frame: .zero, collectionViewLayout: createLayout())
         cv.backgroundColor = .clear
         cv.showsHorizontalScrollIndicator = false
+        cv.isScrollEnabled = false
         cv.delegate = self
         cv.dataSource = self
         cv.register(
@@ -71,7 +72,7 @@ final class MealRecordedContentView: UIView {
         config.image = DesignSystemAsset.iconCopy.image
             .withRenderingMode(.alwaysTemplate)
         config.imagePadding = Constants.buttonImagePadding
-        config.contentInsets = .zero
+        config.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)
         let button = UIButton(configuration: config)
         button.tintColor = .white
         return button
@@ -82,7 +83,7 @@ final class MealRecordedContentView: UIView {
         config.image = UIImage(systemName: "link")?
             .withConfiguration(UIImage.SymbolConfiguration(pointSize: 12, weight: .regular))
         config.imagePadding = Constants.buttonImagePadding
-        config.contentInsets = .zero
+        config.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)
         let button = UIButton(configuration: config)
         button.tintColor = .white
         return button
