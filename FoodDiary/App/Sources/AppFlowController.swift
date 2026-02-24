@@ -74,7 +74,7 @@ extension AppFlowController {
         Task {
             let isLogin = await validateToken()
             
-            if isLogin { try? await fetchUserProfile() }
+            try? await fetchUserProfile()
             
             await MainActor.run { [weak self] in
                 guard let self else { return }
@@ -349,7 +349,10 @@ extension AppFlowController {
     }
 
     fileprivate func handleLoginResult(_ loginResult: LoginResult) {
-        transition(to: loginResult.isFirst ? createOnboardingView() : createMainView())
+        Task {
+            try? await fetchUserProfile()
+            transition(to: loginResult.isFirst ? createOnboardingView() : createMainView())
+        }
     }
 
     fileprivate func transition(to viewController: UIViewController) {
