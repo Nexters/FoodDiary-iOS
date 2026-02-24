@@ -131,7 +131,8 @@ public final class WeeklyCalendarViewModel<
         case .goToNextWeek:
             let nextWeek = calendar.nextWeek(from: currentWeekBaseDate)
             let today = calendar.startOfDay(for: Date())
-            guard nextWeek <= today else { return }
+            let (nextWeekStart, _) = calendar.weekRange(for: nextWeek)
+            guard nextWeekStart <= today else { return }
 
             currentWeekBaseDate = nextWeek
             updateSelectedDateToSameWeekday(in: currentWeekBaseDate)
@@ -242,7 +243,8 @@ public final class WeeklyCalendarViewModel<
         if let newSelectedDate = calendar.date(
             byAdding: .day, value: currentWeekday - 1, to: weekStart)
         {
-            state.selectedDate = newSelectedDate
+            let today = calendar.startOfDay(for: Date())
+            state.selectedDate = newSelectedDate > today ? today : newSelectedDate
         }
     }
 
@@ -339,7 +341,8 @@ extension WeeklyCalendarViewModel {
         let calendar = Calendar.current
         let nextWeek = calendar.date(byAdding: .weekOfYear, value: 1, to: date) ?? date
         let today = calendar.startOfDay(for: Date())
-        return calendar.startOfDay(for: nextWeek) <= today
+        let (nextWeekStart, _) = calendar.weekRange(for: nextWeek)
+        return nextWeekStart <= today
     }
 
     /// 특정 날짜의 사진 로드
