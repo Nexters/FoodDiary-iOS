@@ -196,6 +196,16 @@ public final class MonthlyCalendarViewController<
 
         // Output: ViewModel → View
         viewModel.statePublisher
+            .map(\.nickname)
+            .compactMap { $0 }
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] nickname in
+                self?.recordPromptHeaderView.configure(nickname: nickname)
+            }
+            .store(in: &cancellables)
+
+        viewModel.statePublisher
             .map(\.monthYearText)
             .removeDuplicates()
             .receive(on: DispatchQueue.main)
