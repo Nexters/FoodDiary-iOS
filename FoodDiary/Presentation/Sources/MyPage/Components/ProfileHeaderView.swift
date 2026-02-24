@@ -7,6 +7,7 @@
 
 import UIKit
 import DesignSystem
+import SnapKit
 
 final class ProfileHeaderView: UIView {
 
@@ -36,6 +37,22 @@ final class ProfileHeaderView: UIView {
         return label
     }()
 
+    private lazy var labelStackView: UIStackView = {
+        let sv = UIStackView(arrangedSubviews: [greetingLabel, nameLabel])
+        sv.axis = .vertical
+        sv.spacing = 3
+        sv.alignment = .center
+        return sv
+    }()
+
+    private lazy var contentStackView: UIStackView = {
+        let sv = UIStackView(arrangedSubviews: [characterImageView, labelStackView])
+        sv.axis = .vertical
+        sv.spacing = 15
+        sv.alignment = .center
+        return sv
+    }()
+
     private let separatorView: UIView = {
         let view = UIView()
         view.backgroundColor = .sd800
@@ -55,27 +72,20 @@ final class ProfileHeaderView: UIView {
 
     private func setupUI() {
         backgroundColor = .sd700
-        [characterImageView, greetingLabel, nameLabel, separatorView].forEach { addSubview($0) }
+        [contentStackView, separatorView].forEach { addSubview($0) }
     }
 
     private func setupConstraints() {
         self.snp.makeConstraints {
-            $0.height.equalTo(200)
+            $0.height.equalTo(280)
         }
 
         characterImageView.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(38)
-            $0.centerX.equalToSuperview()
             $0.size.equalTo(72)
         }
 
-        greetingLabel.snp.makeConstraints {
-            $0.top.equalTo(characterImageView.snp.bottom).offset(15)
-            $0.centerX.equalToSuperview()
-        }
-
-        nameLabel.snp.makeConstraints {
-            $0.top.equalTo(greetingLabel.snp.bottom).offset(3)
+        contentStackView.snp.makeConstraints {
+            $0.centerY.equalToSuperview().offset(40)
             $0.centerX.equalToSuperview()
         }
 
