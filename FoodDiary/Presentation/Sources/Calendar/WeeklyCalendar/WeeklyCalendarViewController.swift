@@ -26,6 +26,7 @@ public final class WeeklyCalendarViewController<
             RecordRepo, AssetRepo, AuthRepo, PendingRepo, PushObserver
         >
     private let imageProvider: ImageProvider
+    private let getNicknameUseCase: GetNicknameUseCase
     private let detailViewModelFactory: (Date, [FoodRecord]) -> DetailViewModel<RecordRepo, PendingRepo, PushObserver>
     private let editViewControllerFactory: ((FoodRecord) -> UIViewController)?
     private let presentImagePickerHandler: ((UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void) -> Void)?
@@ -56,12 +57,14 @@ public final class WeeklyCalendarViewController<
             RecordRepo, AssetRepo, AuthRepo, PendingRepo, PushObserver
         >,
         imageProvider: ImageProvider,
+        getNicknameUseCase: GetNicknameUseCase,
         detailViewModelFactory: @escaping (Date, [FoodRecord]) -> DetailViewModel<RecordRepo, PendingRepo, PushObserver>,
         editViewControllerFactory: ((FoodRecord) -> UIViewController)? = nil,
         presentImagePickerHandler: ((UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void) -> Void)? = nil
     ) {
         self.viewModel = viewModel
         self.imageProvider = imageProvider
+        self.getNicknameUseCase = getNicknameUseCase
         self.detailViewModelFactory = detailViewModelFactory
         self.editViewControllerFactory = editViewControllerFactory
         self.presentImagePickerHandler = presentImagePickerHandler
@@ -80,6 +83,10 @@ public final class WeeklyCalendarViewController<
         setupUI()
         setupConstraints()
         setupBindings()
+
+        if let nickname = getNicknameUseCase.execute() {
+            recordPromptHeaderView.configure(nickname: nickname)
+        }
 
         viewModel.input.send(.loadInitialData)
     }
