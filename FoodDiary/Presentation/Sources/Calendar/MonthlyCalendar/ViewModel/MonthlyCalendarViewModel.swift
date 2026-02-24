@@ -62,6 +62,7 @@ public final class MonthlyCalendarViewModel<
         self.stateSubject = CurrentValueSubject(State(currentDisplayDate: today))
 
         setupBindings()
+        input.send(.loadNickname)
     }
 
     // MARK: - Setup
@@ -80,8 +81,10 @@ public final class MonthlyCalendarViewModel<
     @MainActor
     private func handleInput(_ action: Input) async {
         switch action {
-        case .loadInitialData:
+        case .loadNickname:
             state.nickname = getNicknameUseCase.execute()
+
+        case .loadInitialData:
             await requestPhotoAuthorizationIfNeeded()
             await loadMonth(for: state.currentDisplayDate)
 
@@ -144,6 +147,7 @@ extension MonthlyCalendarViewModel {
     }
 
     public enum Input {
+        case loadNickname
         case loadInitialData
         case selectMonth(Date)
         case selectDay(Date)

@@ -80,6 +80,7 @@ public final class WeeklyCalendarViewModel<
         self.stateSubject = CurrentValueSubject(State(selectedDate: today))
 
         setupBindings()
+        input.send(.loadNickname)
     }
 
     // MARK: - Setup
@@ -104,8 +105,10 @@ public final class WeeklyCalendarViewModel<
     @MainActor
     private func handleInput(_ action: Input) async {
         switch action {
-        case .loadInitialData:
+        case .loadNickname:
             state.nickname = getNicknameUseCase.execute()
+
+        case .loadInitialData:
             await requestPhotoAuthorizationIfNeeded()
             await loadWeekData(for: currentWeekBaseDate)
             await updateDateContent(for: state.selectedDate)
@@ -288,6 +291,7 @@ extension WeeklyCalendarViewModel {
     }
 
     public enum Input {
+        case loadNickname
         case loadInitialData
         case requestPhotoAuthorization
         case goToPreviousWeek
