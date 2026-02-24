@@ -46,6 +46,7 @@ public final class DetailViewModel<
     private let loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>
     private let deletePendingRecordUseCase: DeletePendingRecordUseCase<PendingRepo>
     private let deleteFoodRecordUseCase: DeleteFoodRecordUseCase<RecordRepo>
+    private let cleanUpExpiredPendingRecordsUseCase: CleanUpExpiredPendingRecordsUseCase<PendingRepo>
     private let pushNotificationObserver: PushObserver
 
     // MARK: - Init
@@ -58,6 +59,7 @@ public final class DetailViewModel<
         loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>,
         deletePendingRecordUseCase: DeletePendingRecordUseCase<PendingRepo>,
         deleteFoodRecordUseCase: DeleteFoodRecordUseCase<RecordRepo>,
+        cleanUpExpiredPendingRecordsUseCase: CleanUpExpiredPendingRecordsUseCase<PendingRepo>,
         pushNotificationObserver: PushObserver
     ) {
         self.fetchRecordsUseCase = fetchRecordsUseCase
@@ -65,6 +67,7 @@ public final class DetailViewModel<
         self.loadPendingRecordsUseCase = loadPendingRecordsUseCase
         self.deletePendingRecordUseCase = deletePendingRecordUseCase
         self.deleteFoodRecordUseCase = deleteFoodRecordUseCase
+        self.cleanUpExpiredPendingRecordsUseCase = cleanUpExpiredPendingRecordsUseCase
         self.pushNotificationObserver = pushNotificationObserver
         self.calendar = Calendar.current
 
@@ -145,7 +148,10 @@ public final class DetailViewModel<
             state.recordsByMealType = groupRecordsByMealType(records)
 
             let pendingRecords = try await loadPendingRecords(for: date)
-            state.pendingRecords = pendingRecords
+            state.pendingRecords = try await cleanUpExpiredPendingRecordsUseCase.execute(
+                serverRecords: records,
+                pendingRecords: pendingRecords
+            )
 
             updateDateText()
         } catch {

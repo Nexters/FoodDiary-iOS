@@ -51,6 +51,7 @@ public final class WeeklyCalendarViewModel<
     private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, PendingRepo>
     private let loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>
     private let deletePendingRecordUseCase: DeletePendingRecordUseCase<PendingRepo>
+    private let cleanUpExpiredPendingRecordsUseCase: CleanUpExpiredPendingRecordsUseCase<PendingRepo>
     private let pushNotificationObserver: PushObserver
     private let getNicknameUseCase: GetNicknameUseCase
 
@@ -62,7 +63,8 @@ public final class WeeklyCalendarViewModel<
         saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, PendingRepo>,
         loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>,
         deletePendingRecordUseCase: DeletePendingRecordUseCase<PendingRepo>,
-        pushNotificationObserver: PushObserver,
+        cleanUpExpiredPendingRecordsUseCase: CleanUpExpiredPendingRecordsUseCase<PendingRepo>,
+        pushNotificationObserver: PushObserver
         getNicknameUseCase: GetNicknameUseCase
     ) {
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
@@ -70,6 +72,7 @@ public final class WeeklyCalendarViewModel<
         self.saveFoodRecordUseCase = saveFoodRecordUseCase
         self.loadPendingRecordsUseCase = loadPendingRecordsUseCase
         self.deletePendingRecordUseCase = deletePendingRecordUseCase
+        self.cleanUpExpiredPendingRecordsUseCase = cleanUpExpiredPendingRecordsUseCase
         self.pushNotificationObserver = pushNotificationObserver
         self.getNicknameUseCase = getNicknameUseCase
 
@@ -181,10 +184,14 @@ public final class WeeklyCalendarViewModel<
             let records = state.weekDays.records(for: startOfDay, calendar: calendar)
 
             let pendingRecords = try await loadPendingRecords(for: date)
+            let validPendingRecords = try await cleanUpExpiredPendingRecordsUseCase.execute(
+                serverRecords: records,
+                pendingRecords: pendingRecords
+            )
 
             state.dateContent = DateContent(
                 records: records,
-                pendingRecords: pendingRecords
+                pendingRecords: validPendingRecords
             )
         } catch {
             eventSubject.send(.loadFailed(error))
