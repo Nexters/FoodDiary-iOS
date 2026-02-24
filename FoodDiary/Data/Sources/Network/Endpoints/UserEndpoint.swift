@@ -10,6 +10,7 @@ import Domain
 
 public enum UserEndpoint {
     case withdraw
+    case nickname
 }
 
 extension UserEndpoint: Requestable {
@@ -25,6 +26,8 @@ extension UserEndpoint: Requestable {
         switch self {
         case .withdraw:
             "/users/me"
+        case .nickname:
+            "/users/me"
         }
     }
 
@@ -32,12 +35,16 @@ extension UserEndpoint: Requestable {
         switch self {
         case .withdraw:
             .delete
+        case .nickname:
+            .get
         }
     }
 
     public var queryParameters: Encodable? {
         switch self {
         case .withdraw:
+            nil
+        case .nickname:
             nil
         }
     }
@@ -46,12 +53,16 @@ extension UserEndpoint: Requestable {
         switch self {
         case .withdraw:
             return .none
+        case .nickname:
+            return .none
         }
     }
 
     public var headers: [String : String] {
         switch self {
         case .withdraw:
+            return [:]
+        case .nickname:
             return [:]
         }
     }
