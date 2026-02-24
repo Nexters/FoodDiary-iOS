@@ -280,6 +280,22 @@ extension AppFlowController {
             fatalError("MonthlyCalendarViewModel not registered")
         }
 
+        let detailImagePickerHandler:
+            (UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void)
+                -> Void = { [weak self] nav, date, onSelected in
+                    guard let self else { return }
+                    self.presentImagePicker(
+                        from: nav,
+                        date: date,
+                        configuration: .withMaxSelectionCount(10),
+                        autoPreselectByProbability: true,
+                        loadPreviewImages: false,
+                        onSelected: { assets, _ in
+                            onSelected(assets)
+                        }
+                    )
+                }
+
         return MonthlyCalendarViewController(
             viewModel: monthlyViewModel,
             detailViewControllerFactory: { [container] date, records in
@@ -287,7 +303,10 @@ extension AppFlowController {
                 else {
                     fatalError("DetailViewModel not registered")
                 }
-                return DetailViewController(viewModel: detailVM)
+                return DetailViewController(
+                    viewModel: detailVM,
+                    presentImagePickerHandler: detailImagePickerHandler
+                )
             }
         )
     }

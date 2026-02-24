@@ -99,6 +99,9 @@ public final class MonthlyCalendarViewModel<
             } catch {
                 eventSubject.send(.showError(error))
             }
+
+        case .refreshCurrentMonth:
+            await loadMonth(for: state.currentDisplayDate)
         }
     }
 
@@ -151,6 +154,7 @@ extension MonthlyCalendarViewModel {
         case loadInitialData
         case selectMonth(Date)
         case selectDay(Date)
+        case refreshCurrentMonth
     }
 
     public enum Event {
