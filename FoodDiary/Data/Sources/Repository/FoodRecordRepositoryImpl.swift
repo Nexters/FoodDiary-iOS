@@ -121,7 +121,7 @@ public struct FoodRecordRepositoryImpl<
 
         return response.reduce(into: [Date: [URL]]()) { result, entry in
             guard let date = formatter.date(from: entry.key) else { return }
-            result[date] = entry.value.photos.compactMap { URL(string: $0) }
+            result[date] = entry.value.photos.compactMap { URL(string: $0.url) }
         }
     }
 
@@ -245,7 +245,7 @@ extension FoodRecordRepositoryImpl {
 
     private func postFakeAnalysisNotification(date: Date) {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
         formatter.locale = Locale(identifier: "en_US_POSIX")
         let dateString = formatter.string(from: date)
 

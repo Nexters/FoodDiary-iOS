@@ -71,29 +71,20 @@ public struct DiaryPhotoDTO: Decodable {
 
 /// GET /diaries/{diary_id}/suggestions 응답
 public struct DiarySuggestionsResponseDTO: Decodable {
-    public let restaurantCandidates: [RestaurantCandidateDTO]
-    public let categoryCandidates: [String]
-    public let menuCandidates: [String]
-
-    enum CodingKeys: String, CodingKey {
-        case restaurantCandidates = "restaurant_candidates"
-        case categoryCandidates = "category_candidates"
-        case menuCandidates = "menu_candidates"
-    }
+    public let restaurants: [RestaurantCandidateDTO]
 }
 
 public struct RestaurantCandidateDTO: Decodable {
     public let name: String
-    public let confidence: Double
+    public let memo: String
     public let address: String?
     public let url: String?
     public let roadAddress: String?
-    public let zoneNo: String?
+    public let tags: [String]
 
     enum CodingKeys: String, CodingKey {
-        case name, confidence, address, url
+        case name, memo, address, url, tags
         case roadAddress = "road_address"
-        case zoneNo = "zone_no"
     }
 }
 
@@ -111,7 +102,7 @@ public struct AddDiaryPhotosResponseDTO: Decodable {
 extension DiaryResponseDTO {
     func toFoodRecord() -> FoodRecord? {
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
+        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
         dateFormatter.timeZone = .current
 
         guard let date = dateFormatter.date(from: diaryDate) else { return nil }

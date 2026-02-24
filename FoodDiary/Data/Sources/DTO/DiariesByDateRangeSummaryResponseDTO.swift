@@ -10,5 +10,9 @@ import Foundation
 public typealias DiariesByDateRangeSummaryResponseDTO = [String: CalendarPhotoDTO]
 
 public struct CalendarPhotoDTO: Decodable {
-    public let photos: [String]
+    public let photos: [PhotoDTO]
+}
+
+public struct PhotoDTO: Decodable {
+    let url: String
 }
