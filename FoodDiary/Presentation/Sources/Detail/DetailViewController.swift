@@ -326,7 +326,18 @@ public final class DetailViewController<
     }
 
     private func handleShare(record: FoodRecord) {
-        // TODO: 공유할 콘텐츠 구성
+        guard let name = record.restaurantName, !name.isEmpty,
+              let url = record.restaurantUrl, !url.isEmpty else {
+            showShareUnavailableAlert()
+            return
+        }
+        
+        let shareText = formatRecordForShare(name, url)
+        presentShareSheet(items: [shareText])
+    }
+
+    private func formatRecordForShare(_ name: String, _ url: String) -> String {
+        return "\(name) 맛을 기억하시나요?\n\n\(url)"
     }
 
     private func presentShareSheet(items: [Any]) {
@@ -356,6 +367,16 @@ public final class DetailViewController<
         presentImagePickerHandler?(nav, date) { [weak self] assets in
             self?.viewModel.input.send(.saveSelectedPhotos(assets))
         }
+    }
+
+    private func showShareUnavailableAlert() {
+        let alert = UIAlertController(
+            title: nil,
+            message: "공유할 수 없는 다이어리입니다.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
     }
 
     private func showSaveErrorAlert(_ error: Error) {
