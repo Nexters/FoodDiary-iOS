@@ -40,6 +40,12 @@ public final class RecordPromptHeaderView: UIStackView {
         fatalError("init(coder:) has not been implemented")
     }
 
+    // MARK: - Configuration
+
+    public func configure(nickname: String) {
+        titleLabel.setText("\(nickname)님의 음식 기록,\n지금 바로 쓸 수 있어요", style: .hd20, color: DesignSystemAsset.gray050.color)
+    }
+
     // MARK: - Setup
 
     private func setupUI() {
