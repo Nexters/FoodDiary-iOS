@@ -26,7 +26,6 @@ public final class WeeklyCalendarViewController<
             RecordRepo, AssetRepo, AuthRepo, PendingRepo, PushObserver
         >
     private let imageProvider: ImageProvider
-    private let getNicknameUseCase: GetNicknameUseCase
     private let detailViewModelFactory: (Date, [FoodRecord]) -> DetailViewModel<RecordRepo, PendingRepo, PushObserver>
     private let editViewControllerFactory: ((FoodRecord) -> UIViewController)?
     private let presentImagePickerHandler: ((UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void) -> Void)?
@@ -41,7 +40,7 @@ public final class WeeklyCalendarViewController<
 
     private let contentView = UIView()
 
-    private let recordPromptHeaderView = RecordPromptHeaderView()
+    private lazy var recordPromptHeaderView = RecordPromptHeaderView()
     private let headerView = WeeklyCalendarHeaderView()
     private let weekGridView = WeekGridView()
     private let bottomContentView = BottomContentView()
@@ -57,14 +56,12 @@ public final class WeeklyCalendarViewController<
             RecordRepo, AssetRepo, AuthRepo, PendingRepo, PushObserver
         >,
         imageProvider: ImageProvider,
-        getNicknameUseCase: GetNicknameUseCase,
         detailViewModelFactory: @escaping (Date, [FoodRecord]) -> DetailViewModel<RecordRepo, PendingRepo, PushObserver>,
         editViewControllerFactory: ((FoodRecord) -> UIViewController)? = nil,
         presentImagePickerHandler: ((UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void) -> Void)? = nil
     ) {
         self.viewModel = viewModel
         self.imageProvider = imageProvider
-        self.getNicknameUseCase = getNicknameUseCase
         self.detailViewModelFactory = detailViewModelFactory
         self.editViewControllerFactory = editViewControllerFactory
         self.presentImagePickerHandler = presentImagePickerHandler
@@ -83,10 +80,6 @@ public final class WeeklyCalendarViewController<
         setupUI()
         setupConstraints()
         setupBindings()
-
-        if let nickname = getNicknameUseCase.execute() {
-            recordPromptHeaderView.configure(nickname: nickname)
-        }
 
         viewModel.input.send(.loadInitialData)
     }
@@ -178,6 +171,16 @@ public final class WeeklyCalendarViewController<
             .store(in: &cancellables)
 
         // Output: ViewModel → View (State 기반)
+        viewModel.statePublisher
+            .map(\.nickname)
+            .compactMap { $0 }
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] nickname in
+                self?.recordPromptHeaderView.configure(nickname: nickname)
+            }
+            .store(in: &cancellables)
+
         viewModel.statePublisher
             .map(\.monthText)
             .removeDuplicates()

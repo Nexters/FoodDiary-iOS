@@ -52,6 +52,7 @@ public final class WeeklyCalendarViewModel<
     private let loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>
     private let deletePendingRecordUseCase: DeletePendingRecordUseCase<PendingRepo>
     private let pushNotificationObserver: PushObserver
+    private let getNicknameUseCase: GetNicknameUseCase
 
     // MARK: - Init
 
@@ -61,7 +62,8 @@ public final class WeeklyCalendarViewModel<
         saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, PendingRepo>,
         loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>,
         deletePendingRecordUseCase: DeletePendingRecordUseCase<PendingRepo>,
-        pushNotificationObserver: PushObserver
+        pushNotificationObserver: PushObserver,
+        getNicknameUseCase: GetNicknameUseCase
     ) {
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
         self.loadWeeklyCalendarDataUseCase = loadWeeklyCalendarDataUseCase
@@ -69,6 +71,7 @@ public final class WeeklyCalendarViewModel<
         self.loadPendingRecordsUseCase = loadPendingRecordsUseCase
         self.deletePendingRecordUseCase = deletePendingRecordUseCase
         self.pushNotificationObserver = pushNotificationObserver
+        self.getNicknameUseCase = getNicknameUseCase
 
         self.calendar = Calendar.current
 
@@ -102,6 +105,7 @@ public final class WeeklyCalendarViewModel<
     private func handleInput(_ action: Input) async {
         switch action {
         case .loadInitialData:
+            state.nickname = getNicknameUseCase.execute()
             await requestPhotoAuthorizationIfNeeded()
             await loadWeekData(for: currentWeekBaseDate)
             await updateDateContent(for: state.selectedDate)
@@ -280,6 +284,7 @@ extension WeeklyCalendarViewModel {
         public internal(set) var monthText: String = ""
         public internal(set) var isLoading: Bool = false
         public internal(set) var dateContent: DateContent?
+        public internal(set) var nickname: String? = nil
     }
 
     public enum Input {

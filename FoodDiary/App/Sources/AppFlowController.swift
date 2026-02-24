@@ -183,10 +183,6 @@ extension AppFlowController {
             fatalError("WeeklyCalendarViewModel not registered")
         }
 
-        guard let getNicknameUseCase = try? container.resolve(GetNicknameUseCase.self) else {
-            fatalError("GetNicknameUseCase not registered")
-        }
-
         typealias DetailVM = DetailViewModel<
             FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
             PendingFoodRecordStorage<FileStorageService>,
@@ -257,7 +253,6 @@ extension AppFlowController {
         return WeeklyCalendarViewController(
             viewModel: weeklyViewModel,
             imageProvider: imageProvider,
-            getNicknameUseCase: getNicknameUseCase,
             detailViewModelFactory: { [container] date, records in
                 guard let vm = try? container.resolve(DetailVM.self, argument: (date, records))
                 else {
