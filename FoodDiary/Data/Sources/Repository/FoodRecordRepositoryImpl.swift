@@ -57,25 +57,16 @@ public struct FoodRecordRepositoryImpl<
             accessToken: accessToken
         )
 
-        guard !response.results.isEmpty else {
+        guard !response.diaries.isEmpty else {
             throw FoodRecordError.emptyResponse
         }
 
-        // diaryId 기준으로 중복 제거 (같은 diary에 여러 사진이 속할 수 있음)
-        var seen = Set<Int>()
-        var uploadResults: [UploadResult] = []
-        for result in response.results {
-            if seen.insert(result.diaryId).inserted {
-                uploadResults.append(
-                    UploadResult(
-                        uploadId: String(result.diaryId),
-                        mealType: MealType.from(serverValue: result.timeType)
-                    )
-                )
-            }
+        return response.diaries.map { diary in
+            UploadResult(
+                uploadId: String(diary.diaryId),
+                mealType: MealType.from(serverValue: diary.timeType)
+            )
         }
-
-        return uploadResults
     }
 
     public func fetchRecords(in dateRange: ClosedRange<Date>) async throws -> [Date: [FoodRecord]] {
