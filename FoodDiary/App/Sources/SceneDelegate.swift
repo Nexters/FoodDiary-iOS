@@ -545,6 +545,11 @@ extension SceneDelegate {
                     let deletePendingUseCase = resolver.resolve(
                         DeletePendingRecordUseCase<PendingFoodRecordStorage<FileStorageService>>.self
                     ),
+                    let deleteFoodRecordUseCase = resolver.resolve(
+                        DeleteFoodRecordUseCase<
+                            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
+                        >.self
+                    ),
                     let pushObserver = resolver.resolve(PushNotificationObserver.self)
                 else {
                     fatalError("DetailViewModel dependencies not registered")
@@ -557,6 +562,7 @@ extension SceneDelegate {
                     saveFoodRecordUseCase: saveFoodRecordUseCase,
                     loadPendingRecordsUseCase: loadPendingUseCase,
                     deletePendingRecordUseCase: deletePendingUseCase,
+                    deleteFoodRecordUseCase: deleteFoodRecordUseCase,
                     pushNotificationObserver: pushObserver
                 )
             }

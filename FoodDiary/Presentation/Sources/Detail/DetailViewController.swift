@@ -266,6 +266,10 @@ public final class DetailViewController<
                     break
                 case .saveFailed(let error):
                     self?.showSaveErrorAlert(error)
+                case .deleteAllCompleted:
+                    self?.navigationController?.popViewController(animated: true)
+                case .deleteAllFailed(let error):
+                    self?.showDeleteErrorAlert(error)
                 }
             }
             .store(in: &cancellables)
@@ -372,7 +376,35 @@ public final class DetailViewController<
     // MARK: - Actions
 
     @objc private func moreButtonTapped() {
-        // TODO: Show more options menu
+        let actionSheet = UIAlertController(
+            title: nil,
+            message: nil,
+            preferredStyle: .actionSheet
+        )
+
+        actionSheet.addAction(
+            UIAlertAction(title: "전체삭제", style: .destructive) { [weak self] _ in
+                self?.showDeleteAllConfirmation()
+            }
+        )
+        actionSheet.addAction(UIAlertAction(title: "취소", style: .cancel))
+
+        present(actionSheet, animated: true)
+    }
+
+    private func showDeleteAllConfirmation() {
+        let alert = UIAlertController(
+            title: "전체 삭제",
+            message: "이 날짜의 모든 기록을 삭제하시겠습니까?",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(
+            UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
+                self?.viewModel.input.send(.deleteAllRecords)
+            }
+        )
+        present(alert, animated: true)
     }
 
     private func handleEdit(record: FoodRecord) {
@@ -395,6 +427,16 @@ public final class DetailViewController<
 
     private func handleAddPhoto(for mealType: MealType) {
         handleAddPhoto()
+    }
+
+    private func showDeleteErrorAlert(_ error: Error) {
+        let alert = UIAlertController(
+            title: "삭제 실패",
+            message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
     }
 
     private func showSaveErrorAlert(_ error: Error) {
