@@ -24,6 +24,7 @@ public struct FoodRecord: Identifiable, Equatable, Sendable {
     public let genre: FoodGenre
     public let photos: [PhotoInfo]
     public let restaurantName: String?
+    public let restaurantUrl: String?
     public let address: String?
     public let hashtags: [String]
     public let createdAt: Date
@@ -40,6 +41,7 @@ public struct FoodRecord: Identifiable, Equatable, Sendable {
         genre: FoodGenre,
         photos: [PhotoInfo],
         restaurantName: String? = nil,
+        restaurantUrl: String? = nil,
         address: String? = nil,
         hashtags: [String] = [],
         createdAt: Date
@@ -50,6 +52,7 @@ public struct FoodRecord: Identifiable, Equatable, Sendable {
         self.genre = genre
         self.photos = photos
         self.restaurantName = restaurantName
+        self.restaurantUrl = restaurantUrl
         self.address = address
         self.hashtags = hashtags
         self.createdAt = createdAt
