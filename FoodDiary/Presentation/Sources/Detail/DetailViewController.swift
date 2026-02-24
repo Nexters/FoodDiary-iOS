@@ -21,8 +21,11 @@ public final class DetailViewController<
     private enum Constants {
         static var dateNavigatorHeight: CGFloat { 64 }
         static var dateNavigatorTopPadding: CGFloat { 32 }
-        static var dateNavigatorBottomSpacing: CGFloat { 16 }
+        static var dateNavigatorBottomSpacing: CGFloat { 0 }
         static var bottomPadding: CGFloat { 32 }
+        static var floatingButtonSize: CGFloat { 56 }
+        static var floatingButtonBottomInset: CGFloat { 32 }
+        static var floatingButtonTrailingInset: CGFloat { 20 }
     }
 
     // MARK: - Dependencies
@@ -37,7 +40,7 @@ public final class DetailViewController<
     private let scrollView: UIScrollView = {
         let sv = UIScrollView()
         sv.showsVerticalScrollIndicator = false
-
+        sv.alwaysBounceVertical = true
         return sv
     }()
 
@@ -49,6 +52,45 @@ public final class DetailViewController<
         let stack = UIStackView()
         stack.axis = .vertical
         stack.spacing = 0
+        return stack
+    }()
+
+    private lazy var floatingAddButton: UIButton = {
+        let button: UIButton
+        if #available(iOS 26, *) {
+            var config = UIButton.Configuration.glass()
+            config.image = UIImage(systemName: "plus", withConfiguration: UIImage.SymbolConfiguration(pointSize: 20, weight: .medium))
+            config.cornerStyle = .capsule
+            button = UIButton(configuration: config)
+        } else {
+            var config = UIButton.Configuration.plain()
+            config.image = UIImage(systemName: "plus", withConfiguration: UIImage.SymbolConfiguration(pointSize: 20, weight: .medium))
+            config.background.visualEffect = UIBlurEffect(style: .systemMaterialDark)
+            config.cornerStyle = .capsule
+            button = UIButton(configuration: config)
+        }
+        button.tintColor = .white
+        return button
+    }()
+
+    private let emptyDayTitleLabel: UILabel = {
+        let label = UILabel()
+        label.setText("기록된 다이어리가 없어요", style: .p18, color: .gray050)
+        return label
+    }()
+
+    private let emptyDaySubtitleLabel: UILabel = {
+        let label = UILabel()
+        label.setText("음식 사진을 추가해보세요", style: .p15, color: .gray100)
+        return label
+    }()
+
+    private lazy var emptyDayStackView: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [emptyDayTitleLabel, emptyDaySubtitleLabel])
+        stack.axis = .vertical
+        stack.alignment = .center
+        stack.spacing = 6
+        stack.isHidden = true
         return stack
     }()
 
@@ -112,11 +154,17 @@ public final class DetailViewController<
         title = "상세보기"
 
         // More button
+        let deleteAllAction = UIAction(
+            title: "전체삭제",
+            image: UIImage(systemName: "trash"),
+            attributes: .destructive
+        ) { [weak self] _ in
+            self?.showDeleteAllConfirmation()
+        }
+
         navigationItem.rightBarButtonItem = UIBarButtonItem(
             image: UIImage(systemName: "ellipsis"),
-            style: .plain,
-            target: self,
-            action: #selector(moreButtonTapped)
+            menu: UIMenu(children: [deleteAllAction])
         )
     }
 
@@ -126,7 +174,9 @@ public final class DetailViewController<
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
         contentView.addSubview(mealSectionsStackView)
+        view.addSubview(emptyDayStackView)
         view.addSubview(dateNavigatorView)
+        view.addSubview(floatingAddButton)
 
         mealSectionsStackView.addArrangedSubview(breakfastSection)
         mealSectionsStackView.addArrangedSubview(lunchSection)
@@ -160,6 +210,17 @@ public final class DetailViewController<
             $0.leading.trailing.equalToSuperview()
             $0.bottom.equalToSuperview().offset(-Constants.bottomPadding)
         }
+
+        emptyDayStackView.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.centerY.equalTo(scrollView)
+        }
+
+        floatingAddButton.snp.makeConstraints {
+            $0.size.equalTo(Constants.floatingButtonSize)
+            $0.trailing.equalToSuperview().inset(Constants.floatingButtonTrailingInset)
+            $0.bottom.equalTo(view.safeAreaLayoutGuide).inset(Constants.floatingButtonBottomInset)
+        }
     }
 
     private func setupBindings() {
@@ -185,7 +246,7 @@ public final class DetailViewController<
             .sink { [weak self] _ in
                 guard let self else { return }
                 self.scrollView.setContentOffset(
-                    CGPoint(x: 0, y: -self.scrollView.contentInset.top),
+                    CGPoint(x: 0, y: -self.scrollView.adjustedContentInset.top),
                     animated: false
                 )
             }
@@ -238,12 +299,19 @@ public final class DetailViewController<
                     break
                 case .saveFailed(let error):
                     self?.showSaveErrorAlert(error)
+                case .deleteAllCompleted:
+                    self?.navigationController?.popViewController(animated: true)
+                case .deleteAllFailed(let error):
+                    self?.showDeleteErrorAlert(error)
                 }
             }
             .store(in: &cancellables)
 
         // Card events
         setupCardEventBindings()
+
+        // Floating add button
+        floatingAddButton.addTarget(self, action: #selector(floatingAddButtonTapped), for: .touchUpInside)
     }
 
     private func setupCardEventBindings() {
@@ -291,17 +359,27 @@ public final class DetailViewController<
             (.snack, snackSection),
         ]
 
+        var hasAnyContent = false
+
         for (mealType, section) in sections {
-            let state: MealSectionView.State
             if let record = recordsByMealType[mealType] {
-                state = .recorded(record)
+                section.configure(state: .recorded(record))
+                section.isHidden = false
+                hasAnyContent = true
             } else if let pendings = pendingByMealType[mealType], !pendings.isEmpty {
-                state = .pending(pendings)
+                section.configure(state: .pending(pendings))
+                section.isHidden = false
+                hasAnyContent = true
             } else {
-                state = .empty
+                section.isHidden = true
             }
-            section.configure(state: state)
         }
+
+        emptyDayStackView.isHidden = hasAnyContent
+        scrollView.isHidden = !hasAnyContent
+
+        view.bringSubviewToFront(dateNavigatorView)
+        view.bringSubviewToFront(floatingAddButton)
     }
 
     private func formatRecordForCopy(_ record: FoodRecord) -> String {
@@ -351,8 +429,19 @@ public final class DetailViewController<
 
     // MARK: - Actions
 
-    @objc private func moreButtonTapped() {
-        // TODO: Show more options menu
+    private func showDeleteAllConfirmation() {
+        let alert = UIAlertController(
+            title: "전체 삭제",
+            message: "이 날짜의 모든 기록을 삭제하시겠습니까?",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(
+            UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
+                self?.viewModel.input.send(.deleteAllRecords)
+            }
+        )
+        present(alert, animated: true)
     }
 
     private func handleEdit(record: FoodRecord) {
@@ -360,7 +449,11 @@ public final class DetailViewController<
         navigationController?.pushViewController(editVC, animated: true)
     }
 
-    private func handleAddPhoto(for mealType: MealType) {
+    @objc private func floatingAddButtonTapped() {
+        handleAddPhoto()
+    }
+
+    private func handleAddPhoto() {
         guard let nav = navigationController else { return }
         let date = viewModel.state.currentDate
 
@@ -373,6 +466,20 @@ public final class DetailViewController<
         let alert = UIAlertController(
             title: nil,
             message: "공유할 수 없는 다이어리입니다.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
+    }
+
+    private func handleAddPhoto(for mealType: MealType) {
+        handleAddPhoto()
+    }
+
+    private func showDeleteErrorAlert(_ error: Error) {
+        let alert = UIAlertController(
+            title: "삭제 실패",
+            message: error.localizedDescription,
             preferredStyle: .alert
         )
         alert.addAction(UIAlertAction(title: "확인", style: .default))

@@ -55,6 +55,13 @@ public final class EditFoodRecordViewController<
         return label
     }()
 
+    private let categoryScrollView: UIScrollView = {
+        let sv = UIScrollView()
+        sv.showsHorizontalScrollIndicator = false
+        sv.showsVerticalScrollIndicator = false
+        return sv
+    }()
+
     private let categoryStackView: UIStackView = {
         let sv = UIStackView()
         sv.axis = .horizontal
@@ -166,7 +173,8 @@ public final class EditFoodRecordViewController<
 
         contentView.addSubview(imageSectionView)
         contentView.addSubview(categoryTitleLabel)
-        contentView.addSubview(categoryStackView)
+        contentView.addSubview(categoryScrollView)
+        categoryScrollView.addSubview(categoryStackView)
         contentView.addSubview(addressTitleLabel)
         contentView.addSubview(addressDisplayView)
         contentView.addSubview(tagTitleLabel)
@@ -219,13 +227,23 @@ public final class EditFoodRecordViewController<
             $0.leading.equalToSuperview().offset(EditFoodRecordConstants.horizontalInset)
         }
 
-        categoryStackView.snp.makeConstraints {
+        categoryScrollView.snp.makeConstraints {
             $0.top.equalTo(categoryTitleLabel.snp.bottom).offset(EditFoodRecordConstants.contentTopSpacing)
-            $0.leading.equalToSuperview().offset(EditFoodRecordConstants.horizontalInset)
+            $0.leading.trailing.equalToSuperview()
+        }
+
+        categoryStackView.snp.makeConstraints {
+            $0.edges.equalToSuperview().inset(UIEdgeInsets(
+                top: 0,
+                left: EditFoodRecordConstants.horizontalInset,
+                bottom: 0,
+                right: EditFoodRecordConstants.horizontalInset
+            ))
+            $0.height.equalToSuperview()
         }
 
         addressTitleLabel.snp.makeConstraints {
-            $0.top.equalTo(categoryStackView.snp.bottom).offset(EditFoodRecordConstants.sectionSpacing)
+            $0.top.equalTo(categoryScrollView.snp.bottom).offset(EditFoodRecordConstants.sectionSpacing)
             $0.leading.equalToSuperview().offset(EditFoodRecordConstants.horizontalInset)
         }
 

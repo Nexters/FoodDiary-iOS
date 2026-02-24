@@ -27,7 +27,6 @@ public final class InsightViewController: UIViewController {
 
     private let descriptionLabel: UILabel = {
         let label = UILabel()
-        label.textAlignment = .center
         label.numberOfLines = 0
         return label
     }()
@@ -62,7 +61,9 @@ public final class InsightViewController: UIViewController {
         descriptionLabel.setText(
             "인사이트를 제공하기 위해\n최소 1주일간의 데이터가 필요해요.",
             style: .p14,
-            color: .gray050
+            color: .gray050,
+            alignment: .center,
+            lineSpacing: 4
         )
     }
 

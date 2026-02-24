@@ -51,6 +51,7 @@ public final class WeeklyCalendarViewModel<
     private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, PendingRepo>
     private let loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>
     private let deletePendingRecordUseCase: DeletePendingRecordUseCase<PendingRepo>
+    private let cleanUpExpiredPendingRecordsUseCase: CleanUpExpiredPendingRecordsUseCase<PendingRepo>
     private let pushNotificationObserver: PushObserver
     private let getNicknameUseCase: GetNicknameUseCase
 
@@ -62,6 +63,7 @@ public final class WeeklyCalendarViewModel<
         saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, PendingRepo>,
         loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>,
         deletePendingRecordUseCase: DeletePendingRecordUseCase<PendingRepo>,
+        cleanUpExpiredPendingRecordsUseCase: CleanUpExpiredPendingRecordsUseCase<PendingRepo>,
         pushNotificationObserver: PushObserver,
         getNicknameUseCase: GetNicknameUseCase
     ) {
@@ -70,6 +72,7 @@ public final class WeeklyCalendarViewModel<
         self.saveFoodRecordUseCase = saveFoodRecordUseCase
         self.loadPendingRecordsUseCase = loadPendingRecordsUseCase
         self.deletePendingRecordUseCase = deletePendingRecordUseCase
+        self.cleanUpExpiredPendingRecordsUseCase = cleanUpExpiredPendingRecordsUseCase
         self.pushNotificationObserver = pushNotificationObserver
         self.getNicknameUseCase = getNicknameUseCase
 
@@ -128,7 +131,8 @@ public final class WeeklyCalendarViewModel<
         case .goToNextWeek:
             let nextWeek = calendar.nextWeek(from: currentWeekBaseDate)
             let today = calendar.startOfDay(for: Date())
-            guard nextWeek <= today else { return }
+            let (nextWeekStart, _) = calendar.weekRange(for: nextWeek)
+            guard nextWeekStart <= today else { return }
 
             currentWeekBaseDate = nextWeek
             updateSelectedDateToSameWeekday(in: currentWeekBaseDate)
@@ -148,7 +152,11 @@ public final class WeeklyCalendarViewModel<
         case .handlePushNotification(let notification):
             await handlePushNotification(notification)
 
-        case .refreshData:
+        case .refreshData(let date):
+            if let date {
+                state.selectedDate = date
+                await moveToWeekIfNeeded(for: date)
+            }
             await loadWeekData(for: currentWeekBaseDate)
             await updateDateContent(for: state.selectedDate)
         }
@@ -177,10 +185,14 @@ public final class WeeklyCalendarViewModel<
             let records = state.weekDays.records(for: startOfDay, calendar: calendar)
 
             let pendingRecords = try await loadPendingRecords(for: date)
+            let validPendingRecords = try await cleanUpExpiredPendingRecordsUseCase.execute(
+                serverRecords: records,
+                pendingRecords: pendingRecords
+            )
 
             state.dateContent = DateContent(
                 records: records,
-                pendingRecords: pendingRecords
+                pendingRecords: validPendingRecords
             )
         } catch {
             eventSubject.send(.loadFailed(error))
@@ -231,7 +243,8 @@ public final class WeeklyCalendarViewModel<
         if let newSelectedDate = calendar.date(
             byAdding: .day, value: currentWeekday - 1, to: weekStart)
         {
-            state.selectedDate = newSelectedDate
+            let today = calendar.startOfDay(for: Date())
+            state.selectedDate = newSelectedDate > today ? today : newSelectedDate
         }
     }
 
@@ -299,7 +312,7 @@ extension WeeklyCalendarViewModel {
         case selectDate(Date)
         case saveSelectedPhotos([AssetRepo.Asset])
         case handlePushNotification(AnalysisResultNotification)
-        case refreshData
+        case refreshData(Date? = nil)
     }
 
     public enum Event {
@@ -328,7 +341,8 @@ extension WeeklyCalendarViewModel {
         let calendar = Calendar.current
         let nextWeek = calendar.date(byAdding: .weekOfYear, value: 1, to: date) ?? date
         let today = calendar.startOfDay(for: Date())
-        return calendar.startOfDay(for: nextWeek) <= today
+        let (nextWeekStart, _) = calendar.weekRange(for: nextWeek)
+        return nextWeekStart <= today
     }
 
     /// 특정 날짜의 사진 로드

@@ -45,6 +45,8 @@ public final class DetailViewModel<
     private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, PendingRepo>
     private let loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>
     private let deletePendingRecordUseCase: DeletePendingRecordUseCase<PendingRepo>
+    private let deleteFoodRecordUseCase: DeleteFoodRecordUseCase<RecordRepo>
+    private let cleanUpExpiredPendingRecordsUseCase: CleanUpExpiredPendingRecordsUseCase<PendingRepo>
     private let pushNotificationObserver: PushObserver
 
     // MARK: - Init
@@ -56,12 +58,16 @@ public final class DetailViewModel<
         saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, PendingRepo>,
         loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>,
         deletePendingRecordUseCase: DeletePendingRecordUseCase<PendingRepo>,
+        deleteFoodRecordUseCase: DeleteFoodRecordUseCase<RecordRepo>,
+        cleanUpExpiredPendingRecordsUseCase: CleanUpExpiredPendingRecordsUseCase<PendingRepo>,
         pushNotificationObserver: PushObserver
     ) {
         self.fetchRecordsUseCase = fetchRecordsUseCase
         self.saveFoodRecordUseCase = saveFoodRecordUseCase
         self.loadPendingRecordsUseCase = loadPendingRecordsUseCase
         self.deletePendingRecordUseCase = deletePendingRecordUseCase
+        self.deleteFoodRecordUseCase = deleteFoodRecordUseCase
+        self.cleanUpExpiredPendingRecordsUseCase = cleanUpExpiredPendingRecordsUseCase
         self.pushNotificationObserver = pushNotificationObserver
         self.calendar = Calendar.current
 
@@ -110,6 +116,9 @@ public final class DetailViewModel<
 
         case .handlePushNotification(let notification):
             await handlePushNotification(notification)
+
+        case .deleteAllRecords:
+            await performDeleteAllRecords()
         }
     }
 
@@ -139,7 +148,10 @@ public final class DetailViewModel<
             state.recordsByMealType = groupRecordsByMealType(records)
 
             let pendingRecords = try await loadPendingRecords(for: date)
-            state.pendingRecords = pendingRecords
+            state.pendingRecords = try await cleanUpExpiredPendingRecordsUseCase.execute(
+                serverRecords: records,
+                pendingRecords: pendingRecords
+            )
 
             updateDateText()
         } catch {
@@ -201,6 +213,28 @@ public final class DetailViewModel<
         }
     }
 
+    @MainActor
+    private func performDeleteAllRecords() async {
+        guard !state.recordsByMealType.isEmpty || !state.pendingRecords.isEmpty else { return }
+
+        state.isLoading = true
+        defer { state.isLoading = false }
+
+        do {
+            for (_, record) in state.recordsByMealType {
+                try await deleteFoodRecordUseCase.execute(id: record.id)
+            }
+
+            try await deletePendingRecordUseCase.execute(byDate: state.currentDate)
+
+            state.recordsByMealType = [:]
+            state.pendingRecords = []
+            eventSubject.send(.deleteAllCompleted)
+        } catch {
+            eventSubject.send(.deleteAllFailed(error))
+        }
+    }
+
     private func loadPendingRecords(for date: Date) async throws -> [PendingFoodRecord] {
         let allRecords = try await loadPendingRecordsUseCase.execute()
         let dateKey = calendar.startOfDay(for: date)
@@ -235,10 +269,13 @@ extension DetailViewModel {
         case goToNextDay
         case saveSelectedPhotos([any ImageAssetable])
         case handlePushNotification(AnalysisResultNotification)
+        case deleteAllRecords
     }
 
     public enum Event {
         case uploadCompleted
         case saveFailed(Error)
+        case deleteAllCompleted
+        case deleteAllFailed(Error)
     }
 }

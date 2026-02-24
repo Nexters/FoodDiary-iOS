@@ -99,7 +99,7 @@ private extension LoginViewController {
     @objc func loginButtonTapped() {
         let provider = ASAuthorizationAppleIDProvider()
         let request = provider.createRequest()
-        request.requestedScopes = [.fullName, .email]
+        request.requestedScopes = [.email]
         
         let controller = ASAuthorizationController(authorizationRequests: [request])
         controller.delegate = self

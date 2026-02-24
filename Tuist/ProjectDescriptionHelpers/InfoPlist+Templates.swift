@@ -38,7 +38,12 @@ public extension InfoPlist {
                 "UIBackgroundModes": [
                     "remote-notification"
                 ],
-                "ITSAppUsesNonExemptEncryption": false
+                "ITSAppUsesNonExemptEncryption": false,
+                "CFBundleDisplayName": "뭐먹었지?",
+                "UISupportedInterfaceOrientations": [
+                    "UIInterfaceOrientationPortrait"
+                ],
+                "UIRequiresFullScreen": true
             ]
         )
     }
