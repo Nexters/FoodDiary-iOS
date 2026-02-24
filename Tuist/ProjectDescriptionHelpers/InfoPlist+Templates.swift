@@ -39,7 +39,11 @@ public extension InfoPlist {
                     "remote-notification"
                 ],
                 "ITSAppUsesNonExemptEncryption": false,
-                "CFBundleDisplayName": "뭐먹었지?"
+                "CFBundleDisplayName": "뭐먹었지?",
+                "UISupportedInterfaceOrientations": [
+                    "UIInterfaceOrientationPortrait"
+                ],
+                "UIRequiresFullScreen": true
             ]
         )
     }
