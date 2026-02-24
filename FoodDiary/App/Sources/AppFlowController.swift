@@ -73,6 +73,9 @@ extension AppFlowController {
     fileprivate func proceedToNextScreen() {
         Task {
             let isLogin = await validateToken()
+            
+            if isLogin { try? await fetchUserProfile() }
+            
             await MainActor.run { [weak self] in
                 guard let self else { return }
                 routeToAppropriateScreen(isLogin: isLogin)
@@ -99,6 +102,21 @@ extension AppFlowController {
         }
 
         return await validateAccessTokenUseCase.execute()
+    }
+
+    fileprivate func fetchUserProfile() async throws {
+        guard
+            let fetchUserProfileUseCase = try? container.resolve(
+                FetchUserProfileUseCase<
+                    UserRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
+                    NicknameStorage
+                >.self
+            )
+        else {
+            fatalError("FetchUserProfileUseCase Failed Resolve")
+        }
+
+        try await fetchUserProfileUseCase.execute()
     }
 
     fileprivate func createMainView() -> UIViewController {
@@ -163,6 +181,10 @@ extension AppFlowController {
 
         guard let weeklyViewModel = try? container.resolve(WeeklyVM.self) else {
             fatalError("WeeklyCalendarViewModel not registered")
+        }
+
+        guard let getNicknameUseCase = try? container.resolve(GetNicknameUseCase.self) else {
+            fatalError("GetNicknameUseCase not registered")
         }
 
         typealias DetailVM = DetailViewModel<
@@ -235,6 +257,7 @@ extension AppFlowController {
         return WeeklyCalendarViewController(
             viewModel: weeklyViewModel,
             imageProvider: imageProvider,
+            getNicknameUseCase: getNicknameUseCase,
             detailViewModelFactory: { [container] date, records in
                 guard let vm = try? container.resolve(DetailVM.self, argument: (date, records))
                 else {

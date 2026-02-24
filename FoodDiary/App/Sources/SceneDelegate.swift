@@ -181,6 +181,18 @@ extension SceneDelegate {
             }
             return DeviceRepositoryImpl(httpClient: client, tokenStorage: storage)
         }
+
+        container.register(UserRepository.self) { resolver in
+            guard let client = resolver.resolve(HTTPClient.self),
+                  let storage = resolver.resolve(AuthTokenStorage<KeychainService>.self) else {
+                fatalError("UserRepositoryImpl dependencies not registered")
+            }
+            return UserRepositoryImpl(httpClient: client, tokenStorage: storage)
+        }
+
+        container.register(NicknameStoring.self) { _ in
+            NicknameStorage()
+        }
     }
 
     fileprivate func registerDomain() {
@@ -376,6 +388,13 @@ extension SceneDelegate {
             return SearchAddressUseCase(repository: addressRepo)
         }
 
+        container.register(GetNicknameUseCase.self) { resolver in
+            guard let nicknameStorage = resolver.resolve(NicknameStoring.self) else {
+                fatalError("NicknameStoring not registered")
+            }
+            return GetNicknameUseCase(nicknameStorage: nicknameStorage)
+        }
+
         container.register(LogoutUseCase.self) { resolver in
             guard let authRepository = resolver.resolve(AuthRepository.self) else {
                 fatalError("AuthRepository not registered")
@@ -388,6 +407,26 @@ extension SceneDelegate {
                 fatalError("AuthRepository not registered")
             }
             return WithdrawUserUseCase(authRepository: authRepository)
+        }
+
+        container.register(
+            FetchUserProfileUseCase<
+                UserRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
+                NicknameStorage
+            >.self
+        ) { resolver in
+            guard let repository = resolver.resolve(UserRepository.self),
+                  let concreteRepository = repository
+                      as? UserRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
+                  let nicknameStorage = resolver.resolve(NicknameStoring.self),
+                  let concreteNicknameStorage = nicknameStorage as? NicknameStorage
+            else {
+                fatalError("FetchUserProfileUseCase dependencies not registered or unexpected type")
+            }
+            return FetchUserProfileUseCase(
+                repository: concreteRepository,
+                nicknameStorage: concreteNicknameStorage
+            )
         }
 
         container.register(
@@ -594,7 +633,8 @@ extension SceneDelegate {
                     FetchFoodRecordsUseCase<
                         FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
                     >.self
-                )
+                ),
+                let getNicknameUseCase = resolver.resolve(GetNicknameUseCase.self)
             else {
                 fatalError("MonthlyCalendarViewModel dependencies not registered")
             }
@@ -602,7 +642,8 @@ extension SceneDelegate {
             return MonthlyCalendarViewModel(
                 fetchMonthlyCalendarDaysUseCase: fetchMonthlyUseCase,
                 requestPhotoAuthorizationUseCase: requestPhotoAuthUseCase,
-                fetchFoodRecordsUseCase: fetchFoodRecordsUseCase
+                fetchFoodRecordsUseCase: fetchFoodRecordsUseCase,
+                getNicknameUseCase: getNicknameUseCase
             )
         }
 
@@ -612,7 +653,8 @@ extension SceneDelegate {
             ),
                   let notificationAuthProvider = resolver.resolve(NotificationAuthorizationProviding.self),
                   let logoutUseCase = resolver.resolve(LogoutUseCase.self),
-                  let withdrawUserUseCase = resolver.resolve(WithdrawUserUseCase.self) else {
+                  let withdrawUserUseCase = resolver.resolve(WithdrawUserUseCase.self),
+                  let getNicknameUseCase = resolver.resolve(GetNicknameUseCase.self) else {
                 fatalError("MyPageViewModel dependencies not registered")
             }
 
@@ -620,7 +662,8 @@ extension SceneDelegate {
                 updateDeviceNotificationSettingUseCase: updateDeviceUseCase,
                 notificationAuthorizationProvider: notificationAuthProvider,
                 logoutUseCase: logoutUseCase,
-                withdrawUserUseCase: withdrawUserUseCase
+                withdrawUserUseCase: withdrawUserUseCase,
+                getNicknameUseCase: getNicknameUseCase
             )
         }
     }
