@@ -21,7 +21,7 @@ public final class DetailViewController<
     private enum Constants {
         static var dateNavigatorHeight: CGFloat { 64 }
         static var dateNavigatorTopPadding: CGFloat { 32 }
-        static var dateNavigatorBottomSpacing: CGFloat { 16 }
+        static var dateNavigatorBottomSpacing: CGFloat { 0 }
         static var bottomPadding: CGFloat { 32 }
         static var floatingButtonSize: CGFloat { 56 }
         static var floatingButtonBottomInset: CGFloat { 32 }
@@ -213,7 +213,7 @@ public final class DetailViewController<
             .sink { [weak self] _ in
                 guard let self else { return }
                 self.scrollView.setContentOffset(
-                    CGPoint(x: 0, y: -self.scrollView.contentInset.top),
+                    CGPoint(x: 0, y: -self.scrollView.adjustedContentInset.top),
                     animated: false
                 )
             }
@@ -337,6 +337,9 @@ public final class DetailViewController<
                 section.isHidden = true
             }
         }
+
+        view.bringSubviewToFront(dateNavigatorView)
+        view.bringSubviewToFront(floatingAddButton)
     }
 
     private func formatRecordForCopy(_ record: FoodRecord) -> String {
