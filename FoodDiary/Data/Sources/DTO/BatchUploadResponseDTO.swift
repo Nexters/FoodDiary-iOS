@@ -8,21 +8,23 @@
 import Foundation
 
 public struct BatchUploadResponseDTO: Decodable {
-    public let results: [PhotoResultDTO]
-}
-
-public struct PhotoResultDTO: Decodable {
-    public let photoId: Int
-    public let diaryId: Int
-    public let timeType: String
-    public let imageURL: String
-    public let analysisStatus: String
+    public let diaryDate: String
+    public let diaries: [DiaryResultDTO]
 
     enum CodingKeys: String, CodingKey {
-        case photoId = "photo_id"
+        case diaryDate = "diary_date"
+        case diaries
+    }
+}
+
+public struct DiaryResultDTO: Decodable {
+    public let diaryId: Int
+    public let diaryStatus: String
+    public let timeType: String
+
+    enum CodingKeys: String, CodingKey {
         case diaryId = "diary_id"
+        case diaryStatus = "diary_status"
         case timeType = "time_type"
-        case imageURL = "image_url"
-        case analysisStatus = "analysis_status"
     }
 }
