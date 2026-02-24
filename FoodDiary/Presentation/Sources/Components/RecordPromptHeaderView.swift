@@ -29,7 +29,7 @@ public final class RecordPromptHeaderView: UIStackView {
 
     // MARK: - Initialization
 
-    public init(userName: String = "길동") {
+    public init(userName: String = "") {
         self.userName = userName
         super.init(frame: .zero)
         setupUI()
