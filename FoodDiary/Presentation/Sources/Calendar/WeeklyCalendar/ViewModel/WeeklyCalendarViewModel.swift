@@ -64,7 +64,7 @@ public final class WeeklyCalendarViewModel<
         loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>,
         deletePendingRecordUseCase: DeletePendingRecordUseCase<PendingRepo>,
         cleanUpExpiredPendingRecordsUseCase: CleanUpExpiredPendingRecordsUseCase<PendingRepo>,
-        pushNotificationObserver: PushObserver
+        pushNotificationObserver: PushObserver,
         getNicknameUseCase: GetNicknameUseCase
     ) {
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase

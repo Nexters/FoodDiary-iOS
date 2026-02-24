@@ -513,7 +513,7 @@ extension SceneDelegate {
                 let cleanUpExpiredPendingUseCase = resolver.resolve(
                     CleanUpExpiredPendingRecordsUseCase<PendingFoodRecordStorage<FileStorageService>>.self
                 ),
-                let pushObserver = resolver.resolve(PushNotificationObserver.self)
+                let pushObserver = resolver.resolve(PushNotificationObserver.self),
                 let getNicknameUseCase = resolver.resolve(GetNicknameUseCase.self)
             else {
                 fatalError("WeeklyCalendarViewModel dependencies not registered")
@@ -526,7 +526,7 @@ extension SceneDelegate {
                 loadPendingRecordsUseCase: loadPendingUseCase,
                 deletePendingRecordUseCase: deletePendingUseCase,
                 cleanUpExpiredPendingRecordsUseCase: cleanUpExpiredPendingUseCase,
-                pushNotificationObserver: pushObserver
+                pushNotificationObserver: pushObserver,
                 getNicknameUseCase: getNicknameUseCase
             )
         }
