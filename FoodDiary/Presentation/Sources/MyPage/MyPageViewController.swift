@@ -197,6 +197,16 @@ public final class MyPageViewController: UIViewController {
 
     private func setupBindings() {
         viewModel.statePublisher
+            .map(\.nickname)
+            .compactMap { $0 }
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] nickname in
+                self?.profileHeaderView.configure(nickname: nickname)
+            }
+            .store(in: &cancellables)
+
+        viewModel.statePublisher
             .receive(on: DispatchQueue.main)
             .map(\.isNotificationEnabled)
             .removeDuplicates()

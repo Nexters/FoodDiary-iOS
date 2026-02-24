@@ -40,6 +40,7 @@ public final class MyPageViewModel {
     private let notificationAuthorizationProvider: NotificationAuthorizationProviding
     private let logoutUseCase: LogoutUseCase
     private let withdrawUserUseCase: WithdrawUserUseCase
+    private let getNicknameUseCase: GetNicknameUseCase
 
     // MARK: - Init
 
@@ -47,13 +48,15 @@ public final class MyPageViewModel {
         updateDeviceNotificationSettingUseCase: UpdateDeviceNotificationSettingUseCase,
         notificationAuthorizationProvider: NotificationAuthorizationProviding,
         logoutUseCase: LogoutUseCase,
-        withdrawUserUseCase: WithdrawUserUseCase
+        withdrawUserUseCase: WithdrawUserUseCase,
+        getNicknameUseCase: GetNicknameUseCase
     ) {
         self.stateSubject = CurrentValueSubject(State())
         self.updateDeviceNotificationSettingUseCase = updateDeviceNotificationSettingUseCase
         self.notificationAuthorizationProvider = notificationAuthorizationProvider
         self.logoutUseCase = logoutUseCase
         self.withdrawUserUseCase = withdrawUserUseCase
+        self.getNicknameUseCase = getNicknameUseCase
         setupBindings()
     }
 
@@ -74,6 +77,7 @@ public final class MyPageViewModel {
     private func handleInput(_ action: Input) async {
         switch action {
         case .viewDidLoad:
+            state.nickname = getNicknameUseCase.execute()
             await fetchNotificationStatus()
         case .updateNotificationSetting:
             await updateNotificationSetting()
@@ -127,6 +131,7 @@ public final class MyPageViewModel {
 extension MyPageViewModel {
     public struct State: Equatable {
         public var isNotificationEnabled: Bool = true
+        public var nickname: String? = nil
     }
 
     public enum Input {
