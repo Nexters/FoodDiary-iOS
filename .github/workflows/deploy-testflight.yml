@@ -244,14 +244,12 @@ jobs:
             exit 1
           fi
 
-      # ── Git 태그 생성 ──
+      # ── Git 태그 생성 (main 브랜치 push일 때만) ──
       - name: Create Git Tag
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          TAG="v${{ env.VERSION }}"
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            TAG="v${{ env.VERSION }}-${{ env.BUILD_NUMBER }}"
-          fi
-          git tag "$TAG"
+          TAG="${{ env.VERSION }}"
+          git tag -f "$TAG"
           git push origin "$TAG"
           echo "TAG=$TAG" >> $GITHUB_ENV
 
