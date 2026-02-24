@@ -148,7 +148,11 @@ public final class WeeklyCalendarViewModel<
         case .handlePushNotification(let notification):
             await handlePushNotification(notification)
 
-        case .refreshData:
+        case .refreshData(let date):
+            if let date {
+                state.selectedDate = date
+                await moveToWeekIfNeeded(for: date)
+            }
             await loadWeekData(for: currentWeekBaseDate)
             await updateDateContent(for: state.selectedDate)
         }
@@ -299,7 +303,7 @@ extension WeeklyCalendarViewModel {
         case selectDate(Date)
         case saveSelectedPhotos([AssetRepo.Asset])
         case handlePushNotification(AnalysisResultNotification)
-        case refreshData
+        case refreshData(Date? = nil)
     }
 
     public enum Event {

@@ -166,7 +166,7 @@ public final class WeeklyCalendarViewController<
         // Foreground 복귀 시 데이터 갱신
         NotificationCenter.default.publisher(for: UIScene.willEnterForegroundNotification)
             .sink { [weak self] _ in
-                self?.viewModel.input.send(.refreshData)
+                self?.viewModel.input.send(.refreshData())
             }
             .store(in: &cancellables)
 
@@ -359,7 +359,7 @@ public final class WeeklyCalendarViewController<
         let detailVC = DetailViewController(
             viewModel: detailViewModel,
             onDismissWithDate: { [weak self] date in
-                self?.viewModel.input.send(.selectDate(date))
+                self?.viewModel.input.send(.refreshData(date))
             },
             editViewControllerFactory: editViewControllerFactory,
             presentImagePickerHandler: presentImagePickerHandler
