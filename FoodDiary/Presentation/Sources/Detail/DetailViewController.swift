@@ -73,6 +73,27 @@ public final class DetailViewController<
         return button
     }()
 
+    private let emptyDayTitleLabel: UILabel = {
+        let label = UILabel()
+        label.setText("기록된 다이어리가 없어요", style: .p18, color: .gray050)
+        return label
+    }()
+
+    private let emptyDaySubtitleLabel: UILabel = {
+        let label = UILabel()
+        label.setText("음식 사진을 추가해보세요", style: .p15, color: .gray100)
+        return label
+    }()
+
+    private lazy var emptyDayStackView: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [emptyDayTitleLabel, emptyDaySubtitleLabel])
+        stack.axis = .vertical
+        stack.alignment = .center
+        stack.spacing = 6
+        stack.isHidden = true
+        return stack
+    }()
+
     private let breakfastSection = MealSectionView(mealType: .breakfast)
     private let lunchSection = MealSectionView(mealType: .lunch)
     private let dinnerSection = MealSectionView(mealType: .dinner)
@@ -147,6 +168,7 @@ public final class DetailViewController<
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
         contentView.addSubview(mealSectionsStackView)
+        view.addSubview(emptyDayStackView)
         view.addSubview(dateNavigatorView)
         view.addSubview(floatingAddButton)
 
@@ -181,6 +203,11 @@ public final class DetailViewController<
             $0.top.equalToSuperview()
             $0.leading.trailing.equalToSuperview()
             $0.bottom.equalToSuperview().offset(-Constants.bottomPadding)
+        }
+
+        emptyDayStackView.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.centerY.equalTo(scrollView)
         }
 
         floatingAddButton.snp.makeConstraints {
@@ -326,17 +353,24 @@ public final class DetailViewController<
             (.snack, snackSection),
         ]
 
+        var hasAnyContent = false
+
         for (mealType, section) in sections {
             if let record = recordsByMealType[mealType] {
                 section.configure(state: .recorded(record))
                 section.isHidden = false
+                hasAnyContent = true
             } else if let pendings = pendingByMealType[mealType], !pendings.isEmpty {
                 section.configure(state: .pending(pendings))
                 section.isHidden = false
+                hasAnyContent = true
             } else {
                 section.isHidden = true
             }
         }
+
+        emptyDayStackView.isHidden = hasAnyContent
+        scrollView.isHidden = !hasAnyContent
 
         view.bringSubviewToFront(dateNavigatorView)
         view.bringSubviewToFront(floatingAddButton)
