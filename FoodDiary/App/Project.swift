@@ -33,6 +33,7 @@ let project = Project(
             ],
             settings: .settings(
                 base: [
+                    "MARKETING_VERSION": "1.0.0",
                     "BASE_URL": "$(BASE_URL)"
                 ],
                 configurations: []
