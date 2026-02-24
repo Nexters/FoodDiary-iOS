@@ -27,7 +27,7 @@ public struct AddressSearchRepositoryImpl: AddressSearchRepository {
             accessToken: accessToken
         )
 
-        return response.restaurantCandidates.map { candidate in
+        return response.restaurants.map { candidate in
             AddressSearchResult(
                 placeName: candidate.name,
                 roadAddress: candidate.roadAddress ?? candidate.address ?? "",
