@@ -37,7 +37,8 @@ public extension InfoPlist {
                 ],
                 "UIBackgroundModes": [
                     "remote-notification"
-                ]
+                ],
+                "ITSAppUsesNonExemptEncryption": false
             ]
         )
     }
