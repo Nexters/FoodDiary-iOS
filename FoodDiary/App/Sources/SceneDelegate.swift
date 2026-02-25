@@ -407,6 +407,11 @@ extension SceneDelegate {
             return GetNicknameUseCase(nicknameStorage: nicknameStorage)
         }
 
+        container.register(GetAppVersionUseCase.self) { _ in
+            let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+            return GetAppVersionUseCase(appVersion: version)
+        }
+
         container.register(LogoutUseCase.self) { resolver in
             guard let authRepository = resolver.resolve(AuthRepository.self) else {
                 fatalError("AuthRepository not registered")
@@ -682,7 +687,8 @@ extension SceneDelegate {
                   let notificationAuthProvider = resolver.resolve(NotificationAuthorizationProviding.self),
                   let logoutUseCase = resolver.resolve(LogoutUseCase.self),
                   let withdrawUserUseCase = resolver.resolve(WithdrawUserUseCase.self),
-                  let getNicknameUseCase = resolver.resolve(GetNicknameUseCase.self) else {
+                  let getNicknameUseCase = resolver.resolve(GetNicknameUseCase.self),
+                  let getAppVersionUseCase = resolver.resolve(GetAppVersionUseCase.self) else {
                 fatalError("MyPageViewModel dependencies not registered")
             }
 
@@ -691,7 +697,8 @@ extension SceneDelegate {
                 notificationAuthorizationProvider: notificationAuthProvider,
                 logoutUseCase: logoutUseCase,
                 withdrawUserUseCase: withdrawUserUseCase,
-                getNicknameUseCase: getNicknameUseCase
+                getNicknameUseCase: getNicknameUseCase,
+                getAppVersionUseCase: getAppVersionUseCase
             )
         }
     }

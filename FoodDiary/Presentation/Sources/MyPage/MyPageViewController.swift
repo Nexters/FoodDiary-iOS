@@ -222,6 +222,18 @@ public final class MyPageViewController: UIViewController {
                 }
             }
             .store(in: &cancellables)
+
+        viewModel.statePublisher
+            .map(\.appVersion)
+            .filter { !$0.isEmpty }
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                guard let self else { return }
+                let indexPath = IndexPath(row: 0, section: Section.management.rawValue)
+                tableView.reloadRows(at: [indexPath], with: .none)
+            }
+            .store(in: &cancellables)
     }
 
     private func setupNotifications() {
@@ -278,8 +290,7 @@ public final class MyPageViewController: UIViewController {
 
         case .appVersion:
             cell.textLabel?.setText("앱 버전", style: .p14, color: .gray050)
-            cell.detailTextLabel?.setText("1.0", style: .p14, color: .gray400)
-            cell.accessoryView = nil
+            cell.accessoryView = makeVersionLabel(text: viewModel.state.appVersion)
 
         case .privacy:
             cell.textLabel?.setText("개인정보 처리방침", style: .p14, color: .gray050)
@@ -296,6 +307,13 @@ public final class MyPageViewController: UIViewController {
     }
 
     // MARK: - Accessory Factories
+
+    private func makeVersionLabel(text: String) -> UILabel {
+        let label = UILabel()
+        label.setText(text, style: .p14, color: .gray700)
+        label.sizeToFit()
+        return label
+    }
 
     private func makeChevronAccessory() -> UIImageView {
         let iv = UIImageView(image: DesignSystemAsset.iconNext.image)

@@ -49,9 +49,10 @@ public final class MyPageViewModel {
         notificationAuthorizationProvider: NotificationAuthorizationProviding,
         logoutUseCase: LogoutUseCase,
         withdrawUserUseCase: WithdrawUserUseCase,
-        getNicknameUseCase: GetNicknameUseCase
+        getNicknameUseCase: GetNicknameUseCase,
+        getAppVersionUseCase: GetAppVersionUseCase
     ) {
-        self.stateSubject = CurrentValueSubject(State())
+        self.stateSubject = CurrentValueSubject(State(appVersion: getAppVersionUseCase.execute()))
         self.updateDeviceNotificationSettingUseCase = updateDeviceNotificationSettingUseCase
         self.notificationAuthorizationProvider = notificationAuthorizationProvider
         self.logoutUseCase = logoutUseCase
@@ -132,6 +133,7 @@ extension MyPageViewModel {
     public struct State: Equatable {
         public var isNotificationEnabled: Bool = true
         public var nickname: String? = nil
+        public var appVersion: String = ""
     }
 
     public enum Input {
