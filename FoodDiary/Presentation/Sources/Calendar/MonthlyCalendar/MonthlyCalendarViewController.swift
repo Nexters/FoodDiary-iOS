@@ -21,7 +21,7 @@ public final class MonthlyCalendarViewController<
     // MARK: - Dependencies
 
     private let viewModel: MonthlyCalendarViewModel<RecordRepo, AuthRepo>
-    private let detailViewControllerFactory: ((Date, [FoodRecord]) -> UIViewController)
+    private let detailViewControllerFactory: ((Date, [FoodRecord], ((Date) -> Void)?) -> UIViewController)
 
     // MARK: - UI Components
 
@@ -69,7 +69,7 @@ public final class MonthlyCalendarViewController<
 
     public init(
         viewModel: MonthlyCalendarViewModel<RecordRepo, AuthRepo>,
-        detailViewControllerFactory: @escaping ((Date, [FoodRecord]) -> UIViewController)
+        detailViewControllerFactory: @escaping (Date, [FoodRecord], ((Date) -> Void)?) -> UIViewController
     ) {
         self.viewModel = viewModel
         self.detailViewControllerFactory = detailViewControllerFactory
@@ -93,11 +93,6 @@ public final class MonthlyCalendarViewController<
         collectionView.delegate = self
 
         viewModel.input.send(.loadInitialData)
-    }
-
-    public override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        viewModel.input.send(.refreshCurrentMonth)
     }
 
     public override func viewDidLayoutSubviews() {
@@ -300,7 +295,9 @@ public final class MonthlyCalendarViewController<
     // MARK: - Navigation
 
     private func navigateToDetail(date: Date, records: [FoodRecord]) {
-        let detailVC = detailViewControllerFactory(date, records)
+        let detailVC = detailViewControllerFactory(date, records) { [weak self] _ in
+            self?.viewModel.input.send(.refreshCurrentMonth)
+        }
         detailVC.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(detailVC, animated: true)
     }
