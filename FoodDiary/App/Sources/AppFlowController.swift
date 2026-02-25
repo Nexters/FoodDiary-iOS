@@ -183,85 +183,16 @@ extension AppFlowController {
             fatalError("WeeklyCalendarViewModel not registered")
         }
 
-        typealias DetailVM = DetailViewModel<
-            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
-            PendingFoodRecordStorage<FileStorageService>,
-            PushNotificationObserver
-        >
-        typealias EditVM = EditFoodRecordViewModel<
-            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-        >
-        typealias AddressSearchVM = AddressSearchViewModel<AddressSearchRepositoryImpl>
-
-        let addressSearchVCFactory:
-            (Int, @escaping (AddressSearchResult) -> Void) -> UIViewController = {
-                [container] diaryId, onSelect in
-                guard
-                    let addressVM = try? container.resolve(AddressSearchVM.self, argument: diaryId)
-                else {
-                    fatalError("AddressSearchViewModel not registered")
-                }
-                return AddressSearchViewController(
-                    viewModel: addressVM, onAddressSelected: onSelect)
-            }
-
-        let editVCFactory: (FoodRecord) -> UIViewController = { [weak self, container] record in
-            guard let self else { return UIViewController() }
-            guard let editVM = try? container.resolve(EditVM.self, argument: record) else {
-                fatalError("EditFoodRecordViewModel not registered")
-            }
-
-            let presentImagePickerHandler:
-                (UINavigationController, Date, @escaping ([any ImageAssetable], [UIImage]) -> Void)
-                    -> Void = { [weak self] nav, date, onSelected in
-                        guard let self else { return }
-                        self.presentImagePicker(
-                            from: nav,
-                            date: date,
-                            configuration: ImagePickerConfiguration.default,
-                            autoPreselectByProbability: false,
-                            loadPreviewImages: true,
-                            onSelected: { assets, previewImages in
-                                onSelected(assets, previewImages)
-                            }
-                        )
-                    }
-
-            return EditFoodRecordViewController(
-                viewModel: editVM,
-                addressSearchViewControllerFactory: addressSearchVCFactory,
-                presentImagePickerHandler: presentImagePickerHandler
-            )
-        }
-
-        let detailImagePickerHandler:
-            (UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void)
-                -> Void = { [weak self] nav, date, onSelected in
-                    guard let self else { return }
-                    self.presentImagePicker(
-                        from: nav,
-                        date: date,
-                        configuration: .withMaxSelectionCount(10),
-                        autoPreselectByProbability: true,
-                        loadPreviewImages: false,
-                        onSelected: { assets, _ in
-                            onSelected(assets)
-                        }
-                    )
-                }
-
         return WeeklyCalendarViewController(
             viewModel: weeklyViewModel,
             imageProvider: imageProvider,
-            detailViewModelFactory: { [container] date, records in
-                guard let vm = try? container.resolve(DetailVM.self, argument: (date, records))
-                else {
-                    fatalError("DetailViewModel not registered")
-                }
-                return vm
-            },
-            editViewControllerFactory: editVCFactory,
-            presentImagePickerHandler: detailImagePickerHandler
+            detailViewControllerFactory: { [weak self] date, records, onDismiss in
+                self?.makeDetailViewController(
+                    date: date,
+                    records: records,
+                    onDismissWithDate: onDismiss
+                ) ?? UIViewController()
+            }
         )
     }
 
@@ -270,43 +201,19 @@ extension AppFlowController {
             FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
             PhotoAuthorizationFetcher
         >
-        typealias DetailVM = DetailViewModel<
-            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
-            PendingFoodRecordStorage<FileStorageService>,
-            PushNotificationObserver
-        >
 
         guard let monthlyViewModel = try? container.resolve(MonthlyVM.self) else {
             fatalError("MonthlyCalendarViewModel not registered")
         }
 
-        let detailImagePickerHandler:
-            (UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void)
-                -> Void = { [weak self] nav, date, onSelected in
-                    guard let self else { return }
-                    self.presentImagePicker(
-                        from: nav,
-                        date: date,
-                        configuration: .withMaxSelectionCount(10),
-                        autoPreselectByProbability: true,
-                        loadPreviewImages: false,
-                        onSelected: { assets, _ in
-                            onSelected(assets)
-                        }
-                    )
-                }
-
         return MonthlyCalendarViewController(
             viewModel: monthlyViewModel,
-            detailViewControllerFactory: { [container] date, records in
-                guard let detailVM = try? container.resolve(DetailVM.self, argument: (date, records))
-                else {
-                    fatalError("DetailViewModel not registered")
-                }
-                return DetailViewController(
-                    viewModel: detailVM,
-                    presentImagePickerHandler: detailImagePickerHandler
-                )
+            detailViewControllerFactory: { [weak self] date, records, onDismiss in
+                self?.makeDetailViewController(
+                    date: date,
+                    records: records,
+                    onDismissWithDate: onDismiss
+                ) ?? UIViewController()
             }
         )
     }
@@ -402,9 +309,101 @@ extension AppFlowController {
     }
 }
 
+// MARK: - Detail & Edit Factory
+
+extension AppFlowController {
+    private typealias DetailVM = DetailViewModel<
+        FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
+        PendingFoodRecordStorage<FileStorageService>,
+        PushNotificationObserver
+    >
+    private typealias EditVM = EditFoodRecordViewModel<
+        FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
+    >
+    private typealias AddressSearchVM = AddressSearchViewModel<AddressSearchRepositoryImpl>
+
+    fileprivate func makeDetailViewController(
+        date: Date,
+        records: [FoodRecord],
+        onDismissWithDate: ((Date) -> Void)? = nil
+    ) -> UIViewController {
+        guard let detailVM = try? container.resolve(DetailVM.self, argument: (date, records))
+        else {
+            fatalError("DetailViewModel not registered")
+        }
+
+        return DetailViewController(
+            viewModel: detailVM,
+            onDismissWithDate: onDismissWithDate,
+            editViewControllerFactory: { [weak self] record in
+                self?.makeEditViewController(for: record) ?? UIViewController()
+            },
+            presentImagePickerHandler: makeDetailImagePickerHandler()
+        )
+    }
+
+    fileprivate func makeEditViewController(for record: FoodRecord) -> UIViewController {
+        guard let editVM = try? container.resolve(EditVM.self, argument: record) else {
+            fatalError("EditFoodRecordViewModel not registered")
+        }
+
+        let addressSearchVCFactory:
+            (Int, @escaping (AddressSearchResult) -> Void) -> UIViewController = {
+                [container] diaryId, onSelect in
+                guard
+                    let addressVM = try? container.resolve(AddressSearchVM.self, argument: diaryId)
+                else {
+                    fatalError("AddressSearchViewModel not registered")
+                }
+                return AddressSearchViewController(
+                    viewModel: addressVM, onAddressSelected: onSelect)
+            }
+
+        let presentImagePickerHandler:
+            (UINavigationController, Date, @escaping ([any ImageAssetable], [UIImage]) -> Void)
+                -> Void = { [weak self] nav, date, onSelected in
+                    guard let self else { return }
+                    self.presentImagePicker(
+                        from: nav,
+                        date: date,
+                        configuration: ImagePickerConfiguration.default,
+                        autoPreselectByProbability: false,
+                        loadPreviewImages: true,
+                        onSelected: { assets, previewImages in
+                            onSelected(assets, previewImages)
+                        }
+                    )
+                }
+
+        return EditFoodRecordViewController(
+            viewModel: editVM,
+            addressSearchViewControllerFactory: addressSearchVCFactory,
+            presentImagePickerHandler: presentImagePickerHandler
+        )
+    }
+}
+
 // MARK: - Image Picker
 
 extension AppFlowController {
+    fileprivate func makeDetailImagePickerHandler()
+        -> (UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void) -> Void
+    {
+        return { [weak self] nav, date, onSelected in
+            guard let self else { return }
+            self.presentImagePicker(
+                from: nav,
+                date: date,
+                configuration: .withMaxSelectionCount(10),
+                autoPreselectByProbability: true,
+                loadPreviewImages: false,
+                onSelected: { assets, _ in
+                    onSelected(assets)
+                }
+            )
+        }
+    }
+
     fileprivate func presentImagePicker(
         from nav: UINavigationController,
         date: Date,

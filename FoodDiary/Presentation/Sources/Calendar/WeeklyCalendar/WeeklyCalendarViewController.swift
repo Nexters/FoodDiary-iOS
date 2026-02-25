@@ -26,9 +26,7 @@ public final class WeeklyCalendarViewController<
             RecordRepo, AssetRepo, AuthRepo, PendingRepo, PushObserver
         >
     private let imageProvider: ImageProvider
-    private let detailViewModelFactory: (Date, [FoodRecord]) -> DetailViewModel<RecordRepo, PendingRepo, PushObserver>
-    private let editViewControllerFactory: ((FoodRecord) -> UIViewController)?
-    private let presentImagePickerHandler: ((UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void) -> Void)?
+    private let detailViewControllerFactory: (Date, [FoodRecord], ((Date) -> Void)?) -> UIViewController
 
     // MARK: - UI Components
 
@@ -56,15 +54,11 @@ public final class WeeklyCalendarViewController<
             RecordRepo, AssetRepo, AuthRepo, PendingRepo, PushObserver
         >,
         imageProvider: ImageProvider,
-        detailViewModelFactory: @escaping (Date, [FoodRecord]) -> DetailViewModel<RecordRepo, PendingRepo, PushObserver>,
-        editViewControllerFactory: ((FoodRecord) -> UIViewController)? = nil,
-        presentImagePickerHandler: ((UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void) -> Void)? = nil
+        detailViewControllerFactory: @escaping (Date, [FoodRecord], ((Date) -> Void)?) -> UIViewController
     ) {
         self.viewModel = viewModel
         self.imageProvider = imageProvider
-        self.detailViewModelFactory = detailViewModelFactory
-        self.editViewControllerFactory = editViewControllerFactory
-        self.presentImagePickerHandler = presentImagePickerHandler
+        self.detailViewControllerFactory = detailViewControllerFactory
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -354,16 +348,9 @@ public final class WeeklyCalendarViewController<
 
     private func navigateToDetail(for date: Date) {
         let records = viewModel.state.weekDays.records(for: date)
-
-        let detailViewModel = detailViewModelFactory(date, records)
-        let detailVC = DetailViewController(
-            viewModel: detailViewModel,
-            onDismissWithDate: { [weak self] date in
-                self?.viewModel.input.send(.refreshData(date))
-            },
-            editViewControllerFactory: editViewControllerFactory,
-            presentImagePickerHandler: presentImagePickerHandler
-        )
+        let detailVC = detailViewControllerFactory(date, records) { [weak self] date in
+            self?.viewModel.input.send(.refreshData(date))
+        }
         navigationController?.pushViewController(detailVC, animated: true)
     }
 }
