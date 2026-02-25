@@ -28,7 +28,7 @@ final class MonthlyCalendarHeaderView: UIView {
 
     private let chevronButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setImage(DesignSystemAsset.iconNext.image, for: .normal)
+        button.setImage(DesignSystemAsset.iconDown.image, for: .normal)
         button.tintColor = .white
         return button
     }()
@@ -80,7 +80,7 @@ final class MonthlyCalendarHeaderView: UIView {
         }
 
         chevronButton.snp.makeConstraints {
-            $0.width.height.equalTo(24)
+            $0.width.height.equalTo(21)
         }
 
         tapButton.snp.makeConstraints {
@@ -104,7 +104,7 @@ final class MonthlyCalendarHeaderView: UIView {
             duration: 0.3,
             options: .transitionFlipFromBottom,
             animations: {
-                self.chevronButton.setImage(DesignSystemAsset.iconNext.image, for: .normal)
+                self.chevronButton.setImage(DesignSystemAsset.iconDown.image, for: .normal)
             }
         )
     }
@@ -117,7 +117,7 @@ final class MonthlyCalendarHeaderView: UIView {
             duration: 0.3,
             options: .transitionFlipFromTop,
             animations: {
-                self.chevronButton.setImage(DesignSystemAsset.iconDown.image, for: .normal)
+                self.chevronButton.setImage(DesignSystemAsset.iconUp.image, for: .normal)
             }
         )
         monthPickerTapSubject.send()
