@@ -281,12 +281,23 @@ public final class EditFoodRecordViewController<
     private func setupBindings() {
         // Output: ViewModel → View
 
-        viewModel.statePublisher
+        let selectedGenrePublisher = viewModel.statePublisher
             .map(\.selectedGenre)
             .removeDuplicates()
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] genre in
-                self?.updateCategoryChips(genre)
+            .share()
+
+        selectedGenrePublisher
+            .prefix(1)
+            .sink { [weak self] (genre: FoodGenre) in
+                self?.updateCategoryChips(genre, animated: false)
+            }
+            .store(in: &cancellables)
+
+        selectedGenrePublisher
+            .dropFirst()
+            .sink { [weak self] (genre: FoodGenre) in
+                self?.updateCategoryChips(genre, animated: true)
             }
             .store(in: &cancellables)
 
@@ -374,9 +385,13 @@ public final class EditFoodRecordViewController<
 
     // MARK: - Private Methods
 
-    private func updateCategoryChips(_ selectedGenre: FoodGenre) {
+    private func updateCategoryChips(_ selectedGenre: FoodGenre, animated: Bool) {
         for chip in categoryChips {
             chip.setSelected(chip.genre == selectedGenre)
+            if chip.genre == selectedGenre {
+                let frameInScrollView = chip.convert(chip.bounds, to: categoryScrollView)
+                categoryScrollView.scrollRectToVisible(frameInScrollView, animated: animated)
+            }
         }
     }
 
