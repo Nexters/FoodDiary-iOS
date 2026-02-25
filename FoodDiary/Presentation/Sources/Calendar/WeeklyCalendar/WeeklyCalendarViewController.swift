@@ -281,7 +281,7 @@ public final class WeeklyCalendarViewController<
             let selectedPhotos = foodImageAssets.map { $0.imageAsset }
 
             // 음식 확률 0.6 이상인 사진 ID를 미리 선택
-            let preselectedIds = Set(
+            let preselectedFoodPhotoIds = Set(
                 foodImageAssets
                     .filter { $0.foodProbability >= 0.6 }
                     .map { $0.id }
@@ -289,7 +289,7 @@ public final class WeeklyCalendarViewController<
 
             let picker = ImagePickerViewController(
                 photos: selectedPhotos,
-                preselectedIds: preselectedIds,
+                preselectedFoodPhotoIds: preselectedFoodPhotoIds,
                 imageProvider: imageProvider,
                 configuration: .withMaxSelectionCount(10)
             )

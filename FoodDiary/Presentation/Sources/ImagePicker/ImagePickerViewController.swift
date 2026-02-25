@@ -99,9 +99,12 @@ public final class ImagePickerViewController<
     private var cancellables = Set<AnyCancellable>()
 
     private let photos: [Asset]
-    private let preselectedIds: Set<String>
+    private let preselectedFoodPhotoIds: Set<String>
     private let imageProvider: ImageProvider
     private let configuration: ImagePickerConfiguration
+    // preselected된 사진은 food/all 양쪽 섹션에 나타날 수 있어, id 기준 인덱스를 캐싱한다.
+    private let foodPhotos: [Asset]
+    private let indexPathsByPhotoId: [String: [IndexPath]]
 
     // MARK: - State
 
@@ -109,13 +112,10 @@ public final class ImagePickerViewController<
 
     // MARK: - Computed Properties
 
-    private var foodPhotos: [Asset] { photos.filter { preselectedIds.contains($0.id) } }
-    private var otherPhotos: [Asset] { photos.filter { !preselectedIds.contains($0.id) } }
-
     private func photosInSection(_ section: PhotoSection) -> [Asset] {
         switch section {
         case .food: return foodPhotos
-        case .all: return otherPhotos
+        case .all: return photos
         }
     }
 
@@ -185,19 +185,27 @@ public final class ImagePickerViewController<
     /// 이미지 피커 초기화
     /// - Parameters:
     ///   - photos: 표시할 사진 목록
-    ///   - preselectedIds: 미리 선택될 사진 ID 집합 (음식 섹션으로 분류됨)
+    ///   - preselectedFoodPhotoIds: 미리 선택될 음식 사진 ID 집합
     ///   - imageProvider: 이미지 로딩 제공자
     ///   - configuration: 피커 설정
     public init(
         photos: [Asset],
-        preselectedIds: Set<String> = [],
+        preselectedFoodPhotoIds: Set<String> = [],
         imageProvider: ImageProvider,
         configuration: ImagePickerConfiguration = .default
     ) {
+        // 매 접근마다 filter하지 않도록 음식 섹션 데이터를 1회 계산해 둔다.
+        let foodPhotos = photos.filter { preselectedFoodPhotoIds.contains($0.id) }
+
         self.photos = photos
-        self.preselectedIds = preselectedIds
+        self.preselectedFoodPhotoIds = preselectedFoodPhotoIds
         self.imageProvider = imageProvider
         self.configuration = configuration
+        self.foodPhotos = foodPhotos
+        self.indexPathsByPhotoId = Self.makeIndexPathsByPhotoId(
+            allPhotos: photos,
+            foodPhotos: foodPhotos
+        )
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -273,7 +281,7 @@ public final class ImagePickerViewController<
     }
 
     private func applyPreselection() {
-        for photo in photos where preselectedIds.contains(photo.id) {
+        for photo in photos where preselectedFoodPhotoIds.contains(photo.id) {
             if let maxCount = configuration.maxSelectionCount,
                 selectedPhotoIds.count >= maxCount
             {
@@ -301,11 +309,33 @@ public final class ImagePickerViewController<
             selectedPhotoIds.insert(photo.id)
         }
 
-        if let cell = collectionView.cellForItem(at: indexPath) as? ImagePickerCell {
-            cell.setSelected(selectedPhotoIds.contains(photo.id))
-        }
+        // 같은 사진이 양쪽 섹션에 동시에 보일 수 있어, 매핑된 셀을 함께 갱신한다.
+        let affectedIndexPaths = indexPathsByPhotoId[photo.id] ?? [indexPath]
+        collectionView.reloadItems(at: affectedIndexPaths)
 
         updateUI()
+    }
+
+    private static func makeIndexPathsByPhotoId(
+        allPhotos: [Asset],
+        foodPhotos: [Asset]
+    ) -> [String: [IndexPath]] {
+        // photo id -> [food 섹션 indexPath, all 섹션 indexPath]
+        var indexPathsById: [String: [IndexPath]] = [:]
+
+        for (item, photo) in foodPhotos.enumerated() {
+            indexPathsById[photo.id, default: []].append(
+                IndexPath(item: item, section: PhotoSection.food.rawValue)
+            )
+        }
+
+        for (item, photo) in allPhotos.enumerated() {
+            indexPathsById[photo.id, default: []].append(
+                IndexPath(item: item, section: PhotoSection.all.rawValue)
+            )
+        }
+
+        return indexPathsById
     }
 
     private func updateUI() {

@@ -517,14 +517,14 @@ extension AppFlowController {
                 let foodImageAssets = photosByDate[startOfDay] ?? []
                 let photos = foodImageAssets.map { $0.imageAsset }
 
-                let preselectedIds: Set<String> =
+                let preselectedFoodPhotoIds: Set<String> =
                     autoPreselectByProbability
                     ? Set(foodImageAssets.filter { $0.foodProbability >= 0.5 }.map { $0.id })
                     : []
 
                 let picker = ImagePickerViewController(
                     photos: photos,
-                    preselectedIds: preselectedIds,
+                    preselectedFoodPhotoIds: preselectedFoodPhotoIds,
                     imageProvider: imageProvider,
                     configuration: configuration
                 )
