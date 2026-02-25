@@ -136,7 +136,8 @@ private extension FoodImageAssetFetcher {
 
         let image = try await imageRepository.loadImage(
             for: asset,
-            targetSize: imageTargetSize
+            targetSize: imageTargetSize,
+            preferFastDelivery: true
         )
         let result = try foodClassifier.classify(image: image)
 

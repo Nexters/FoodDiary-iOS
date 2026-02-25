@@ -14,7 +14,8 @@ public struct UIImageLoader: RenderableImageRepository {
         self.imageConverter = imageLoader
     }
 
-    public func loadImage(for asset: PHAsset, targetSize: CGSize) async throws -> UIImage {
-        try await imageConverter.convert(from: asset, targetSize: targetSize)
+    public func loadImage(for asset: PHAsset, targetSize: CGSize, preferFastDelivery: Bool) async throws -> UIImage {
+        let deliveryMode: PHImageRequestOptionsDeliveryMode = preferFastDelivery ? .fastFormat : .highQualityFormat
+        return try await imageConverter.convert(from: asset, targetSize: targetSize, deliveryMode: deliveryMode)
     }
 }
