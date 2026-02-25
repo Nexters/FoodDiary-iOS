@@ -22,6 +22,7 @@ final class AppFlowController: UIViewController {
     private var networkCancellable: AnyCancellable?
     private var cancellables = Set<AnyCancellable>()
     private let container: DIContainer
+    private var pendingDeepLinkDate: String?
 
     public init(container: DIContainer) {
         self.container = container
@@ -37,6 +38,7 @@ final class AppFlowController: UIViewController {
         view.backgroundColor = .sdBase
         setupNetworkMonitoring()
         setupAnalysisCompletionToast()
+        setupDeepLinkHandling()
     }
 
     private func setupAnalysisCompletionToast() {
@@ -44,6 +46,16 @@ final class AppFlowController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { _ in
                 ToastView.show(type: .imageUploadComplete)
+            }
+            .store(in: &cancellables)
+    }
+
+    private func setupDeepLinkHandling() {
+        NotificationCenter.default.publisher(for: AppNotification.Push.deepLinkToDetail)
+            .receive(on: DispatchQueue.main)
+            .compactMap { $0.userInfo?[AppNotification.Push.Key.diaryDate] as? String }
+            .sink { [weak self] diaryDateString in
+                self?.navigateToDetailFromDeepLink(diaryDateString: diaryDateString)
             }
             .store(in: &cancellables)
     }
@@ -73,9 +85,9 @@ extension AppFlowController {
     fileprivate func proceedToNextScreen() {
         Task {
             let isLogin = await validateToken()
-            
+
             try? await fetchUserProfile()
-            
+
             await MainActor.run { [weak self] in
                 guard let self else { return }
                 routeToAppropriateScreen(isLogin: isLogin)
@@ -88,6 +100,14 @@ extension AppFlowController {
     fileprivate func routeToAppropriateScreen(isLogin: Bool) {
         let destinationVC = isLogin ? createMainView() : createLoginView()
         transition(to: destinationVC)
+
+        if isLogin, let deepLink = pendingDeepLinkDate {
+            pendingDeepLinkDate = nil
+            Task { [weak self] in
+                try? await Task.sleep(for: .seconds(0.5))
+                self?.performDeepLinkNavigation(diaryDateString: deepLink)
+            }
+        }
     }
 
     fileprivate func validateToken() async -> Bool {
@@ -309,6 +329,67 @@ extension AppFlowController {
     }
 }
 
+// MARK: - Deep Link Navigation
+
+extension AppFlowController {
+    private static let deepLinkDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter
+    }()
+
+    fileprivate func navigateToDetailFromDeepLink(diaryDateString: String) {
+        guard findNavigationController() != nil else {
+            pendingDeepLinkDate = diaryDateString
+            return
+        }
+        performDeepLinkNavigation(diaryDateString: diaryDateString)
+    }
+
+    fileprivate func performDeepLinkNavigation(diaryDateString: String) {
+        guard let date = Self.deepLinkDateFormatter.date(from: diaryDateString) else {
+            print("[DeepLink] 날짜 파싱 실패: \(diaryDateString)")
+            return
+        }
+
+        guard let navController = findNavigationController() else {
+            print("[DeepLink] NavigationController를 찾을 수 없음")
+            return
+        }
+
+        let detailVC = makeDetailViewController(
+            date: date,
+            records: [],
+            onDismissWithDate: nil
+        )
+
+        if let presented = navController.presentedViewController {
+            presented.dismiss(animated: false) {
+                navController.pushViewController(detailVC, animated: true)
+            }
+        } else {
+            navController.pushViewController(detailVC, animated: true)
+        }
+    }
+
+    private func findNavigationController() -> UINavigationController? {
+        guard let child = currentChild else { return nil }
+
+        if let nav = child as? UINavigationController {
+            return nav
+        }
+
+        for child in child.children {
+            if let nav = child as? UINavigationController {
+                return nav
+            }
+        }
+
+        return nil
+    }
+}
+
 // MARK: - Detail & Edit Factory
 
 extension AppFlowController {
@@ -413,8 +494,8 @@ extension AppFlowController {
         onSelected: @escaping ([any ImageAssetable], [UIImage]) -> Void
     ) {
         guard let fetchUseCase = try? container.resolve(FetchUseCase.self),
-              let imageProvider = try? container.resolve(UIImageLoader.self),
-              let authUseCase = try? container.resolve(AuthUseCase.self)
+            let imageProvider = try? container.resolve(UIImageLoader.self),
+            let authUseCase = try? container.resolve(AuthUseCase.self)
         else {
             fatalError("ImagePicker dependencies not registered")
         }
@@ -436,7 +517,8 @@ extension AppFlowController {
                 let foodImageAssets = photosByDate[startOfDay] ?? []
                 let photos = foodImageAssets.map { $0.imageAsset }
 
-                let preselectedIds: Set<String> = autoPreselectByProbability
+                let preselectedIds: Set<String> =
+                    autoPreselectByProbability
                     ? Set(foodImageAssets.filter { $0.foodProbability >= 0.5 }.map { $0.id })
                     : []
 
@@ -471,7 +553,7 @@ extension AppFlowController {
                                 onSelected(assets, [])
                             }
                         case .cancelled:
-                            nav?.popViewController(animated: true)
+                            break
                         }
                     }
 
@@ -489,11 +571,12 @@ extension AppFlowController {
             preferredStyle: .alert
         )
         alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-        alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { _ in
-            if let url = URL(string: UIApplication.openSettingsURLString) {
-                UIApplication.shared.open(url)
-            }
-        })
+        alert.addAction(
+            UIAlertAction(title: "설정으로 이동", style: .default) { _ in
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            })
         nav.topViewController?.present(alert, animated: true)
     }
 

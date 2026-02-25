@@ -85,6 +85,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         print("[Push] 파싱 성공 - type: \(type), diary_date: \(diaryDate)")
 
+        let applicationState = UIApplication.shared.applicationState
+
+        // 앱 내부 이벤트 전파 (데이터 갱신 + 포그라운드 토스트)
         NotificationCenter.default.post(
             name: AppNotification.Push.analysisResult,
             object: nil,
@@ -94,6 +97,36 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             ]
         )
         print("[Push] NotificationCenter로 전달 완료")
+
+        // 백그라운드/종료 상태일 때 로컬 알림 배너 표시
+        if applicationState != .active {
+            scheduleLocalNotification(type: type, diaryDate: diaryDate)
+        }
+    }
+
+    private func scheduleLocalNotification(type: String, diaryDate: String) {
+        let content = UNMutableNotificationContent()
+        content.title = "뭐먹었지?"
+        content.body = "AI가 기록을 완료했습니다!"
+        content.sound = .default
+        content.userInfo = [
+            "type": type,
+            "diary_date": diaryDate,
+            "is_local_notification": true
+        ]
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        let identifier = "analysis_complete_\(diaryDate)"
+
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [identifier])
+
+        let request = UNNotificationRequest(
+            identifier: identifier,
+            content: content,
+            trigger: trigger
+        )
+
+        UNUserNotificationCenter.current().add(request)
     }
 }
 
@@ -105,7 +138,21 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        handlePushNotification(response.notification.request.content.userInfo)
+        let userInfo = response.notification.request.content.userInfo
+
+        if userInfo["is_local_notification"] as? Bool == true {
+            // 로컬 알림 탭 → 딥링크로 상세 화면 이동
+            if let diaryDate = userInfo["diary_date"] as? String {
+                NotificationCenter.default.post(
+                    name: AppNotification.Push.deepLinkToDetail,
+                    object: nil,
+                    userInfo: [AppNotification.Push.Key.diaryDate: diaryDate]
+                )
+            }
+        } else {
+            handlePushNotification(userInfo)
+        }
+
         completionHandler()
     }
 
@@ -114,8 +161,15 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
-        handlePushNotification(notification.request.content.userInfo)
-        completionHandler([])
+        let userInfo = notification.request.content.userInfo
+
+        if userInfo["is_local_notification"] as? Bool == true {
+            // 로컬 알림이 포그라운드에서 도착 → 배너 표시 안 함 (토스트로 이미 처리됨)
+            completionHandler([])
+        } else {
+            handlePushNotification(userInfo)
+            completionHandler([])
+        }
     }
 
 }
