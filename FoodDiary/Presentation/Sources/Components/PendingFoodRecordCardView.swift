@@ -5,7 +5,6 @@
 
 import DesignSystem
 import Domain
-import Photos
 import SnapKit
 import UIKit
 
@@ -19,7 +18,6 @@ public final class PendingFoodRecordCardView: UIView {
         static let borderWidth: CGFloat = 4
         static let pendingIconSize: CGFloat = 140
         static let pendingLabelTopSpacing: CGFloat = 27
-        static let thumbnailSize: CGFloat = 600
     }
 
     // MARK: - UI Components
@@ -41,9 +39,10 @@ public final class PendingFoodRecordCardView: UIView {
         return iv
     }()
 
-    private let dimView: UIVisualEffectView = {
-        let effectView = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
-        return effectView
+    private let dimView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.black.withAlphaComponent(0.4)
+        return view
     }()
 
     private let pendingIconView: UIImageView = {
@@ -78,7 +77,6 @@ public final class PendingFoodRecordCardView: UIView {
             style: .p14,
             color: .gray050
         )
-        loadThumbnail(assetIdentifier: record.assetIdentifier)
     }
 
     @available(*, unavailable)
@@ -127,37 +125,32 @@ public final class PendingFoodRecordCardView: UIView {
         }
     }
 
-    // MARK: - Thumbnail Loading
+    // MARK: - Public Methods
 
-    private func loadThumbnail(assetIdentifier: String?) {
-        guard let assetIdentifier else { return }
-
-        let fetchResult = PHAsset.fetchAssets(
-            withLocalIdentifiers: [assetIdentifier],
-            options: nil
-        )
-        guard let asset = fetchResult.firstObject else { return }
-
-        let scale = UIScreen.main.scale
-        let size = CGSize(
-            width: Constants.thumbnailSize * scale,
-            height: Constants.thumbnailSize * scale
-        )
-        let options = PHImageRequestOptions()
-        options.deliveryMode = .highQualityFormat
-        options.resizeMode = .exact
-        options.isNetworkAccessAllowed = true
-
-        PHImageManager.default().requestImage(
-            for: asset,
-            targetSize: size,
-            contentMode: .aspectFill,
-            options: options
-        ) { [weak self] image, _ in
+    public func configure(image: UIImage?) {
+        guard let image else {
+            backgroundImageView.image = nil
+            return
+        }
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let blurred = Self.applyGaussianBlur(to: image, radius: 30)
             DispatchQueue.main.async {
-                self?.backgroundImageView.image = image
+                self?.backgroundImageView.image = blurred
             }
         }
+    }
+
+    private static func applyGaussianBlur(to image: UIImage, radius: CGFloat) -> UIImage? {
+        guard let ciImage = CIImage(image: image),
+              let filter = CIFilter(name: "CIGaussianBlur") else { return image }
+        filter.setValue(ciImage, forKey: kCIInputImageKey)
+        filter.setValue(radius, forKey: kCIInputRadiusKey)
+        guard let output = filter.outputImage else { return image }
+        // 블러 적용 시 이미지 경계가 확장되므로 원본 크기로 크롭
+        let cropped = output.cropped(to: ciImage.extent)
+        let context = CIContext()
+        guard let cgImage = context.createCGImage(cropped, from: cropped.extent) else { return image }
+        return UIImage(cgImage: cgImage, scale: image.scale, orientation: image.imageOrientation)
     }
 
 }

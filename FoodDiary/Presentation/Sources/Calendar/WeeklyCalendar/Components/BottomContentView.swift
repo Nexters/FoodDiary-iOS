@@ -161,6 +161,10 @@ final class BottomContentView: UIView {
         newPendingCardView.addGestureRecognizer(tapGesture)
     }
 
+    func configurePendingImage(_ image: UIImage?) {
+        pendingCardView?.configure(image: image)
+    }
+
     @objc private func pendingCardTapped() {
         guard let date = currentPendingDate else { return }
         pendingTapSubject.send(date)

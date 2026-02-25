@@ -196,6 +196,10 @@ public final class WeeklyCalendarViewController<
                     }
 
                 bottomContentView.configure(state: state)
+
+                if case .pending(let records) = state {
+                    self.loadPendingThumbnail(for: records)
+                }
             }
             .store(in: &cancellables)
 
@@ -338,6 +342,31 @@ public final class WeeklyCalendarViewController<
         )
         alert.addAction(UIAlertAction(title: "확인", style: .default))
         present(alert, animated: true)
+    }
+
+    private func loadPendingThumbnail(for records: [PendingFoodRecord]) {
+        guard let assetIdentifier = records.first?.assetIdentifier else { return }
+
+        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [assetIdentifier], options: nil)
+        guard let asset = fetchResult.firstObject else { return }
+
+        let scale = UIScreen.main.scale
+        let size = CGSize(width: 600 * scale, height: 600 * scale)
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .highQualityFormat
+        options.resizeMode = .exact
+        options.isNetworkAccessAllowed = true
+
+        PHImageManager.default().requestImage(
+            for: asset,
+            targetSize: size,
+            contentMode: .aspectFill,
+            options: options
+        ) { [weak self] image, _ in
+            DispatchQueue.main.async {
+                self?.bottomContentView.configurePendingImage(image)
+            }
+        }
     }
 
     private func navigateToDetail(for date: Date) {

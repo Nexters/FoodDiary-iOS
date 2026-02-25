@@ -7,6 +7,7 @@ import Combine
 import DesignSystem
 import Domain
 import Kingfisher
+import Photos
 import SnapKit
 import UIKit
 
@@ -407,6 +408,7 @@ public final class DetailViewController<
                 section.configure(state: .pending(pendings))
                 section.isHidden = false
                 hasAnyContent = true
+                loadPendingThumbnail(for: pendings, into: section)
             } else {
                 section.configure(state: .empty)
                 section.isHidden = false
@@ -419,6 +421,31 @@ public final class DetailViewController<
 
         view.bringSubviewToFront(dateNavigatorView)
         view.bringSubviewToFront(floatingAddButton)
+    }
+
+    private func loadPendingThumbnail(for records: [PendingFoodRecord], into section: MealSectionView) {
+        guard let assetIdentifier = records.first?.assetIdentifier else { return }
+
+        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [assetIdentifier], options: nil)
+        guard let asset = fetchResult.firstObject else { return }
+
+        let scale = UIScreen.main.scale
+        let size = CGSize(width: 600 * scale, height: 600 * scale)
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .highQualityFormat
+        options.resizeMode = .exact
+        options.isNetworkAccessAllowed = true
+
+        PHImageManager.default().requestImage(
+            for: asset,
+            targetSize: size,
+            contentMode: .aspectFill,
+            options: options
+        ) { image, _ in
+            DispatchQueue.main.async {
+                section.configurePendingImage(image)
+            }
+        }
     }
 
     private func formatRecordForCopy(_ record: FoodRecord) -> String {

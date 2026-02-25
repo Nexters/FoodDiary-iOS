@@ -137,7 +137,7 @@ final class MealSectionView: UIView {
 
     // MARK: - Public Methods
 
-    func configure(state: State) {
+    func configure(state: State, pendingImage: UIImage? = nil) {
         guard currentState != state else { return }
         currentState = state
 
@@ -148,10 +148,15 @@ final class MealSectionView: UIView {
         case .empty:
             showEmptyState()
         case .pending(let records):
-            showPendingState(records: records)
+            showPendingState(records: records, image: pendingImage)
         case .recorded(let record):
             showRecordedState(record: record)
         }
+    }
+
+    func configurePendingImage(_ image: UIImage?) {
+        guard let pendingView = contentContainerView.subviews.compactMap({ $0 as? PendingFoodRecordCardView }).first else { return }
+        pendingView.configure(image: image)
     }
 
     // MARK: - State Rendering
@@ -181,11 +186,12 @@ final class MealSectionView: UIView {
         }
     }
 
-    private func showPendingState(records: [PendingFoodRecord]) {
+    private func showPendingState(records: [PendingFoodRecord], image: UIImage?) {
         editButton.isHidden = true
 
         guard let firstRecord = records.first else { return }
         let pendingView = PendingFoodRecordCardView(record: firstRecord)
+        pendingView.configure(image: image)
         contentContainerView.addSubview(pendingView)
         pendingView.snp.makeConstraints {
             $0.top.bottom.equalToSuperview()
