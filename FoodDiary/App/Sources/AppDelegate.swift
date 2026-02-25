@@ -21,7 +21,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         FirebaseApp.configure()
         Messaging.messaging().delegate = self
         setupAppearance()
-        registerForRemoteNotifications(application)
+        UNUserNotificationCenter.current().delegate = self
         return true
     }
 
@@ -35,16 +35,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     private func setupAppearance() {
         UINavigationBar.appearance().tintColor = .white
-    }
-
-    private func registerForRemoteNotifications(_ application: UIApplication) {
-        UNUserNotificationCenter.current().delegate = self
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
-            guard granted else { return }
-            DispatchQueue.main.async {
-                application.registerForRemoteNotifications()
-            }
-        }
     }
 
     func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
@@ -186,5 +176,4 @@ extension AppDelegate: MessagingDelegate {
         try? DIContainer.shared.resolve(PushTokenStoring.self).set(fcmToken)
     }
 }
-
 
