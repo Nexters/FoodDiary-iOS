@@ -206,6 +206,13 @@ public final class WeeklyCalendarViewController<
             }
             .store(in: &cancellables)
 
+        // 펜딩 카드 탭 → 상세 화면으로 이동
+        bottomContentView.pendingTapPublisher
+            .sink { [weak self] date in
+                self?.navigateToDetail(for: date)
+            }
+            .store(in: &cancellables)
+
         // Event: 권한 거부 시 설정 이동 안내 Alert 표시 및 저장 결과 처리
         viewModel.eventPublisher
             .receive(on: DispatchQueue.main)

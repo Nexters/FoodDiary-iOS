@@ -33,8 +33,13 @@ final class BottomContentView: UIView {
         cardStackTapSubject.eraseToAnyPublisher()
     }
 
+    var pendingTapPublisher: AnyPublisher<Date, Never> {
+        pendingTapSubject.eraseToAnyPublisher()
+    }
+
     private let addButtonTapSubject = PassthroughSubject<Void, Never>()
     private let cardStackTapSubject = PassthroughSubject<FoodRecord, Never>()
+    private let pendingTapSubject = PassthroughSubject<Date, Never>()
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - UI Components
@@ -70,6 +75,7 @@ final class BottomContentView: UIView {
     }()
 
     private var pendingCardView: PendingFoodRecordCardView?
+    private var currentPendingDate: Date?
 
     // MARK: - Init
 
@@ -135,6 +141,8 @@ final class BottomContentView: UIView {
         cardStackStateView.isHidden = true
         pendingStateView.isHidden = false
         showContainerStyle(true)
+        cancellables.removeAll()
+        currentPendingDate = record.date
 
         // 기존 pending 카드 제거
         pendingCardView?.removeFromSuperview()
@@ -145,10 +153,17 @@ final class BottomContentView: UIView {
         pendingCardView = newPendingCardView
 
         newPendingCardView.snp.makeConstraints {
-            $0.center.equalToSuperview()
-            $0.horizontalEdges.equalToSuperview().inset(Constants.pendingCardHorizontalInset)
-            $0.height.equalTo(newPendingCardView.snp.width).multipliedBy(Constants.cardAspectRatio)
+            $0.edges.equalToSuperview()
         }
+
+        // 탭 제스처
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(pendingCardTapped))
+        newPendingCardView.addGestureRecognizer(tapGesture)
+    }
+
+    @objc private func pendingCardTapped() {
+        guard let date = currentPendingDate else { return }
+        pendingTapSubject.send(date)
     }
 
     private func showContainerStyle(_ show: Bool) {

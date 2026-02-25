@@ -19,7 +19,7 @@ final class MealSectionView: UIView {
         static let contentTopInset: CGFloat = 16
         static let horizontalInset: CGFloat = 20
         static let textHorizontalInset: CGFloat = Self.horizontalInset + 10
-        static let pendingCardHorizontalInset: CGFloat = 40
+        static let pendingCardHorizontalInset: CGFloat = horizontalInset + 6
     }
 
     // MARK: - Publishers
@@ -189,7 +189,7 @@ final class MealSectionView: UIView {
         contentContainerView.addSubview(pendingView)
         pendingView.snp.makeConstraints {
             $0.top.bottom.equalToSuperview()
-            $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
+            $0.leading.trailing.equalToSuperview().inset(Constants.pendingCardHorizontalInset)
             $0.height.equalTo(pendingView.snp.width)
         }
     }
