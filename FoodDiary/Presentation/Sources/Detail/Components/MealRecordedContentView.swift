@@ -151,16 +151,19 @@ final class MealRecordedContentView: UIView {
 
         restaurantNameLabel.snp.makeConstraints {
             $0.top.leading.equalToSuperview()
+            $0.trailing.lessThanOrEqualTo(copyButton.snp.leading).offset(-8)
         }
 
         shareButton.snp.makeConstraints {
             $0.centerY.equalTo(restaurantNameLabel)
             $0.trailing.equalToSuperview()
+            $0.height.greaterThanOrEqualTo(44)
         }
 
         copyButton.snp.makeConstraints {
             $0.centerY.equalTo(restaurantNameLabel)
-            $0.trailing.equalTo(shareButton.snp.leading).offset(-Constants.buttonSpacing)
+            $0.trailing.equalTo(shareButton.snp.leading)
+            $0.height.greaterThanOrEqualTo(44)
         }
 
         hashtagLabel.snp.makeConstraints {
