@@ -18,9 +18,9 @@ final class BottomContentView: UIView {
         static let containerBorderWidth: CGFloat = 1
         static let containerHorizontalInset: CGFloat = 0
         static let containerBackgroundAlpha: CGFloat = 0.05
-        static let cardHorizontalInset: CGFloat = 40
+        static let cardHorizontalInset: CGFloat = 30
         static let pendingCardHorizontalInset: CGFloat = 60
-        static let cardAspectRatio: CGFloat = 1.15
+        static let cardAspectRatio: CGFloat = 1.0
     }
 
     // MARK: - Publishers
