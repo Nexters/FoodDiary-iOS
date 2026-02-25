@@ -102,6 +102,15 @@ public final class MonthlyCalendarViewModel<
 
         case .refreshCurrentMonth:
             await loadMonth(for: state.currentDisplayDate)
+
+        case .updateMonth(let date):
+            let calendar = Calendar.current
+            if calendar.component(.year, from: date) != calendar.component(.year, from: state.currentDisplayDate)
+                || calendar.component(.month, from: date) != calendar.component(.month, from: state.currentDisplayDate) {
+                await loadMonth(for: date)
+            } else {
+                await loadMonth(for: state.currentDisplayDate)
+            }
         }
     }
 
@@ -155,6 +164,7 @@ extension MonthlyCalendarViewModel {
         case selectMonth(Date)
         case selectDay(Date)
         case refreshCurrentMonth
+        case updateMonth(Date)
     }
 
     public enum Event {

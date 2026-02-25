@@ -295,8 +295,8 @@ public final class MonthlyCalendarViewController<
     // MARK: - Navigation
 
     private func navigateToDetail(date: Date, records: [FoodRecord]) {
-        let detailVC = detailViewControllerFactory(date, records) { [weak self] _ in
-            self?.viewModel.input.send(.refreshCurrentMonth)
+        let detailVC = detailViewControllerFactory(date, records) { [weak self] date in
+            self?.viewModel.input.send(.updateMonth(date))
         }
         detailVC.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(detailVC, animated: true)
