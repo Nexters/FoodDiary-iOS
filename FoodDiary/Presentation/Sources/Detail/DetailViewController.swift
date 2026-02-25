@@ -408,7 +408,9 @@ public final class DetailViewController<
                 section.isHidden = false
                 hasAnyContent = true
             } else {
-                section.isHidden = true
+                section.configure(state: .empty)
+                section.isHidden = false
+                hasAnyContent = true
             }
         }
 

@@ -159,20 +159,26 @@ final class MealSectionView: UIView {
     private func showEmptyState() {
         editButton.isHidden = true
 
-        let emptyView = EmptyFoodRecordView(text: "오늘의 음식 사진을 추가해보세요.")
-        contentContainerView.addSubview(emptyView)
-        emptyView.snp.makeConstraints {
-            $0.top.bottom.equalToSuperview()
-            $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
-            $0.height.equalTo(emptyView.snp.width)
+        let label = UILabel()
+        label.setText("사진을 추가하고 기록해 보세요.", style: .p14, color: .gray100)
+        label.textAlignment = .center
+
+        let container = UIView()
+        container.backgroundColor = .gray900
+        container.layer.cornerRadius = 16
+        container.clipsToBounds = true
+        container.addSubview(label)
+
+        label.snp.makeConstraints {
+            $0.center.equalToSuperview()
         }
 
-        emptyView.addButtonTapPublisher
-            .sink { [weak self] in
-                guard let self else { return }
-                self.addButtonTapSubject.send(self.mealType)
-            }
-            .store(in: &cancellables)
+        contentContainerView.addSubview(container)
+        container.snp.makeConstraints {
+            $0.top.bottom.equalToSuperview()
+            $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
+            $0.height.equalTo(container.snp.width)
+        }
     }
 
     private func showPendingState(records: [PendingFoodRecord]) {
