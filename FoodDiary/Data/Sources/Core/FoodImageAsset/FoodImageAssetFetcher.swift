@@ -9,7 +9,7 @@ import Domain
 import Photos
 import UIKit
 
-/// 사진 라이브러리에서 음식 사진을 정확도 높은 순으로 정렬해서 가져오는 `Repository` 구현체
+/// 사진 라이브러리에서 음식 사진을 시간순으로 가져오는 `Repository` 구현체
 public struct FoodImageAssetFetcher<
     FoodClassifier: FoodClassifierRepresentable,
     ImageRepo: RenderableImageRepository
@@ -51,10 +51,12 @@ public struct FoodImageAssetFetcher<
 
     public func prefetchFoodImageAssets(forWeekContaining date: Date) {
         let calendar = Calendar.current
-        guard let startOfWeek = calendar.date(
-            from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
-        ),
-        let endOfWeek = calendar.date(byAdding: .day, value: 7, to: startOfWeek) else {
+        guard
+            let startOfWeek = calendar.date(
+                from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+            ),
+            let endOfWeek = calendar.date(byAdding: .day, value: 7, to: startOfWeek)
+        else {
             return
         }
 
@@ -68,19 +70,21 @@ public typealias PHFoodImageAsset = FoodImageAsset<PHAsset>
 
 // MARK: - Photo Fetching
 
-private extension FoodImageAssetFetcher {
-    struct PhotoSection {
+extension FoodImageAssetFetcher {
+    fileprivate struct PhotoSection {
         let date: Date
         let assets: [PHAsset]
     }
 
-    func fetchPhotoSections(from startDate: Date, to endDate: Date?) async -> [PhotoSection] {
+    fileprivate func fetchPhotoSections(from startDate: Date, to endDate: Date?) async
+        -> [PhotoSection]
+    {
         let options = PHFetchOptions()
         options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
 
         var predicates: [NSPredicate] = [
             NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue),
-            NSPredicate(format: "creationDate >= %@", startDate as NSDate)
+            NSPredicate(format: "creationDate >= %@", startDate as NSDate),
         ]
         if let end = endDate {
             predicates.append(NSPredicate(format: "creationDate <= %@", end as NSDate))
@@ -91,7 +95,7 @@ private extension FoodImageAssetFetcher {
         return groupByDate(fetchResult)
     }
 
-    func groupByDate(_ fetchResult: PHFetchResult<PHAsset>) -> [PhotoSection] {
+    fileprivate func groupByDate(_ fetchResult: PHFetchResult<PHAsset>) -> [PhotoSection] {
         let calendar = Calendar.current
         var sections: [Date: [PHAsset]] = [:]
 
@@ -107,8 +111,10 @@ private extension FoodImageAssetFetcher {
 
 // MARK: - Classification
 
-private extension FoodImageAssetFetcher {
-    func classifyAllSections(_ sections: [PhotoSection]) async throws -> [Date: [PHFoodImageAsset]] {
+extension FoodImageAssetFetcher {
+    fileprivate func classifyAllSections(_ sections: [PhotoSection]) async throws -> [Date:
+        [PHFoodImageAsset]]
+    {
         let results = try await mapEach(sections) { section in
             let photos = try await self.classifyPhotosInSection(section)
             return (section.date, photos)
@@ -117,14 +123,30 @@ private extension FoodImageAssetFetcher {
         return Dictionary(uniqueKeysWithValues: results)
     }
 
-    func classifyPhotosInSection(_ section: PhotoSection) async throws -> [PHFoodImageAsset] {
-        try await mapEach(section.assets) { asset in
-            try await self.classifyAsset(asset)
+    fileprivate func classifyPhotosInSection(_ section: PhotoSection) async throws
+        -> [PHFoodImageAsset]
+    {
+        try await withThrowingTaskGroup( 
+            of: (originalIndex: Int, photo: PHFoodImageAsset).self
+        ) { group in
+            for (index, asset) in section.assets.enumerated() {
+                group.addTask {
+                    (originalIndex: index, photo: try await self.classifyAsset(asset))
+                }
+            }
+
+            var results: [(originalIndex: Int, photo: PHFoodImageAsset)] = []
+            for try await result in group {
+                results.append(result)
+            }
+            return
+                results
+                .sorted { $0.originalIndex < $1.originalIndex }
+                .map(\.photo)
         }
-        .sorted { $0.foodProbability > $1.foodProbability }
     }
 
-    func classifyAsset(_ asset: PHAsset) async throws -> PHFoodImageAsset {
+    fileprivate func classifyAsset(_ asset: PHAsset) async throws -> PHFoodImageAsset {
         let identifier = asset.localIdentifier
 
         if let cached = await cache.get(identifier) {
@@ -141,10 +163,11 @@ private extension FoodImageAssetFetcher {
         )
         let result = try foodClassifier.classify(image: image)
 
-        await cache.set(.init(
-            identifier: identifier,
-            foodProbability: result.foodProbability
-        ))
+        await cache.set(
+            .init(
+                identifier: identifier,
+                foodProbability: result.foodProbability
+            ))
 
         return FoodImageAsset(
             imageAsset: asset,
@@ -152,7 +175,7 @@ private extension FoodImageAssetFetcher {
         )
     }
 
-    func mapEach<T, R: Sendable>(
+    fileprivate func mapEach<T, R: Sendable>(
         _ items: [T],
         transform: @escaping @Sendable (T) async throws -> R
     ) async throws -> [R] {
@@ -185,4 +208,3 @@ public enum FoodImageAssetError: LocalizedError {
         }
     }
 }
-
