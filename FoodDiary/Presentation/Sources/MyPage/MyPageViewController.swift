@@ -39,7 +39,7 @@ public final class MyPageViewController: UIViewController {
         var rows: [Row] {
             switch self {
             case .notifications: return [.notificationSetting]
-            case .management: return [.appVersion, .terms, .privacy]
+            case .management: return [.appVersion, .privacy, .customerInquiry]
             case .logout: return [.logout]
             }
         }
@@ -48,8 +48,8 @@ public final class MyPageViewController: UIViewController {
     private enum Row {
         case notificationSetting
         case appVersion
-        case terms
         case privacy
+        case customerInquiry
         case logout
     }
 
@@ -281,12 +281,12 @@ public final class MyPageViewController: UIViewController {
             cell.detailTextLabel?.setText("1.0", style: .p14, color: .gray400)
             cell.accessoryView = nil
 
-        case .terms:
-            cell.textLabel?.setText("서비스 이용약관", style: .p14, color: .gray050)
-            cell.accessoryView = makeChevronAccessory()
-
         case .privacy:
             cell.textLabel?.setText("개인정보 처리방침", style: .p14, color: .gray050)
+            cell.accessoryView = makeChevronAccessory()
+
+        case .customerInquiry:
+            cell.textLabel?.setText("문의하기", style: .p14, color: .gray050)
             cell.accessoryView = makeChevronAccessory()
 
         case .logout:
@@ -392,9 +392,13 @@ extension MyPageViewController: UITableViewDelegate {
         switch row {
         case .notificationSetting:
             openAppSettings()
+        case .privacy:
+            openExternalLink("https://www.notion.so/enebin/311c690fca2b80bc8c89c5f7cc5cb35c?source=copy_link")
+        case .customerInquiry:
+            openExternalLink("https://www.instagram.com/mumuk_official/")
         case .logout:
             showLogoutAlert()
-        default:
+        case .appVersion:
             break
         }
     }
@@ -418,7 +422,10 @@ extension MyPageViewController: UITableViewDelegate {
         guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
         UIApplication.shared.open(url)
     }
+
+    private func openExternalLink(_ link: String) {
+        guard let url = URL(string: link) else { return }
+        UIApplication.shared.open(url)
+    }
 }
-
-
 
