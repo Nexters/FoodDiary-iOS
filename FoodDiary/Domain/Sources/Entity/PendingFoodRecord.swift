@@ -13,18 +13,22 @@ public struct PendingFoodRecord: Identifiable, Equatable, Codable, Sendable {
     public let mealType: MealType
     public let date: Date
     public let createdAt: Date
+    /// PHAsset.localIdentifier (pending 뷰에서 배경 이미지 표시용)
+    public let assetIdentifier: String?
 
     public init(
         id: String = UUID().uuidString,
         uploadId: String,
         mealType: MealType,
         date: Date,
-        createdAt: Date = Date()
+        createdAt: Date = Date(),
+        assetIdentifier: String? = nil
     ) {
         self.id = id
         self.uploadId = uploadId
         self.mealType = mealType
         self.date = date
         self.createdAt = createdAt
+        self.assetIdentifier = assetIdentifier
     }
 }
