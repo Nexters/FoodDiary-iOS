@@ -13,10 +13,14 @@ public final class PHAssetConverter: @unchecked Sendable {
 
     public init() {}
 
-    public func convert(from asset: PHAsset, targetSize: CGSize) async throws -> UIImage {
+    public func convert(
+        from asset: PHAsset,
+        targetSize: CGSize,
+        deliveryMode: PHImageRequestOptionsDeliveryMode = .highQualityFormat
+    ) async throws -> UIImage {
         try await withCheckedThrowingContinuation { continuation in
             let options = PHImageRequestOptions()
-            options.deliveryMode = .highQualityFormat
+            options.deliveryMode = deliveryMode
             options.isSynchronous = false
             options.isNetworkAccessAllowed = true
 

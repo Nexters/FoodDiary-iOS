@@ -13,6 +13,13 @@ public protocol RenderableImageRepository<Asset>: Sendable {
     /// - Parameters:
     ///   - asset: 이미지 에셋
     ///   - targetSize: 요청 이미지 크기
+    ///   - preferFastDelivery: true이면 품질보다 속도를 우선합니다 (ML 전처리 등)
     /// - Returns: 로드된 UIImage
-    func loadImage(for asset: Asset, targetSize: CGSize) async throws -> UIImage
+    func loadImage(for asset: Asset, targetSize: CGSize, preferFastDelivery: Bool) async throws -> UIImage
+}
+
+extension RenderableImageRepository {
+    public func loadImage(for asset: Asset, targetSize: CGSize) async throws -> UIImage {
+        try await loadImage(for: asset, targetSize: targetSize, preferFastDelivery: false)
+    }
 }
