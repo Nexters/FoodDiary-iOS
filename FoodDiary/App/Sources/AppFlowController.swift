@@ -257,10 +257,26 @@ extension AppFlowController {
                 let mainVC = createMainView()
                 transition(to: mainVC)
                 showCoachmarkOverlay(on: mainVC)
+                prefetchInitialFoodImageAssets()
             }
             .store(in: &cancellables)
 
         return UINavigationController(rootViewController: onboardingVC)
+    }
+
+    /// 온보딩 완료 후 사진 권한 획득 → 과거 4주치 FoodImageAsset prefetch
+    private func prefetchInitialFoodImageAssets() {
+        guard let authUseCase = try? container.resolve(AuthUseCase.self),
+              let fetchUseCase = try? container.resolve(FetchUseCase.self)
+        else { return }
+
+        Task {
+            if !authUseCase.isAuthorized() {
+                let status = await authUseCase.execute()
+                guard status == .authorized || status == .limited else { return }
+            }
+            fetchUseCase.prefetch(forPreviousWeeks: 4, of: Date())
+        }
     }
 
     fileprivate func showCoachmarkOverlay(on viewController: UIViewController) {

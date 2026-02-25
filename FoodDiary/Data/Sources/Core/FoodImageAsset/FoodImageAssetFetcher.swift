@@ -63,11 +63,8 @@ public struct FoodImageAssetFetcher<
         return result
     }
 
-    public func prefetchFoodImageAssets(forAdjacentWeeksOf date: Date) {
+    public func prefetchFoodImageAssets(forPreviousWeeks weekCount: Int, of date: Date) {
         let calendar = Calendar.current
-        guard let oneWeekAgo = calendar.date(byAdding: .weekOfYear, value: -1, to: date),
-              let twoWeeksAgo = calendar.date(byAdding: .weekOfYear, value: -2, to: date)
-        else { return }
 
         func weekRange(for targetDate: Date) -> (start: Date, end: Date)? {
             guard
@@ -79,18 +76,21 @@ public struct FoodImageAssetFetcher<
             return (startOfWeek, endOfWeek)
         }
 
-        guard let currentRange = weekRange(for: date) else { return }
-        let previousWeeks = [oneWeekAgo, twoWeeksAgo]
+        let previousDates = (1...weekCount).compactMap {
+            calendar.date(byAdding: .weekOfYear, value: -$0, to: date)
+        }
 
         Task(priority: .utility) {
             // 현재 주를 먼저 완료
-            _ = try? await self.fetchFoodImageAssets(
-                from: currentRange.start,
-                to: currentRange.end
-            )
+            if let currentRange = weekRange(for: date) {
+                _ = try? await self.fetchFoodImageAssets(
+                    from: currentRange.start,
+                    to: currentRange.end
+                )
+            }
 
-            // 이전 2주를 병렬로 백그라운드 실행
-            for targetDate in previousWeeks {
+            // 과거 주를 병렬로 백그라운드 실행
+            for targetDate in previousDates {
                 guard let range = weekRange(for: targetDate) else { continue }
                 Task(priority: .background) {
                     _ = try? await self.fetchFoodImageAssets(
