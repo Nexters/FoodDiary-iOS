@@ -8,16 +8,21 @@ import Logging
 
 public struct HTTPLogger {
     private let logger: Logger
+    private let logBody: Bool
 
-    public init(logger: Logger = Logger(label: "com.fooddiary.network")) {
+    public init(
+        logger: Logger = Logger(label: "com.fooddiary.network"),
+        logBody: Bool = false
+    ) {
         self.logger = logger
+        self.logBody = logBody
     }
 
     func logRequest(_ request: URLRequest) {
             let method = request.httpMethod ?? "UNKNOWN"
             let url = request.url?.absoluteString ?? "nil"
             var message = "[Request] [\(method)] \(url)"
-            if let body = request.httpBody {
+            if logBody, let body = request.httpBody {
                 message += "\nBody:\n\(prettyJSON(body))"
             }
             logger.info("\(message)")
@@ -26,7 +31,9 @@ public struct HTTPLogger {
     func logResponse(_ response: URLResponse, statusCode: Int, data: Data) {
             let url = response.url?.absoluteString ?? "nil"
             var message = "[Response] [\(statusCode)] \(url)"
-            message += "\nBody:\n\(prettyJSON(data))"
+            if logBody {
+                message += "\nBody:\n\(prettyJSON(data))"
+            }
         if (200..<300).contains(statusCode) {
             logger.info("\(message)")
             } else {
@@ -35,6 +42,7 @@ public struct HTTPLogger {
     }
 
     func logRequestBody(_ body: Data?) {
+            guard logBody else { return }
             guard let body else {
                 logger.info("[Request Body] (empty)")
                 return
@@ -44,6 +52,7 @@ public struct HTTPLogger {
     }
 
     func logResponseBody(_ data: Data) {
+            guard logBody else { return }
             let bodyString = String(data: data, encoding: .utf8) ?? "(binary \(data.count) bytes)"
             logger.info("[Response Body] \(bodyString)")
     }
