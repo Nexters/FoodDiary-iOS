@@ -38,6 +38,7 @@ public final class DetailViewModel<
     private let stateSubject: CurrentValueSubject<State, Never>
     private let eventSubject = PassthroughSubject<Event, Never>()
     private var cancellables = Set<AnyCancellable>()
+    private var loadRecordsTask: Task<Void, Never>?
 
     // MARK: - Dependencies
 
@@ -86,7 +87,8 @@ public final class DetailViewModel<
         input
             .sink { [weak self] action in
                 guard let self else { return }
-                Task(priority: .userInitiated) {
+                self.loadRecordsTask?.cancel()
+                self.loadRecordsTask = Task(priority: .userInitiated) {
                     await self.handleInput(action)
                 }
             }
@@ -141,13 +143,16 @@ public final class DetailViewModel<
     @MainActor
     private func loadRecords(for date: Date) async {
         state.isLoading = true
-        defer { state.isLoading = false }
 
         do {
             let records = try await fetchRecordsUseCase.execute(for: date)
+            guard !Task.isCancelled else { return }
+
             state.recordsByMealType = groupRecordsByMealType(records)
 
             let pendingRecords = try await loadPendingRecords(for: date)
+            guard !Task.isCancelled else { return }
+
             state.pendingRecords = try await cleanUpExpiredPendingRecordsUseCase.execute(
                 serverRecords: records,
                 pendingRecords: pendingRecords
@@ -155,8 +160,12 @@ public final class DetailViewModel<
 
             updateDateText()
         } catch {
-            print("Failed to load records: \(error)")
+            if !Task.isCancelled {
+                print("Failed to load records: \(error)")
+            }
         }
+
+        state.isLoading = false
     }
 
     private func groupRecordsByMealType(_ records: [FoodRecord]) -> [MealType: FoodRecord] {
