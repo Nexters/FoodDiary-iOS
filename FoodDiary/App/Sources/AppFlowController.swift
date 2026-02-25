@@ -12,6 +12,7 @@ import Domain
 import Presentation
 import SnapKit
 import UIKit
+import UserNotifications
 
 final class AppFlowController: UIViewController {
     private typealias AssetFetcher = FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>
@@ -100,6 +101,9 @@ extension AppFlowController {
     fileprivate func routeToAppropriateScreen(isLogin: Bool) {
         let destinationVC = isLogin ? createMainView() : createLoginView()
         transition(to: destinationVC)
+        if isLogin {
+            registerForRemoteNotificationsAfterLogin()
+        }
 
         if isLogin, let deepLink = pendingDeepLinkDate {
             pendingDeepLinkDate = nil
@@ -297,7 +301,37 @@ extension AppFlowController {
     fileprivate func handleLoginResult(_ loginResult: LoginResult) {
         Task {
             try? await fetchUserProfile()
+            registerForRemoteNotificationsAfterLogin()
             transition(to: loginResult.isFirst ? createOnboardingView() : createMainView())
+        }
+    }
+
+    fileprivate func registerForRemoteNotificationsAfterLogin() {
+        Task { @MainActor in
+            let settings = await UNUserNotificationCenter.current().notificationSettings()
+            switch settings.authorizationStatus {
+            case .authorized, .provisional, .ephemeral:
+                UIApplication.shared.registerForRemoteNotifications()
+            case .notDetermined:
+                await requestSystemNotificationAuthorization()
+            case .denied:
+                break
+            @unknown default:
+                break
+            }
+        }
+    }
+
+    @MainActor
+    fileprivate func requestSystemNotificationAuthorization() async {
+        do {
+            let granted = try await UNUserNotificationCenter.current().requestAuthorization(
+                options: [.alert, .badge, .sound]
+            )
+            guard granted else { return }
+            UIApplication.shared.registerForRemoteNotifications()
+        } catch {
+            print("알림 권한 요청 실패: \(error)")
         }
     }
 

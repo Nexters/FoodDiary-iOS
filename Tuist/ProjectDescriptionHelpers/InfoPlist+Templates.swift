@@ -7,8 +7,8 @@
 
 import ProjectDescription
 
-public extension InfoPlist {
-    static func sceneDelegateApp() -> InfoPlist {
+extension InfoPlist {
+    public static func sceneDelegateApp() -> InfoPlist {
         .extendingDefault(
             with: [
                 "CFBundleShortVersionString": "$(MARKETING_VERSION)",
@@ -20,17 +20,17 @@ public extension InfoPlist {
                         "UIWindowSceneSessionRoleApplication": [
                             [
                                 "UISceneConfigurationName": "Default Configuration",
-                                "UISceneDelegateClassName": "$(PRODUCT_MODULE_NAME).SceneDelegate"
+                                "UISceneDelegateClassName": "$(PRODUCT_MODULE_NAME).SceneDelegate",
                             ]
                         ]
-                    ]
+                    ],
                 ],
                 "UILaunchScreen": [
                     "UIColorName": "",
-                    "UIImageName": ""
+                    "UIImageName": "",
                 ],
                 "NSPhotoLibraryUsageDescription": "음식 사진을 분류하기 위해 사진 라이브러리 접근 권한이 필요합니다.",
-                "NSUserNotificationsUsageDescription": "음식 분석 완료 알림을 받기 위해 알림 권한이 필요합니다.",
+                "NSUserNotificationsUsageDescription": "AI 분석 완료 알림을 받기 위해선 알림 권한이 필요합니다.",
                 "BASE_URL": "$(BASE_URL)",
                 "NSAppTransportSecurity": [
                     "NSAllowsArbitraryLoads": true
@@ -43,7 +43,7 @@ public extension InfoPlist {
                 "UISupportedInterfaceOrientations": [
                     "UIInterfaceOrientationPortrait"
                 ],
-                "UIRequiresFullScreen": true
+                "UIRequiresFullScreen": true,
             ]
         )
     }
