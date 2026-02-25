@@ -55,9 +55,17 @@ public final class WeeklyCalendarViewController<
         return sv
     }()
 
+    private let imagePickerLoadingView: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .medium)
+        indicator.color = .gray400
+        indicator.hidesWhenStopped = true
+        return indicator
+    }()
+
     // MARK: - State
 
     private var cancellables = Set<AnyCancellable>()
+    private var isLoadingImagePicker = false
 
     // MARK: - Init
 
@@ -100,10 +108,11 @@ public final class WeeklyCalendarViewController<
 
     private func setupUI() {
         view.backgroundColor = .sdBase
-        
+
         view.addSubview(recordPromptHeaderView)
         view.addSubview(headerView)
         view.addSubview(containerStackView)
+        view.addSubview(imagePickerLoadingView)
     }
 
     private func setupConstraints() {
@@ -121,6 +130,10 @@ public final class WeeklyCalendarViewController<
             $0.top.equalTo(headerView.snp.bottom).offset(14)
             $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
             $0.bottom.equalTo(view.safeAreaLayoutGuide).offset(-34)
+        }
+
+        imagePickerLoadingView.snp.makeConstraints {
+            $0.center.equalTo(bottomContentView)
         }
     }
 
@@ -244,9 +257,23 @@ public final class WeeklyCalendarViewController<
             .store(in: &cancellables)
     }
 
+    // MARK: - Image Picker Loading
+
+    private func setImagePickerLoading(_ isLoading: Bool) {
+        isLoadingImagePicker = isLoading
+        if isLoading {
+            imagePickerLoadingView.startAnimating()
+        } else {
+            imagePickerLoadingView.stopAnimating()
+        }
+        bottomContentView.alpha = isLoading ? 0.5 : 1.0
+        bottomContentView.isUserInteractionEnabled = !isLoading
+    }
+
     // MARK: - Actions
 
     private func handleAddButtonTap() {
+        guard !isLoadingImagePicker else { return }
         if viewModel.checkPhotoAuthorizationForAddingPhoto() {
             Task {
                 await presentImagePicker()
@@ -279,6 +306,9 @@ public final class WeeklyCalendarViewController<
 
     @MainActor
     private func presentImagePicker() async {
+        setImagePickerLoading(true)
+        defer { setImagePickerLoading(false) }
+
         let selectedDate = viewModel.state.selectedDate
 
         do {
