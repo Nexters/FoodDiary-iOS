@@ -78,6 +78,10 @@ final class WeeklyCalendarHeaderView: UIView {
     }
 
     private func setupConstraints() {
+        snp.makeConstraints {
+            $0.height.equalTo(44)
+        }
+
         monthLabel.snp.makeConstraints {
             $0.leading.equalToSuperview()
             $0.centerY.equalToSuperview()
@@ -85,7 +89,7 @@ final class WeeklyCalendarHeaderView: UIView {
 
         navigationStack.snp.makeConstraints {
             $0.trailing.equalToSuperview()
-            $0.top.bottom.equalToSuperview()
+            $0.centerY.equalToSuperview()
         }
 
         previousButton.snp.makeConstraints {

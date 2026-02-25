@@ -43,6 +43,13 @@ public final class WeeklyCalendarViewController<
     private let weekGridView = WeekGridView()
     private let bottomContentView = BottomContentView()
 
+    private lazy var containerStackView: UIStackView = {
+        let sv = UIStackView(arrangedSubviews: [weekGridView, bottomContentView])
+        sv.axis = .vertical
+        sv.spacing = 24
+        return sv
+    }()
+
     // MARK: - State
 
     private var cancellables = Set<AnyCancellable>()
@@ -86,45 +93,25 @@ public final class WeeklyCalendarViewController<
 
     private func setupUI() {
         view.backgroundColor = .sdBase
-
-        view.addSubview(scrollView)
-        scrollView.addSubview(contentView)
-        contentView.addSubview(recordPromptHeaderView)
-        contentView.addSubview(headerView)
-        contentView.addSubview(weekGridView)
-        view.addSubview(bottomContentView)
+        
+        view.addSubview(recordPromptHeaderView)
+        view.addSubview(headerView)
+        view.addSubview(containerStackView)
     }
 
     private func setupConstraints() {
-        scrollView.snp.makeConstraints {
-            $0.edges.equalTo(view.safeAreaLayoutGuide)
-        }
-
-        contentView.snp.makeConstraints {
-            $0.verticalEdges.equalToSuperview()
-            $0.horizontalEdges.equalToSuperview().inset(20)
-            $0.width.equalToSuperview().offset(-40)
-        }
-
         recordPromptHeaderView.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(28)
-            $0.leading.trailing.equalToSuperview()
+            $0.top.equalTo(view.safeAreaLayoutGuide).offset(28)
+            $0.leading.trailing.equalToSuperview().inset(20)
         }
 
         headerView.snp.makeConstraints {
             $0.top.equalTo(recordPromptHeaderView.snp.bottom).offset(32)
-            $0.leading.trailing.equalToSuperview()
+            $0.leading.trailing.equalToSuperview().inset(20)
         }
 
-        weekGridView.snp.makeConstraints {
-            $0.top.equalTo(headerView.snp.bottom).offset(12)
-            $0.leading.trailing.equalToSuperview()
-            // $0.height.equalTo(80)
-            $0.bottom.equalToSuperview()
-        }
-
-        bottomContentView.snp.makeConstraints {
-            $0.top.equalTo(weekGridView.snp.bottom).offset(18)
+        containerStackView.snp.makeConstraints {
+            $0.top.equalTo(headerView.snp.bottom).offset(14)
             $0.leading.trailing.equalToSuperview().inset(20)
             $0.bottom.equalTo(view.safeAreaLayoutGuide).offset(-34)
         }
