@@ -33,7 +33,8 @@ public final class DetailViewController<
     private let viewModel: DetailViewModel<RecordRepo, PendingRepo, PushObserver>
     private let onDismissWithDate: ((Date) -> Void)?
     private let editViewControllerFactory: ((FoodRecord) -> UIViewController)?
-    private let presentImagePickerHandler: ((UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void) -> Void)?
+    private let presentImagePickerHandler:
+        ((UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void) -> Void)?
 
     // MARK: - UI Components
 
@@ -59,12 +60,16 @@ public final class DetailViewController<
         let button: UIButton
         if #available(iOS 26, *) {
             var config = UIButton.Configuration.glass()
-            config.image = UIImage(systemName: "plus", withConfiguration: UIImage.SymbolConfiguration(pointSize: 20, weight: .medium))
+            config.image = UIImage(
+                systemName: "plus",
+                withConfiguration: UIImage.SymbolConfiguration(pointSize: 20, weight: .medium))
             config.cornerStyle = .capsule
             button = UIButton(configuration: config)
         } else {
             var config = UIButton.Configuration.plain()
-            config.image = UIImage(systemName: "plus", withConfiguration: UIImage.SymbolConfiguration(pointSize: 20, weight: .medium))
+            config.image = UIImage(
+                systemName: "plus",
+                withConfiguration: UIImage.SymbolConfiguration(pointSize: 20, weight: .medium))
             config.background.visualEffect = UIBlurEffect(style: .systemMaterialDark)
             config.cornerStyle = .capsule
             button = UIButton(configuration: config)
@@ -94,6 +99,13 @@ public final class DetailViewController<
         return stack
     }()
 
+    private let loadingIndicatorView: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .medium)
+        indicator.color = .gray400
+        indicator.hidesWhenStopped = true
+        return indicator
+    }()
+
     private let breakfastSection = MealSectionView(mealType: .breakfast)
     private let lunchSection = MealSectionView(mealType: .lunch)
     private let dinnerSection = MealSectionView(mealType: .dinner)
@@ -109,7 +121,9 @@ public final class DetailViewController<
         viewModel: DetailViewModel<RecordRepo, PendingRepo, PushObserver>,
         onDismissWithDate: ((Date) -> Void)? = nil,
         editViewControllerFactory: ((FoodRecord) -> UIViewController)? = nil,
-        presentImagePickerHandler: ((UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void) -> Void)? = nil
+        presentImagePickerHandler: (
+            (UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void) -> Void
+        )? = nil
     ) {
         self.viewModel = viewModel
         self.onDismissWithDate = onDismissWithDate
@@ -177,6 +191,7 @@ public final class DetailViewController<
         view.addSubview(emptyDayStackView)
         view.addSubview(dateNavigatorView)
         view.addSubview(floatingAddButton)
+        view.addSubview(loadingIndicatorView)
 
         mealSectionsStackView.addArrangedSubview(breakfastSection)
         mealSectionsStackView.addArrangedSubview(lunchSection)
@@ -266,7 +281,13 @@ public final class DetailViewController<
             .removeDuplicates()
             .receive(on: DispatchQueue.main)
             .sink { [weak self] isLoading in
-                self?.dateNavigatorView.setPending(isLoading)
+                guard let self else { return }
+                if isLoading {
+                    self.loadingIndicatorView.startAnimating()
+                    self.emptyDayStackView.isHidden = true
+                } else {
+                    self.loadingIndicatorView.stopAnimating()
+                }
             }
             .store(in: &cancellables)
 
@@ -311,33 +332,46 @@ public final class DetailViewController<
         setupCardEventBindings()
 
         // Floating add button
-        floatingAddButton.addTarget(self, action: #selector(floatingAddButtonTapped), for: .touchUpInside)
+        floatingAddButton.addTarget(
+            self, action: #selector(floatingAddButtonTapped), for: .touchUpInside)
     }
 
     private func setupCardEventBindings() {
         breakfastSection.copyTapPublisher
-            .merge(with: lunchSection.copyTapPublisher, dinnerSection.copyTapPublisher, snackSection.copyTapPublisher)
+            .merge(
+                with: lunchSection.copyTapPublisher, dinnerSection.copyTapPublisher,
+                snackSection.copyTapPublisher
+            )
             .sink { [weak self] record in
                 self?.handleCopy(record: record)
             }
             .store(in: &cancellables)
 
         breakfastSection.shareTapPublisher
-            .merge(with: lunchSection.shareTapPublisher, dinnerSection.shareTapPublisher, snackSection.shareTapPublisher)
+            .merge(
+                with: lunchSection.shareTapPublisher, dinnerSection.shareTapPublisher,
+                snackSection.shareTapPublisher
+            )
             .sink { [weak self] record in
                 self?.handleShare(record: record)
             }
             .store(in: &cancellables)
 
         breakfastSection.editTapPublisher
-            .merge(with: lunchSection.editTapPublisher, dinnerSection.editTapPublisher, snackSection.editTapPublisher)
+            .merge(
+                with: lunchSection.editTapPublisher, dinnerSection.editTapPublisher,
+                snackSection.editTapPublisher
+            )
             .sink { [weak self] record in
                 self?.handleEdit(record: record)
             }
             .store(in: &cancellables)
 
         breakfastSection.addButtonTapPublisher
-            .merge(with: lunchSection.addButtonTapPublisher, dinnerSection.addButtonTapPublisher, snackSection.addButtonTapPublisher)
+            .merge(
+                with: lunchSection.addButtonTapPublisher, dinnerSection.addButtonTapPublisher,
+                snackSection.addButtonTapPublisher
+            )
             .sink { [weak self] mealType in
                 self?.handleAddPhoto(for: mealType)
             }
@@ -405,11 +439,12 @@ public final class DetailViewController<
 
     private func handleShare(record: FoodRecord) {
         guard let name = record.restaurantName, !name.isEmpty,
-              let url = record.restaurantUrl, !url.isEmpty else {
+            let url = record.restaurantUrl, !url.isEmpty
+        else {
             showShareUnavailableAlert()
             return
         }
-        
+
         let shareText = formatRecordForShare(name, url)
         presentShareSheet(items: [shareText])
     }
@@ -425,7 +460,6 @@ public final class DetailViewController<
         )
         present(activityVC, animated: true)
     }
-
 
     // MARK: - Actions
 
