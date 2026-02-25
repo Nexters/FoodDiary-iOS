@@ -24,9 +24,9 @@ public struct FetchFoodImageAssetUseCase<Repository: FoodImageAssetRepository> {
         }.value
     }
 
-    /// 주간 사진 데이터를 백그라운드에서 미리 로드하여 캐시 워밍
-    /// - Parameter date: 주의 기준이 되는 날짜
+    /// 인접 주간 사진 데이터를 백그라운드에서 미리 로드하여 캐시 워밍
+    /// - Parameter date: 기준 날짜
     public func prefetch(for date: Date) {
-        repository.prefetchFoodImageAssets(forWeekContaining: date)
+        repository.prefetchFoodImageAssets(forAdjacentWeeksOf: date)
     }
 }

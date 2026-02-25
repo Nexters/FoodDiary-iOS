@@ -132,9 +132,6 @@ public final class WeeklyCalendarViewController<
             $0.bottom.equalTo(view.safeAreaLayoutGuide).offset(-34)
         }
 
-        imagePickerLoadingView.snp.makeConstraints {
-            $0.center.equalTo(bottomContentView)
-        }
     }
 
     private func setupBindings() {
@@ -261,13 +258,8 @@ public final class WeeklyCalendarViewController<
 
     private func setImagePickerLoading(_ isLoading: Bool) {
         isLoadingImagePicker = isLoading
-        if isLoading {
-            imagePickerLoadingView.startAnimating()
-        } else {
-            imagePickerLoadingView.stopAnimating()
-        }
-        bottomContentView.alpha = isLoading ? 0.5 : 1.0
         bottomContentView.isUserInteractionEnabled = !isLoading
+        bottomContentView.alpha = isLoading ? 0.5 : 1.0
     }
 
     // MARK: - Actions

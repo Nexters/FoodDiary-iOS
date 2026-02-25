@@ -17,7 +17,7 @@ final class MockFoodImageAssetRepository: FoodImageAssetRepository, @unchecked S
         resultToReturn
     }
 
-    func prefetchFoodImageAssets(forWeekContaining date: Date) {
+    func prefetchFoodImageAssets(forAdjacentWeeksOf date: Date) {
         // Mock에서는 아무 동작도 하지 않음
     }
 }

@@ -63,19 +63,42 @@ public struct FoodImageAssetFetcher<
         return result
     }
 
-    public func prefetchFoodImageAssets(forWeekContaining date: Date) {
+    public func prefetchFoodImageAssets(forAdjacentWeeksOf date: Date) {
         let calendar = Calendar.current
-        guard
-            let startOfWeek = calendar.date(
-                from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
-            ),
-            let endOfWeek = calendar.date(byAdding: .day, value: 7, to: startOfWeek)
-        else {
-            return
+        guard let oneWeekAgo = calendar.date(byAdding: .weekOfYear, value: -1, to: date),
+              let twoWeeksAgo = calendar.date(byAdding: .weekOfYear, value: -2, to: date)
+        else { return }
+
+        func weekRange(for targetDate: Date) -> (start: Date, end: Date)? {
+            guard
+                let startOfWeek = calendar.date(
+                    from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: targetDate)
+                ),
+                let endOfWeek = calendar.date(byAdding: .day, value: 7, to: startOfWeek)
+            else { return nil }
+            return (startOfWeek, endOfWeek)
         }
 
-        Task(priority: .background) {
-            _ = try? await self.fetchFoodImageAssets(from: startOfWeek, to: endOfWeek)
+        guard let currentRange = weekRange(for: date) else { return }
+        let previousWeeks = [oneWeekAgo, twoWeeksAgo]
+
+        Task(priority: .utility) {
+            // 현재 주를 먼저 완료
+            _ = try? await self.fetchFoodImageAssets(
+                from: currentRange.start,
+                to: currentRange.end
+            )
+
+            // 이전 2주를 병렬로 백그라운드 실행
+            for targetDate in previousWeeks {
+                guard let range = weekRange(for: targetDate) else { continue }
+                Task(priority: .background) {
+                    _ = try? await self.fetchFoodImageAssets(
+                        from: range.start,
+                        to: range.end
+                    )
+                }
+            }
         }
     }
 }
