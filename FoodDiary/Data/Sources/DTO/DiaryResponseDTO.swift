@@ -58,12 +58,10 @@ public struct DiaryResponseDTO: Decodable {
 public struct DiaryPhotoDTO: Decodable {
     public let photoId: Int
     public let imageUrl: String
-    public let analysisStatus: String
 
     enum CodingKeys: String, CodingKey {
         case photoId = "photo_id"
         case imageUrl = "image_url"
-        case analysisStatus = "analysis_status"
     }
 }
 

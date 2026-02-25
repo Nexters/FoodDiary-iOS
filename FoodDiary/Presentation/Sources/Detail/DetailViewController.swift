@@ -285,8 +285,11 @@ public final class DetailViewController<
                 if isLoading {
                     self.loadingIndicatorView.startAnimating()
                     self.emptyDayStackView.isHidden = true
+                    self.scrollView.isHidden = true
                 } else {
                     self.loadingIndicatorView.stopAnimating()
+                    let state = self.viewModel.state
+                    self.updateMealSections(state.recordsByMealType, pendingRecords: state.pendingRecords)
                 }
             }
             .store(in: &cancellables)
