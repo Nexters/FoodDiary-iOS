@@ -221,18 +221,16 @@ public final class ImagePickerViewController<
         navigationController?.setNavigationBarHidden(false, animated: animated)
     }
 
+    public override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if isMovingFromParent {
+            resultSubject.send(.cancelled)
+        }
+    }
+
     // MARK: - Setup
 
     private func setupNavigationBar() {
-        let backButton = UIBarButtonItem(
-            image: UIImage(systemName: "chevron.left"),
-            style: .plain,
-            target: self,
-            action: #selector(handleCancel)
-        )
-        backButton.tintColor = .white
-        navigationItem.leftBarButtonItem = backButton
-
         let selectAllButton = UIBarButtonItem(
             title: selectAllButtonState.title,
             style: .plain,
@@ -341,10 +339,6 @@ public final class ImagePickerViewController<
     @objc private func confirmButtonTapped() {
         let selectedAssets = photos.filter { selectedPhotoIds.contains($0.id) }
         resultSubject.send(.selected(selectedAssets))
-    }
-
-    @objc private func handleCancel() {
-        resultSubject.send(.cancelled)
     }
 
     // MARK: - UICollectionViewDataSource
