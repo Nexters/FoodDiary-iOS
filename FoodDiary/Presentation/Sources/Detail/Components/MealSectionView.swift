@@ -165,13 +165,11 @@ final class MealSectionView: UIView {
         editButton.isHidden = true
 
         let label = UILabel()
-        label.setText("사진을 추가해서 기록해 보세요.", style: .p14, color: .gray100)
+        label.setText("사진을 추가해서 기록해 보세요", style: .p14, color: .gray100)
         label.textAlignment = .center
 
-        let container = UIView()
-        container.backgroundColor = .gray900
-        container.layer.cornerRadius = 16
-        container.clipsToBounds = true
+        let container = DashedBorderView()
+        container.cornerRadius = 16
         container.addSubview(label)
 
         label.snp.makeConstraints {
