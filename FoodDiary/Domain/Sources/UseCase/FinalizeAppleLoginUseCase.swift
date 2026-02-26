@@ -18,19 +18,22 @@ public struct FinalizeAppleLoginUseCase {
     private let osVersion: String
     private let pushTokenStorage: PushTokenStoring
     private let notificationAuthorizationProvider: NotificationAuthorizationProviding
+    private let initialLaunchStorage: InitialLaunchStoring
 
     public init(
         authRepository: AuthRepository,
         deviceId: String,
         osVersion: String,
         pushTokenStorage: PushTokenStoring,
-        notificationAuthorizationProvider: NotificationAuthorizationProviding
+        notificationAuthorizationProvider: NotificationAuthorizationProviding,
+        initialLaunchStorage: InitialLaunchStoring
     ) {
         self.authRepository = authRepository
         self.deviceId = deviceId
         self.osVersion = osVersion
         self.pushTokenStorage = pushTokenStorage
         self.notificationAuthorizationProvider = notificationAuthorizationProvider
+        self.initialLaunchStorage = initialLaunchStorage
     }
 
     public func execute(_ appleIdentityToken: String) async throws -> LoginResult {
@@ -46,7 +49,8 @@ public struct FinalizeAppleLoginUseCase {
             notificationEnabled: notificationEnabled
         )
 
-        // 로그인 요청
-        return try await authRepository.login(loginRequest)
+        let result = try await authRepository.login(loginRequest)
+        initialLaunchStorage.set()
+        return result
     }
 }
