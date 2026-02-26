@@ -11,6 +11,14 @@ import UIKit
 /// 주간 캘린더 상단 헤더 (월 표시 + 좌우 네비게이션)
 final class WeeklyCalendarHeaderView: UIView {
 
+    // MARK: - Constants
+
+    private enum Constants {
+        static let headerHeight: CGFloat = 44
+        static let navigationSpacing: CGFloat = 8
+        static let buttonSize: CGFloat = 44
+    }
+
     // MARK: - Publishers
 
     var previousTapPublisher: AnyPublisher<Void, Never> {
@@ -50,7 +58,7 @@ final class WeeklyCalendarHeaderView: UIView {
     private let navigationStack: UIStackView = {
         let sv = UIStackView()
         sv.axis = .horizontal
-        sv.spacing = 8
+        sv.spacing = Constants.navigationSpacing
         return sv
     }()
 
@@ -79,7 +87,7 @@ final class WeeklyCalendarHeaderView: UIView {
 
     private func setupConstraints() {
         snp.makeConstraints {
-            $0.height.equalTo(44)
+            $0.height.equalTo(Constants.headerHeight)
         }
 
         monthLabel.snp.makeConstraints {
@@ -93,11 +101,11 @@ final class WeeklyCalendarHeaderView: UIView {
         }
 
         previousButton.snp.makeConstraints {
-            $0.size.equalTo(44)
+            $0.size.equalTo(Constants.buttonSize)
         }
 
         nextButton.snp.makeConstraints {
-            $0.size.equalTo(44)
+            $0.size.equalTo(Constants.buttonSize)
         }
     }
 

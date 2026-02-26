@@ -13,7 +13,8 @@ import UIKit
 public final class DetailViewController<
     RecordRepo: FoodRecordRepository,
     PendingRepo: PendingFoodRecordRepository,
-    PushObserver: PushNotificationObserving
+    PushObserver: PushNotificationObserving,
+    ThumbnailRepo: PendingThumbnailRepository
 >: UIViewController {
 
     // MARK: - Constants
@@ -31,6 +32,7 @@ public final class DetailViewController<
     // MARK: - Dependencies
 
     private let viewModel: DetailViewModel<RecordRepo, PendingRepo, PushObserver>
+    private let loadPendingThumbnailUseCase: LoadPendingThumbnailUseCase<ThumbnailRepo>
     private let onDismissWithDate: ((Date) -> Void)?
     private let editViewControllerFactory: ((FoodRecord) -> UIViewController)?
     private let presentImagePickerHandler:
@@ -119,6 +121,7 @@ public final class DetailViewController<
 
     public init(
         viewModel: DetailViewModel<RecordRepo, PendingRepo, PushObserver>,
+        loadPendingThumbnailUseCase: LoadPendingThumbnailUseCase<ThumbnailRepo>,
         onDismissWithDate: ((Date) -> Void)? = nil,
         editViewControllerFactory: ((FoodRecord) -> UIViewController)? = nil,
         presentImagePickerHandler: (
@@ -126,6 +129,7 @@ public final class DetailViewController<
         )? = nil
     ) {
         self.viewModel = viewModel
+        self.loadPendingThumbnailUseCase = loadPendingThumbnailUseCase
         self.onDismissWithDate = onDismissWithDate
         self.editViewControllerFactory = editViewControllerFactory
         self.presentImagePickerHandler = presentImagePickerHandler
@@ -407,8 +411,11 @@ public final class DetailViewController<
                 section.configure(state: .pending(pendings))
                 section.isHidden = false
                 hasAnyContent = true
+                loadPendingThumbnail(for: pendings, into: section)
             } else {
-                section.isHidden = true
+                section.configure(state: .empty)
+                section.isHidden = false
+                hasAnyContent = true
             }
         }
 
@@ -417,6 +424,19 @@ public final class DetailViewController<
 
         view.bringSubviewToFront(dateNavigatorView)
         view.bringSubviewToFront(floatingAddButton)
+    }
+
+    private func loadPendingThumbnail(for records: [PendingFoodRecord], into section: MealSectionView) {
+        let scale = UIScreen.main.scale
+        let targetSize = CGSize(width: 600 * scale, height: 600 * scale)
+
+        Task { [weak self, weak section] in
+            guard let self else { return }
+            let image = await loadPendingThumbnailUseCase.execute(from: records, targetSize: targetSize)
+            await MainActor.run {
+                section?.configurePendingImage(image)
+            }
+        }
     }
 
     private func formatRecordForCopy(_ record: FoodRecord) -> String {

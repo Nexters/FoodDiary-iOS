@@ -31,12 +31,15 @@ public struct SaveFoodRecordUseCase<
         let request = CreateFoodRecordRequest(date: date, assets: assets)
         let uploadResults = try await repository.uploadRecord(request)
 
+        let representativeAssetId = assets.first?.id
+
         var pendingRecords: [PendingFoodRecord] = []
         for result in uploadResults {
             let pendingRecord = PendingFoodRecord(
                 uploadId: result.uploadId,
                 mealType: result.mealType,
-                date: date
+                date: date,
+                assetIdentifier: representativeAssetId
             )
             // 로컬에 저장해서 앱 재시작 시 복원 가능하도록 함
             try await pendingRepository.save(pendingRecord)

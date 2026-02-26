@@ -19,7 +19,7 @@ final class MealSectionView: UIView {
         static let contentTopInset: CGFloat = 16
         static let horizontalInset: CGFloat = 20
         static let textHorizontalInset: CGFloat = Self.horizontalInset + 10
-        static let pendingCardHorizontalInset: CGFloat = 40
+        static let pendingCardHorizontalInset: CGFloat = horizontalInset + 6
     }
 
     // MARK: - Publishers
@@ -137,7 +137,7 @@ final class MealSectionView: UIView {
 
     // MARK: - Public Methods
 
-    func configure(state: State) {
+    func configure(state: State, pendingImage: UIImage? = nil) {
         guard currentState != state else { return }
         currentState = state
 
@@ -148,10 +148,15 @@ final class MealSectionView: UIView {
         case .empty:
             showEmptyState()
         case .pending(let records):
-            showPendingState(records: records)
+            showPendingState(records: records, image: pendingImage)
         case .recorded(let record):
             showRecordedState(record: record)
         }
+    }
+
+    func configurePendingImage(_ image: UIImage?) {
+        guard let pendingView = contentContainerView.subviews.compactMap({ $0 as? PendingFoodRecordCardView }).first else { return }
+        pendingView.configure(image: image)
     }
 
     // MARK: - State Rendering
@@ -159,31 +164,36 @@ final class MealSectionView: UIView {
     private func showEmptyState() {
         editButton.isHidden = true
 
-        let emptyView = EmptyFoodRecordView(text: "오늘의 음식 사진을 추가해보세요.")
-        contentContainerView.addSubview(emptyView)
-        emptyView.snp.makeConstraints {
-            $0.top.bottom.equalToSuperview()
-            $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
-            $0.height.equalTo(emptyView.snp.width)
+        let label = UILabel()
+        label.setText("사진을 추가해서 기록해 보세요", style: .p14, color: .gray100)
+        label.textAlignment = .center
+
+        let container = DashedBorderView()
+        container.cornerRadius = 16
+        container.addSubview(label)
+
+        label.snp.makeConstraints {
+            $0.center.equalToSuperview()
         }
 
-        emptyView.addButtonTapPublisher
-            .sink { [weak self] in
-                guard let self else { return }
-                self.addButtonTapSubject.send(self.mealType)
-            }
-            .store(in: &cancellables)
+        contentContainerView.addSubview(container)
+        container.snp.makeConstraints {
+            $0.top.bottom.equalToSuperview()
+            $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
+            $0.height.equalTo(container.snp.width)
+        }
     }
 
-    private func showPendingState(records: [PendingFoodRecord]) {
+    private func showPendingState(records: [PendingFoodRecord], image: UIImage?) {
         editButton.isHidden = true
 
         guard let firstRecord = records.first else { return }
         let pendingView = PendingFoodRecordCardView(record: firstRecord)
+        pendingView.configure(image: image)
         contentContainerView.addSubview(pendingView)
         pendingView.snp.makeConstraints {
             $0.top.bottom.equalToSuperview()
-            $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
+            $0.leading.trailing.equalToSuperview().inset(Constants.pendingCardHorizontalInset)
             $0.height.equalTo(pendingView.snp.width)
         }
     }

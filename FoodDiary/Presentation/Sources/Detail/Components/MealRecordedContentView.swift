@@ -41,6 +41,13 @@ final class MealRecordedContentView: UIView {
     private var cardItems: [CardItem] = []
     private var currentRecord: FoodRecord?
 
+    // MARK: - Constraints
+
+    private var labelTrailingWithButton: Constraint?
+    private var labelTrailingWithoutButton: Constraint?
+    private var infoTopWithPageControl: Constraint?
+    private var infoTopWithoutPageControl: Constraint?
+
     // MARK: - UI Components
 
     private lazy var collectionView: UICollectionView = {
@@ -144,15 +151,23 @@ final class MealRecordedContentView: UIView {
         }
 
         infoContainerView.snp.makeConstraints {
-            $0.top.equalTo(pageControl.snp.bottom).offset(Constants.infoTopSpacing)
+            infoTopWithPageControl = $0.top
+                .equalTo(pageControl.snp.bottom).offset(Constants.infoTopSpacing).constraint
+            infoTopWithoutPageControl = $0.top
+                .equalTo(collectionView.snp.bottom).offset(Constants.infoTopSpacing).constraint
             $0.leading.trailing.equalToSuperview().inset(Constants.textHorizontalInset)
             $0.bottom.equalToSuperview()
         }
+        infoTopWithoutPageControl?.deactivate()
 
         restaurantNameLabel.snp.makeConstraints {
             $0.top.leading.equalToSuperview()
-            $0.trailing.lessThanOrEqualTo(copyButton.snp.leading).offset(-8)
+            labelTrailingWithButton = $0.trailing
+                .lessThanOrEqualTo(copyButton.snp.leading).offset(-8).constraint
+            labelTrailingWithoutButton = $0.trailing
+                .lessThanOrEqualToSuperview().constraint
         }
+        labelTrailingWithoutButton?.deactivate()
 
         shareButton.snp.makeConstraints {
             $0.centerY.equalTo(restaurantNameLabel)
@@ -212,7 +227,16 @@ final class MealRecordedContentView: UIView {
     private func configureContent() {
         pageControl.numberOfPages = cardItems.count
         pageControl.currentPage = 0
-        pageControl.isHidden = cardItems.count <= 1
+
+        let showPageControl = cardItems.count > 1
+        pageControl.isHidden = !showPageControl
+        if showPageControl {
+            infoTopWithPageControl?.activate()
+            infoTopWithoutPageControl?.deactivate()
+        } else {
+            infoTopWithPageControl?.deactivate()
+            infoTopWithoutPageControl?.activate()
+        }
 
         if let record = cardItems.first?.record {
             currentRecord = record
@@ -221,7 +245,21 @@ final class MealRecordedContentView: UIView {
     }
 
     private func configureInfoSection(with record: FoodRecord) {
-        restaurantNameLabel.setText(record.restaurantName ?? "", style: .hd16, color: .white)
+        let hasName = !(record.restaurantName ?? "").isEmpty
+
+        if hasName {
+            restaurantNameLabel.setText(record.restaurantName!, style: .hd16, color: .white)
+            copyButton.isHidden = false
+            shareButton.isHidden = false
+            labelTrailingWithButton?.activate()
+            labelTrailingWithoutButton?.deactivate()
+        } else {
+            restaurantNameLabel.setText("수정버튼을 눌러 내용을 기록해 보세요", style: .p12, color: .gray400)
+            copyButton.isHidden = true
+            shareButton.isHidden = true
+            labelTrailingWithButton?.deactivate()
+            labelTrailingWithoutButton?.activate()
+        }
 
         let copyTitle = Typography.p12.styled("복사", color: .white)
         copyButton.setAttributedTitle(copyTitle, for: .normal)

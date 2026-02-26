@@ -389,7 +389,8 @@ public final class EditFoodRecordViewController<
         for chip in categoryChips {
             chip.setSelected(chip.genre == selectedGenre)
             if chip.genre == selectedGenre {
-                let frameInScrollView = chip.convert(chip.bounds, to: categoryScrollView)
+                var frameInScrollView = chip.convert(chip.bounds, to: categoryScrollView)
+                frameInScrollView.size.width += EditFoodRecordConstants.horizontalInset
                 categoryScrollView.scrollRectToVisible(frameInScrollView, animated: animated)
             }
         }
@@ -468,7 +469,11 @@ public final class EditFoodRecordViewController<
 
     @objc private func backButtonTapped() {
         guard !viewModel.state.isSaving else { return }
-        showUnsavedChangesAlert()
+        if viewModel.state.hasChanges {
+            showUnsavedChangesAlert()
+        } else {
+            popWithCancelled()
+        }
     }
 
     @objc private func deleteButtonTapped() {
@@ -492,7 +497,10 @@ public final class EditFoodRecordViewController<
 
     public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         guard !viewModel.state.isSaving else { return false }
-        showUnsavedChangesAlert()
-        return false
+        if viewModel.state.hasChanges {
+            showUnsavedChangesAlert()
+            return false
+        }
+        return true
     }
 }

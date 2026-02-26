@@ -87,9 +87,16 @@ public final class DetailViewModel<
         input
             .sink { [weak self] action in
                 guard let self else { return }
-                self.loadRecordsTask?.cancel()
-                self.loadRecordsTask = Task(priority: .userInitiated) {
-                    await self.handleInput(action)
+                switch action {
+                case .loadRecords, .goToPreviousDay, .goToNextDay:
+                    self.loadRecordsTask?.cancel()
+                    self.loadRecordsTask = Task(priority: .userInitiated) {
+                        await self.handleInput(action)
+                    }
+                default:
+                    Task(priority: .userInitiated) {
+                        await self.handleInput(action)
+                    }
                 }
             }
             .store(in: &cancellables)

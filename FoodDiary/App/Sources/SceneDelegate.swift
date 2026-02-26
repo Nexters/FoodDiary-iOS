@@ -104,6 +104,13 @@ extension SceneDelegate {
             return UIImageLoader(imageLoader: imageLoader)
         }
 
+        container.register(PendingThumbnailRepositoryImpl.self) { resolver in
+            guard let imageLoader = resolver.resolve(UIImageLoader.self) else {
+                fatalError("UIImageLoader not registered")
+            }
+            return PendingThumbnailRepositoryImpl(imageLoader: imageLoader)
+        }
+
         container.register(TFLiteFoodClassifier.self) { _ in
             do {
                 return try TFLiteFoodClassifier()
@@ -265,6 +272,15 @@ extension SceneDelegate {
                 fatalError("PendingFoodRecordStorage not registered")
             }
             return LoadPendingRecordsUseCase(repository: repository)
+        }
+
+        container.register(
+            LoadPendingThumbnailUseCase<PendingThumbnailRepositoryImpl>.self
+        ) { resolver in
+            guard let repository = resolver.resolve(PendingThumbnailRepositoryImpl.self) else {
+                fatalError("PendingThumbnailRepositoryImpl not registered")
+            }
+            return LoadPendingThumbnailUseCase(repository: repository)
         }
 
         container.register(
