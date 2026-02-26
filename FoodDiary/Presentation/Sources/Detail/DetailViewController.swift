@@ -12,9 +12,7 @@ import UIKit
 
 public final class DetailViewController<
     RecordRepo: FoodRecordRepository,
-    PendingRepo: PendingFoodRecordRepository,
-    PushObserver: PushNotificationObserving,
-    ThumbnailRepo: PendingThumbnailRepository
+    PushObserver: PushNotificationObserving
 >: UIViewController {
 
     // MARK: - Constants
@@ -31,8 +29,7 @@ public final class DetailViewController<
 
     // MARK: - Dependencies
 
-    private let viewModel: DetailViewModel<RecordRepo, PendingRepo, PushObserver>
-    private let loadPendingThumbnailUseCase: LoadPendingThumbnailUseCase<ThumbnailRepo>
+    private let viewModel: DetailViewModel<RecordRepo, PushObserver>
     private let onDismissWithDate: ((Date) -> Void)?
     private let editViewControllerFactory: ((FoodRecord) -> UIViewController)?
     private let presentImagePickerHandler:
@@ -120,8 +117,7 @@ public final class DetailViewController<
     // MARK: - Init
 
     public init(
-        viewModel: DetailViewModel<RecordRepo, PendingRepo, PushObserver>,
-        loadPendingThumbnailUseCase: LoadPendingThumbnailUseCase<ThumbnailRepo>,
+        viewModel: DetailViewModel<RecordRepo, PushObserver>,
         onDismissWithDate: ((Date) -> Void)? = nil,
         editViewControllerFactory: ((FoodRecord) -> UIViewController)? = nil,
         presentImagePickerHandler: (
@@ -129,7 +125,6 @@ public final class DetailViewController<
         )? = nil
     ) {
         self.viewModel = viewModel
-        self.loadPendingThumbnailUseCase = loadPendingThumbnailUseCase
         self.onDismissWithDate = onDismissWithDate
         self.editViewControllerFactory = editViewControllerFactory
         self.presentImagePickerHandler = presentImagePickerHandler
@@ -293,7 +288,7 @@ public final class DetailViewController<
                 } else {
                     self.loadingIndicatorView.stopAnimating()
                     let state = self.viewModel.state
-                    self.updateMealSections(state.recordsByMealType, pendingRecords: state.pendingRecords)
+                    self.updateMealSections(state.recordsByMealType, processingRecords: state.processingRecordsByMealType)
                 }
             }
             .store(in: &cancellables)
@@ -308,13 +303,13 @@ public final class DetailViewController<
             .store(in: &cancellables)
 
         let recordsPublisher = viewModel.statePublisher.map(\.recordsByMealType)
-        let pendingPublisher = viewModel.statePublisher.map(\.pendingRecords)
+        let processingPublisher = viewModel.statePublisher.map(\.processingRecordsByMealType)
 
-        Publishers.CombineLatest(recordsPublisher, pendingPublisher)
+        Publishers.CombineLatest(recordsPublisher, processingPublisher)
             .removeDuplicates { $0.0 == $1.0 && $0.1 == $1.1 }
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] records, pending in
-                self?.updateMealSections(records, pendingRecords: pending)
+            .sink { [weak self] records, processing in
+                self?.updateMealSections(records, processingRecords: processing)
             }
             .store(in: &cancellables)
 
@@ -389,10 +384,8 @@ public final class DetailViewController<
 
     private func updateMealSections(
         _ recordsByMealType: [MealType: FoodRecord],
-        pendingRecords: [PendingFoodRecord]
+        processingRecords: [MealType: FoodRecord]
     ) {
-        let pendingByMealType = Dictionary(grouping: pendingRecords, by: \.mealType)
-
         let sections: [(MealType, MealSectionView)] = [
             (.breakfast, breakfastSection),
             (.lunch, lunchSection),
@@ -407,11 +400,10 @@ public final class DetailViewController<
                 section.configure(state: .recorded(record))
                 section.isHidden = false
                 hasAnyContent = true
-            } else if let pendings = pendingByMealType[mealType], !pendings.isEmpty {
-                section.configure(state: .pending(pendings))
+            } else if let processingRecord = processingRecords[mealType] {
+                section.configure(state: .processing(processingRecord))
                 section.isHidden = false
                 hasAnyContent = true
-                loadPendingThumbnail(for: pendings, into: section)
             } else {
                 section.configure(state: .empty)
                 section.isHidden = false
@@ -424,19 +416,6 @@ public final class DetailViewController<
 
         view.bringSubviewToFront(dateNavigatorView)
         view.bringSubviewToFront(floatingAddButton)
-    }
-
-    private func loadPendingThumbnail(for records: [PendingFoodRecord], into section: MealSectionView) {
-        let scale = UIScreen.main.scale
-        let targetSize = CGSize(width: 600 * scale, height: 600 * scale)
-
-        Task { [weak self, weak section] in
-            guard let self else { return }
-            let image = await loadPendingThumbnailUseCase.execute(from: records, targetSize: targetSize)
-            await MainActor.run {
-                section?.configurePendingImage(image)
-            }
-        }
     }
 
     private func formatRecordForCopy(_ record: FoodRecord) -> String {

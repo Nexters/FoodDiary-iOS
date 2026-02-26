@@ -33,13 +33,13 @@ final class BottomContentView: UIView {
         cardStackTapSubject.eraseToAnyPublisher()
     }
 
-    var pendingTapPublisher: AnyPublisher<Date, Never> {
-        pendingTapSubject.eraseToAnyPublisher()
+    var processingTapPublisher: AnyPublisher<Date, Never> {
+        processingTapSubject.eraseToAnyPublisher()
     }
 
     private let addButtonTapSubject = PassthroughSubject<Void, Never>()
     private let cardStackTapSubject = PassthroughSubject<FoodRecord, Never>()
-    private let pendingTapSubject = PassthroughSubject<Date, Never>()
+    private let processingTapSubject = PassthroughSubject<Date, Never>()
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - UI Components
@@ -66,16 +66,17 @@ final class BottomContentView: UIView {
 
     private var cardStackView: FoodRecordCardStackView?
 
-    // Pending State UI
-    private let pendingStateView: UIView = {
+    // Processing State UI
+    private let processingStateView: UIView = {
         let view = UIView()
         view.isHidden = true
         view.clipsToBounds = false
         return view
     }()
 
-    private var pendingCardView: PendingFoodRecordCardView?
-    private var currentPendingDate: Date?
+    private var processingCardView: PendingFoodRecordCardView?
+    private var currentProcessingDate: Date?
+    private var currentState: State?
 
     // MARK: - Init
 
@@ -98,8 +99,8 @@ final class BottomContentView: UIView {
         // Card Stack State
         containerView.addSubview(cardStackStateView)
 
-        // Pending State
-        containerView.addSubview(pendingStateView)
+        // Processing State
+        containerView.addSubview(processingStateView)
     }
 
     private func setupConstraints() {
@@ -112,8 +113,8 @@ final class BottomContentView: UIView {
             $0.edges.equalToSuperview()
         }
 
-        // Pending State Constraints
-        pendingStateView.snp.makeConstraints {
+        // Processing State Constraints
+        processingStateView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
     }
@@ -121,12 +122,15 @@ final class BottomContentView: UIView {
     // MARK: - Configuration
 
     func configure(state: State) {
+        guard currentState != state else { return }
+        currentState = state
+
         switch state {
         case .empty:
             showEmptyState()
-        case .pending(let records):
+        case .processing(let records):
             if let first = records.first {
-                showPendingState(record: first)
+                showProcessingState(record: first)
             }
         case .recorded(let records):
             if let first = records.first {
@@ -135,41 +139,38 @@ final class BottomContentView: UIView {
         }
     }
 
-    private func showPendingState(record: PendingFoodRecord) {
+    private func showProcessingState(record: FoodRecord) {
         emptyStateView?.removeFromSuperview()
         emptyStateView = nil
         cardStackStateView.isHidden = true
-        pendingStateView.isHidden = false
+        processingStateView.isHidden = false
         showContainerStyle(false)
         cancellables.removeAll()
-        currentPendingDate = record.date
+        currentProcessingDate = record.date
 
-        // 기존 pending 카드 제거
-        pendingCardView?.removeFromSuperview()
+        // 기존 processing 카드 제거
+        processingCardView?.removeFromSuperview()
 
         // 새로 생성
-        let newPendingCardView = PendingFoodRecordCardView(record: record)
-        pendingStateView.addSubview(newPendingCardView)
-        pendingCardView = newPendingCardView
+        let imageURL = record.photos.first?.imageURL
+        let newProcessingCardView = PendingFoodRecordCardView(imageURL: imageURL)
+        processingStateView.addSubview(newProcessingCardView)
+        processingCardView = newProcessingCardView
 
-        newPendingCardView.snp.makeConstraints {
+        newProcessingCardView.snp.makeConstraints {
             $0.center.equalToSuperview()
             $0.horizontalEdges.equalToSuperview().inset(Constants.pendingCardHorizontalInset)
-            $0.height.equalTo(newPendingCardView.snp.width)
+            $0.height.equalTo(newProcessingCardView.snp.width)
         }
 
         // 탭 제스처
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(pendingCardTapped))
-        newPendingCardView.addGestureRecognizer(tapGesture)
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(processingCardTapped))
+        newProcessingCardView.addGestureRecognizer(tapGesture)
     }
 
-    func configurePendingImage(_ image: UIImage?) {
-        pendingCardView?.configure(image: image)
-    }
-
-    @objc private func pendingCardTapped() {
-        guard let date = currentPendingDate else { return }
-        pendingTapSubject.send(date)
+    @objc private func processingCardTapped() {
+        guard let date = currentProcessingDate else { return }
+        processingTapSubject.send(date)
     }
 
     private func showContainerStyle(_ show: Bool) {
@@ -179,7 +180,7 @@ final class BottomContentView: UIView {
 
     private func showEmptyState() {
         cardStackStateView.isHidden = true
-        pendingStateView.isHidden = true
+        processingStateView.isHidden = true
         showContainerStyle(false)
 
         // 기존 empty 뷰 제거
@@ -207,8 +208,8 @@ final class BottomContentView: UIView {
         emptyStateView?.removeFromSuperview()
         emptyStateView = nil
         cardStackStateView.isHidden = false
-        pendingStateView.isHidden = true
-        pendingCardView?.removeFromSuperview()
+        processingStateView.isHidden = true
+        processingCardView?.removeFromSuperview()
         showContainerStyle(false)
 
         // 기존 카드스택뷰 제거
@@ -241,7 +242,7 @@ final class BottomContentView: UIView {
 extension BottomContentView {
     enum State: Equatable {
         case empty
-        case pending([PendingFoodRecord])
+        case processing([FoodRecord])
         case recorded([FoodRecord])
     }
 }

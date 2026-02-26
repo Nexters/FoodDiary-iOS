@@ -104,13 +104,6 @@ extension SceneDelegate {
             return UIImageLoader(imageLoader: imageLoader)
         }
 
-        container.register(PendingThumbnailRepositoryImpl.self) { resolver in
-            guard let imageLoader = resolver.resolve(UIImageLoader.self) else {
-                fatalError("UIImageLoader not registered")
-            }
-            return PendingThumbnailRepositoryImpl(imageLoader: imageLoader)
-        }
-
         container.register(TFLiteFoodClassifier.self) { _ in
             do {
                 return try TFLiteFoodClassifier()
@@ -155,17 +148,6 @@ extension SceneDelegate {
 
         container.register(PhotoAuthorizationFetcher.self) { _ in
             PhotoAuthorizationFetcher()
-        }
-
-        container.register(FileStorageService.self) { _ in
-            FileStorageService()
-        }
-
-        container.register(PendingFoodRecordStorage<FileStorageService>.self) { resolver in
-            guard let fileStorage = resolver.resolve(FileStorageService.self) else {
-                fatalError("FileStorageService not registered")
-            }
-            return PendingFoodRecordStorage(fileStorage: fileStorage)
         }
 
         container.register(PushNotificationObserver.self) { _ in
@@ -264,67 +246,17 @@ extension SceneDelegate {
         }
 
         container.register(
-            LoadPendingRecordsUseCase<PendingFoodRecordStorage<FileStorageService>>.self
-        ) { resolver in
-            guard
-                let repository = resolver.resolve(PendingFoodRecordStorage<FileStorageService>.self)
-            else {
-                fatalError("PendingFoodRecordStorage not registered")
-            }
-            return LoadPendingRecordsUseCase(repository: repository)
-        }
-
-        container.register(
-            LoadPendingThumbnailUseCase<PendingThumbnailRepositoryImpl>.self
-        ) { resolver in
-            guard let repository = resolver.resolve(PendingThumbnailRepositoryImpl.self) else {
-                fatalError("PendingThumbnailRepositoryImpl not registered")
-            }
-            return LoadPendingThumbnailUseCase(repository: repository)
-        }
-
-        container.register(
-            DeletePendingRecordUseCase<PendingFoodRecordStorage<FileStorageService>>.self
-        ) { resolver in
-            guard
-                let pendingRepo = resolver.resolve(
-                    PendingFoodRecordStorage<FileStorageService>.self)
-            else {
-                fatalError("PendingFoodRecordStorage not registered")
-            }
-            return DeletePendingRecordUseCase(repository: pendingRepo)
-        }
-
-        container.register(
-            CleanUpExpiredPendingRecordsUseCase<PendingFoodRecordStorage<FileStorageService>>.self
-        ) { resolver in
-            guard
-                let pendingRepo = resolver.resolve(
-                    PendingFoodRecordStorage<FileStorageService>.self)
-            else {
-                fatalError("PendingFoodRecordStorage not registered")
-            }
-            return CleanUpExpiredPendingRecordsUseCase(repository: pendingRepo)
-        }
-
-        container.register(
             SaveFoodRecordUseCase<
-                FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
-                PendingFoodRecordStorage<FileStorageService>
+                FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
             >.self
         ) { resolver in
             guard
                 let recordRepo = resolver.resolve(
-                    FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>.self),
-                let pendingRepo = resolver.resolve(
-                    PendingFoodRecordStorage<FileStorageService>.self)
+                    FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>.self)
             else {
                 fatalError("SaveFoodRecordUseCase dependencies not registered")
             }
-            return SaveFoodRecordUseCase(
-                repository: recordRepo,
-                pendingRepository: pendingRepo
-            )
+            return SaveFoodRecordUseCase(repository: recordRepo)
         }
 
         container.register(
@@ -504,7 +436,6 @@ extension SceneDelegate {
             FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
             FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>,
             PhotoAuthorizationFetcher,
-            PendingFoodRecordStorage<FileStorageService>,
             PushNotificationObserver
         >
 
@@ -521,18 +452,8 @@ extension SceneDelegate {
                 ),
                 let saveFoodRecordUseCase = resolver.resolve(
                     SaveFoodRecordUseCase<
-                        FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
-                        PendingFoodRecordStorage<FileStorageService>
+                        FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
                     >.self
-                ),
-                let loadPendingUseCase = resolver.resolve(
-                    LoadPendingRecordsUseCase<PendingFoodRecordStorage<FileStorageService>>.self
-                ),
-                let deletePendingUseCase = resolver.resolve(
-                    DeletePendingRecordUseCase<PendingFoodRecordStorage<FileStorageService>>.self
-                ),
-                let cleanUpExpiredPendingUseCase = resolver.resolve(
-                    CleanUpExpiredPendingRecordsUseCase<PendingFoodRecordStorage<FileStorageService>>.self
                 ),
                 let pushObserver = resolver.resolve(PushNotificationObserver.self),
                 let getNicknameUseCase = resolver.resolve(GetNicknameUseCase.self)
@@ -544,9 +465,6 @@ extension SceneDelegate {
                 requestPhotoAuthorizationUseCase: requestPhotoAuthUseCase,
                 loadWeeklyCalendarDataUseCase: loadWeeklyUseCase,
                 saveFoodRecordUseCase: saveFoodRecordUseCase,
-                loadPendingRecordsUseCase: loadPendingUseCase,
-                deletePendingRecordUseCase: deletePendingUseCase,
-                cleanUpExpiredPendingRecordsUseCase: cleanUpExpiredPendingUseCase,
                 pushNotificationObserver: pushObserver,
                 getNicknameUseCase: getNicknameUseCase
             )
@@ -554,7 +472,6 @@ extension SceneDelegate {
 
         typealias DetailVM = DetailViewModel<
             FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
-            PendingFoodRecordStorage<FileStorageService>,
             PushNotificationObserver
         >
 
@@ -572,23 +489,13 @@ extension SceneDelegate {
                     ),
                     let saveFoodRecordUseCase = resolver.resolve(
                         SaveFoodRecordUseCase<
-                            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
-                            PendingFoodRecordStorage<FileStorageService>
+                            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
                         >.self
-                    ),
-                    let loadPendingUseCase = resolver.resolve(
-                        LoadPendingRecordsUseCase<PendingFoodRecordStorage<FileStorageService>>.self
-                    ),
-                    let deletePendingUseCase = resolver.resolve(
-                        DeletePendingRecordUseCase<PendingFoodRecordStorage<FileStorageService>>.self
                     ),
                     let deleteFoodRecordUseCase = resolver.resolve(
                         DeleteFoodRecordUseCase<
                             FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
                         >.self
-                    ),
-                    let cleanUpExpiredPendingUseCase = resolver.resolve(
-                        CleanUpExpiredPendingRecordsUseCase<PendingFoodRecordStorage<FileStorageService>>.self
                     ),
                     let pushObserver = resolver.resolve(PushNotificationObserver.self)
                 else {
@@ -600,10 +507,7 @@ extension SceneDelegate {
                     initialRecords: initialRecords,
                     fetchRecordsUseCase: fetchRecordsUseCase,
                     saveFoodRecordUseCase: saveFoodRecordUseCase,
-                    loadPendingRecordsUseCase: loadPendingUseCase,
-                    deletePendingRecordUseCase: deletePendingUseCase,
                     deleteFoodRecordUseCase: deleteFoodRecordUseCase,
-                    cleanUpExpiredPendingRecordsUseCase: cleanUpExpiredPendingUseCase,
                     pushNotificationObserver: pushObserver
                 )
             }

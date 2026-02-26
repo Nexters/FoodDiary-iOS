@@ -15,7 +15,7 @@ public struct HTTPClient: HTTPClienting {
     public init(
         session: URLSession = .shared,
         decoder: JSONDecoder = .init(),
-        logger: HTTPLogger = HTTPLogger()
+        logger: HTTPLogger = HTTPLogger(logBody: true)
     ) {
         self.session = session
         self.decoder = decoder
