@@ -20,7 +20,7 @@ final class MealSectionView: UIView {
         static let horizontalInset: CGFloat = 20
         static let textHorizontalInset: CGFloat = Self.horizontalInset + 10
         static let pendingCardHorizontalInset: CGFloat = horizontalInset + 6
-        static let emptyImageSize: CGFloat = 140
+        static let emptyImageSize: CGFloat = 160
         static let emptyTextTopSpacing: CGFloat = 25
     }
 
@@ -132,8 +132,11 @@ final class MealSectionView: UIView {
     }
 
     private func configureEditButton() {
-        let attributed = NSMutableAttributedString(attributedString: Typography.p14.styled("수정", color: .white))
-        attributed.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: 0, length: attributed.length))
+        let attributed = NSMutableAttributedString(
+            attributedString: Typography.p14.styled("수정", color: .white))
+        attributed.addAttribute(
+            .underlineStyle, value: NSUnderlineStyle.single.rawValue,
+            range: NSRange(location: 0, length: attributed.length))
         editButton.setAttributedTitle(attributed, for: .normal)
     }
 

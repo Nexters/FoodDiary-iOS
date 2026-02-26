@@ -61,6 +61,6 @@ public extension Date {
 
     /// 일자 2자리 포맷팅 (예: "01", "15")
     func formatDayNumber(calendar: Calendar) -> String {
-        String(format: "%02d", calendar.component(.day, from: self))
+        String(format: "%d", calendar.component(.day, from: self))
     }
 }

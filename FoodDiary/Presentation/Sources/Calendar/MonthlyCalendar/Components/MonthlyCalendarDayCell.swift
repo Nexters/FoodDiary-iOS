@@ -31,7 +31,9 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
     }()
 
     private lazy var stackView: UIStackView = {
-        let view = UIStackView(arrangedSubviews: [dayNumberLabel, dashedBorderView, polaroidImageCardsView])
+        let view = UIStackView(arrangedSubviews: [
+            dayNumberLabel, dashedBorderView, polaroidImageCardsView,
+        ])
         view.backgroundColor = .clear
         view.axis = .vertical
         view.alignment = .center
@@ -87,7 +89,7 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
         containerView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
-        
+
         stackView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(Constants.stackHorizontalInset)
             $0.top.bottom.equalToSuperview().inset(Constants.stackVerticalInset)
@@ -120,7 +122,7 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
             applyTodayStyle()
         }
     }
-    
+
     private func resetCellState() {
         isUserInteractionEnabled = true
         dashedBorderView.backgroundColor = .clear
@@ -159,7 +161,8 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
         if photoURLs.count == 1 {
             polaroidImageCardsView.configure(imageURL: photoURLs[0])
         } else {
-            polaroidImageCardsView.configure(backImageURL: photoURLs[0], frontImageURL: photoURLs[1])
+            polaroidImageCardsView.configure(
+                backImageURL: photoURLs[0], frontImageURL: photoURLs[1])
         }
     }
 
@@ -172,7 +175,8 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
         if isCurrentMonth {
             dayNumberLabel.setText(formattedDayNumber, style: .p12, color: .white)
         } else {
-            dayNumberLabel.setText(formattedDayNumber, style: .p12, color: DesignSystemAsset.gray700.color)
+            dayNumberLabel.setText(
+                formattedDayNumber, style: .p12, color: DesignSystemAsset.gray700.color)
         }
     }
 }
