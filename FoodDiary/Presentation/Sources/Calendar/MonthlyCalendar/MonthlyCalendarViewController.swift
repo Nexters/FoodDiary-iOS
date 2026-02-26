@@ -94,6 +94,11 @@ public final class MonthlyCalendarViewController<
 
         viewModel.input.send(.loadInitialData)
     }
+    
+    public override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        viewModel.input.send(.refreshCurrentMonth)
+    }
 
     public override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
