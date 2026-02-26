@@ -96,6 +96,7 @@ public final class MyPageViewController: UIViewController {
         tv.dataSource = self
         tv.delegate = self
         tv.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
+        tv.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 15, bottom: 0, trailing: 15)
         return tv
     }()
 
@@ -391,6 +392,7 @@ extension MyPageViewController: UITableViewDelegate {
 
         headerView.addSubview(stackView)
         stackView.snp.makeConstraints {
+            $0.leading.equalToSuperview()
             $0.centerY.equalToSuperview()
         }
 
