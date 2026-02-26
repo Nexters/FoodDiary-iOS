@@ -198,8 +198,7 @@ final class MealSectionView: UIView {
             $0.height.equalTo(container.snp.width)
         }
 
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(emptyStateTapped))
-        container.addGestureRecognizer(tapGesture)
+        container.isUserInteractionEnabled = false
     }
 
     private func showProcessingState(record: FoodRecord) {
