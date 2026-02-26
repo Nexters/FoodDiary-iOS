@@ -27,6 +27,7 @@ public final class FoodRecordCardView: UIView {
     // MARK: - State
 
     private let imageURL: URL?
+    private var isConfigured = false
 
     // MARK: - UI Components
 
@@ -67,12 +68,18 @@ public final class FoodRecordCardView: UIView {
         super.init(frame: .zero)
         setupUI()
         setupConstraints()
-        configure()
     }
 
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    public override func didMoveToWindow() {
+        super.didMoveToWindow()
+        guard window != nil, !isConfigured else { return }
+        isConfigured = true
+        configure()
     }
 
     // MARK: - Setup
