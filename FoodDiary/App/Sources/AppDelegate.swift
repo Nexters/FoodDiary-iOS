@@ -171,9 +171,17 @@ extension AppDelegate: MessagingDelegate {
         guard let fcmToken else { return }
         print("[FCM] 토큰 수신: \(fcmToken)")
 
-        // TODO: 서버 API로 fcmToken 전송
-        // TODO: self.container로 사용해야 함.
         try? DIContainer.shared.resolve(PushTokenStoring.self).set(fcmToken)
+
+        guard let useCase = try? DIContainer.shared.resolve(UpdateDeviceNotificationSettingUseCase.self) else {
+            print("[FCM] 로그인 전 토큰 수신 - 서버 업데이트 스킵")
+            return
+        }
+
+        Task {
+            try? await useCase.execute()
+            print("[FCM] 서버 디바이스 토큰 업데이트 완료")
+        }
     }
 }
 
