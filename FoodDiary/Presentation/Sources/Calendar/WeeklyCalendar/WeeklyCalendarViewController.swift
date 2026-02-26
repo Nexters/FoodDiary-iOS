@@ -18,19 +18,16 @@ public final class WeeklyCalendarViewController<
     AssetRepo: FoodImageAssetRepository,
     AuthRepo: PhotoAuthorizationRepository,
     ImageProvider: RenderableImageRepository,
-    PendingRepo: PendingFoodRecordRepository,
-    PushObserver: PushNotificationObserving,
-    ThumbnailRepo: PendingThumbnailRepository
+    PushObserver: PushNotificationObserving
 >: UIViewController where ImageProvider.Asset == AssetRepo.Asset {
 
     // MARK: - Dependencies
 
     private let viewModel:
         WeeklyCalendarViewModel<
-            RecordRepo, AssetRepo, AuthRepo, PendingRepo, PushObserver
+            RecordRepo, AssetRepo, AuthRepo, PushObserver
         >
     private let imageProvider: ImageProvider
-    private let loadPendingThumbnailUseCase: LoadPendingThumbnailUseCase<ThumbnailRepo>
     private let detailViewControllerFactory: (Date, [FoodRecord], ((Date) -> Void)?) -> UIViewController
 
     // MARK: - UI Components
@@ -71,15 +68,13 @@ public final class WeeklyCalendarViewController<
 
     public init(
         viewModel: WeeklyCalendarViewModel<
-            RecordRepo, AssetRepo, AuthRepo, PendingRepo, PushObserver
+            RecordRepo, AssetRepo, AuthRepo, PushObserver
         >,
         imageProvider: ImageProvider,
-        loadPendingThumbnailUseCase: LoadPendingThumbnailUseCase<ThumbnailRepo>,
         detailViewControllerFactory: @escaping (Date, [FoodRecord], ((Date) -> Void)?) -> UIViewController
     ) {
         self.viewModel = viewModel
         self.imageProvider = imageProvider
-        self.loadPendingThumbnailUseCase = loadPendingThumbnailUseCase
         self.detailViewControllerFactory = detailViewControllerFactory
         super.init(nibName: nil, bundle: nil)
     }
@@ -206,17 +201,13 @@ public final class WeeklyCalendarViewController<
                 let state: BottomContentView.State =
                     if !content.records.isEmpty {
                         .recorded(content.records)
-                    } else if !content.pendingRecords.isEmpty {
-                        .pending(content.pendingRecords)
+                    } else if !content.processingRecords.isEmpty {
+                        .processing(content.processingRecords)
                     } else {
                         .empty
                     }
 
                 bottomContentView.configure(state: state)
-
-                if case .pending(let records) = state {
-                    self.loadPendingThumbnail(for: records)
-                }
             }
             .store(in: &cancellables)
 
@@ -227,8 +218,8 @@ public final class WeeklyCalendarViewController<
             }
             .store(in: &cancellables)
 
-        // 펜딩 카드 탭 → 상세 화면으로 이동
-        bottomContentView.pendingTapPublisher
+        // 프로세싱 카드 탭 → 상세 화면으로 이동
+        bottomContentView.processingTapPublisher
             .sink { [weak self] date in
                 self?.navigateToDetail(for: date)
             }
@@ -247,8 +238,6 @@ public final class WeeklyCalendarViewController<
                     self?.showSaveErrorAlert(error)
                 case .loadFailed(let error):
                     self?.showLoadErrorAlert(error)
-                case .analysisFailed(_, let reason):
-                    self?.showAnalysisFailedAlert(reason: reason)
                 }
             }
             .store(in: &cancellables)
@@ -361,29 +350,6 @@ public final class WeeklyCalendarViewController<
         )
         alert.addAction(UIAlertAction(title: "확인", style: .default))
         present(alert, animated: true)
-    }
-
-    private func showAnalysisFailedAlert(reason: String) {
-        let alert = UIAlertController(
-            title: "분석 실패",
-            message: reason,
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
-        present(alert, animated: true)
-    }
-
-    private func loadPendingThumbnail(for records: [PendingFoodRecord]) {
-        let scale = UIScreen.main.scale
-        let targetSize = CGSize(width: 600 * scale, height: 600 * scale)
-
-        Task { [weak self] in
-            guard let self else { return }
-            let image = await loadPendingThumbnailUseCase.execute(from: records, targetSize: targetSize)
-            await MainActor.run {
-                self.bottomContentView.configurePendingImage(image)
-            }
-        }
     }
 
     private func navigateToDetail(for date: Date) {

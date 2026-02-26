@@ -117,6 +117,8 @@ extension DiaryResponseDTO {
         let mealType = MealType.from(serverValue: timeType)
         let genre = category.flatMap { FoodGenre(rawValue: $0) } ?? .etc
 
+        let status = AnalysisStatus(rawValue: analysisStatus) ?? .completed
+
         return FoodRecord(
             id: String(id),
             date: date,
@@ -127,7 +129,8 @@ extension DiaryResponseDTO {
             restaurantUrl: restaurantUrl,
             address: roadAddress,
             hashtags: tags ?? [],
-            createdAt: createdDate
+            createdAt: createdDate,
+            analysisStatus: status
         )
     }
 }

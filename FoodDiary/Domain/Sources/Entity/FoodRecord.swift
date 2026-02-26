@@ -16,6 +16,12 @@ public struct PhotoInfo: Equatable, Sendable {
     }
 }
 
+/// 서버 분석 상태
+public enum AnalysisStatus: String, Equatable, Sendable {
+    case completed = "completed"
+    case processing = "processing"
+}
+
 /// 서버에서 받아온 음식 기록 정보
 public struct FoodRecord: Identifiable, Equatable, Sendable {
     public let id: String
@@ -28,10 +34,15 @@ public struct FoodRecord: Identifiable, Equatable, Sendable {
     public let address: String?
     public let hashtags: [String]
     public let createdAt: Date
+    public let analysisStatus: AnalysisStatus
 
     /// 하위 호환용 computed property
     public var imageURLs: [URL] {
         photos.map(\.imageURL)
+    }
+
+    public var isProcessing: Bool {
+        analysisStatus == .processing
     }
 
     public init(
@@ -44,7 +55,8 @@ public struct FoodRecord: Identifiable, Equatable, Sendable {
         restaurantUrl: String? = nil,
         address: String? = nil,
         hashtags: [String] = [],
-        createdAt: Date
+        createdAt: Date,
+        analysisStatus: AnalysisStatus = .completed
     ) {
         self.id = id
         self.date = date
@@ -56,6 +68,7 @@ public struct FoodRecord: Identifiable, Equatable, Sendable {
         self.address = address
         self.hashtags = hashtags
         self.createdAt = createdAt
+        self.analysisStatus = analysisStatus
     }
 
     /// 포맷된 시간 (예: "오후 1시 12분")

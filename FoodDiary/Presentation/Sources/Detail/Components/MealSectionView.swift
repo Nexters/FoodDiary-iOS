@@ -137,7 +137,7 @@ final class MealSectionView: UIView {
 
     // MARK: - Public Methods
 
-    func configure(state: State, pendingImage: UIImage? = nil) {
+    func configure(state: State) {
         guard currentState != state else { return }
         currentState = state
 
@@ -147,16 +147,11 @@ final class MealSectionView: UIView {
         switch state {
         case .empty:
             showEmptyState()
-        case .pending(let records):
-            showPendingState(records: records, image: pendingImage)
+        case .processing(let record):
+            showProcessingState(record: record)
         case .recorded(let record):
             showRecordedState(record: record)
         }
-    }
-
-    func configurePendingImage(_ image: UIImage?) {
-        guard let pendingView = contentContainerView.subviews.compactMap({ $0 as? PendingFoodRecordCardView }).first else { return }
-        pendingView.configure(image: image)
     }
 
     // MARK: - State Rendering
@@ -184,12 +179,11 @@ final class MealSectionView: UIView {
         }
     }
 
-    private func showPendingState(records: [PendingFoodRecord], image: UIImage?) {
+    private func showProcessingState(record: FoodRecord) {
         editButton.isHidden = true
 
-        guard let firstRecord = records.first else { return }
-        let pendingView = PendingFoodRecordCardView(record: firstRecord)
-        pendingView.configure(image: image)
+        let imageURL = record.photos.first?.imageURL
+        let pendingView = PendingFoodRecordCardView(imageURL: imageURL)
         contentContainerView.addSubview(pendingView)
         pendingView.snp.makeConstraints {
             $0.top.bottom.equalToSuperview()
@@ -210,7 +204,7 @@ final class MealSectionView: UIView {
                 self?.shareTapSubject.send(record)
             }
         )
-        
+
         contentContainerView.addSubview(recordedView)
         recordedView.snp.makeConstraints {
             $0.top.equalToSuperview()
@@ -232,7 +226,7 @@ final class MealSectionView: UIView {
 extension MealSectionView {
     enum State: Equatable {
         case empty
-        case pending([PendingFoodRecord])
+        case processing(FoodRecord)
         case recorded(FoodRecord)
     }
 }

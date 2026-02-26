@@ -4,7 +4,7 @@
 //
 
 import DesignSystem
-import Domain
+import Kingfisher
 import SnapKit
 import UIKit
 
@@ -68,7 +68,7 @@ public final class PendingFoodRecordCardView: UIView {
 
     // MARK: - Init
 
-    public init(record: PendingFoodRecord) {
+    public init(imageURL: URL? = nil) {
         super.init(frame: .zero)
         setupUI()
         setupConstraints()
@@ -77,6 +77,10 @@ public final class PendingFoodRecordCardView: UIView {
             style: .p14,
             color: .gray050
         )
+
+        if let imageURL {
+            loadRemoteImage(url: imageURL)
+        }
     }
 
     @available(*, unavailable)
@@ -125,16 +129,17 @@ public final class PendingFoodRecordCardView: UIView {
         }
     }
 
-    // MARK: - Public Methods
+    // MARK: - Private Methods
 
-    public func configure(image: UIImage?) {
-        guard let image else {
-            backgroundImageView.image = nil
-            return
-        }
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let blurred = Self.applyGaussianBlur(to: image, radius: 30)
-            DispatchQueue.main.async { self?.backgroundImageView.image = blurred }
+    private func loadRemoteImage(url: URL) {
+        backgroundImageView.kf.setImage(with: url) { [weak self] result in
+            guard let self, case .success(let value) = result else { return }
+            DispatchQueue.global(qos: .userInitiated).async {
+                let blurred = Self.applyGaussianBlur(to: value.image, radius: 30)
+                DispatchQueue.main.async {
+                    self.backgroundImageView.image = blurred
+                }
+            }
         }
     }
 
@@ -145,7 +150,6 @@ public final class PendingFoodRecordCardView: UIView {
         filter.setValue(ciImage, forKey: kCIInputImageKey)
         filter.setValue(radius, forKey: kCIInputRadiusKey)
         guard let output = filter.outputImage else { return image }
-        // 블러 적용 시 이미지 경계가 확장되므로 원본 크기로 크롭
         let cropped = output.cropped(to: ciImage.extent)
         let context = CIContext()
         guard let cgImage = context.createCGImage(cropped, from: cropped.extent) else {

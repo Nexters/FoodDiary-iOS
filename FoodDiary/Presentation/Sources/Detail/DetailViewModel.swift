@@ -9,7 +9,6 @@ import Foundation
 
 public final class DetailViewModel<
     RecordRepo: FoodRecordRepository,
-    PendingRepo: PendingFoodRecordRepository,
     PushObserver: PushNotificationObserving
 > {
 
@@ -43,11 +42,8 @@ public final class DetailViewModel<
     // MARK: - Dependencies
 
     private let fetchRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
-    private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, PendingRepo>
-    private let loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>
-    private let deletePendingRecordUseCase: DeletePendingRecordUseCase<PendingRepo>
+    private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>
     private let deleteFoodRecordUseCase: DeleteFoodRecordUseCase<RecordRepo>
-    private let cleanUpExpiredPendingRecordsUseCase: CleanUpExpiredPendingRecordsUseCase<PendingRepo>
     private let pushNotificationObserver: PushObserver
 
     // MARK: - Init
@@ -56,25 +52,22 @@ public final class DetailViewModel<
         initialDate: Date,
         initialRecords: [FoodRecord],
         fetchRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>,
-        saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo, PendingRepo>,
-        loadPendingRecordsUseCase: LoadPendingRecordsUseCase<PendingRepo>,
-        deletePendingRecordUseCase: DeletePendingRecordUseCase<PendingRepo>,
+        saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>,
         deleteFoodRecordUseCase: DeleteFoodRecordUseCase<RecordRepo>,
-        cleanUpExpiredPendingRecordsUseCase: CleanUpExpiredPendingRecordsUseCase<PendingRepo>,
         pushNotificationObserver: PushObserver
     ) {
         self.fetchRecordsUseCase = fetchRecordsUseCase
         self.saveFoodRecordUseCase = saveFoodRecordUseCase
-        self.loadPendingRecordsUseCase = loadPendingRecordsUseCase
-        self.deletePendingRecordUseCase = deletePendingRecordUseCase
         self.deleteFoodRecordUseCase = deleteFoodRecordUseCase
-        self.cleanUpExpiredPendingRecordsUseCase = cleanUpExpiredPendingRecordsUseCase
         self.pushNotificationObserver = pushNotificationObserver
         self.calendar = Calendar.current
 
         let startOfDay = calendar.startOfDay(for: initialDate)
         self.stateSubject = CurrentValueSubject(State(currentDate: startOfDay))
-        stateSubject.value.recordsByMealType = groupRecordsByMealType(initialRecords)
+
+        let (completed, processing) = Self.partitionRecords(initialRecords)
+        stateSubject.value.recordsByMealType = Self.groupRecordsByMealType(completed)
+        stateSubject.value.processingRecordsByMealType = Self.groupRecordsByMealType(processing)
 
         updateDateText()
         updateNextDayAvailability()
@@ -152,18 +145,12 @@ public final class DetailViewModel<
         state.isLoading = true
 
         do {
-            let records = try await fetchRecordsUseCase.execute(for: date)
+            let allRecords = try await fetchRecordsUseCase.execute(for: date)
             guard !Task.isCancelled else { return }
 
-            state.recordsByMealType = groupRecordsByMealType(records)
-
-            let pendingRecords = try await loadPendingRecords(for: date)
-            guard !Task.isCancelled else { return }
-
-            state.pendingRecords = try await cleanUpExpiredPendingRecordsUseCase.execute(
-                serverRecords: records,
-                pendingRecords: pendingRecords
-            )
+            let (completed, processing) = Self.partitionRecords(allRecords)
+            state.recordsByMealType = Self.groupRecordsByMealType(completed)
+            state.processingRecordsByMealType = Self.groupRecordsByMealType(processing)
 
             updateDateText()
         } catch {
@@ -175,8 +162,21 @@ public final class DetailViewModel<
         state.isLoading = false
     }
 
-    private func groupRecordsByMealType(_ records: [FoodRecord]) -> [MealType: FoodRecord] {
+    private static func groupRecordsByMealType(_ records: [FoodRecord]) -> [MealType: FoodRecord] {
         Dictionary(uniqueKeysWithValues: records.map { ($0.mealType, $0) })
+    }
+
+    private static func partitionRecords(_ records: [FoodRecord]) -> (completed: [FoodRecord], processing: [FoodRecord]) {
+        var completed: [FoodRecord] = []
+        var processing: [FoodRecord] = []
+        for record in records {
+            if record.isProcessing {
+                processing.append(record)
+            } else {
+                completed.append(record)
+            }
+        }
+        return (completed, processing)
     }
 
     private let dateFormatter: DateFormatter = {
@@ -200,38 +200,32 @@ public final class DetailViewModel<
         guard !assets.isEmpty else { return }
 
         do {
-            let pendingRecords = try await saveFoodRecordUseCase.execute(
+            try await saveFoodRecordUseCase.execute(
                 from: assets,
                 date: state.currentDate
             )
-            state.pendingRecords.append(contentsOf: pendingRecords)
             eventSubject.send(.uploadCompleted)
+            await loadRecords(for: state.currentDate)
         } catch {
             eventSubject.send(.saveFailed(error))
         }
     }
 
-    // MARK: - Pending Records
+    // MARK: - Push Notification
 
     @MainActor
     private func handlePushNotification(_ notification: AnalysisResultNotification) async {
-        do {
-            try await deletePendingRecordUseCase.execute(byDate: notification.diaryDate)
+        let notificationDate = calendar.startOfDay(for: notification.diaryDate)
+        let currentDate = calendar.startOfDay(for: state.currentDate)
 
-            let notificationDate = calendar.startOfDay(for: notification.diaryDate)
-            let currentDate = calendar.startOfDay(for: state.currentDate)
-
-            if notificationDate == currentDate {
-                await loadRecords(for: state.currentDate)
-            }
-        } catch {
-            // Push 처리 실패는 무시
+        if notificationDate == currentDate {
+            await loadRecords(for: state.currentDate)
         }
     }
 
     @MainActor
     private func performDeleteAllRecords() async {
-        guard !state.recordsByMealType.isEmpty || !state.pendingRecords.isEmpty else { return }
+        guard !state.recordsByMealType.isEmpty || !state.processingRecordsByMealType.isEmpty else { return }
 
         state.isLoading = true
         defer { state.isLoading = false }
@@ -241,20 +235,16 @@ public final class DetailViewModel<
                 try await deleteFoodRecordUseCase.execute(id: record.id)
             }
 
-            try await deletePendingRecordUseCase.execute(byDate: state.currentDate)
+            for (_, record) in state.processingRecordsByMealType {
+                try await deleteFoodRecordUseCase.execute(id: record.id)
+            }
 
             state.recordsByMealType = [:]
-            state.pendingRecords = []
+            state.processingRecordsByMealType = [:]
             eventSubject.send(.deleteAllCompleted)
         } catch {
             eventSubject.send(.deleteAllFailed(error))
         }
-    }
-
-    private func loadPendingRecords(for date: Date) async throws -> [PendingFoodRecord] {
-        let allRecords = try await loadPendingRecordsUseCase.execute()
-        let dateKey = calendar.startOfDay(for: date)
-        return allRecords.filter { calendar.startOfDay(for: $0.date) == dateKey }
     }
 }
 
@@ -264,7 +254,7 @@ extension DetailViewModel {
     public struct State: Equatable {
         public var currentDate: Date
         public var recordsByMealType: [MealType: FoodRecord] = [:]
-        public var pendingRecords: [PendingFoodRecord] = []
+        public var processingRecordsByMealType: [MealType: FoodRecord] = [:]
         public var dateText: String = ""
         public var isLoading: Bool = false
         public var isNextDayAvailable: Bool = true
@@ -272,7 +262,7 @@ extension DetailViewModel {
         public static func == (lhs: Self, rhs: Self) -> Bool {
             Calendar.current.isDate(lhs.currentDate, inSameDayAs: rhs.currentDate)
                 && lhs.recordsByMealType == rhs.recordsByMealType
-                && lhs.pendingRecords == rhs.pendingRecords
+                && lhs.processingRecordsByMealType == rhs.processingRecordsByMealType
                 && lhs.dateText == rhs.dateText
                 && lhs.isLoading == rhs.isLoading
                 && lhs.isNextDayAvailable == rhs.isNextDayAvailable
