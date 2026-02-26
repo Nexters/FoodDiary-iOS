@@ -389,7 +389,8 @@ public final class EditFoodRecordViewController<
         for chip in categoryChips {
             chip.setSelected(chip.genre == selectedGenre)
             if chip.genre == selectedGenre {
-                let frameInScrollView = chip.convert(chip.bounds, to: categoryScrollView)
+                var frameInScrollView = chip.convert(chip.bounds, to: categoryScrollView)
+                frameInScrollView.size.width += EditFoodRecordConstants.horizontalInset
                 categoryScrollView.scrollRectToVisible(frameInScrollView, animated: animated)
             }
         }
