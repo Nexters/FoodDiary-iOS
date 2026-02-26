@@ -18,6 +18,7 @@ final class AppFlowController: UIViewController {
     private typealias AssetFetcher = FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>
     private typealias FetchUseCase = FetchFoodImageAssetUseCase<AssetFetcher>
     private typealias AuthUseCase = RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>
+    private typealias PendingThumbnailUseCase = LoadPendingThumbnailUseCase<PendingThumbnailRepositoryImpl>
 
     private var currentChild: UIViewController?
     private var networkCancellable: AnyCancellable?
@@ -191,8 +192,11 @@ extension AppFlowController {
     }
 
     fileprivate func makeWeeklyCalendarVC() -> UIViewController {
-        guard let imageProvider = try? container.resolve(UIImageLoader.self) else {
-            fatalError("UIImageLoader not registered")
+        guard
+            let imageProvider = try? container.resolve(UIImageLoader.self),
+            let pendingThumbnailUseCase = try? container.resolve(PendingThumbnailUseCase.self)
+        else {
+            fatalError("WeeklyCalendarViewController dependencies not registered")
         }
 
         typealias WeeklyVM = WeeklyCalendarViewModel<
@@ -210,6 +214,7 @@ extension AppFlowController {
         return WeeklyCalendarViewController(
             viewModel: weeklyViewModel,
             imageProvider: imageProvider,
+            loadPendingThumbnailUseCase: pendingThumbnailUseCase,
             detailViewControllerFactory: { [weak self] date, records, onDismiss in
                 self?.makeDetailViewController(
                     date: date,
@@ -442,13 +447,16 @@ extension AppFlowController {
         records: [FoodRecord],
         onDismissWithDate: ((Date) -> Void)? = nil
     ) -> UIViewController {
-        guard let detailVM = try? container.resolve(DetailVM.self, argument: (date, records))
+        guard
+            let detailVM = try? container.resolve(DetailVM.self, argument: (date, records)),
+            let pendingThumbnailUseCase = try? container.resolve(PendingThumbnailUseCase.self)
         else {
-            fatalError("DetailViewModel not registered")
+            fatalError("DetailViewController dependencies not registered")
         }
 
         return DetailViewController(
             viewModel: detailVM,
+            loadPendingThumbnailUseCase: pendingThumbnailUseCase,
             onDismissWithDate: onDismissWithDate,
             editViewControllerFactory: { [weak self] record in
                 self?.makeEditViewController(for: record) ?? UIViewController()

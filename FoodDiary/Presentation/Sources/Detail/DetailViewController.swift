@@ -7,14 +7,14 @@ import Combine
 import DesignSystem
 import Domain
 import Kingfisher
-import Photos
 import SnapKit
 import UIKit
 
 public final class DetailViewController<
     RecordRepo: FoodRecordRepository,
     PendingRepo: PendingFoodRecordRepository,
-    PushObserver: PushNotificationObserving
+    PushObserver: PushNotificationObserving,
+    ThumbnailRepo: PendingThumbnailRepository
 >: UIViewController {
 
     // MARK: - Constants
@@ -32,6 +32,7 @@ public final class DetailViewController<
     // MARK: - Dependencies
 
     private let viewModel: DetailViewModel<RecordRepo, PendingRepo, PushObserver>
+    private let loadPendingThumbnailUseCase: LoadPendingThumbnailUseCase<ThumbnailRepo>
     private let onDismissWithDate: ((Date) -> Void)?
     private let editViewControllerFactory: ((FoodRecord) -> UIViewController)?
     private let presentImagePickerHandler:
@@ -120,6 +121,7 @@ public final class DetailViewController<
 
     public init(
         viewModel: DetailViewModel<RecordRepo, PendingRepo, PushObserver>,
+        loadPendingThumbnailUseCase: LoadPendingThumbnailUseCase<ThumbnailRepo>,
         onDismissWithDate: ((Date) -> Void)? = nil,
         editViewControllerFactory: ((FoodRecord) -> UIViewController)? = nil,
         presentImagePickerHandler: (
@@ -127,6 +129,7 @@ public final class DetailViewController<
         )? = nil
     ) {
         self.viewModel = viewModel
+        self.loadPendingThumbnailUseCase = loadPendingThumbnailUseCase
         self.onDismissWithDate = onDismissWithDate
         self.editViewControllerFactory = editViewControllerFactory
         self.presentImagePickerHandler = presentImagePickerHandler
@@ -424,26 +427,14 @@ public final class DetailViewController<
     }
 
     private func loadPendingThumbnail(for records: [PendingFoodRecord], into section: MealSectionView) {
-        guard let assetIdentifier = records.first?.assetIdentifier else { return }
-
-        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [assetIdentifier], options: nil)
-        guard let asset = fetchResult.firstObject else { return }
-
         let scale = UIScreen.main.scale
-        let size = CGSize(width: 600 * scale, height: 600 * scale)
-        let options = PHImageRequestOptions()
-        options.deliveryMode = .highQualityFormat
-        options.resizeMode = .exact
-        options.isNetworkAccessAllowed = true
+        let targetSize = CGSize(width: 600 * scale, height: 600 * scale)
 
-        PHImageManager.default().requestImage(
-            for: asset,
-            targetSize: size,
-            contentMode: .aspectFill,
-            options: options
-        ) { image, _ in
-            DispatchQueue.main.async {
-                section.configurePendingImage(image)
+        Task { [weak self, weak section] in
+            guard let self else { return }
+            let image = await loadPendingThumbnailUseCase.execute(from: records, targetSize: targetSize)
+            await MainActor.run {
+                section?.configurePendingImage(image)
             }
         }
     }
