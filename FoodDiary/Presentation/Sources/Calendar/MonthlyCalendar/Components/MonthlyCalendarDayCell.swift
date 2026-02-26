@@ -168,7 +168,7 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
         isCurrentMonth: Bool,
         isToday: Bool,
     ) {
-        let formattedDayNumber = String(format: "%02d", dayNumber)
+        let formattedDayNumber = String(format: "%d", dayNumber)
         if isCurrentMonth {
             dayNumberLabel.setText(formattedDayNumber, style: .p12, color: .white)
         } else {
