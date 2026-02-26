@@ -6,12 +6,12 @@
       "scale" : "1x"
     },
     {
-      "filename" : "onboard-1 1.png",
+      "filename" : "onboard-1@2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "onboard-1 2.png",
+      "filename" : "onboard-1@3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }
