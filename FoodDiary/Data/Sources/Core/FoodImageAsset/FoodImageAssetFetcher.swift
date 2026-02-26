@@ -36,8 +36,6 @@ public struct FoodImageAssetFetcher<
         self.imageRepository = imageRepository
         self.cache = cache
         self.imageTargetSize = imageTargetSize
-
-        logger.logLevel = .critical
     }
 
     public func fetchFoodImageAssets(
