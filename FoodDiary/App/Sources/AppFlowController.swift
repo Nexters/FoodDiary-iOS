@@ -476,26 +476,9 @@ extension AppFlowController {
                     viewModel: addressVM, onAddressSelected: onSelect)
             }
 
-        let presentImagePickerHandler:
-            (UINavigationController, Date, @escaping ([any ImageAssetable], [UIImage]) -> Void)
-                -> Void = { [weak self] nav, date, onSelected in
-                    guard let self else { return }
-                    self.presentImagePicker(
-                        from: nav,
-                        date: date,
-                        configuration: ImagePickerConfiguration.default,
-                        autoPreselectByProbability: false,
-                        loadPreviewImages: true,
-                        onSelected: { assets, previewImages in
-                            onSelected(assets, previewImages)
-                        }
-                    )
-                }
-
         return EditFoodRecordViewController(
             viewModel: editVM,
-            addressSearchViewControllerFactory: addressSearchVCFactory,
-            presentImagePickerHandler: presentImagePickerHandler
+            addressSearchViewControllerFactory: addressSearchVCFactory
         )
     }
 }
