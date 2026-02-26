@@ -182,6 +182,15 @@ extension EditFoodRecordViewModel {
             photos.map(\.imageURL)
         }
 
+        public var hasChanges: Bool {
+            photos != originalRecord.photos
+                || !newAssets.isEmpty
+                || selectedGenre != originalRecord.genre
+                || address != originalRecord.address
+                || detailAddress != (originalRecord.restaurantName ?? "")
+                || hashtags != originalRecord.hashtags
+        }
+
         public static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.originalRecord == rhs.originalRecord
                 && lhs.photos == rhs.photos
