@@ -10,6 +10,10 @@ import Photos
 import SnapKit
 import UIKit
 
+private enum Constants {
+    static let horizontalInset: CGFloat = 20
+}
+
 public final class WeeklyCalendarViewController<
     RecordRepo: FoodRecordRepository,
     AssetRepo: FoodImageAssetRepository,
@@ -102,17 +106,17 @@ public final class WeeklyCalendarViewController<
     private func setupConstraints() {
         recordPromptHeaderView.snp.makeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide).offset(28)
-            $0.leading.trailing.equalToSuperview().inset(20)
+            $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
         }
 
         headerView.snp.makeConstraints {
             $0.top.equalTo(recordPromptHeaderView.snp.bottom).offset(32)
-            $0.leading.trailing.equalToSuperview().inset(20)
+            $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
         }
 
         containerStackView.snp.makeConstraints {
             $0.top.equalTo(headerView.snp.bottom).offset(14)
-            $0.leading.trailing.equalToSuperview().inset(20)
+            $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
             $0.bottom.equalTo(view.safeAreaLayoutGuide).offset(-34)
         }
     }

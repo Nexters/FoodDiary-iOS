@@ -19,7 +19,7 @@ final class BottomContentView: UIView {
         static let containerHorizontalInset: CGFloat = 0
         static let containerBackgroundAlpha: CGFloat = 0.05
         static let cardHorizontalInset: CGFloat = 30
-        static let pendingCardHorizontalInset: CGFloat = 60
+        static let pendingCardHorizontalInset: CGFloat = 15
         static let cardAspectRatio: CGFloat = 1.0
     }
 
@@ -140,7 +140,7 @@ final class BottomContentView: UIView {
         emptyStateView = nil
         cardStackStateView.isHidden = true
         pendingStateView.isHidden = false
-        showContainerStyle(true)
+        showContainerStyle(false)
         cancellables.removeAll()
         currentPendingDate = record.date
 
@@ -153,7 +153,9 @@ final class BottomContentView: UIView {
         pendingCardView = newPendingCardView
 
         newPendingCardView.snp.makeConstraints {
-            $0.edges.equalToSuperview()
+            $0.center.equalToSuperview()
+            $0.horizontalEdges.equalToSuperview().inset(Constants.pendingCardHorizontalInset)
+            $0.height.equalTo(newPendingCardView.snp.width)
         }
 
         // 탭 제스처
