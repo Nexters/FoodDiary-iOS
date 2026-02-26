@@ -118,7 +118,7 @@ extension AppFlowController {
         guard
             let validateAccessTokenUseCase = try? container.resolve(
                 ValidateAccessTokenUseCase<
-                    TokenRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
+                    TokenRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>, InitialLaunchStorage>
                 >.self
             )
         else {
