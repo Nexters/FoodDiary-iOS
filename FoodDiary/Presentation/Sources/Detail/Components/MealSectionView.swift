@@ -166,11 +166,14 @@ final class MealSectionView: UIView {
         imageView.contentMode = .scaleAspectFit
 
         let label = UILabel()
-        label.setText("오늘의 음식 사진을 촬영해보세요", style: .p14, color: .gray100)
+        label.setText("오늘의 음식 사진을 촬영해보세요", style: .p12, color: .gray100)
         label.textAlignment = .center
 
         let container = DashedBorderView()
         container.cornerRadius = 16
+        container.backgroundColor = .sd900
+        container.layer.cornerRadius = 16
+        container.clipsToBounds = true
         container.addSubview(imageView)
         container.addSubview(label)
 
