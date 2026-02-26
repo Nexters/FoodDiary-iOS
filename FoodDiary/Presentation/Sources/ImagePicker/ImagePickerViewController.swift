@@ -362,8 +362,19 @@ public final class ImagePickerViewController<
         case .deselectAll:
             selectedPhotoIds.removeAll()
         }
-        collectionView.reloadData()
+        updateVisibleCellsSelection()
         updateUI()
+    }
+
+    private func updateVisibleCellsSelection() {
+        for cell in collectionView.visibleCells {
+            guard let imageCell = cell as? ImagePickerCell,
+                let indexPath = collectionView.indexPath(for: cell),
+                let section = PhotoSection(rawValue: indexPath.section)
+            else { continue }
+            let photo = photosInSection(section)[indexPath.item]
+            imageCell.setSelected(selectedPhotoIds.contains(photo.id))
+        }
     }
 
     @objc private func confirmButtonTapped() {
