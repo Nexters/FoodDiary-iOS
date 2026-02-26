@@ -30,12 +30,6 @@ public final class EditFoodRecordViewController<
 
     private let viewModel: EditFoodRecordViewModel<RecordRepo>
     private let addressSearchViewControllerFactory: ((Int, @escaping (AddressSearchResult) -> Void) -> UIViewController)?
-    private let presentImagePickerHandler: (
-        (_ navigationController: UINavigationController,
-         _ date: Date,
-         _ onSelected: @escaping ([any ImageAssetable], [UIImage]) -> Void
-        ) -> Void)?
-
     // MARK: - UI Components
 
     private let scrollView: UIScrollView = {
@@ -116,12 +110,10 @@ public final class EditFoodRecordViewController<
 
     public init(
         viewModel: EditFoodRecordViewModel<RecordRepo>,
-        addressSearchViewControllerFactory: ((Int, @escaping (AddressSearchResult) -> Void) -> UIViewController)? = nil,
-        presentImagePickerHandler: ((UINavigationController, Date, @escaping ([any ImageAssetable], [UIImage]) -> Void) -> Void)? = nil
+        addressSearchViewControllerFactory: ((Int, @escaping (AddressSearchResult) -> Void) -> UIViewController)? = nil
     ) {
         self.viewModel = viewModel
         self.addressSearchViewControllerFactory = addressSearchViewControllerFactory
-        self.presentImagePickerHandler = presentImagePickerHandler
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -336,12 +328,6 @@ public final class EditFoodRecordViewController<
 
         // Input: View → ViewModel
 
-        imageSectionView.addImageTapPublisher
-            .sink { [weak self] in
-                self?.presentImagePicker()
-            }
-            .store(in: &cancellables)
-
         imageSectionView.removeExistingImagePublisher
             .sink { [weak self] index in
                 self?.viewModel.input.send(.removeExistingImage(at: index))
@@ -422,13 +408,6 @@ public final class EditFoodRecordViewController<
             self?.viewModel.input.send(.selectAddress(result))
         }) else { return }
         present(addressSearchVC, animated: true)
-    }
-
-    private func presentImagePicker() {
-        guard let nav = navigationController else { return }
-        presentImagePickerHandler?(nav, viewModel.state.originalRecord.date) { [weak self] assets, previewImages in
-            self?.viewModel.input.send(.addImages(assets: assets, previewImages: previewImages))
-        }
     }
 
     private func presentAddTagAlert() {

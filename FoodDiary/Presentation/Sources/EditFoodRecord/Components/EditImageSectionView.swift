@@ -20,16 +20,11 @@ final class EditImageSectionView: UIView {
     }
 
     private enum ImageItem {
-        case addButton
         case existingImage(index: Int, url: URL)
         case newImage(index: Int, image: UIImage)
     }
 
     // MARK: - Publishers
-
-    var addImageTapPublisher: AnyPublisher<Void, Never> {
-        addImageTapSubject.eraseToAnyPublisher()
-    }
 
     var removeExistingImagePublisher: AnyPublisher<Int, Never> {
         removeExistingImageSubject.eraseToAnyPublisher()
@@ -39,7 +34,6 @@ final class EditImageSectionView: UIView {
         removeNewImageSubject.eraseToAnyPublisher()
     }
 
-    private let addImageTapSubject = PassthroughSubject<Void, Never>()
     private let removeExistingImageSubject = PassthroughSubject<Int, Never>()
     private let removeNewImageSubject = PassthroughSubject<Int, Never>()
 
@@ -49,7 +43,7 @@ final class EditImageSectionView: UIView {
     private var newImages: [UIImage] = []
 
     private var items: [ImageItem] {
-        var result: [ImageItem] = [.addButton]
+        var result: [ImageItem] = []
         result += existingImageURLs.enumerated().map { .existingImage(index: $0.offset, url: $0.element) }
         result += newImages.enumerated().map { .newImage(index: $0.offset, image: $0.element) }
         return result
@@ -70,9 +64,7 @@ final class EditImageSectionView: UIView {
         let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
         cv.backgroundColor = .clear
         cv.showsHorizontalScrollIndicator = false
-        cv.delegate = self
         cv.dataSource = self
-        cv.register(AddImageCell.self, forCellWithReuseIdentifier: AddImageCell.reuseIdentifier)
         cv.register(EditImageCell.self, forCellWithReuseIdentifier: EditImageCell.reuseIdentifier)
         return cv
     }()
@@ -121,15 +113,6 @@ extension EditImageSectionView: UICollectionViewDataSource {
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         switch items[indexPath.item] {
-        case .addButton:
-            guard let cell = collectionView.dequeueReusableCell(
-                withReuseIdentifier: AddImageCell.reuseIdentifier,
-                for: indexPath
-            ) as? AddImageCell else {
-                return UICollectionViewCell()
-            }
-            return cell
-
         case .existingImage(let index, let url):
             guard let cell = collectionView.dequeueReusableCell(
                 withReuseIdentifier: EditImageCell.reuseIdentifier,
@@ -159,12 +142,3 @@ extension EditImageSectionView: UICollectionViewDataSource {
     }
 }
 
-// MARK: - UICollectionViewDelegate
-
-extension EditImageSectionView: UICollectionViewDelegate {
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if case .addButton = items[indexPath.item] {
-            addImageTapSubject.send()
-        }
-    }
-}
