@@ -21,7 +21,7 @@ final class MealSectionView: UIView {
         static let textHorizontalInset: CGFloat = Self.horizontalInset + 10
         static let pendingCardHorizontalInset: CGFloat = horizontalInset + 6
         static let emptyImageSize: CGFloat = 160
-        static let emptyTextTopSpacing: CGFloat = 25
+        static let emptyTextTopSpacing: CGFloat = 10
     }
 
     // MARK: - Publishers
