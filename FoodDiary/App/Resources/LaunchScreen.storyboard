@@ -19,7 +19,7 @@
                                     <constraint firstAttribute="height" constant="145" id="char-h-001"/>
                                 </constraints>
                             </imageView>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" image="logo" translatesAutoresizingMaskIntoConstraints="NO" id="logo-img-001">
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" image="logo" translatesAutoresizingMaskIntoConstraints="NO" id="logo-img-001">
                                 <rect key="frame" x="89" y="265.5" width="215" height="64"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="215" id="logo-w-001"/>
