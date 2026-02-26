@@ -76,6 +76,7 @@ final class BottomContentView: UIView {
 
     private var processingCardView: PendingFoodRecordCardView?
     private var currentProcessingDate: Date?
+    private var currentState: State?
 
     // MARK: - Init
 
@@ -121,6 +122,9 @@ final class BottomContentView: UIView {
     // MARK: - Configuration
 
     func configure(state: State) {
+        guard currentState != state else { return }
+        currentState = state
+
         switch state {
         case .empty:
             showEmptyState()

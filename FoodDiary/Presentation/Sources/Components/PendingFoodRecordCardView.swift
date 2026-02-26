@@ -132,7 +132,7 @@ public final class PendingFoodRecordCardView: UIView {
     // MARK: - Private Methods
 
     private func loadRemoteImage(url: URL) {
-        backgroundImageView.kf.setImage(with: url) { [weak self] result in
+        KingfisherManager.shared.retrieveImage(with: url) { [weak self] result in
             guard let self, case .success(let value) = result else { return }
             DispatchQueue.global(qos: .userInitiated).async {
                 let blurred = Self.applyGaussianBlur(to: value.image, radius: 30)
