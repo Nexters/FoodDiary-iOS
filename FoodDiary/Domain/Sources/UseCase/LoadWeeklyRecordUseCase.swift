@@ -51,7 +51,7 @@ public struct LoadWeeklyRecordUseCase<
         for date: Date,
         locale: Locale = Locale(identifier: "ko_KR")
     ) async throws -> WeekData {
-        fetchFoodImageAssetUseCase.prefetch(for: date)
+        fetchFoodImageAssetUseCase.prefetch(forPreviousWeeks: 2, of: date)
 
         let (weekStart, weekEnd) = calendar.weekRange(for: date)
         let weekDates = calendar.weekDates(from: weekStart)

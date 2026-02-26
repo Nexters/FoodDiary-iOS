@@ -6,6 +6,7 @@
 //
 
 import Domain
+import Logging
 import Photos
 import UIKit
 
@@ -18,6 +19,7 @@ public struct FoodImageAssetFetcher<
     private let imageRepository: ImageRepo
     private let cache: ClassificationCacheManager
     private let imageTargetSize: CGSize
+    private let logger = Logger(label: "com.fooddiary.asset-fetcher")
 
     /// - Parameters:
     ///   - foodClassifier: 음식 분류기
@@ -42,26 +44,61 @@ public struct FoodImageAssetFetcher<
     ) async throws -> [Date: [FoodImageAsset<PHAsset>]] {
         let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
         guard status == .authorized || status == .limited else {
+            logger.error("[Asset Fetch] 사진 라이브러리 권한 없음 (status: \(status.rawValue))")
             throw FoodImageAssetError.notAuthorized
         }
 
+        logger.info("[Asset Fetch] 시작 (\(startDate) ~ \(endDate?.description ?? "nil"))")
+        let clock = ContinuousClock()
+        let start = clock.now
+
         let sections = await fetchPhotoSections(from: startDate, to: endDate)
-        return try await classifyAllSections(sections)
+        let totalPhotos = sections.reduce(0) { $0 + $1.assets.count }
+        logger.info("[Asset Fetch] 사진 \(totalPhotos)장 / \(sections.count)개 섹션 조회됨")
+
+        let result = try await classifyAllSections(sections)
+        let elapsed = clock.now - start
+        logger.info("[Asset Fetch] 완료 (소요: \(elapsed))")
+
+        return result
     }
 
-    public func prefetchFoodImageAssets(forWeekContaining date: Date) {
+    public func prefetchFoodImageAssets(forPreviousWeeks weekCount: Int, of date: Date) {
         let calendar = Calendar.current
-        guard
-            let startOfWeek = calendar.date(
-                from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
-            ),
-            let endOfWeek = calendar.date(byAdding: .day, value: 7, to: startOfWeek)
-        else {
-            return
+
+        func weekRange(for targetDate: Date) -> (start: Date, end: Date)? {
+            guard
+                let startOfWeek = calendar.date(
+                    from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: targetDate)
+                ),
+                let endOfWeek = calendar.date(byAdding: .day, value: 7, to: startOfWeek)
+            else { return nil }
+            return (startOfWeek, endOfWeek)
         }
 
-        Task(priority: .background) {
-            _ = try? await self.fetchFoodImageAssets(from: startOfWeek, to: endOfWeek)
+        let previousDates = (1...weekCount).compactMap {
+            calendar.date(byAdding: .weekOfYear, value: -$0, to: date)
+        }
+
+        Task(priority: .utility) {
+            // 현재 주를 먼저 완료
+            if let currentRange = weekRange(for: date) {
+                _ = try? await self.fetchFoodImageAssets(
+                    from: currentRange.start,
+                    to: currentRange.end
+                )
+            }
+
+            // 과거 주를 병렬로 백그라운드 실행
+            for targetDate in previousDates {
+                guard let range = weekRange(for: targetDate) else { continue }
+                Task(priority: .background) {
+                    _ = try? await self.fetchFoodImageAssets(
+                        from: range.start,
+                        to: range.end
+                    )
+                }
+            }
         }
     }
 }
@@ -126,7 +163,13 @@ extension FoodImageAssetFetcher {
     fileprivate func classifyPhotosInSection(_ section: PhotoSection) async throws
         -> [PHFoodImageAsset]
     {
-        try await withThrowingTaskGroup( 
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MM/dd"
+        logger.info("[Classify] \(dateFormatter.string(from: section.date)) 섹션 \(section.assets.count)장 분류 시작")
+        let clock = ContinuousClock()
+        let start = clock.now
+
+        return try await withThrowingTaskGroup(
             of: (originalIndex: Int, photo: PHFoodImageAsset).self
         ) { group in
             for (index, asset) in section.assets.enumerated() {
@@ -139,10 +182,14 @@ extension FoodImageAssetFetcher {
             for try await result in group {
                 results.append(result)
             }
-            return
-                results
+            let photos = results
                 .sorted { $0.originalIndex < $1.originalIndex }
                 .map(\.photo)
+
+            let elapsed = clock.now - start
+            let foodCount = photos.filter { $0.foodProbability > 0.5 }.count
+            logger.info("[Classify] \(dateFormatter.string(from: section.date)) 섹션 완료 - 음식 \(foodCount)/\(photos.count)장 (소요: \(elapsed))")
+            return photos
         }
     }
 
@@ -150,18 +197,21 @@ extension FoodImageAssetFetcher {
         let identifier = asset.localIdentifier
 
         if let cached = await cache.get(identifier) {
+            logger.trace("[Classify] 캐시 히트 \(identifier) (prob: \(cached.foodProbability))")
             return FoodImageAsset(
                 imageAsset: asset,
                 foodProbability: cached.foodProbability
             )
         }
 
+        logger.trace("[Classify] 캐시 미스 \(identifier)")
         let image = try await imageRepository.loadImage(
             for: asset,
             targetSize: imageTargetSize,
             preferFastDelivery: true
         )
         let result = try foodClassifier.classify(image: image)
+        logger.trace("[Classify] 분류 완료 \(identifier) (prob: \(result.foodProbability))")
 
         await cache.set(
             .init(
