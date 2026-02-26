@@ -105,7 +105,10 @@ final class BottomContentView: UIView {
 
     private func setupConstraints() {
         containerView.snp.makeConstraints {
-            $0.edges.equalToSuperview().inset(UIEdgeInsets(top: 0, left: Constants.containerHorizontalInset, bottom: 0, right: Constants.containerHorizontalInset))
+            $0.edges.equalToSuperview().inset(
+                UIEdgeInsets(
+                    top: 0, left: Constants.containerHorizontalInset, bottom: 0,
+                    right: Constants.containerHorizontalInset))
         }
 
         // Card Stack State Constraints
@@ -164,7 +167,8 @@ final class BottomContentView: UIView {
         }
 
         // 탭 제스처
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(processingCardTapped))
+        let tapGesture = UITapGestureRecognizer(
+            target: self, action: #selector(processingCardTapped))
         newProcessingCardView.addGestureRecognizer(tapGesture)
     }
 
@@ -188,7 +192,7 @@ final class BottomContentView: UIView {
         cancellables.removeAll()
 
         // 새로 생성
-        let newEmptyView = EmptyFoodRecordView(text: "오늘의 음식 사진을 추가해보세요.")
+        let newEmptyView = EmptyFoodRecordView(text: "오늘의 음식 사진을 추가해보세요")
         containerView.addSubview(newEmptyView)
         emptyStateView = newEmptyView
 
