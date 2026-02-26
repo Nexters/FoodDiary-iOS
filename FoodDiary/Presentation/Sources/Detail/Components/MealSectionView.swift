@@ -20,6 +20,8 @@ final class MealSectionView: UIView {
         static let horizontalInset: CGFloat = 20
         static let textHorizontalInset: CGFloat = Self.horizontalInset + 10
         static let pendingCardHorizontalInset: CGFloat = horizontalInset + 6
+        static let emptyImageSize: CGFloat = 140
+        static let emptyTextTopSpacing: CGFloat = 25
     }
 
     // MARK: - Publishers
@@ -159,16 +161,28 @@ final class MealSectionView: UIView {
     private func showEmptyState() {
         editButton.isHidden = true
 
+        let imageView = UIImageView()
+        imageView.image = DesignSystemAsset.emptyMeal.image
+        imageView.contentMode = .scaleAspectFit
+
         let label = UILabel()
-        label.setText("사진을 추가해서 기록해 보세요", style: .p14, color: .gray100)
+        label.setText("오늘의 음식 사진을 촬영해보세요", style: .p14, color: .gray100)
         label.textAlignment = .center
 
         let container = DashedBorderView()
         container.cornerRadius = 16
+        container.addSubview(imageView)
         container.addSubview(label)
 
+        imageView.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.centerY.equalToSuperview().offset(-(Constants.emptyTextTopSpacing / 2))
+            $0.size.equalTo(Constants.emptyImageSize)
+        }
+
         label.snp.makeConstraints {
-            $0.center.equalToSuperview()
+            $0.centerX.equalToSuperview()
+            $0.top.equalTo(imageView.snp.bottom).offset(Constants.emptyTextTopSpacing)
         }
 
         contentContainerView.addSubview(container)
@@ -177,6 +191,9 @@ final class MealSectionView: UIView {
             $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
             $0.height.equalTo(container.snp.width)
         }
+
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(emptyStateTapped))
+        container.addGestureRecognizer(tapGesture)
     }
 
     private func showProcessingState(record: FoodRecord) {
@@ -214,6 +231,10 @@ final class MealSectionView: UIView {
     }
 
     // MARK: - Actions
+
+    @objc private func emptyStateTapped() {
+        addButtonTapSubject.send(mealType)
+    }
 
     @objc private func editTapped() {
         guard case .recorded(let record) = currentState else { return }
