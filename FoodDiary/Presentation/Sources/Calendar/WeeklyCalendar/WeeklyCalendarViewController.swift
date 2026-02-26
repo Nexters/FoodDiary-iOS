@@ -184,6 +184,15 @@ public final class WeeklyCalendarViewController<
             .store(in: &cancellables)
 
         viewModel.statePublisher
+            .map(\.canGoToNextWeek)
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] canGoNext in
+                self?.headerView.setNextButtonEnabled(canGoNext)
+            }
+            .store(in: &cancellables)
+
+        viewModel.statePublisher
             .map { (weekDays: $0.weekDays, selectedDate: $0.selectedDate) }
             .removeDuplicates(by: ==)
             .receive(on: DispatchQueue.main)

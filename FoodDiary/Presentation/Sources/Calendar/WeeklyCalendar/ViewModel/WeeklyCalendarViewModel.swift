@@ -163,6 +163,7 @@ public final class WeeklyCalendarViewModel<
             let weekData = try await loadWeeklyCalendarDataUseCase.loadWeekData(for: date)
             state.weekDays = weekData.weekDays
             state.monthText = weekData.monthText
+            state.canGoToNextWeek = canGoToNextWeek(from: currentWeekBaseDate)
         } catch {
             eventSubject.send(.loadFailed(error))
         }
@@ -270,6 +271,7 @@ extension WeeklyCalendarViewModel {
         public internal(set) var isLoading: Bool = false
         public internal(set) var dateContent: DateContent?
         public internal(set) var nickname: String? = nil
+        public internal(set) var canGoToNextWeek: Bool = false
     }
 
     public enum Input {

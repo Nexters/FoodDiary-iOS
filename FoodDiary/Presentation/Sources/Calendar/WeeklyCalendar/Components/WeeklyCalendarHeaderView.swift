@@ -120,6 +120,11 @@ final class WeeklyCalendarHeaderView: UIView {
         monthLabel.setText(text, style: .p18, color: .gray050)
     }
 
+    func setNextButtonEnabled(_ isEnabled: Bool) {
+        nextButton.isEnabled = isEnabled
+        nextButton.alpha = isEnabled ? 1.0 : 0.3
+    }
+
     // MARK: - Actions
 
     @objc private func previousTapped() {
