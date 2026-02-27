@@ -95,7 +95,7 @@ final class AddressSearchResultCell: UITableViewCell {
 
         selectButton.snp.makeConstraints {
             $0.trailing.equalToSuperview().offset(-Constants.horizontalPadding)
-            $0.top.equalToSuperview().offset(Constants.verticalPadding)
+            $0.centerY.equalToSuperview()
         }
         selectButton.setContentHuggingPriority(.required, for: .horizontal)
         selectButton.setContentCompressionResistancePriority(.required, for: .horizontal)

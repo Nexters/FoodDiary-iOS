@@ -247,6 +247,7 @@ public final class AddressSearchViewController<
 
         Task { @MainActor [weak self] in
             guard let self else { return }
+            self.containerHeightConstraint?.update(offset: self.view.bounds.height)
             self.view.layoutIfNeeded()
             let contentHeight = self.resultsTableView.contentSize.height
             self.containerHeightConstraint?.update(offset: contentHeight)
