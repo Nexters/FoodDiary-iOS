@@ -132,6 +132,12 @@ public final class EditFoodRecordViewModel<RecordRepo: FoodRecordRepository> {
         state.isSaving = true
         defer { state.isSaving = false }
 
+        // 모든 사진이 제거된 경우 레코드 삭제 처리
+        if state.photos.isEmpty && state.newAssets.isEmpty {
+            await performDelete()
+            return
+        }
+
         let request = UpdateFoodRecordRequest(
             id: state.originalRecord.id,
             genre: state.selectedGenre,
