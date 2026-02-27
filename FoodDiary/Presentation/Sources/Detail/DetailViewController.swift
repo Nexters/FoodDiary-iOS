@@ -571,13 +571,13 @@ public final class DetailViewController<
         }
     }
 
-    private func scrollToMealSection(_ mealType: MealType, animated: Bool = true) {
+    private func scrollToMealSection(_ mealType: MealType) {
         let targetSection = mealSectionView(for: mealType)
         let sectionFrame = targetSection.convert(targetSection.bounds, to: scrollView)
         let targetOffset = CGPoint(
             x: 0,
             y: sectionFrame.origin.y - scrollView.adjustedContentInset.top
         )
-        scrollView.setContentOffset(targetOffset, animated: animated)
+        scrollView.setContentOffset(targetOffset, animated: false)
     }
 }
