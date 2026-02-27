@@ -22,6 +22,7 @@ final class MealRecordedContentView: UIView {
         static let hashtagTopSpacing: CGFloat = 16
         static let buttonImagePadding: CGFloat = 4
         static let textHorizontalInset: CGFloat = 10
+        static let noteTopSpacing: CGFloat = 16
     }
 
     // MARK: - Types
@@ -47,6 +48,7 @@ final class MealRecordedContentView: UIView {
     private var labelTrailingWithoutButton: Constraint?
     private var infoTopWithPageControl: Constraint?
     private var infoTopWithoutPageControl: Constraint?
+    private var infoBottomConstraint: Constraint?
 
     // MARK: - UI Components
 
@@ -97,6 +99,8 @@ final class MealRecordedContentView: UIView {
     }()
 
     private let hashtagLabel = UILabel()
+
+    private var noteView: NoteContentView?
 
     // MARK: - Init
 
@@ -184,7 +188,6 @@ final class MealRecordedContentView: UIView {
         hashtagLabel.snp.makeConstraints {
             $0.top.equalTo(restaurantNameLabel.snp.bottom).offset(Constants.hashtagTopSpacing)
             $0.leading.trailing.equalToSuperview()
-            $0.bottom.equalToSuperview()
         }
     }
 
@@ -270,6 +273,31 @@ final class MealRecordedContentView: UIView {
         let hashtagText = record.hashtags.map { "#\($0)" }.joined(separator: " ")
         hashtagLabel.setText(hashtagText, style: .p12, color: .white)
         hashtagLabel.isHidden = record.hashtags.isEmpty
+
+        configureNoteSection(with: record)
+    }
+
+    private func configureNoteSection(with record: FoodRecord) {
+        noteView?.removeFromSuperview()
+        noteView = nil
+        infoBottomConstraint?.deactivate()
+
+        let hasNote = !(record.note ?? "").isEmpty
+
+        if hasNote {
+            let newNoteView = NoteContentView(note: record.note!)
+            infoContainerView.addSubview(newNoteView)
+            newNoteView.snp.makeConstraints {
+                $0.top.equalTo(hashtagLabel.snp.bottom).offset(Constants.noteTopSpacing)
+                $0.leading.trailing.equalToSuperview()
+                infoBottomConstraint = $0.bottom.equalToSuperview().constraint
+            }
+            noteView = newNoteView
+        } else {
+            hashtagLabel.snp.makeConstraints {
+                infoBottomConstraint = $0.bottom.equalToSuperview().constraint
+            }
+        }
     }
 
     private func updateCurrentRecord(for page: Int) {
