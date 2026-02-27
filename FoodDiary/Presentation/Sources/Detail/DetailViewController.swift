@@ -113,7 +113,7 @@ public final class DetailViewController<
     // MARK: - State
 
     private var cancellables = Set<AnyCancellable>()
-    private var initialScrollTarget: MealType?
+    private var pendingScrollTarget: MealType?
     private let scrollToFirstRecord: Bool
     private let shouldPopToRoot: Bool
 
@@ -131,7 +131,7 @@ public final class DetailViewController<
         )? = nil
     ) {
         self.viewModel = viewModel
-        self.initialScrollTarget = initialScrollTarget
+        self.pendingScrollTarget = initialScrollTarget
         self.scrollToFirstRecord = scrollToFirstRecord
         self.shouldPopToRoot = shouldPopToRoot
         self.onDismissWithDate = onDismissWithDate
@@ -309,14 +309,7 @@ public final class DetailViewController<
                         state.recordsByMealType,
                         processingRecords: state.processingRecordsByMealType)
 
-                    if let mealType = self.initialScrollTarget {
-                        self.initialScrollTarget = nil
-                        DispatchQueue.main.async {
-                            self.scrollToMealSection(mealType)
-                        }
-                    } else if self.scrollToFirstRecord,
-                        let mealType = self.firstContentMealType(state)
-                    {
+                    if let mealType = self.resolveScrollTarget(state) {
                         DispatchQueue.main.async {
                             self.scrollToMealSection(mealType)
                         }
@@ -514,6 +507,7 @@ public final class DetailViewController<
 
     private func handleEdit(record: FoodRecord) {
         guard let editVC = editViewControllerFactory?(record) else { return }
+        pendingScrollTarget = record.mealType
         navigationController?.pushViewController(editVC, animated: true)
     }
 
@@ -573,6 +567,19 @@ public final class DetailViewController<
         case .dinner: return dinnerSection
         case .snack: return snackSection
         }
+    }
+
+    private func resolveScrollTarget(
+        _ state: DetailViewModel<RecordRepo, PushObserver>.State
+    ) -> MealType? {
+        if let mealType = pendingScrollTarget {
+            pendingScrollTarget = nil
+            return mealType
+        }
+        if scrollToFirstRecord {
+            return firstContentMealType(state)
+        }
+        return nil
     }
 
     private func firstContentMealType(_ state: DetailViewModel<RecordRepo, PushObserver>.State)
