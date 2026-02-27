@@ -209,10 +209,12 @@ extension AppFlowController {
         return WeeklyCalendarViewController(
             viewModel: weeklyViewModel,
             imageProvider: imageProvider,
-            detailViewControllerFactory: { [weak self] date, records, onDismiss in
+            detailViewControllerFactory: { [weak self] date, records, scrollToMealType, shouldPopToRoot, onDismiss in
                 self?.makeDetailViewController(
                     date: date,
                     records: records,
+                    scrollToMealType: scrollToMealType,
+                    shouldPopToRoot: shouldPopToRoot,
                     onDismissWithDate: onDismiss
                 ) ?? UIViewController()
             }
@@ -231,10 +233,12 @@ extension AppFlowController {
 
         return MonthlyCalendarViewController(
             viewModel: monthlyViewModel,
-            detailViewControllerFactory: { [weak self] date, records, onDismiss in
+            detailViewControllerFactory: { [weak self] date, records, scrollToMealType, shouldPopToRoot, onDismiss in
                 self?.makeDetailViewController(
                     date: date,
                     records: records,
+                    scrollToMealType: scrollToMealType,
+                    shouldPopToRoot: shouldPopToRoot,
                     onDismissWithDate: onDismiss
                 ) ?? UIViewController()
             }
@@ -441,6 +445,8 @@ extension AppFlowController {
     fileprivate func makeDetailViewController(
         date: Date,
         records: [FoodRecord],
+        scrollToMealType: MealType? = nil,
+        shouldPopToRoot: Bool = false,
         onDismissWithDate: ((Date) -> Void)? = nil
     ) -> UIViewController {
         guard
@@ -451,6 +457,8 @@ extension AppFlowController {
 
         return DetailViewController(
             viewModel: detailVM,
+            initialScrollTarget: scrollToMealType,
+            shouldPopToRoot: shouldPopToRoot,
             onDismissWithDate: onDismissWithDate,
             editViewControllerFactory: { [weak self] record in
                 self?.makeEditViewController(for: record) ?? UIViewController()

@@ -113,11 +113,16 @@ public final class DetailViewController<
     // MARK: - State
 
     private var cancellables = Set<AnyCancellable>()
+    private let initialScrollTarget: MealType?
+    private var hasPerformedInitialScroll = false
+    private let shouldPopToRoot: Bool
 
     // MARK: - Init
 
     public init(
         viewModel: DetailViewModel<RecordRepo, PushObserver>,
+        initialScrollTarget: MealType? = nil,
+        shouldPopToRoot: Bool = false,
         onDismissWithDate: ((Date) -> Void)? = nil,
         editViewControllerFactory: ((FoodRecord) -> UIViewController)? = nil,
         presentImagePickerHandler: (
@@ -125,6 +130,8 @@ public final class DetailViewController<
         )? = nil
     ) {
         self.viewModel = viewModel
+        self.initialScrollTarget = initialScrollTarget
+        self.shouldPopToRoot = shouldPopToRoot
         self.onDismissWithDate = onDismissWithDate
         self.editViewControllerFactory = editViewControllerFactory
         self.presentImagePickerHandler = presentImagePickerHandler
@@ -166,6 +173,15 @@ public final class DetailViewController<
     private func setupNavigation() {
         title = "상세보기"
 
+        if shouldPopToRoot {
+            navigationItem.leftBarButtonItem = UIBarButtonItem(
+                image: UIImage(systemName: "chevron.left"),
+                style: .plain,
+                target: self,
+                action: #selector(backButtonTapped)
+            )
+        }
+
         // More button
         let deleteAllAction = UIAction(
             title: "전체삭제",
@@ -179,6 +195,11 @@ public final class DetailViewController<
             image: UIImage(systemName: "ellipsis"),
             menu: UIMenu(children: [deleteAllAction])
         )
+    }
+
+    @objc private func backButtonTapped() {
+        onDismissWithDate?(viewModel.state.currentDate)
+        navigationController?.popToRootViewController(animated: true)
     }
 
     private func setupUI() {
@@ -289,6 +310,13 @@ public final class DetailViewController<
                     self.loadingIndicatorView.stopAnimating()
                     let state = self.viewModel.state
                     self.updateMealSections(state.recordsByMealType, processingRecords: state.processingRecordsByMealType)
+
+                    if let mealType = self.initialScrollTarget, !self.hasPerformedInitialScroll {
+                        self.hasPerformedInitialScroll = true
+                        DispatchQueue.main.async {
+                            self.scrollToMealSection(mealType)
+                        }
+                    }
                 }
             }
             .store(in: &cancellables)
@@ -530,5 +558,26 @@ public final class DetailViewController<
         )
         alert.addAction(UIAlertAction(title: "확인", style: .default))
         present(alert, animated: true)
+    }
+
+    // MARK: - Scroll to Meal Section
+
+    private func mealSectionView(for mealType: MealType) -> MealSectionView {
+        switch mealType {
+        case .breakfast: return breakfastSection
+        case .lunch: return lunchSection
+        case .dinner: return dinnerSection
+        case .snack: return snackSection
+        }
+    }
+
+    private func scrollToMealSection(_ mealType: MealType, animated: Bool = true) {
+        let targetSection = mealSectionView(for: mealType)
+        let sectionFrame = targetSection.convert(targetSection.bounds, to: scrollView)
+        let targetOffset = CGPoint(
+            x: 0,
+            y: sectionFrame.origin.y - scrollView.adjustedContentInset.top
+        )
+        scrollView.setContentOffset(targetOffset, animated: animated)
     }
 }

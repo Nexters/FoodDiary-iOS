@@ -21,7 +21,7 @@ public final class MonthlyCalendarViewController<
     // MARK: - Dependencies
 
     private let viewModel: MonthlyCalendarViewModel<RecordRepo, AuthRepo>
-    private let detailViewControllerFactory: ((Date, [FoodRecord], ((Date) -> Void)?) -> UIViewController)
+    private let detailViewControllerFactory: ((Date, [FoodRecord], MealType?, Bool, ((Date) -> Void)?) -> UIViewController)
 
     // MARK: - UI Components
 
@@ -69,7 +69,7 @@ public final class MonthlyCalendarViewController<
 
     public init(
         viewModel: MonthlyCalendarViewModel<RecordRepo, AuthRepo>,
-        detailViewControllerFactory: @escaping (Date, [FoodRecord], ((Date) -> Void)?) -> UIViewController
+        detailViewControllerFactory: @escaping (Date, [FoodRecord], MealType?, Bool, ((Date) -> Void)?) -> UIViewController
     ) {
         self.viewModel = viewModel
         self.detailViewControllerFactory = detailViewControllerFactory
@@ -300,7 +300,7 @@ public final class MonthlyCalendarViewController<
     // MARK: - Navigation
 
     private func navigateToDetail(date: Date, records: [FoodRecord]) {
-        let detailVC = detailViewControllerFactory(date, records) { [weak self] date in
+        let detailVC = detailViewControllerFactory(date, records, nil, false) { [weak self] date in
             self?.viewModel.input.send(.updateMonth(date))
         }
         detailVC.hidesBottomBarWhenPushed = true

@@ -28,7 +28,7 @@ public final class WeeklyCalendarViewController<
             RecordRepo, AssetRepo, AuthRepo, PushObserver
         >
     private let imageProvider: ImageProvider
-    private let detailViewControllerFactory: (Date, [FoodRecord], ((Date) -> Void)?) -> UIViewController
+    private let detailViewControllerFactory: (Date, [FoodRecord], MealType?, Bool, ((Date) -> Void)?) -> UIViewController
 
     // MARK: - UI Components
 
@@ -71,7 +71,7 @@ public final class WeeklyCalendarViewController<
             RecordRepo, AssetRepo, AuthRepo, PushObserver
         >,
         imageProvider: ImageProvider,
-        detailViewControllerFactory: @escaping (Date, [FoodRecord], ((Date) -> Void)?) -> UIViewController
+        detailViewControllerFactory: @escaping (Date, [FoodRecord], MealType?, Bool, ((Date) -> Void)?) -> UIViewController
     ) {
         self.viewModel = viewModel
         self.imageProvider = imageProvider
@@ -241,8 +241,8 @@ public final class WeeklyCalendarViewController<
                 switch event {
                 case .photoAuthorizationDenied:
                     self?.showPhotoAuthorizationDeniedAlert()
-                case .uploadCompleted:
-                    break
+                case .uploadCompleted(let date, let mealType):
+                    self?.navigateToDetail(for: date, scrollTo: mealType, shouldPopToRoot: true)
                 case .saveFailed(let error):
                     self?.showSaveErrorAlert(error)
                 case .loadFailed(let error):
@@ -334,7 +334,6 @@ public final class WeeklyCalendarViewController<
     private func handleImagePickerResult(_ result: ImagePickerResult<AssetRepo.Asset>) {
         switch result {
         case .selected(let assets):
-            navigationController?.popViewController(animated: true)
             viewModel.input.send(.saveSelectedPhotos(assets))
         case .cancelled:
             navigationController?.popViewController(animated: true)
@@ -361,11 +360,13 @@ public final class WeeklyCalendarViewController<
         present(alert, animated: true)
     }
 
-    private func navigateToDetail(for date: Date) {
+    private func navigateToDetail(for date: Date, scrollTo mealType: MealType? = nil, shouldPopToRoot: Bool = false) {
         let records = viewModel.state.weekDays.records(for: date)
-        let detailVC = detailViewControllerFactory(date, records) { [weak self] date in
+        let detailVC = detailViewControllerFactory(date, records, mealType, shouldPopToRoot) { [weak self] date in
             self?.viewModel.input.send(.refreshData(date))
         }
         navigationController?.pushViewController(detailVC, animated: true)
     }
+
+
 }

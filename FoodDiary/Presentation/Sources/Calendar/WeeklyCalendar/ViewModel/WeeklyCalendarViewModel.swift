@@ -188,11 +188,12 @@ public final class WeeklyCalendarViewModel<
         guard !assets.isEmpty else { return }
 
         do {
-            try await saveFoodRecordUseCase.execute(
+            let results = try await saveFoodRecordUseCase.execute(
                 from: assets,
                 date: state.selectedDate
             )
-            eventSubject.send(.uploadCompleted)
+            let mealType = results.first?.mealType ?? .breakfast
+            eventSubject.send(.uploadCompleted(date: state.selectedDate, mealType: mealType))
             await loadWeekData(for: currentWeekBaseDate)
             await updateDateContent(for: state.selectedDate)
         } catch {
@@ -288,7 +289,7 @@ extension WeeklyCalendarViewModel {
 
     public enum Event {
         case photoAuthorizationDenied
-        case uploadCompleted
+        case uploadCompleted(date: Date, mealType: MealType)
         case saveFailed(Error)
         case loadFailed(Error)
     }
