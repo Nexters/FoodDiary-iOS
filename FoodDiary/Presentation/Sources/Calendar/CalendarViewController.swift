@@ -50,17 +50,31 @@ public final class CalendarViewController: UIViewController {
     private func showViewController(for mode: ViewMode) {
         let targetVC = mode == .weekly ? weeklyVC : monthlyVC
 
-        if let currentChild {
-            currentChild.willMove(toParent: nil)
-            currentChild.view.removeFromSuperview()
-            currentChild.removeFromParent()
+        // 초기 로드: 애니메이션 없이 바로 추가
+        guard let outgoingVC = currentChild else {
+            addChild(targetVC)
+            view.addSubview(targetVC.view)
+            targetVC.view.snp.makeConstraints { $0.edges.equalToSuperview() }
+            targetVC.didMove(toParent: self)
+            currentChild = targetVC
+            return
         }
 
         addChild(targetVC)
+        targetVC.view.alpha = 0
         view.addSubview(targetVC.view)
         targetVC.view.snp.makeConstraints { $0.edges.equalToSuperview() }
-        targetVC.didMove(toParent: self)
 
-        currentChild = targetVC
+        UIView.animate(withDuration: 0.4) {
+            targetVC.view.alpha = 1
+            outgoingVC.view.alpha = 0
+        } completion: { _ in
+            outgoingVC.view.alpha = 1
+            outgoingVC.willMove(toParent: nil)
+            outgoingVC.view.removeFromSuperview()
+            outgoingVC.removeFromParent()
+            targetVC.didMove(toParent: self)
+            self.currentChild = targetVC
+        }
     }
 }
