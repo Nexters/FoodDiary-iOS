@@ -309,9 +309,13 @@ public final class DetailViewController<
                 } else {
                     self.loadingIndicatorView.stopAnimating()
                     let state = self.viewModel.state
-                    self.updateMealSections(state.recordsByMealType, processingRecords: state.processingRecordsByMealType)
+                    self.updateMealSections(
+                        state.recordsByMealType,
+                        processingRecords: state.processingRecordsByMealType)
 
-                    if let mealType = self.initialScrollTarget, !self.hasPerformedInitialScroll {
+                    if let mealType = self.initialScrollTarget ?? self.firstContentMealType(state),
+                        !self.hasPerformedInitialScroll
+                    {
                         self.hasPerformedInitialScroll = true
                         DispatchQueue.main.async {
                             self.scrollToMealSection(mealType)
@@ -568,6 +572,16 @@ public final class DetailViewController<
         case .lunch: return lunchSection
         case .dinner: return dinnerSection
         case .snack: return snackSection
+        }
+    }
+
+    private func firstContentMealType(_ state: DetailViewModel<RecordRepo, PushObserver>.State)
+        -> MealType?
+    {
+        let orderedMealTypes: [MealType] = [.breakfast, .lunch, .dinner, .snack]
+        return orderedMealTypes.first { mealType in
+            state.recordsByMealType[mealType] != nil
+                || state.processingRecordsByMealType[mealType] != nil
         }
     }
 
