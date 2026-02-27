@@ -113,8 +113,8 @@ public final class DetailViewController<
     // MARK: - State
 
     private var cancellables = Set<AnyCancellable>()
-    private let initialScrollTarget: MealType?
-    private var hasPerformedInitialScroll = false
+    private var initialScrollTarget: MealType?
+    private let scrollToFirstRecord: Bool
     private let shouldPopToRoot: Bool
 
     // MARK: - Init
@@ -122,6 +122,7 @@ public final class DetailViewController<
     public init(
         viewModel: DetailViewModel<RecordRepo, PushObserver>,
         initialScrollTarget: MealType? = nil,
+        scrollToFirstRecord: Bool = true,
         shouldPopToRoot: Bool = false,
         onDismissWithDate: ((Date) -> Void)? = nil,
         editViewControllerFactory: ((FoodRecord) -> UIViewController)? = nil,
@@ -131,6 +132,7 @@ public final class DetailViewController<
     ) {
         self.viewModel = viewModel
         self.initialScrollTarget = initialScrollTarget
+        self.scrollToFirstRecord = scrollToFirstRecord
         self.shouldPopToRoot = shouldPopToRoot
         self.onDismissWithDate = onDismissWithDate
         self.editViewControllerFactory = editViewControllerFactory
@@ -198,8 +200,16 @@ public final class DetailViewController<
     }
 
     @objc private func backButtonTapped() {
+        dismissDetail()
+    }
+
+    private func dismissDetail() {
         onDismissWithDate?(viewModel.state.currentDate)
-        navigationController?.popToRootViewController(animated: true)
+        if shouldPopToRoot {
+            navigationController?.popToRootViewController(animated: true)
+        } else {
+            navigationController?.popViewController(animated: true)
+        }
     }
 
     private func setupUI() {
@@ -274,20 +284,6 @@ public final class DetailViewController<
 
         // Output: ViewModel → View
         viewModel.statePublisher
-            .map(\.currentDate)
-            .removeDuplicates { Calendar.current.isDate($0, inSameDayAs: $1) }
-            .dropFirst()
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in
-                guard let self else { return }
-                self.scrollView.setContentOffset(
-                    CGPoint(x: 0, y: -self.scrollView.adjustedContentInset.top),
-                    animated: false
-                )
-            }
-            .store(in: &cancellables)
-
-        viewModel.statePublisher
             .map(\.dateText)
             .removeDuplicates()
             .receive(on: DispatchQueue.main)
@@ -313,10 +309,14 @@ public final class DetailViewController<
                         state.recordsByMealType,
                         processingRecords: state.processingRecordsByMealType)
 
-                    if let mealType = self.initialScrollTarget ?? self.firstContentMealType(state),
-                        !self.hasPerformedInitialScroll
+                    if let mealType = self.initialScrollTarget {
+                        self.initialScrollTarget = nil
+                        DispatchQueue.main.async {
+                            self.scrollToMealSection(mealType)
+                        }
+                    } else if self.scrollToFirstRecord,
+                        let mealType = self.firstContentMealType(state)
                     {
-                        self.hasPerformedInitialScroll = true
                         DispatchQueue.main.async {
                             self.scrollToMealSection(mealType)
                         }
@@ -355,7 +355,7 @@ public final class DetailViewController<
                 case .saveFailed(let error):
                     self?.showSaveErrorAlert(error)
                 case .deleteAllCompleted:
-                    self?.navigationController?.popViewController(animated: true)
+                    self?.dismissDetail()
                 case .deleteAllFailed(let error):
                     self?.showDeleteErrorAlert(error)
                 }
