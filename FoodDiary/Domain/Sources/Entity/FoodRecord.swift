@@ -33,6 +33,7 @@ public struct FoodRecord: Identifiable, Equatable, Sendable {
     public let restaurantUrl: String?
     public let address: String?
     public let hashtags: [String]
+    public let note: String?
     public let createdAt: Date
     public let analysisStatus: AnalysisStatus
 
@@ -55,6 +56,7 @@ public struct FoodRecord: Identifiable, Equatable, Sendable {
         restaurantUrl: String? = nil,
         address: String? = nil,
         hashtags: [String] = [],
+        note: String? = nil,
         createdAt: Date,
         analysisStatus: AnalysisStatus = .completed
     ) {
@@ -67,6 +69,7 @@ public struct FoodRecord: Identifiable, Equatable, Sendable {
         self.restaurantUrl = restaurantUrl
         self.address = address
         self.hashtags = hashtags
+        self.note = note
         self.createdAt = createdAt
         self.analysisStatus = analysisStatus
     }

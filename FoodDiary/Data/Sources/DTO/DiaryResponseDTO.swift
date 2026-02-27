@@ -27,7 +27,6 @@ public struct DiaryResponseDTO: Decodable {
     public let createdAt: String
     public let photos: [DiaryPhotoDTO]
 
-    // 새 API 필드 (도메인에서 미사용)
     public let note: String?
     public let photoCount: Int?
     public let userId: String?
@@ -129,6 +128,7 @@ extension DiaryResponseDTO {
             restaurantUrl: restaurantUrl,
             address: roadAddress,
             hashtags: tags ?? [],
+            note: note,
             createdAt: createdDate,
             analysisStatus: status
         )
