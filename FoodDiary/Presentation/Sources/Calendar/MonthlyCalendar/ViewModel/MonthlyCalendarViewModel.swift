@@ -59,7 +59,16 @@ public final class MonthlyCalendarViewModel<
         self.getNicknameUseCase = getNicknameUseCase
 
         let today = Date()
+        let calendar = Calendar.seoul
+        let period = calendar.monthlyCalendarPeriod(for: today)
+        let placeholderDays = Self.generatePlaceholderDays(
+            for: period, currentMonth: today, calendar: calendar
+        )
+
         self.stateSubject = CurrentValueSubject(State(currentDisplayDate: today))
+        state.monthDays = placeholderDays
+        state.numberOfWeeks = placeholderDays.count / 7
+        state.monthYearText = today.formatMonthText()
 
         setupBindings()
         input.send(.loadNickname)
@@ -130,6 +139,36 @@ public final class MonthlyCalendarViewModel<
         } catch {
             print("Failed to load monthly calendar: \(error)")
         }
+    }
+
+    private static func generatePlaceholderDays(
+        for period: DateInterval,
+        currentMonth: Date,
+        calendar: Calendar
+    ) -> [MonthlyCalendarDay] {
+        let today = calendar.startOfDay(for: Date())
+        let currentMonthComponents = calendar.dateComponents([.year, .month], from: currentMonth)
+
+        var days: [MonthlyCalendarDay] = []
+        var currentDate = period.start
+
+        while currentDate < period.end {
+            let dateComponents = calendar.dateComponents([.year, .month], from: currentDate)
+            let isCurrentMonth = dateComponents.year == currentMonthComponents.year &&
+                                 dateComponents.month == currentMonthComponents.month
+
+            days.append(MonthlyCalendarDay(
+                date: currentDate,
+                dayNumber: calendar.component(.day, from: currentDate),
+                isCurrentMonth: isCurrentMonth,
+                isToday: calendar.isDate(currentDate, inSameDayAs: today),
+                imageURLs: []
+            ))
+            guard let next = calendar.date(byAdding: .day, value: 1, to: currentDate) else { break }
+            currentDate = next
+        }
+
+        return days
     }
 
     private func requestPhotoAuthorizationIfNeeded() async {

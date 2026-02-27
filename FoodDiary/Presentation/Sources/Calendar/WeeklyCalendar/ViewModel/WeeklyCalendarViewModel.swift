@@ -66,11 +66,28 @@ public final class WeeklyCalendarViewModel<
         self.pushNotificationObserver = pushNotificationObserver
         self.getNicknameUseCase = getNicknameUseCase
 
-        self.calendar = Calendar.current
+        let cal = Calendar.current
+        self.calendar = cal
 
-        let today = calendar.startOfDay(for: Date())
+        let today = cal.startOfDay(for: Date())
         self.currentWeekBaseDate = today
+
+        let (weekStart, _) = cal.weekRange(for: today)
+        let weekDates = cal.weekDates(from: weekStart)
+        let placeholderWeekDays = weekDates.map { dayDate in
+            WeeklyCalendarDay(
+                date: dayDate,
+                dayOfWeek: dayDate.formatDayOfWeek(),
+                dayNumber: dayDate.formatDayNumber(calendar: cal),
+                isToday: cal.isDateInToday(dayDate),
+                isFuture: cal.startOfDay(for: dayDate) > today,
+                records: []
+            )
+        }
+
         self.stateSubject = CurrentValueSubject(State(selectedDate: today))
+        state.weekDays = placeholderWeekDays
+        state.monthText = today.formatMonthText()
 
         setupBindings()
         input.send(.loadNickname)
