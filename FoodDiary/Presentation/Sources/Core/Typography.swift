@@ -17,7 +17,7 @@ import DesignSystem
 /// label.attributedText = Typography.hd24.styled("뭐먹었지")
 /// ```
 public enum Typography {
-    // MARK: - Headline (Bold, 140% line height)
+    // MARK: - Headline (Bold, 120% line height)
     /// 페이지 헤드라인 - 24pt Bold
     case hd24
     /// 페이지 타이틀 - 20pt Bold
@@ -27,7 +27,7 @@ public enum Typography {
     /// 페이지 서브 타이틀 2nd - 16pt Bold
     case hd16
 
-    // MARK: - Paragraph (Regular, 140% line height)
+    // MARK: - Paragraph (Regular, 120% line height)
     /// 본문 - 18pt Regular
     case p18
     /// 캡션 - 15pt Regular
@@ -64,7 +64,7 @@ public enum Typography {
     }
 
     private var lineHeight: CGFloat {
-        font.pointSize * 1.4
+        font.pointSize * 1.15
     }
 
     private var letterSpacing: CGFloat {
