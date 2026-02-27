@@ -127,6 +127,7 @@ public final class AddressSearchViewController<
         super.viewDidLoad()
         setupUI()
         setupConstraints()
+        setupKeyboardDismissGesture()
         setupBindings()
     }
 

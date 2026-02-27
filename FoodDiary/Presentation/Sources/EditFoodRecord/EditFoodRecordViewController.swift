@@ -129,6 +129,7 @@ public final class EditFoodRecordViewController<
         setupNavigation()
         setupUI()
         setupConstraints()
+        setupKeyboardDismissGesture()
         setupCategoryChips()
         setupBindings()
     }
