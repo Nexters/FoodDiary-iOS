@@ -98,7 +98,11 @@ final class MealRecordedContentView: UIView {
         return button
     }()
 
-    private let hashtagLabel = UILabel()
+    private let hashtagLabel: UILabel = {
+        let label = UILabel()
+        label.numberOfLines = 0
+        return label
+    }()
 
     private var noteView: NoteContentView?
 
