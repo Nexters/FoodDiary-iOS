@@ -20,11 +20,12 @@ public struct SaveFoodRecordUseCase<
 
     /// 서버 업로드 수행
     /// 분석 완료 시 Remote Push로 결과 수신
+    @discardableResult
     public func execute(
         from assets: [any ImageAssetable],
         date: Date
-    ) async throws {
+    ) async throws -> [UploadResult] {
         let request = CreateFoodRecordRequest(date: date, assets: assets)
-        _ = try await repository.uploadRecord(request)
+        return try await repository.uploadRecord(request)
     }
 }
