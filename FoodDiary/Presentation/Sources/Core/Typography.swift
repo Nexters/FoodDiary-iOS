@@ -17,7 +17,7 @@ import DesignSystem
 /// label.attributedText = Typography.hd24.styled("뭐먹었지")
 /// ```
 public enum Typography {
-    // MARK: - Headline (Bold, 130% line height)
+    // MARK: - Headline (Bold, 140% line height)
     /// 페이지 헤드라인 - 24pt Bold
     case hd24
     /// 페이지 타이틀 - 20pt Bold
@@ -27,7 +27,7 @@ public enum Typography {
     /// 페이지 서브 타이틀 2nd - 16pt Bold
     case hd16
 
-    // MARK: - Paragraph (Regular, 100% line height)
+    // MARK: - Paragraph (Regular, 140% line height)
     /// 본문 - 18pt Regular
     case p18
     /// 캡션 - 15pt Regular
@@ -63,13 +63,8 @@ public enum Typography {
         }
     }
 
-    private var lineHeightMultiple: CGFloat {
-        switch self {
-        case .hd24, .hd20, .hd18, .hd16:
-            return 1.0
-        case .p18, .p15, .p14, .p12, .p10:
-            return 1.0
-        }
+    private var lineHeight: CGFloat {
+        font.pointSize * 1.4
     }
 
     private var letterSpacing: CGFloat {
@@ -78,15 +73,19 @@ public enum Typography {
 
     public func styled(_ text: String, color: UIColor = .white, alignment: NSTextAlignment = .natural, lineSpacing: CGFloat = 0) -> NSAttributedString {
         let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.lineHeightMultiple = lineHeightMultiple
+        paragraphStyle.minimumLineHeight = lineHeight
+        paragraphStyle.maximumLineHeight = lineHeight
         paragraphStyle.alignment = alignment
         paragraphStyle.lineSpacing = lineSpacing
+
+        let baselineOffset = (lineHeight - font.lineHeight) / 4
 
         return NSAttributedString(string: text, attributes: [
             .font: font,
             .kern: letterSpacing,
             .foregroundColor: color,
-            .paragraphStyle: paragraphStyle
+            .paragraphStyle: paragraphStyle,
+            .baselineOffset: baselineOffset
         ])
     }
 }
