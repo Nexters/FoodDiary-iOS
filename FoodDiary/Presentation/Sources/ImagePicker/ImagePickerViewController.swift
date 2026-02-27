@@ -167,13 +167,23 @@ public final class ImagePickerViewController<
         let container = UIView()
         container.isHidden = true
 
+        let imageView = UIImageView(image: DesignSystemAsset.emptyImage.image)
+        imageView.contentMode = .scaleAspectFit
+        imageView.snp.makeConstraints {
+            $0.width.height.equalTo(210)
+        }
+
         let label = UILabel()
-        label.setText("이 날짜에 찍은 사진이 없어요", style: .hd18, color: .gray400)
-        label.textColor = .gray400
+        label.setText("오늘은 촬영된 사진이 없어요", style: .p12, color: .gray050)
         label.textAlignment = .center
 
-        container.addSubview(label)
-        label.snp.makeConstraints {
+        let stackView = UIStackView(arrangedSubviews: [imageView, label])
+        stackView.axis = .vertical
+        stackView.spacing = 20
+        stackView.alignment = .center
+
+        container.addSubview(stackView)
+        stackView.snp.makeConstraints {
             $0.center.equalToSuperview()
         }
 
