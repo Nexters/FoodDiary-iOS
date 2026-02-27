@@ -24,6 +24,7 @@ final class AppFlowController: UIViewController {
     private var cancellables = Set<AnyCancellable>()
     private let container: DIContainer
     private var pendingDeepLinkDate: String?
+    private var splashView: SplashView?
 
     public init(container: DIContainer) {
         self.container = container
@@ -37,9 +38,17 @@ final class AppFlowController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .sdBase
+        setupSplashView()
         setupNetworkMonitoring()
         setupAnalysisCompletionToast()
         setupDeepLinkHandling()
+    }
+
+    private func setupSplashView() {
+        let splash = SplashView()
+        view.addSubview(splash)
+        splash.snp.makeConstraints { $0.edges.equalToSuperview() }
+        splashView = splash
     }
 
     private func setupAnalysisCompletionToast() {
@@ -85,9 +94,12 @@ extension AppFlowController {
 
     fileprivate func proceedToNextScreen() {
         Task {
-            let isLogin = await validateToken()
+            prefetchFoodImageAssets()
 
-            try? await fetchUserProfile()
+            async let minimumDelay: Void = Task.sleep(for: .seconds(1.5))
+            async let loginResult = validateTokenAndFetchProfile()
+
+            let (_, isLogin) = try await (minimumDelay, loginResult)
 
             await MainActor.run { [weak self] in
                 guard let self else { return }
@@ -98,9 +110,26 @@ extension AppFlowController {
         }
     }
 
+    private func removeSplashView() {
+        splashView?.animateRemoval()
+        splashView = nil
+    }
+
+    private func prefetchFoodImageAssets() {
+        guard let useCase = try? container.resolve(FetchUseCase.self) else { return }
+        useCase.prefetch(forPreviousWeeks: 2, of: Date())
+    }
+
+    private func validateTokenAndFetchProfile() async -> Bool {
+        let isLogin = await validateToken()
+        try? await fetchUserProfile()
+        return isLogin
+    }
+
     fileprivate func routeToAppropriateScreen(isLogin: Bool) {
         let destinationVC = isLogin ? createMainView() : createLoginView()
         transition(to: destinationVC)
+        removeSplashView()
         if isLogin {
             registerForRemoteNotificationsAfterLogin()
         }
