@@ -228,7 +228,6 @@ public final class DetailViewModel<
         guard !state.recordsByMealType.isEmpty || !state.processingRecordsByMealType.isEmpty else { return }
 
         state.isLoading = true
-        defer { state.isLoading = false }
 
         do {
             for (_, record) in state.recordsByMealType {
@@ -243,6 +242,7 @@ public final class DetailViewModel<
             state.processingRecordsByMealType = [:]
             eventSubject.send(.deleteAllCompleted)
         } catch {
+            state.isLoading = false
             eventSubject.send(.deleteAllFailed(error))
         }
     }
