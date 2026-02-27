@@ -143,6 +143,7 @@ public final class DetailViewModel<
     @MainActor
     private func loadRecords(for date: Date) async {
         state.isLoading = true
+        defer { state.isLoading = false }
 
         do {
             let allRecords = try await fetchRecordsUseCase.execute(for: date)
@@ -158,8 +159,6 @@ public final class DetailViewModel<
                 print("Failed to load records: \(error)")
             }
         }
-
-        state.isLoading = false
     }
 
     private static func groupRecordsByMealType(_ records: [FoodRecord]) -> [MealType: FoodRecord] {
