@@ -11,6 +11,13 @@ import UIKit
 /// 음식 기록이 없을 때 표시되는 빈 상태 뷰
 final class EmptyFoodRecordView: UIView {
 
+    // MARK: - Style
+
+    enum Style {
+        case addable
+        case unavailable
+    }
+
     // MARK: - Constants
 
     private enum Constants {
@@ -35,7 +42,6 @@ final class EmptyFoodRecordView: UIView {
 
     private let addImageView: UIImageView = {
         let iv = UIImageView()
-        iv.image = DesignSystemAsset.add.image
         iv.contentMode = .scaleAspectFit
         return iv
     }()
@@ -49,11 +55,13 @@ final class EmptyFoodRecordView: UIView {
 
     // MARK: - Init
 
-    init(text: String) {
+    init(text: String, style: Style = .addable) {
         super.init(frame: .zero)
-        setupUI()
+        setupUI(style: style)
         setupConstraints()
-        setupActions()
+        if style == .addable {
+            setupActions()
+        }
         placeholderLabel.setText(text, style: .p14, color: .gray050)
     }
 
@@ -64,13 +72,20 @@ final class EmptyFoodRecordView: UIView {
 
     // MARK: - Setup
 
-    private func setupUI() {
+    private func setupUI(style: Style) {
         dashedBorderView.cornerRadius = Constants.cornerRadius
         dashedBorderView.backgroundColor = .sd900
         dashedBorderView.layer.cornerRadius = Constants.cornerRadius
         dashedBorderView.clipsToBounds = true
         addSubview(dashedBorderView)
         dashedBorderView.addSubview(contentView)
+
+        switch style {
+        case .addable:
+            addImageView.image = DesignSystemAsset.add.image
+        case .unavailable:
+            addImageView.image = DesignSystemAsset.emptyMeal.image
+        }
 
         contentView.addSubview(addImageView)
         contentView.addSubview(placeholderLabel)

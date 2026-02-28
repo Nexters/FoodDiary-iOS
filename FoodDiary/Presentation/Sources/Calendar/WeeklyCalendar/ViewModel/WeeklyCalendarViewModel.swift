@@ -194,10 +194,28 @@ public final class WeeklyCalendarViewModel<
         let completedRecords = allRecords.filter { !$0.isProcessing }
         let processingRecords = allRecords.filter { $0.isProcessing }
 
+        var hasFoodPhotos = false
+        if completedRecords.isEmpty && processingRecords.isEmpty {
+            hasFoodPhotos = await checkFoodPhotosExist(for: date)
+        }
+
         state.dateContent = DateContent(
             records: completedRecords,
-            processingRecords: processingRecords
+            processingRecords: processingRecords,
+            hasFoodPhotos: hasFoodPhotos
         )
+    }
+
+    private func checkFoodPhotosExist(for date: Date) async -> Bool {
+        guard requestPhotoAuthorizationUseCase.isAuthorized() else {
+            return false
+        }
+        do {
+            let photos = try await loadWeeklyCalendarDataUseCase.loadPhotos(for: date)
+            return !photos.isEmpty
+        } catch {
+            return false
+        }
     }
 
     @MainActor
@@ -318,6 +336,7 @@ extension WeeklyCalendarViewModel {
     public struct DateContent: Equatable {
         public let records: [FoodRecord]
         public let processingRecords: [FoodRecord]
+        public let hasFoodPhotos: Bool
     }
 }
 
