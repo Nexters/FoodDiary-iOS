@@ -213,7 +213,7 @@ public final class WeeklyCalendarViewController<
                     } else if !content.processingRecords.isEmpty {
                         .processing(content.processingRecords)
                     } else {
-                        .empty
+                        .empty(hasPhotos: content.hasFoodPhotos)
                     }
 
                 bottomContentView.configure(state: state)

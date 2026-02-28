@@ -129,8 +129,8 @@ final class BottomContentView: UIView {
         currentState = state
 
         switch state {
-        case .empty:
-            showEmptyState()
+        case .empty(let hasPhotos):
+            showEmptyState(hasPhotos: hasPhotos)
         case .processing(let records):
             if let first = records.first {
                 showProcessingState(record: first)
@@ -182,7 +182,7 @@ final class BottomContentView: UIView {
         containerView.layer.borderWidth = show ? Constants.containerBorderWidth : 0
     }
 
-    private func showEmptyState() {
+    private func showEmptyState(hasPhotos: Bool) {
         cardStackStateView.isHidden = true
         processingStateView.isHidden = true
         showContainerStyle(false)
@@ -192,7 +192,12 @@ final class BottomContentView: UIView {
         cancellables.removeAll()
 
         // 새로 생성
-        let newEmptyView = EmptyFoodRecordView(text: "오늘의 음식 사진을 추가해보세요")
+        let newEmptyView = EmptyFoodRecordView(
+            text: hasPhotos
+                ? "오늘의 음식 사진을 추가해보세요"
+                : "기록 가능한 음식 사진이 없어요",
+            style: hasPhotos ? .addable : .unavailable
+        )
         containerView.addSubview(newEmptyView)
         emptyStateView = newEmptyView
 
@@ -200,12 +205,14 @@ final class BottomContentView: UIView {
             $0.edges.equalToSuperview()
         }
 
-        // Publisher 바인딩
-        newEmptyView.addButtonTapPublisher
-            .sink { [weak self] in
-                self?.addButtonTapSubject.send()
-            }
-            .store(in: &cancellables)
+        // 사진이 있을 때만 탭 Publisher 바인딩
+        if hasPhotos {
+            newEmptyView.addButtonTapPublisher
+                .sink { [weak self] in
+                    self?.addButtonTapSubject.send()
+                }
+                .store(in: &cancellables)
+        }
     }
 
     private func showCardStackState(record: FoodRecord, totalCount: Int) {
@@ -245,7 +252,7 @@ final class BottomContentView: UIView {
 
 extension BottomContentView {
     enum State: Equatable {
-        case empty
+        case empty(hasPhotos: Bool)
         case processing([FoodRecord])
         case recorded([FoodRecord])
     }
