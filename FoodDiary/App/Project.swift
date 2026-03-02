@@ -34,7 +34,8 @@ let project = Project(
             settings: .settings(
                 base: [
                     "MARKETING_VERSION": "1.0.0",
-                    "BASE_URL": "$(BASE_URL)"
+                    "BASE_URL": "$(BASE_URL)",
+                    "TARGETED_DEVICE_FAMILY": "1"
                 ],
                 configurations: []
             )
