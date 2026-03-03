@@ -1,0 +1,291 @@
+name: Deploy to TestFlight
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-testflight
+  cancel-in-progress: false
+
+env:
+  TUIST_VERSION: 4.123.0
+
+jobs:
+  deploy:
+    name: Archive & Upload to TestFlight
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      # ── 소스 체크아웃 ──
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 빌드 환경 설정 ──
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Setup Mise
+        uses: jdx/mise-action@v2
+        with:
+          install: true
+
+      - name: Install Tuist
+        run: |
+          mise install tuist@${{ env.TUIST_VERSION }}
+          mise use -g tuist@${{ env.TUIST_VERSION }}
+          tuist version
+
+      # ── 코드 서명 설정 ──
+      - name: Install Apple Certificate
+        env:
+          CERTIFICATE_P12_BASE64: ${{ secrets.CERTIFICATE_P12_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          CERTIFICATE_PATH=$RUNNER_TEMP/certificate.p12
+          echo "$CERTIFICATE_P12_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
+
+          security import "$CERTIFICATE_PATH" \
+            -P "$CERTIFICATE_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$KEYCHAIN_PATH"
+
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> $GITHUB_ENV
+
+      - name: Install Provisioning Profile
+        env:
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          PROFILE_PATH=$RUNNER_TEMP/FoodDiary.mobileprovision
+          echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode -o "$PROFILE_PATH"
+
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< \
+            $(security cms -D -i "$PROFILE_PATH"))
+
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp "$PROFILE_PATH" \
+            ~/Library/MobileDevice/Provisioning\ Profiles/${PROFILE_UUID}.mobileprovision
+
+          echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
+
+      - name: Verify Provisioning Profile
+        run: |
+          echo "=== Installed Provisioning Profiles ==="
+          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/
+
+          PROFILE_PATH=$(ls ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision)
+          PROFILE_INFO=$(security cms -D -i "$PROFILE_PATH")
+
+          echo "=== Profile Name ==="
+          echo "$PROFILE_INFO" | /usr/libexec/PlistBuddy -c "Print Name" /dev/stdin
+
+          echo "=== Profile UUID ==="
+          echo "$PROFILE_INFO" | /usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin
+
+          echo "=== Team Identifier ==="
+          echo "$PROFILE_INFO" | /usr/libexec/PlistBuddy -c "Print TeamIdentifier:0" /dev/stdin
+
+          echo "=== Expiration Date ==="
+          echo "$PROFILE_INFO" | /usr/libexec/PlistBuddy -c "Print ExpirationDate" /dev/stdin
+
+          echo "=== App ID ==="
+          echo "$PROFILE_INFO" | /usr/libexec/PlistBuddy -c "Print Entitlements:application-identifier" /dev/stdin
+
+      # ── 설정 파일 생성 ──
+      - name: Create Config Files
+        env:
+          RELEASE_XCCONFIG: ${{ secrets.RELEASE_XCCONFIG }}
+        run: |
+          mkdir -p Configs
+          echo "$RELEASE_XCCONFIG" | grep -v -E 'CURRENT_PROJECT_VERSION|MARKETING_VERSION' > Configs/release.xcconfig
+          echo "// Debug Configuration (CI)" > Configs/debug.xcconfig
+
+      - name: Create GoogleService-Info.plist
+        env:
+          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
+        run: |
+          echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode \
+            -o FoodDiary/App/Resources/GoogleService-Info.plist
+
+      # ── App Store Connect API Key ──
+      - name: Setup App Store Connect API Key
+        env:
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+        run: |
+          mkdir -p ~/.private_keys
+          echo "$ASC_PRIVATE_KEY" > ~/.private_keys/AuthKey_${ASC_KEY_ID}.p8
+
+      # ── 의존성 설치 및 프로젝트 생성 ──
+      - name: Cache Tuist Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            Tuist/.build
+            ~/.tuist
+          key: tuist-${{ runner.os }}-${{ hashFiles('Tuist/Package.swift', 'Tuist/Package.resolved') }}
+          restore-keys: tuist-${{ runner.os }}-
+
+      - name: Install Dependencies & Generate Project
+        run: |
+          tuist install
+          tuist generate --no-open
+
+      # ── Archive ──
+      - name: Archive
+        run: |
+          set -o pipefail
+          BUILD_NUMBER=$(date -u +'%y%m%d')${{ github.run_number }}
+          MARKETING_VERSION=$(grep 'MARKETING_VERSION' FoodDiary/App/Project.swift | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          ARCHIVE_PATH=$RUNNER_TEMP/App.xcarchive
+
+          xcodebuild archive \
+            -workspace Workspace.xcworkspace \
+            -scheme release \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$ARCHIVE_PATH" \
+            MARKETING_VERSION="$MARKETING_VERSION" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM=W35T2QAC67 \
+            CODE_SIGN_IDENTITY="iPhone Distribution" \
+            OTHER_CODE_SIGN_FLAGS="--keychain ${{ env.KEYCHAIN_PATH }}" \
+            2>&1 | tee "$RUNNER_TEMP/archive.log" | xcpretty --color
+
+          # 아카이브에서 버전 추출
+          VERSION=$(/usr/libexec/PlistBuddy -c "Print :ApplicationProperties:CFBundleShortVersionString" "$ARCHIVE_PATH/Info.plist")
+
+          echo "ARCHIVE_PATH=$ARCHIVE_PATH" >> $GITHUB_ENV
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      # ── Export IPA ──
+      - name: Create ExportOptions.plist
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+            "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store</string>
+              <key>teamID</key>
+              <string>W35T2QAC67</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>com.fooddiary.ios.app</key>
+                  <string>FoodDiary-Distribution</string>
+              </dict>
+              <key>uploadSymbols</key>
+              <true/>
+              <key>uploadBitcode</key>
+              <false/>
+          </dict>
+          </plist>
+          PLIST
+          # heredoc 들여쓰기 제거
+          sed -i '' 's/^          //' "$RUNNER_TEMP/ExportOptions.plist"
+          echo "=== ExportOptions.plist ==="
+          cat "$RUNNER_TEMP/ExportOptions.plist"
+
+      - name: Export IPA
+        run: |
+          set -o pipefail
+          EXPORT_PATH=$RUNNER_TEMP/export
+
+          xcodebuild -exportArchive \
+            -archivePath "${{ env.ARCHIVE_PATH }}" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$EXPORT_PATH" \
+            2>&1 | tee "$RUNNER_TEMP/export.log" | xcpretty --color
+
+          echo "EXPORT_PATH=$EXPORT_PATH" >> $GITHUB_ENV
+          echo "=== Exported files ==="
+          ls -la "$EXPORT_PATH"
+
+      # ── TestFlight 업로드 ──
+      - name: Upload to TestFlight
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          IPA_PATH=$(ls ${{ env.EXPORT_PATH }}/*.ipa)
+
+          OUTPUT=$(xcrun altool --upload-app \
+            --type ios \
+            --file "$IPA_PATH" \
+            --apiKey "$ASC_KEY_ID" \
+            --apiIssuer "$ASC_ISSUER_ID" 2>&1) || true
+
+          echo "$OUTPUT"
+
+          if echo "$OUTPUT" | grep -q "UPLOAD FAILED\|ERROR:"; then
+            echo "::error::TestFlight 업로드 실패"
+            exit 1
+          fi
+
+      # ── Git 태그 생성 (main 브랜치 push일 때만) ──
+      - name: Create Git Tag
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          TAG="${{ env.VERSION }}"
+          git tag -f "$TAG"
+          git push origin "$TAG"
+          echo "TAG=$TAG" >> $GITHUB_ENV
+
+      # ── 아티팩트 업로드 ──
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: FoodDiary-${{ env.VERSION }}-${{ env.BUILD_NUMBER }}.ipa
+          path: ${{ env.EXPORT_PATH }}/*.ipa
+          retention-days: 30
+
+      - name: Upload dSYM Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dSYMs-${{ env.VERSION }}-${{ env.BUILD_NUMBER }}
+          path: ${{ env.ARCHIVE_PATH }}/dSYMs/
+          retention-days: 90
+
+      - name: Upload Build Log
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: build-log
+          path: |
+            ${{ runner.temp }}/archive.log
+            ${{ runner.temp }}/export.log
+          retention-days: 7
+
+      # ── 정리 ──
+      - name: Cleanup
+        if: always()
+        run: |
+          if [ -n "${{ env.KEYCHAIN_PATH }}" ]; then
+            security delete-keychain "${{ env.KEYCHAIN_PATH }}" || true
+          fi
+          rm -rf ~/Library/MobileDevice/Provisioning\ Profiles/* || true
+          rm -rf ~/.private_keys || true
