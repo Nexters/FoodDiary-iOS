@@ -68,7 +68,7 @@ public final class InsightViewModel<Repo: InsightRepository> {
                 let insight = try await fetchInsightUseCase.execute()
                 state.insight = insight
                 state.isLoading = false
-            } catch is InsightError {
+            } catch InsightError.insufficientData {
                 state.hasInsufficientData = true
                 state.isLoading = false
             } catch {
