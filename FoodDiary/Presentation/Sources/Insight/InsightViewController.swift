@@ -163,6 +163,29 @@ public final class InsightViewController<Repo: InsightRepository>: UIViewControl
                 self?.buildContentSections(with: insight)
             }
             .store(in: &cancellables)
+
+        viewModel.eventPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] event in
+                switch event {
+                case .loadFailed:
+                    self?.showLoadFailedAlert()
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    private func showLoadFailedAlert() {
+        let alert = UIAlertController(
+            title: "오류",
+            message: "데이터를 불러오는 데 실패했습니다.\n다시 시도해 주세요.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "다시 시도", style: .default) { [weak self] _ in
+            self?.viewModel.input.send(.loadInsight)
+        })
+        alert.addAction(UIAlertAction(title: "닫기", style: .cancel))
+        present(alert, animated: true)
     }
 
     // MARK: - Content
