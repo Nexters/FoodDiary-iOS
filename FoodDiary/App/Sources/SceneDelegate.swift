@@ -177,7 +177,7 @@ extension SceneDelegate {
             return UserRepositoryImpl(httpClient: client, tokenStorage: storage)
         }
 
-        container.register(InsightRepository.self) { resolver in
+        container.register(InsightRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>.self) { resolver in
             guard let client = resolver.resolve(HTTPClient.self),
                   let storage = resolver.resolve(AuthTokenStorage<KeychainService>.self) else {
                 fatalError("InsightRepositoryImpl dependencies not registered")
@@ -391,13 +391,12 @@ extension SceneDelegate {
                 InsightRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
             >.self
         ) { resolver in
-            guard let repository = resolver.resolve(InsightRepository.self),
-                  let concreteRepository = repository
-                      as? InsightRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-            else {
+            guard let repository = resolver.resolve(
+                InsightRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>.self
+            ) else {
                 fatalError("FetchInsightUseCase dependencies not registered")
             }
-            return FetchInsightUseCase(repository: concreteRepository)
+            return FetchInsightUseCase(repository: repository)
         }
 
         container.register(
