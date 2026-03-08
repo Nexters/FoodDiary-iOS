@@ -75,6 +75,7 @@ struct RequestableTests {
     func testMultipartBody() throws {
         let formData = MultipartFormData(
             date: "2026-02-17",
+            deviceId: "abcd",
             photos: [
                 File(fileName: "photo1.jpg", mimeType: "image/jpeg", data: "dummy-1".data(using: .utf8)!),
                 File(fileName: "photo2.jpg", mimeType: "image/jpeg", data: "dummy-2".data(using: .utf8)!)
@@ -91,6 +92,7 @@ struct RequestableTests {
     func testMultipartContentTypeHeader() throws {
         let formData = MultipartFormData(
             date: "2026-02-17",
+            deviceId: "abcd",
             photos: [
                 File(fileName: "photo1.jpg", mimeType: "image/jpeg", data: "dummy-1".data(using: .utf8)!),
                 File(fileName: "photo2.jpg", mimeType: "image/jpeg", data: "dummy-2".data(using: .utf8)!)
