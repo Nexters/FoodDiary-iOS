@@ -22,6 +22,7 @@ final class InsightKeywordsView: UIView {
     private let titleLabel = UILabel()
     private let tagsContainerView = UIView()
     private let keywords: [String]
+    private var didLayoutTags = false
 
     // MARK: - Init
 
@@ -58,22 +59,23 @@ final class InsightKeywordsView: UIView {
         tagsContainerView.snp.makeConstraints {
             $0.top.equalTo(titleLabel.snp.bottom).offset(12)
             $0.leading.trailing.equalToSuperview().inset(20)
+            $0.height.equalTo(0)
             $0.bottom.equalToSuperview().inset(20)
         }
     }
 
     public override func layoutSubviews() {
         super.layoutSubviews()
+        guard !didLayoutTags else { return }
         layoutTags()
     }
 
     // MARK: - Tag Layout
 
     private func layoutTags() {
-        tagsContainerView.subviews.forEach { $0.removeFromSuperview() }
-
         let containerWidth = tagsContainerView.bounds.width
         guard containerWidth > 0 else { return }
+        didLayoutTags = true
 
         var currentX: CGFloat = 0
         var currentY: CGFloat = 0
