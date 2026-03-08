@@ -177,6 +177,14 @@ extension SceneDelegate {
             return UserRepositoryImpl(httpClient: client, tokenStorage: storage)
         }
 
+        container.register(InsightRepository.self) { resolver in
+            guard let client = resolver.resolve(HTTPClient.self),
+                  let storage = resolver.resolve(AuthTokenStorage<KeychainService>.self) else {
+                fatalError("InsightRepositoryImpl dependencies not registered")
+            }
+            return InsightRepositoryImpl(httpClient: client, tokenStorage: storage)
+        }
+
         container.register(NicknameStoring.self) { _ in
             NicknameStorage()
         }
@@ -379,6 +387,20 @@ extension SceneDelegate {
         }
 
         container.register(
+            FetchInsightUseCase<
+                InsightRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
+            >.self
+        ) { resolver in
+            guard let repository = resolver.resolve(InsightRepository.self),
+                  let concreteRepository = repository
+                      as? InsightRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
+            else {
+                fatalError("FetchInsightUseCase dependencies not registered")
+            }
+            return FetchInsightUseCase(repository: concreteRepository)
+        }
+
+        container.register(
             FetchUserProfileUseCase<
                 UserRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
                 NicknameStorage
@@ -433,6 +455,22 @@ extension SceneDelegate {
             }
 
             return LoginViewModel(finalizeAppleLoginUseCase: useCase)
+        }
+
+        typealias InsightVM = InsightViewModel<
+            InsightRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
+        >
+
+        container.register(InsightVM.self, scope: .transient) { resolver in
+            guard let fetchInsightUseCase = resolver.resolve(
+                FetchInsightUseCase<
+                    InsightRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
+                >.self
+            ) else {
+                fatalError("FetchInsightUseCase not registered")
+            }
+
+            return InsightViewModel(fetchInsightUseCase: fetchInsightUseCase)
         }
 
         // WeeklyCalendarViewModel 타입 별칭
