@@ -190,10 +190,18 @@ extension AppFlowController {
             return vc
         }
 
+        typealias InsightVM = InsightViewModel<
+            InsightRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
+        >
+
+        guard let insightVM = try? container.resolve(InsightVM.self) else {
+            fatalError("InsightViewModel not registered")
+        }
+
         let tabBarVC = RootTabBarController(
             weeklyVC: weeklyCalendarVC,
             monthlyVC: monthlyCalendarVC,
-            insightVC: InsightViewController(),
+            insightVC: InsightViewController(viewModel: insightVM),
             myPageViewControllerFactory: myPageVCFactory
         )
 
