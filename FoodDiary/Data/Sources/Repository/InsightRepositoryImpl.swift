@@ -16,14 +16,10 @@ public struct InsightRepositoryImpl<Client: HTTPClienting, Storage: AuthTokenSto
     }
 
     public func fetchInsight() async throws -> Insight {
-        guard let accessToken = tokenStorage.get() else {
-            throw InsightError.noAccessToken
-        }
-
         do {
             let response: InsightResponseDTO = try await httpClient.request(
                 InsightEndpoint.fetch,
-                accessToken: accessToken
+                accessToken: tokenStorage.get()
             )
             return response.toInsight()
         } catch NetworkError.httpError(statusCode: 400, _) {
