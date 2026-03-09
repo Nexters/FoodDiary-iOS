@@ -11,12 +11,13 @@ public extension UIColor {
 
     static let primary = DesignSystemAsset.primary.color
     static let primaryLight = DesignSystemAsset.primaryLight.color
-    static let primaryLight100 = DesignSystemAsset.primaryLight100.color
-    
+    static let primaryGradientStart = DesignSystemAsset.primaryGradientStart.color
+    static let primaryGradientEnd = DesignSystemAsset.primaryGradientEnd.color
+
     // MARK: - Blue
-    
-    static let blue = DesignSystemAsset.blue.color
-    static let blueLight = DesignSystemAsset.blueLight.color
+
+    static let blueGradientStart = DesignSystemAsset.blueGradientStart.color
+    static let blueGradientEnd = DesignSystemAsset.blueGradientEnd.color
 
     // MARK: - Red Positive
 
