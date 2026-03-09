@@ -11,9 +11,9 @@ final class InsightCategoryStatsView: UIView {
 
     // MARK: - UI Components
 
-    private let titleLabel = UILabel()
-    private let currentMonthLabel = UILabel()
-    private let previousMonthLabel = UILabel()
+    private let descriptionLabel = UILabel()
+    private let rankLabel = UILabel()
+    private let donutChartView = DonutChartView()
 
     // MARK: - Init
 
@@ -35,40 +35,48 @@ final class InsightCategoryStatsView: UIView {
         layer.cornerRadius = 16
         clipsToBounds = true
 
-        titleLabel.setText("🍽️ 카테고리 분석", style: .hd18)
-        addSubview(titleLabel)
-
         let current = categoryStats.currentMonth
-        currentMonthLabel.setText(
-            "이번 달 최다: \(current.topCategory) (\(current.count)회)",
-            style: .p15,
-            color: .gray050
-        )
-        addSubview(currentMonthLabel)
-
         let previous = categoryStats.previousMonth
-        previousMonthLabel.setText(
-            "지난 달 최다: \(previous.topCategory) (\(previous.count)회)",
-            style: .p14,
-            color: .gray300
-        )
-        addSubview(previousMonthLabel)
+        let isSameCategory = current.topCategory == previous.topCategory
+
+        let descriptionText = isSameCategory ? "왕좌가 유지되었어요." : "왕좌가 바뀌었어요."
+        descriptionLabel.setText(descriptionText, style: .hd16, color: .gray050)
+        addSubview(descriptionLabel)
+
+        let attributed = NSMutableAttributedString()
+        if !isSameCategory {
+            attributed.append(Typography.hd16.styled(previous.topCategory, color: .blueGradientStart))
+            attributed.append(Typography.hd16.styled(" 대신 ", color: .gray050))
+        }
+        attributed.append(Typography.hd16.styled(current.topCategory, color: .primary))
+        attributed.append(Typography.hd16.styled(" 이 1등이에요.", color: .gray050))
+        rankLabel.attributedText = attributed
+        addSubview(rankLabel)
+
+        donutChartView.innerRadiusRatio = 0.3
+        donutChartView.separatorColor = .sd900
+        donutChartView.data = [
+            DonutChartView.SliceData(value: Double(current.count), colors: [.primaryGradientStart, .primaryGradientEnd], label: "\(current.count)회"),
+            DonutChartView.SliceData(value: Double(previous.count), colors: [.blueGradientStart, .blueGradientEnd], label: "\(previous.count)회")
+        ]
+        addSubview(donutChartView)
     }
 
     private func setupConstraints() {
-        titleLabel.snp.makeConstraints {
+        descriptionLabel.snp.makeConstraints {
             $0.top.leading.equalToSuperview().inset(20)
             $0.trailing.lessThanOrEqualToSuperview().inset(20)
         }
 
-        currentMonthLabel.snp.makeConstraints {
-            $0.top.equalTo(titleLabel.snp.bottom).offset(12)
+        rankLabel.snp.makeConstraints {
+            $0.top.equalTo(descriptionLabel.snp.bottom).offset(8)
             $0.leading.trailing.equalToSuperview().inset(20)
         }
 
-        previousMonthLabel.snp.makeConstraints {
-            $0.top.equalTo(currentMonthLabel.snp.bottom).offset(8)
-            $0.leading.trailing.equalToSuperview().inset(20)
+        donutChartView.snp.makeConstraints {
+            $0.top.equalTo(rankLabel.snp.bottom).offset(20)
+            $0.centerX.equalToSuperview()
+            $0.width.height.equalTo(220)
             $0.bottom.equalToSuperview().inset(20)
         }
     }
