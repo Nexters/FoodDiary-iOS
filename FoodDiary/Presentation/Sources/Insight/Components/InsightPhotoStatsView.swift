@@ -124,8 +124,8 @@ final class InsightPhotoStatsView: UIView {
         let counts = [prevCount, currCount]
         let countInts = [Int(prevCount), Int(currCount)]
         let gradientColors: [[UIColor]] = [
-            [.blue, .blueLight],
-            [.primary, .primaryLight100]
+            [.blueGradientStart, .blueGradientEnd],
+            [.primaryGradientStart, .primaryGradientEnd]
         ]
 
         for (i, count) in counts.enumerated() {
