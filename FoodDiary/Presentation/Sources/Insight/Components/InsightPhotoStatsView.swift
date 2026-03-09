@@ -13,6 +13,7 @@ final class InsightPhotoStatsView: UIView {
 
     private enum Constants {
         static let maxBarHeight: CGFloat = 160
+        static let minBarHeight: CGFloat = 30
         static let lineCount: Int = 6
     }
 
@@ -69,16 +70,15 @@ final class InsightPhotoStatsView: UIView {
 
     private func setupChangeRateLabel(photoStats: PhotoStats) {
         let rate = photoStats.changeRate
-        let rateColor: UIColor = rate >= 0 ? .primary : .rn500
 
         let prefixLabel = UILabel()
         prefixLabel.setText("지난 달 대비 기록된 사진이 ", style: .p10, color: .gray050)
 
         let valueLabel = UILabel()
-        valueLabel.setText("\(Int(rate))%", style: .hd16, color: rateColor)
+        valueLabel.setText("\(Int(rate))%", style: .hd16, color: .primary)
 
         let suffixLabel = UILabel()
-        suffixLabel.setText(" 증가했어요.", style: .p10, color: .gray050)
+        suffixLabel.setText(rate >= 0 ? " 증가했어요." : " 감소했어요.", style: .p10, color: .gray050)
 
         changeRateStackView.axis = .horizontal
         changeRateStackView.alignment = .center
@@ -129,7 +129,7 @@ final class InsightPhotoStatsView: UIView {
         ]
 
         for (i, count) in counts.enumerated() {
-            let barHeight = total > 0 ? (count / total) * Constants.maxBarHeight : 0
+            let barHeight = total > 0 ? max((count / total) * Constants.maxBarHeight, Constants.minBarHeight) : 0
             let barView = GradientBarView(colors: gradientColors[i])
 
             let label = UILabel()
