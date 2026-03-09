@@ -10,6 +10,13 @@ public extension UIColor {
     // MARK: - Primary
 
     static let primary = DesignSystemAsset.primary.color
+    static let primaryLight = DesignSystemAsset.primaryLight.color
+    static let primaryLight100 = DesignSystemAsset.primaryLight100.color
+    
+    // MARK: - Blue
+    
+    static let blue = DesignSystemAsset.blue.color
+    static let blueLight = DesignSystemAsset.blueLight.color
 
     // MARK: - Red Positive
 
