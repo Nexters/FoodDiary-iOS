@@ -3,25 +3,19 @@
 //  Presentation
 //
 
+import DesignSystem
 import Domain
 import SnapKit
 import UIKit
 
 final class InsightDiaryTimeStatsView: UIView {
 
-    // MARK: - Constants
-
-    private enum Constants {
-        static let barMaxHeight: CGFloat = 80
-        static let barWidth: CGFloat = 6
-        static let barSpacing: CGFloat = 4
-    }
-
     // MARK: - UI Components
 
     private let titleLabel = UILabel()
-    private let activeHourLabel = UILabel()
-    private let chartContainerView = UIView()
+    private let subtitleLabel = UILabel()
+    private let descriptionLabel = UILabel()
+    private let bigTimeLabel = UILabel()
 
     // MARK: - Init
 
@@ -29,7 +23,6 @@ final class InsightDiaryTimeStatsView: UIView {
         super.init(frame: .zero)
         setupUI(diaryTimeStats: diaryTimeStats)
         setupConstraints()
-        buildChart(distribution: diaryTimeStats.distribution)
     }
 
     @available(*, unavailable)
@@ -44,15 +37,37 @@ final class InsightDiaryTimeStatsView: UIView {
         layer.cornerRadius = 16
         clipsToBounds = true
 
-        titleLabel.setText("⏰ 기록 시간대", style: .hd18)
+        let hour = diaryTimeStats.mostActiveHour
+        let timeText = String(format: "%d:00", hour)
+
+        titleLabel.setText("식사는 늘,", style: .hd18, color: .primary)
         addSubview(titleLabel)
 
-        let hour = diaryTimeStats.mostActiveHour
-        let hourText = String(format: "%02d시", hour)
-        activeHourLabel.setText("주로 \(hourText)에 기록해요", style: .p15, color: .gray050)
-        addSubview(activeHourLabel)
+        let timeAttr = Typography.hd20.styled(timeText, color: .primary)
+        let suffixAttr = Typography.hd20.styled(" 이 제일 많았어요", color: .gray200)
+        let combined = NSMutableAttributedString()
+        combined.append(timeAttr)
+        combined.append(suffixAttr)
+        subtitleLabel.attributedText = combined
+        addSubview(subtitleLabel)
 
-        addSubview(chartContainerView)
+        descriptionLabel.setText(
+            "이 시간대에 음식 사진이 가장 많이 남았어요.",
+            style: .p14,
+            color: .gray400
+        )
+        descriptionLabel.numberOfLines = 0
+        addSubview(descriptionLabel)
+
+        bigTimeLabel.attributedText = NSAttributedString(
+            string: timeText,
+            attributes: [
+                .font: DesignSystemFontFamily.Pretendard.bold.font(size: 50),
+                .foregroundColor: UIColor.primary
+            ]
+        )
+        bigTimeLabel.textAlignment = .center
+        addSubview(bigTimeLabel)
     }
 
     private func setupConstraints() {
@@ -61,49 +76,20 @@ final class InsightDiaryTimeStatsView: UIView {
             $0.trailing.lessThanOrEqualToSuperview().inset(20)
         }
 
-        activeHourLabel.snp.makeConstraints {
-            $0.top.equalTo(titleLabel.snp.bottom).offset(12)
+        subtitleLabel.snp.makeConstraints {
+            $0.top.equalTo(titleLabel.snp.bottom).offset(4)
             $0.leading.trailing.equalToSuperview().inset(20)
         }
 
-        chartContainerView.snp.makeConstraints {
-            $0.top.equalTo(activeHourLabel.snp.bottom).offset(16)
+        descriptionLabel.snp.makeConstraints {
+            $0.top.equalTo(subtitleLabel.snp.bottom).offset(12)
             $0.leading.trailing.equalToSuperview().inset(20)
-            $0.height.equalTo(Constants.barMaxHeight + 20)
-            $0.bottom.equalToSuperview().inset(20)
-        }
-    }
-
-    private func buildChart(distribution: [HourCount]) {
-        let maxCount = distribution.map(\.count).max() ?? 1
-
-        let stackView = UIStackView()
-        stackView.axis = .horizontal
-        stackView.alignment = .bottom
-        stackView.distribution = .equalSpacing
-        stackView.spacing = Constants.barSpacing
-        chartContainerView.addSubview(stackView)
-
-        stackView.snp.makeConstraints {
-            $0.edges.equalToSuperview()
         }
 
-        for hourCount in distribution {
-            let ratio = maxCount > 0
-                ? CGFloat(hourCount.count) / CGFloat(maxCount)
-                : 0
-            let barHeight = max(2, Constants.barMaxHeight * ratio)
-
-            let barView = UIView()
-            barView.backgroundColor = hourCount.count == maxCount ? .primary : .sd700
-            barView.layer.cornerRadius = Constants.barWidth / 2
-
-            barView.snp.makeConstraints {
-                $0.width.equalTo(Constants.barWidth)
-                $0.height.equalTo(barHeight)
-            }
-
-            stackView.addArrangedSubview(barView)
+        bigTimeLabel.snp.makeConstraints {
+            $0.top.equalTo(descriptionLabel.snp.bottom).offset(24)
+            $0.centerX.equalToSuperview()
+            $0.bottom.equalToSuperview().inset(28)
         }
     }
 }
