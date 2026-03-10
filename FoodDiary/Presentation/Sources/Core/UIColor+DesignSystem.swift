@@ -39,6 +39,7 @@ public extension UIColor {
 
     static let sdBase = DesignSystemAsset.sdBase.color
     static let sd900 = DesignSystemAsset.sd900.color
+    static let sd850 = DesignSystemAsset.sd850.color
     static let sd800 = DesignSystemAsset.sd800.color
     static let sd700 = DesignSystemAsset.sd700.color
     static let sd600 = DesignSystemAsset.sd600.color
