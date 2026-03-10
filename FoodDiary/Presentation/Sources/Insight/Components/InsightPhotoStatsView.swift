@@ -54,7 +54,10 @@ final class InsightPhotoStatsView: UIView {
         layer.cornerRadius = 16
         clipsToBounds = true
 
-        descriptionLabel.setText("먹기 전에\n카메라부터 찾았네요.", style: .hd16, color: .gray050)
+        let descriptionText = photoStats.changeRate >= 0
+            ? "먹기 전에\n카메라부터 찾았네요."
+            : "이번 달엔 음식에 더 집중하셨네요."
+        descriptionLabel.setText(descriptionText, style: .hd16, color: .gray050)
         descriptionLabel.numberOfLines = 2
 
         setupChangeRateLabel(photoStats: photoStats)
@@ -75,7 +78,7 @@ final class InsightPhotoStatsView: UIView {
         prefixLabel.setText("지난 달 대비 기록된 사진이 ", style: .p10, color: .gray050)
 
         let valueLabel = UILabel()
-        valueLabel.setText("\(Int(rate))%", style: .hd16, color: .primary)
+        valueLabel.setText("\(Int(abs(rate)))%", style: .hd16, color: .primary)
 
         let suffixLabel = UILabel()
         suffixLabel.setText(rate >= 0 ? " 증가했어요." : " 감소했어요.", style: .p10, color: .gray050)
