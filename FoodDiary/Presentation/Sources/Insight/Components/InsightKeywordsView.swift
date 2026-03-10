@@ -8,21 +8,11 @@ import UIKit
 
 final class InsightKeywordsView: UIView {
 
-    // MARK: - Constants
-
-    private enum Constants {
-        static let tagHeight: CGFloat = 32
-        static let tagHorizontalPadding: CGFloat = 14
-        static let tagSpacing: CGFloat = 8
-        static let lineSpacing: CGFloat = 8
-    }
-
     // MARK: - UI Components
 
     private let titleLabel = UILabel()
-    private let tagsContainerView = UIView()
+    private let tagsStackView = UIStackView()
     private let keywords: [String]
-    private var didLayoutTags = false
 
     // MARK: - Init
 
@@ -45,9 +35,20 @@ final class InsightKeywordsView: UIView {
         layer.cornerRadius = 16
         clipsToBounds = true
 
-        titleLabel.setText("💬 키워드", style: .hd18)
+        titleLabel.setText("나의 입맛과\n가장 잘 어울리는 키워드", style: .hd16, color: .gray050)
+        titleLabel.numberOfLines = 2
+
+        tagsStackView.axis = .horizontal
+        tagsStackView.spacing = 8
+        tagsStackView.alignment = .center
+        tagsStackView.distribution = .equalSpacing
+
+        for keyword in keywords {
+            tagsStackView.addArrangedSubview(makeTagView(text: keyword))
+        }
+
         addSubview(titleLabel)
-        addSubview(tagsContainerView)
+        addSubview(tagsStackView)
     }
 
     private func setupConstraints() {
@@ -56,72 +57,35 @@ final class InsightKeywordsView: UIView {
             $0.trailing.lessThanOrEqualToSuperview().inset(20)
         }
 
-        tagsContainerView.snp.makeConstraints {
-            $0.top.equalTo(titleLabel.snp.bottom).offset(12)
-            $0.leading.trailing.equalToSuperview().inset(20)
-            $0.height.equalTo(0)
+        tagsStackView.snp.makeConstraints {
+            $0.top.equalTo(titleLabel.snp.bottom).offset(32)
+            $0.leading.equalToSuperview().inset(20)
+            $0.trailing.lessThanOrEqualToSuperview().inset(20)
             $0.bottom.equalToSuperview().inset(20)
         }
     }
 
-    public override func layoutSubviews() {
-        super.layoutSubviews()
-        guard !didLayoutTags else { return }
-        layoutTags()
-    }
-
-    // MARK: - Tag Layout
-
-    private func layoutTags() {
-        let containerWidth = tagsContainerView.bounds.width
-        guard containerWidth > 0 else { return }
-        didLayoutTags = true
-
-        var currentX: CGFloat = 0
-        var currentY: CGFloat = 0
-
-        for keyword in keywords {
-            let tagView = makeTagView(text: keyword)
-            let tagSize = tagView.systemLayoutSizeFitting(UIView.layoutFittingCompressedSize)
-
-            if currentX + tagSize.width > containerWidth, currentX > 0 {
-                currentX = 0
-                currentY += Constants.tagHeight + Constants.lineSpacing
-            }
-
-            tagView.frame = CGRect(
-                x: currentX,
-                y: currentY,
-                width: tagSize.width,
-                height: Constants.tagHeight
-            )
-            tagsContainerView.addSubview(tagView)
-            currentX += tagSize.width + Constants.tagSpacing
-        }
-
-        let totalHeight = currentY + Constants.tagHeight
-        tagsContainerView.snp.updateConstraints {
-            $0.height.equalTo(totalHeight)
-        }
-    }
+    // MARK: - Tag
 
     private func makeTagView(text: String) -> UIView {
         let container = UIView()
-        container.backgroundColor = .sd700
-        container.layer.cornerRadius = Constants.tagHeight / 2
+        container.backgroundColor = .sd850
 
         let label = UILabel()
-        label.setText("#\(text)", style: .p14, color: .gray050)
+        label.setText("#\(text)", style: .p14, color: .gray400)
+
         container.addSubview(label)
 
         label.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(Constants.tagHorizontalPadding)
+            $0.leading.trailing.equalToSuperview().inset(14)
             $0.centerY.equalToSuperview()
         }
 
         container.snp.makeConstraints {
-            $0.height.equalTo(Constants.tagHeight)
+            $0.height.equalTo(36)
         }
+
+        container.layer.cornerRadius = 18
 
         return container
     }
