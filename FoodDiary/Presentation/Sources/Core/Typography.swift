@@ -26,6 +26,8 @@ public enum Typography {
     case hd18
     /// 페이지 서브 타이틀 2nd - 16pt Bold
     case hd16
+    /// 소형 헤드라인 - 15pt Bold
+    case hd15
 
     // MARK: - Paragraph (Regular, 120% line height)
     /// 본문 - 18pt Regular
@@ -50,6 +52,8 @@ public enum Typography {
             return DesignSystemFontFamily.Pretendard.bold.font(size: 18)
         case .hd16:
             return DesignSystemFontFamily.Pretendard.bold.font(size: 16)
+        case .hd15:
+            return DesignSystemFontFamily.Pretendard.bold.font(size: 15)
         case .p18:
             return DesignSystemFontFamily.Pretendard.regular.font(size: 18)
         case .p15:
