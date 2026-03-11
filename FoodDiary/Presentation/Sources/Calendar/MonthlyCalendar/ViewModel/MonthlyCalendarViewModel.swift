@@ -98,6 +98,12 @@ public final class MonthlyCalendarViewModel<
             await loadMonth(for: state.currentDisplayDate)
 
         case .selectMonth(let date):
+            let calendar = Calendar.current
+            let newComponents = calendar.dateComponents([.year, .month], from: date)
+            let todayComponents = calendar.dateComponents([.year, .month], from: Date())
+            guard let newYearMonth = calendar.date(from: newComponents),
+                  let todayYearMonth = calendar.date(from: todayComponents),
+                  newYearMonth <= todayYearMonth else { return }
             state.currentDisplayDate = date
             await loadMonth(for: state.currentDisplayDate)
 
