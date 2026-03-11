@@ -115,6 +115,8 @@ public final class MonthlyCalendarViewController<
         view.addSubview(containerView)
         containerView.addSubview(stackView)
 
+        setupSwipeGestures()
+
         let mypageButton = UIBarButtonItem(
             image: DesignSystemAsset.iconMypage.image,
             style: .plain,
@@ -238,6 +240,27 @@ public final class MonthlyCalendarViewController<
                 }
             }
             .store(in: &cancellables)
+    }
+
+    private func setupSwipeGestures() {
+        let swipeLeft = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipe(_:)))
+        swipeLeft.direction = .left
+        containerView.addGestureRecognizer(swipeLeft)
+
+        let swipeRight = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipe(_:)))
+        swipeRight.direction = .right
+        containerView.addGestureRecognizer(swipeRight)
+    }
+
+    @objc private func handleSwipe(_ gesture: UISwipeGestureRecognizer) {
+        let calendar = Calendar.current
+        let offset = gesture.direction == .left ? 1 : -1
+        guard let newDate = calendar.date(
+            byAdding: .month,
+            value: offset,
+            to: viewModel.state.currentDisplayDate
+        ) else { return }
+        viewModel.input.send(.selectMonth(newDate))
     }
 
     // MARK: - Private Methods
