@@ -39,17 +39,20 @@ final class InsightCategoryStatsView: UIView {
         let previous = categoryStats.previousMonth
         let isSameCategory = current.topCategory == previous.topCategory
 
+        let currentName = FoodGenre(rawValue: current.topCategory)?.displayName ?? current.topCategory
+        let previousName = FoodGenre(rawValue: previous.topCategory)?.displayName ?? previous.topCategory
+
         let descriptionText = isSameCategory ? "왕좌가 유지되었어요." : "왕좌가 바뀌었어요."
         descriptionLabel.setText(descriptionText, style: .hd16, color: .gray050)
         addSubview(descriptionLabel)
 
         let attributed = NSMutableAttributedString()
         if !isSameCategory {
-            attributed.append(Typography.hd16.styled(previous.topCategory, color: .blueGradientStart))
+            attributed.append(Typography.hd16.styled(previousName, color: .blueGradientStart))
             attributed.append(Typography.hd16.styled(" 대신 ", color: .gray050))
         }
-        attributed.append(Typography.hd16.styled(current.topCategory, color: .primary))
-        attributed.append(Typography.hd16.styled(" 이 1등이에요.", color: .gray050))
+        attributed.append(Typography.hd16.styled(currentName, color: .primary))
+        attributed.append(Typography.hd16.styled("이 1등이에요.", color: .gray050))
         rankLabel.attributedText = attributed
         addSubview(rankLabel)
 
