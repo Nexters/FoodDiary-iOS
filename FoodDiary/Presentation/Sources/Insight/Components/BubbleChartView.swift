@@ -163,7 +163,7 @@ final class BubbleChartView: UIView {
         container.addSublayer(circleLayer)
 
         // 라벨 텍스트
-        let nameFontSize: CGFloat = diameter > 100 ? 16 : (diameter > 70 ? 13 : 11)
+        let nameFontSize: CGFloat = diameter > 100 ? 15 : (diameter > 70 ? 13 : 11)
         let countFontSize: CGFloat = diameter > 100 ? 12 : (diameter > 70 ? 10 : 9)
         let nameFont = DesignSystemFontFamily.Pretendard.bold.font(size: nameFontSize)
         let countFont = DesignSystemFontFamily.Pretendard.regular.font(size: countFontSize)
