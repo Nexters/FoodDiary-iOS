@@ -44,7 +44,7 @@ struct InsightResponseDTO: Decodable {
 struct PhotoStatsDTO: Decodable {
     let currentMonthCount: Int
     let previousMonthCount: Int
-    let changeRate: Int
+    let changeRate: Double
 
     enum CodingKeys: String, CodingKey {
         case currentMonthCount = "current_month_count"
@@ -56,7 +56,7 @@ struct PhotoStatsDTO: Decodable {
         PhotoStats(
             currentMonthCount: currentMonthCount,
             previousMonthCount: previousMonthCount,
-            changeRate: changeRate
+            changeRate: Int(changeRate)
         )
     }
 }
