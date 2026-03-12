@@ -35,8 +35,7 @@ final class InsightDiaryTimeStatsView: UIView {
         layer.cornerRadius = 16
         clipsToBounds = true
 
-        let hour = diaryTimeStats.mostActiveHour
-        let timeText = String(format: "%d:00", hour)
+        let timeText = diaryTimeStats.mostActiveTime
 
         let attributed = NSMutableAttributedString()
         attributed.append(Typography.hd15.styled("식사는 늘,\n", color: .white, lineSpacing: 6))
