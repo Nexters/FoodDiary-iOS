@@ -196,6 +196,7 @@ public final class InsightViewController<Repo: InsightRepository>: UIViewControl
         scrollView.isHidden = false
 
         let sections: [UIView] = [
+            InsightHeaderView(),
             InsightPhotoStatsView(photoStats: insight.photoStats, month: insight.month),
             InsightCategoryStatsView(categoryStats: insight.categoryStats),
             InsightTopMenuView(topMenu: insight.topMenu),
