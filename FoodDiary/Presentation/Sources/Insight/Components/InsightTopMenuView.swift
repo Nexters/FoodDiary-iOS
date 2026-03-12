@@ -54,7 +54,7 @@ final class InsightTopMenuView: UIView {
 
     private func setupTitle(week: Int) {
         let attributed = NSMutableAttributedString()
-        attributed.append(Typography.hd15.styled("가장 활발하게\n기록한 주는 ", color: .white, lineSpacing: 6))
+        attributed.append(Typography.hd15.styled("이번달 가장 자주먹은\n주차는 ", color: .white, lineSpacing: 6))
         attributed.append(Typography.hd15.styled("\(week)주차", color: .primary))
 
         titleLabel.attributedText = attributed
