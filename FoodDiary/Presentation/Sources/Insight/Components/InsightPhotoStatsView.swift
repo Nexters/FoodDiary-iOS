@@ -57,7 +57,7 @@ final class InsightPhotoStatsView: UIView {
         let descriptionText = photoStats.changeRate >= 0
             ? "먹기 전에\n카메라부터 찾았네요."
             : "이번 달엔 음식에 더 집중하셨네요."
-        descriptionLabel.setText(descriptionText, style: .hd16, color: .gray050)
+        descriptionLabel.setText(descriptionText, style: .hd15, color: .gray050, lineSpacing: 6)
         descriptionLabel.numberOfLines = 2
 
         setupChangeRateLabel(photoStats: photoStats)

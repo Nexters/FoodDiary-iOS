@@ -48,7 +48,7 @@ final class InsightKeywordsView: UIView {
         layer.cornerRadius = 16
         clipsToBounds = true
 
-        titleLabel.setText("나의 입맛과\n가장 잘 어울리는 키워드", style: .hd16, color: .gray050)
+        titleLabel.setText("나의 입맛과\n가장 잘 어울리는 키워드", style: .hd15, color: .gray050, lineSpacing: 6)
         titleLabel.numberOfLines = 2
         addSubview(titleLabel)
         addSubview(tagsContainer)
