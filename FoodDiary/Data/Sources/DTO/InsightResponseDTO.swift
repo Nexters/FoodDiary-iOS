@@ -10,21 +10,19 @@ struct InsightResponseDTO: Decodable {
     let month: String
     let photoStats: PhotoStatsDTO
     let categoryStats: CategoryStatsDTO
-    let topMenu: TopMenuDTO
     let diaryTimeStats: DiaryTimeStatsDTO
-    let keywords: [String]
-    let keywordStats: [KeywordStatDTO]
     let locationStats: [LocationStatDTO]
+    let tagStats: [KeywordStatDTO]
+    let weeklyStats: WeeklyStatsDTO
 
     enum CodingKeys: String, CodingKey {
         case month
         case photoStats = "photo_stats"
         case categoryStats = "category_stats"
-        case topMenu = "top_menu"
         case diaryTimeStats = "diary_time_stats"
-        case keywords
-        case keywordStats = "keyword_stats"
         case locationStats = "location_stats"
+        case tagStats = "tag_stats"
+        case weeklyStats = "weekly_stats"
     }
 
     func toInsight() -> Insight {
@@ -32,11 +30,10 @@ struct InsightResponseDTO: Decodable {
             month: month,
             photoStats: photoStats.toEntity(),
             categoryStats: categoryStats.toEntity(),
-            topMenu: topMenu.toEntity(),
             diaryTimeStats: diaryTimeStats.toEntity(),
-            keywords: keywords,
-            keywordStats: keywordStats.map { $0.toEntity() },
-            locationStats: locationStats.map { $0.toEntity() }
+            locationStats: locationStats.map { $0.toEntity() },
+            tagStats: tagStats.map { $0.toEntity() },
+            weeklyStats: weeklyStats.toEntity()
         )
     }
 }
@@ -124,15 +121,6 @@ struct CategoryCountsDTO: Decodable {
     }
 }
 
-struct TopMenuDTO: Decodable {
-    let name: String
-    let count: Int
-
-    func toEntity() -> TopMenu {
-        TopMenu(name: name, count: count)
-    }
-}
-
 struct DiaryTimeStatsDTO: Decodable {
     let mostActiveTime: String
     let distribution: [TimeCountDTO]
@@ -174,5 +162,31 @@ struct LocationStatDTO: Decodable {
 
     func toEntity() -> LocationStat {
         LocationStat(dong: dong, count: count)
+    }
+}
+
+struct WeeklyStatsDTO: Decodable {
+    let mostActiveWeek: Int
+    let weeklyCounts: [WeekCountDTO]
+
+    enum CodingKeys: String, CodingKey {
+        case mostActiveWeek = "most_active_week"
+        case weeklyCounts = "weekly_counts"
+    }
+
+    func toEntity() -> WeeklyStats {
+        WeeklyStats(
+            mostActiveWeek: mostActiveWeek,
+            weeklyCounts: weeklyCounts.map { $0.toEntity() }
+        )
+    }
+}
+
+struct WeekCountDTO: Decodable {
+    let week: Int
+    let count: Int
+
+    func toEntity() -> WeekCount {
+        WeekCount(week: week, count: count)
     }
 }
