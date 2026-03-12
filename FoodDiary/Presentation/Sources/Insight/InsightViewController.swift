@@ -195,14 +195,19 @@ public final class InsightViewController<Repo: InsightRepository>: UIViewControl
         descriptionLabel.isHidden = true
         scrollView.isHidden = false
 
-        let sections: [UIView] = [
+        var sections: [UIView] = [
             InsightHeaderView(),
             InsightPhotoStatsView(photoStats: insight.photoStats, month: insight.month),
             InsightCategoryStatsView(categoryStats: insight.categoryStats),
             InsightTopMenuView(topMenu: insight.topMenu),
-            InsightDiaryTimeStatsView(diaryTimeStats: insight.diaryTimeStats),
-            InsightKeywordsView(keywords: insight.keywords)
+            InsightDiaryTimeStatsView(diaryTimeStats: insight.diaryTimeStats)
         ]
+
+        if !insight.locationStats.isEmpty {
+            sections.append(InsightLocationStatsView(locationStats: insight.locationStats))
+        }
+
+        sections.append(InsightKeywordsView(keywords: insight.keywords))
 
         sections.forEach { contentStackView.addArrangedSubview($0) }
     }
