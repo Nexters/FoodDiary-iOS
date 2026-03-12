@@ -30,10 +30,10 @@ final class InsightTopMenuView: UIView {
 
     // MARK: - Init
 
-    init(topMenu: TopMenu) {
+    init(weeklyStats: WeeklyStats) {
         barView = GradientBarView(colors: [.primaryGradientStart, .primaryGradientEnd])
         super.init(frame: .zero)
-        setupUI(topMenu: topMenu)
+        setupUI(weeklyStats: weeklyStats)
         setupConstraints()
     }
 
@@ -44,20 +44,21 @@ final class InsightTopMenuView: UIView {
 
     // MARK: - Setup
 
-    private func setupUI(topMenu: TopMenu) {
+    private func setupUI(weeklyStats: WeeklyStats) {
         backgroundColor = .sd900
         layer.cornerRadius = 16
         clipsToBounds = true
 
-        setupTitle(name: topMenu.name)
+        setupTitle(week: weeklyStats.mostActiveWeek)
         setupSeparator()
-        setupChart(count: topMenu.count)
+        let totalCount = weeklyStats.weeklyCounts.map(\.count).reduce(0, +)
+        setupChart(count: totalCount)
     }
 
-    private func setupTitle(name: String) {
+    private func setupTitle(week: Int) {
         let attributed = NSMutableAttributedString()
-        attributed.append(Typography.hd15.styled("가장 자주 먹은\n음식은 ", color: .white, lineSpacing: 6))
-        attributed.append(Typography.hd15.styled(name, color: .primary))
+        attributed.append(Typography.hd15.styled("가장 활발하게\n기록한 주는 ", color: .white, lineSpacing: 6))
+        attributed.append(Typography.hd15.styled("\(week)주차", color: .primary))
 
         titleLabel.attributedText = attributed
         titleLabel.numberOfLines = 0
