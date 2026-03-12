@@ -78,7 +78,7 @@ final class InsightPhotoStatsView: UIView {
         prefixLabel.setText("지난 달 대비 기록된 사진이 ", style: .p10, color: .gray050)
 
         let valueLabel = UILabel()
-        valueLabel.setText("\(Int(abs(rate)))%", style: .hd16, color: .primary)
+        valueLabel.setText("\(abs(rate))%", style: .hd16, color: .primary)
 
         let suffixLabel = UILabel()
         suffixLabel.setText(rate >= 0 ? " 증가했어요." : " 감소했어요.", style: .p10, color: .gray050)
