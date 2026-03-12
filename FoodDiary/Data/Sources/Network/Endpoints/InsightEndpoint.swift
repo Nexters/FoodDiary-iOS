@@ -35,7 +35,7 @@ extension InsightEndpoint: Requestable {
     public var queryParameters: Encodable? {
         switch self {
         case .fetch:
-            nil
+            ["test_mode": true]
         }
     }
 

@@ -3,6 +3,7 @@
 //  Presentation
 //
 
+import Domain
 import SnapKit
 import UIKit
 
@@ -21,14 +22,14 @@ final class InsightKeywordsView: UIView {
 
     private let titleLabel = UILabel()
     private let tagsContainer = UIView()
-    private let keywords: [String]
+    private let keywords: [KeywordStat]
     private var tagViews: [UIView] = []
     private var tagsContainerHeightConstraint: Constraint?
     private var lastTagsHeight: CGFloat = 0
 
     // MARK: - Init
 
-    init(keywords: [String]) {
+    init(keywords: [KeywordStat]) {
         self.keywords = keywords
         super.init(frame: .zero)
         setupUI()
@@ -52,7 +53,7 @@ final class InsightKeywordsView: UIView {
         addSubview(titleLabel)
         addSubview(tagsContainer)
 
-        tagViews = keywords.map { makeTagView(text: $0) }
+        tagViews = keywords.map { makeTagView(text: $0.keyword) }
         tagViews.forEach { tagsContainer.addSubview($0) }
     }
 
