@@ -15,7 +15,8 @@ final class InsightTopMenuView: UIView {
     private enum Constants {
         static let maxBarHeight: CGFloat = 160
         static let lineCount: Int = 6
-        static let barWidth: CGFloat = 60
+        static let barSpacing: CGFloat = 8
+        static let weekLabelHeight: CGFloat = 20
     }
 
     // MARK: - UI Components
@@ -24,14 +25,11 @@ final class InsightTopMenuView: UIView {
     private let separatorView = UIView()
     private let chartContainerView = UIView()
     private let linesStackView = UIStackView()
-    private let barView: GradientBarView
-    private let countLabel = UILabel()
-    private let nameLabel = UILabel()
+    private let barsStackView = UIStackView()
 
     // MARK: - Init
 
     init(weeklyStats: WeeklyStats) {
-        barView = GradientBarView(colors: [.primaryGradientStart, .primaryGradientEnd])
         super.init(frame: .zero)
         setupUI(weeklyStats: weeklyStats)
         setupConstraints()
@@ -51,8 +49,7 @@ final class InsightTopMenuView: UIView {
 
         setupTitle(week: weeklyStats.mostActiveWeek)
         setupSeparator()
-        let totalCount = weeklyStats.weeklyCounts.map(\.count).reduce(0, +)
-        setupChart(count: totalCount)
+        setupChart(weeklyStats: weeklyStats)
     }
 
     private func setupTitle(week: Int) {
@@ -70,7 +67,7 @@ final class InsightTopMenuView: UIView {
         addSubview(separatorView)
     }
 
-    private func setupChart(count: Int) {
+    private func setupChart(weeklyStats: WeeklyStats) {
         addSubview(chartContainerView)
 
         // Grid lines
@@ -86,17 +83,61 @@ final class InsightTopMenuView: UIView {
             linesStackView.addArrangedSubview(line)
         }
 
-        // Bar
-        chartContainerView.addSubview(barView)
+        // Bars stack
+        barsStackView.axis = .horizontal
+        barsStackView.distribution = .fillEqually
+        barsStackView.spacing = Constants.barSpacing
+        barsStackView.alignment = .bottom
+        chartContainerView.addSubview(barsStackView)
 
-        countLabel.setText("\(count)회", style: .p12, color: .white)
+        guard !weeklyStats.weeklyCounts.isEmpty else { return }
+
+        let maxCount = weeklyStats.weeklyCounts.map(\.count).max() ?? 1
+
+        for weekCount in weeklyStats.weeklyCounts {
+            let column = makeBarColumn(weekCount: weekCount, maxCount: maxCount)
+            barsStackView.addArrangedSubview(column)
+        }
+    }
+
+    private func makeBarColumn(weekCount: WeekCount, maxCount: Int) -> UIView {
+        let column = UIView()
+
+        let barView = GradientBarView(colors: [.primaryGradientStart, .primaryGradientEnd])
+        column.addSubview(barView)
+
+        let countLabel = UILabel()
+        countLabel.setText("\(weekCount.count)회", style: .p12, color: .white)
         countLabel.textAlignment = .center
         barView.addSubview(countLabel)
 
-        // Name label below bar
-        nameLabel.setText("총 기록", style: .p10, color: .gray200)
-        nameLabel.textAlignment = .center
-        addSubview(nameLabel)
+        let weekLabel = UILabel()
+        weekLabel.setText("\(weekCount.week)주차", style: .p10, color: .gray200)
+        weekLabel.textAlignment = .center
+        column.addSubview(weekLabel)
+
+        let ratio = weekCount.count > 0
+            ? CGFloat(weekCount.count) / CGFloat(maxCount)
+            : 0
+        let barHeight = max(Constants.maxBarHeight * ratio, weekCount.count > 0 ? 24 : 0)
+
+        barView.snp.makeConstraints {
+            $0.leading.trailing.equalToSuperview()
+            $0.bottom.equalTo(weekLabel.snp.top).offset(-8)
+            $0.height.equalTo(barHeight)
+        }
+
+        countLabel.snp.makeConstraints {
+            $0.top.equalToSuperview().inset(6)
+            $0.centerX.equalToSuperview()
+        }
+
+        weekLabel.snp.makeConstraints {
+            $0.leading.trailing.bottom.equalToSuperview()
+            $0.height.equalTo(Constants.weekLabelHeight)
+        }
+
+        return column
     }
 
     private func setupConstraints() {
@@ -114,28 +155,18 @@ final class InsightTopMenuView: UIView {
         chartContainerView.snp.makeConstraints {
             $0.top.equalTo(separatorView.snp.bottom).offset(20)
             $0.leading.trailing.equalToSuperview().inset(20)
-            $0.height.equalTo(Constants.maxBarHeight)
+            $0.height.equalTo(Constants.maxBarHeight + Constants.weekLabelHeight + 8)
+            $0.bottom.equalToSuperview().inset(20)
         }
 
         linesStackView.snp.makeConstraints {
-            $0.edges.equalToSuperview()
-        }
-
-        barView.snp.makeConstraints {
-            $0.centerX.bottom.equalToSuperview()
-            $0.width.equalTo(Constants.barWidth)
+            $0.top.leading.trailing.equalToSuperview()
             $0.height.equalTo(Constants.maxBarHeight)
         }
 
-        countLabel.snp.makeConstraints {
-            $0.top.equalToSuperview().inset(6)
-            $0.centerX.equalToSuperview()
-        }
-
-        nameLabel.snp.makeConstraints {
-            $0.top.equalTo(chartContainerView.snp.bottom).offset(8)
-            $0.centerX.equalTo(barView)
-            $0.bottom.equalToSuperview().inset(20)
+        barsStackView.snp.makeConstraints {
+            $0.leading.trailing.bottom.equalToSuperview()
+            $0.top.equalToSuperview()
         }
     }
 }
