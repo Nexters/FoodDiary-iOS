@@ -199,7 +199,7 @@ public final class InsightViewController<Repo: InsightRepository>: UIViewControl
             InsightHeaderView(),
             InsightPhotoStatsView(photoStats: insight.photoStats, month: insight.month),
             InsightCategoryStatsView(categoryStats: insight.categoryStats),
-            InsightTopMenuView(topMenu: insight.topMenu),
+            InsightTopMenuView(weeklyStats: insight.weeklyStats),
             InsightDiaryTimeStatsView(diaryTimeStats: insight.diaryTimeStats)
         ]
 
@@ -207,7 +207,7 @@ public final class InsightViewController<Repo: InsightRepository>: UIViewControl
             sections.append(InsightLocationStatsView(locationStats: insight.locationStats))
         }
 
-        sections.append(InsightKeywordsView(keywords: insight.keywords))
+        sections.append(InsightKeywordsView(keywords: insight.tagStats))
 
         sections.forEach { contentStackView.addArrangedSubview($0) }
     }
