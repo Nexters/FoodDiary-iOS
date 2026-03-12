@@ -9,30 +9,27 @@ public struct Insight: Equatable, Sendable {
     public let month: String
     public let photoStats: PhotoStats
     public let categoryStats: CategoryStats
-    public let topMenu: TopMenu
     public let diaryTimeStats: DiaryTimeStats
-    public let keywords: [String]
-    public let keywordStats: [KeywordStat]
     public let locationStats: [LocationStat]
+    public let tagStats: [KeywordStat]
+    public let weeklyStats: WeeklyStats
 
     public init(
         month: String,
         photoStats: PhotoStats,
         categoryStats: CategoryStats,
-        topMenu: TopMenu,
         diaryTimeStats: DiaryTimeStats,
-        keywords: [String],
-        keywordStats: [KeywordStat],
-        locationStats: [LocationStat]
+        locationStats: [LocationStat],
+        tagStats: [KeywordStat],
+        weeklyStats: WeeklyStats
     ) {
         self.month = month
         self.photoStats = photoStats
         self.categoryStats = categoryStats
-        self.topMenu = topMenu
         self.diaryTimeStats = diaryTimeStats
-        self.keywords = keywords
-        self.keywordStats = keywordStats
         self.locationStats = locationStats
+        self.tagStats = tagStats
+        self.weeklyStats = weeklyStats
     }
 }
 
@@ -88,16 +85,6 @@ public struct CategoryCounts: Equatable, Sendable {
     }
 }
 
-public struct TopMenu: Equatable, Sendable {
-    public let name: String
-    public let count: Int
-
-    public init(name: String, count: Int) {
-        self.name = name
-        self.count = count
-    }
-}
-
 public struct DiaryTimeStats: Equatable, Sendable {
     public let mostActiveTime: String
     public let distribution: [TimeCount]
@@ -134,6 +121,26 @@ public struct LocationStat: Equatable, Sendable {
 
     public init(dong: String, count: Int) {
         self.dong = dong
+        self.count = count
+    }
+}
+
+public struct WeeklyStats: Equatable, Sendable {
+    public let mostActiveWeek: Int
+    public let weeklyCounts: [WeekCount]
+
+    public init(mostActiveWeek: Int, weeklyCounts: [WeekCount]) {
+        self.mostActiveWeek = mostActiveWeek
+        self.weeklyCounts = weeklyCounts
+    }
+}
+
+public struct WeekCount: Equatable, Sendable {
+    public let week: Int
+    public let count: Int
+
+    public init(week: Int, count: Int) {
+        self.week = week
         self.count = count
     }
 }
