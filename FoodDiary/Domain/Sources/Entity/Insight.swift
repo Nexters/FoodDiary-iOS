@@ -12,6 +12,8 @@ public struct Insight: Equatable, Sendable {
     public let topMenu: TopMenu
     public let diaryTimeStats: DiaryTimeStats
     public let keywords: [String]
+    public let keywordStats: [KeywordStat]
+    public let locationStats: [LocationStat]
 
     public init(
         month: String,
@@ -19,7 +21,9 @@ public struct Insight: Equatable, Sendable {
         categoryStats: CategoryStats,
         topMenu: TopMenu,
         diaryTimeStats: DiaryTimeStats,
-        keywords: [String]
+        keywords: [String],
+        keywordStats: [KeywordStat],
+        locationStats: [LocationStat]
     ) {
         self.month = month
         self.photoStats = photoStats
@@ -27,15 +31,17 @@ public struct Insight: Equatable, Sendable {
         self.topMenu = topMenu
         self.diaryTimeStats = diaryTimeStats
         self.keywords = keywords
+        self.keywordStats = keywordStats
+        self.locationStats = locationStats
     }
 }
 
 public struct PhotoStats: Equatable, Sendable {
     public let currentMonthCount: Int
     public let previousMonthCount: Int
-    public let changeRate: Double
+    public let changeRate: Int
 
-    public init(currentMonthCount: Int, previousMonthCount: Int, changeRate: Double) {
+    public init(currentMonthCount: Int, previousMonthCount: Int, changeRate: Int) {
         self.currentMonthCount = currentMonthCount
         self.previousMonthCount = previousMonthCount
         self.changeRate = changeRate
@@ -45,10 +51,12 @@ public struct PhotoStats: Equatable, Sendable {
 public struct CategoryStats: Equatable, Sendable {
     public let currentMonth: CategoryStat
     public let previousMonth: CategoryStat
+    public let currentMonthCounts: CategoryCounts
 
-    public init(currentMonth: CategoryStat, previousMonth: CategoryStat) {
+    public init(currentMonth: CategoryStat, previousMonth: CategoryStat, currentMonthCounts: CategoryCounts) {
         self.currentMonth = currentMonth
         self.previousMonth = previousMonth
+        self.currentMonthCounts = currentMonthCounts
     }
 }
 
@@ -59,6 +67,24 @@ public struct CategoryStat: Equatable, Sendable {
     public init(topCategory: String, count: Int) {
         self.topCategory = topCategory
         self.count = count
+    }
+}
+
+public struct CategoryCounts: Equatable, Sendable {
+    public let chinese: Int
+    public let etc: Int
+    public let homeCooked: Int
+    public let japanese: Int
+    public let korean: Int
+    public let western: Int
+
+    public init(chinese: Int, etc: Int, homeCooked: Int, japanese: Int, korean: Int, western: Int) {
+        self.chinese = chinese
+        self.etc = etc
+        self.homeCooked = homeCooked
+        self.japanese = japanese
+        self.korean = korean
+        self.western = western
     }
 }
 
@@ -73,21 +99,41 @@ public struct TopMenu: Equatable, Sendable {
 }
 
 public struct DiaryTimeStats: Equatable, Sendable {
-    public let mostActiveHour: Int
-    public let distribution: [HourCount]
+    public let mostActiveTime: String
+    public let distribution: [TimeCount]
 
-    public init(mostActiveHour: Int, distribution: [HourCount]) {
-        self.mostActiveHour = mostActiveHour
+    public init(mostActiveTime: String, distribution: [TimeCount]) {
+        self.mostActiveTime = mostActiveTime
         self.distribution = distribution
     }
 }
 
-public struct HourCount: Equatable, Sendable {
-    public let hour: Int
+public struct TimeCount: Equatable, Sendable {
+    public let time: String
     public let count: Int
 
-    public init(hour: Int, count: Int) {
-        self.hour = hour
+    public init(time: String, count: Int) {
+        self.time = time
+        self.count = count
+    }
+}
+
+public struct KeywordStat: Equatable, Sendable {
+    public let keyword: String
+    public let count: Int
+
+    public init(keyword: String, count: Int) {
+        self.keyword = keyword
+        self.count = count
+    }
+}
+
+public struct LocationStat: Equatable, Sendable {
+    public let dong: String
+    public let count: Int
+
+    public init(dong: String, count: Int) {
+        self.dong = dong
         self.count = count
     }
 }
