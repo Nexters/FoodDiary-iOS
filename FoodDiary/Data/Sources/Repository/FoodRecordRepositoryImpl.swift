@@ -8,6 +8,32 @@ import Foundation
 import Photos
 import UIKit
 
+// MARK: - In-memory Cache
+
+private final class PhotoURLCache: @unchecked Sendable {
+    private var storage: [String: [Date: [URL]]] = [:]
+    private let lock = NSLock()
+
+    func get(for dateRange: ClosedRange<Date>) -> [Date: [URL]]? {
+        lock.lock(); defer { lock.unlock() }
+        return storage[key(for: dateRange)]
+    }
+
+    func set(_ value: [Date: [URL]], for dateRange: ClosedRange<Date>) {
+        lock.lock(); defer { lock.unlock() }
+        storage[key(for: dateRange)] = value
+    }
+
+    func remove(for dateRange: ClosedRange<Date>) {
+        lock.lock(); defer { lock.unlock() }
+        storage.removeValue(forKey: key(for: dateRange))
+    }
+
+    private func key(for dateRange: ClosedRange<Date>) -> String {
+        "\(Int(dateRange.lowerBound.timeIntervalSince1970))-\(Int(dateRange.upperBound.timeIntervalSince1970))"
+    }
+}
+
 /// FoodRecordRepository 구현체
 public struct FoodRecordRepositoryImpl<
     Client: HTTPClienting & Sendable,
@@ -18,6 +44,7 @@ public struct FoodRecordRepositoryImpl<
     private let deviceId: String
     private let imageConverter: PHAssetConverter
     private let calendar = Calendar.current
+    private let photoURLCache = PhotoURLCache()
 
     #if DEBUG
         let testMode: Bool = true
@@ -98,6 +125,12 @@ public struct FoodRecordRepositoryImpl<
     }
 
     public func fetchPhotoURLs(in dateRange: ClosedRange<Date>) async throws -> [Date: [URL]] {
+        if let cached = photoURLCache.get(for: dateRange) {
+            print("[FoodRecordRepository] Cache HIT: \(formatDate(dateRange.lowerBound)) ~ \(formatDate(dateRange.upperBound))")
+            return cached
+        }
+        print("[FoodRecordRepository] Cache MISS: \(formatDate(dateRange.lowerBound)) ~ \(formatDate(dateRange.upperBound)) — fetching...")
+
         guard let accessToken = tokenStorage.get() else {
             throw FoodRecordError.noAccessToken
         }
@@ -119,10 +152,18 @@ public struct FoodRecordRepositoryImpl<
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
 
-        return response.reduce(into: [Date: [URL]]()) { result, entry in
+        let result = response.reduce(into: [Date: [URL]]()) { result, entry in
             guard let date = formatter.date(from: entry.key) else { return }
             result[date] = entry.value.photos.compactMap { URL(string: $0.url) }
         }
+
+        photoURLCache.set(result, for: dateRange)
+        print("[FoodRecordRepository] Cache STORED: \(formatDate(dateRange.lowerBound)) ~ \(formatDate(dateRange.upperBound))")
+        return result
+    }
+
+    public func invalidatePhotoURLCache(in dateRange: ClosedRange<Date>) {
+        photoURLCache.remove(for: dateRange)
     }
 
     // MARK: - 수정/삭제 API
