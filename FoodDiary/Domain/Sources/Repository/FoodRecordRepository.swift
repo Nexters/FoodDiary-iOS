@@ -35,4 +35,8 @@ public protocol FoodRecordRepository: Sendable {
     /// 음식 기록 삭제
     /// - Parameter id: 삭제할 기록 ID
     func deleteRecord(id: String) async throws
+
+    /// 특정 날짜 범위의 사진 URL 캐시 무효화
+    /// - Parameter dateRange: 무효화할 날짜 범위
+    func invalidatePhotoURLCache(in dateRange: ClosedRange<Date>)
 }
