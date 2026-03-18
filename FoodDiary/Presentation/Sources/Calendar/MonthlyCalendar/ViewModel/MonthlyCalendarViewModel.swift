@@ -41,7 +41,6 @@ public final class MonthlyCalendarViewModel<
     // MARK: - Dependencies
 
     private let fetchMonthlyCalendarDaysUseCase: FetchMonthlyCalendarDaysUseCase<RecordRepo>
-    private let prefetchAdjacentMonthsUseCase: PrefetchAdjacentMonthsUseCase<RecordRepo>
     private let invalidateMonthCacheUseCase: InvalidateMonthCacheUseCase<RecordRepo>
     private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>
     private let fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
@@ -51,14 +50,12 @@ public final class MonthlyCalendarViewModel<
 
     public init(
         fetchMonthlyCalendarDaysUseCase: FetchMonthlyCalendarDaysUseCase<RecordRepo>,
-        prefetchAdjacentMonthsUseCase: PrefetchAdjacentMonthsUseCase<RecordRepo>,
         invalidateMonthCacheUseCase: InvalidateMonthCacheUseCase<RecordRepo>,
         requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>,
         fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>,
         getNicknameUseCase: GetNicknameUseCase
     ) {
         self.fetchMonthlyCalendarDaysUseCase = fetchMonthlyCalendarDaysUseCase
-        self.prefetchAdjacentMonthsUseCase = prefetchAdjacentMonthsUseCase
         self.invalidateMonthCacheUseCase = invalidateMonthCacheUseCase
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
         self.fetchFoodRecordsUseCase = fetchFoodRecordsUseCase
@@ -153,7 +150,6 @@ public final class MonthlyCalendarViewModel<
             return
         }
 
-        prefetchAdjacentMonthsUseCase.execute(for: date)
     }
 
     private static func generatePlaceholderDays(

@@ -286,20 +286,6 @@ extension SceneDelegate {
         }
 
         container.register(
-            PrefetchAdjacentMonthsUseCase<
-                FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-            >.self
-        ) { resolver in
-            guard
-                let repository = resolver.resolve(
-                    FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>.self)
-            else {
-                fatalError("FoodRecordRepositoryImpl not registered")
-            }
-            return PrefetchAdjacentMonthsUseCase(repository: repository)
-        }
-
-        container.register(
             InvalidateMonthCacheUseCase<
                 FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
             >.self
@@ -648,11 +634,6 @@ extension SceneDelegate {
                         FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
                     >.self
                 ),
-                let prefetchAdjacentMonthsUseCase = resolver.resolve(
-                    PrefetchAdjacentMonthsUseCase<
-                        FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-                    >.self
-                ),
                 let invalidateMonthCacheUseCase = resolver.resolve(
                     InvalidateMonthCacheUseCase<
                         FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
@@ -673,7 +654,6 @@ extension SceneDelegate {
 
             return MonthlyCalendarViewModel(
                 fetchMonthlyCalendarDaysUseCase: fetchMonthlyUseCase,
-                prefetchAdjacentMonthsUseCase: prefetchAdjacentMonthsUseCase,
                 invalidateMonthCacheUseCase: invalidateMonthCacheUseCase,
                 requestPhotoAuthorizationUseCase: requestPhotoAuthUseCase,
                 fetchFoodRecordsUseCase: fetchFoodRecordsUseCase,
