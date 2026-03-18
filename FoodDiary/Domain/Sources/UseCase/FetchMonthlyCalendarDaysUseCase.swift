@@ -17,6 +17,8 @@ public struct FetchMonthlyCalendarDaysUseCase<Repository: FoodRecordRepository>:
         let calendar = Calendar.seoul
         let recordsByDate = try await repository.fetchPhotoURLs(in: period.start...period.end)
 
+        prefetchAdjacentMonths(for: currentMonth)
+
         // 캘린더 날짜 배열 생성 (records 포함)
         return generateCalendarDays(
             for: period,
@@ -24,6 +26,26 @@ public struct FetchMonthlyCalendarDaysUseCase<Repository: FoodRecordRepository>:
             calendar: calendar,
             recordsByDate: recordsByDate
         )
+    }
+
+    private func prefetchAdjacentMonths(for date: Date) {
+        let calendar = Calendar.current
+        let neighbors = [-1, 1].compactMap { calendar.date(byAdding: .month, value: $0, to: date) }
+        for neighbor in neighbors {
+            Task { await prefetch(neighbor) }
+        }
+    }
+
+    private func prefetch(_ date: Date) async {
+        let label = date.formatMonthText()
+        let period = Calendar.current.monthlyCalendarPeriod(for: date)
+        print("[Prefetch] 시작: \(label)")
+        do {
+            let urls = try await repository.fetchPhotoURLs(in: period.start...period.end)
+            print("[Prefetch] 완료: \(label) — \(urls.count)개 URL")
+        } catch {
+            print("[Prefetch] 실패: \(label) — \(error)")
+        }
     }
 
     // MARK: - Private Methods
