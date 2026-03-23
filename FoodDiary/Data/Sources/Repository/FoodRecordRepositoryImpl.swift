@@ -8,28 +8,36 @@ import Foundation
 import Photos
 import UIKit
 
-// MARK: - In-memory Cache
+// MARK: - In-memory LRU Cache
 
-private final class PhotoURLCache: @unchecked Sendable {
-    private var storage: [String: [Date: [URL]]] = [:]
-    private let lock = NSLock()
+private actor PhotoURLCache {
+    private var entries: [(key: String, value: [Date: [URL]])] = []
+    private let capacity = 12
 
     func get(for dateRange: ClosedRange<Date>) -> [Date: [URL]]? {
-        lock.lock(); defer { lock.unlock() }
-        return storage[key(for: dateRange)]
+        let k = cacheKey(for: dateRange)
+        guard let index = entries.firstIndex(where: { $0.key == k }) else { return nil }
+        let entry = entries.remove(at: index)
+        entries.insert(entry, at: 0)
+        return entry.value
     }
 
     func set(_ value: [Date: [URL]], for dateRange: ClosedRange<Date>) {
-        lock.lock(); defer { lock.unlock() }
-        storage[key(for: dateRange)] = value
+        let k = cacheKey(for: dateRange)
+        entries.removeAll { $0.key == k }
+        entries.insert((key: k, value: value), at: 0)
+        if entries.count > capacity {
+            let evicted = entries.removeLast()
+            print("[PhotoURLCache] 캐시 용량 초과 — 삭제: \(evicted.key)")
+        }
     }
 
     func remove(for dateRange: ClosedRange<Date>) {
-        lock.lock(); defer { lock.unlock() }
-        storage.removeValue(forKey: key(for: dateRange))
+        let k = cacheKey(for: dateRange)
+        entries.removeAll { $0.key == k }
     }
 
-    private func key(for dateRange: ClosedRange<Date>) -> String {
+    private func cacheKey(for dateRange: ClosedRange<Date>) -> String {
         "\(Int(dateRange.lowerBound.timeIntervalSince1970))-\(Int(dateRange.upperBound.timeIntervalSince1970))"
     }
 }
@@ -124,46 +132,59 @@ public struct FoodRecordRepositoryImpl<
         return records[startOfDay] ?? []
     }
 
-    public func fetchPhotoURLs(in dateRange: ClosedRange<Date>) async throws -> [Date: [URL]] {
-        if let cached = photoURLCache.get(for: dateRange) {
-            print("[FoodRecordRepository] Cache HIT: \(formatDate(dateRange.lowerBound)) ~ \(formatDate(dateRange.upperBound))")
-            return cached
+    public func fetchPhotoURLs(in dateRange: ClosedRange<Date>) -> AsyncThrowingStream<[Date: [URL]], Error> {
+        AsyncThrowingStream { continuation in
+            Task {
+                let rangeLabel = "\(formatDate(dateRange.lowerBound)) ~ \(formatDate(dateRange.upperBound))"
+
+                // 1. 캐시 HIT 시 즉시 방출
+                if let cached = await photoURLCache.get(for: dateRange) {
+                    print("[FoodRecordRepository] Cache HIT: \(rangeLabel)")
+                    continuation.yield(cached)
+                } else {
+                    print("[FoodRecordRepository] Cache MISS: \(rangeLabel) — fetching...")
+                }
+
+                // 2. 항상 서버 검증
+                do {
+                    guard let accessToken = tokenStorage.get() else {
+                        throw FoodRecordError.noAccessToken
+                    }
+
+                    let endpoint = DiaryEndpoint.byDateRangeSummary(
+                        startDate: formatDate(dateRange.lowerBound),
+                        endDate: formatDate(dateRange.upperBound),
+                        testMode: testMode
+                    )
+
+                    let response: DiariesByDateRangeSummaryResponseDTO = try await httpClient.request(
+                        endpoint,
+                        accessToken: accessToken
+                    )
+
+                    let formatter = DateFormatter()
+                    formatter.dateFormat = "yyyy-MM-dd"
+
+                    let fresh = response.reduce(into: [Date: [URL]]()) { result, entry in
+                        guard let date = formatter.date(from: entry.key) else { return }
+                        result[date] = entry.value.photos.compactMap { URL(string: $0.url) }
+                    }
+
+                    let current = await photoURLCache.get(for: dateRange)
+                    if current != fresh {
+                        await photoURLCache.set(fresh, for: dateRange)
+                        print("[FoodRecordRepository] Cache UPDATED: \(rangeLabel)")
+                        continuation.yield(fresh)
+                    } else {
+                        print("[FoodRecordRepository] Cache VALID: \(rangeLabel)")
+                    }
+
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
         }
-        print("[FoodRecordRepository] Cache MISS: \(formatDate(dateRange.lowerBound)) ~ \(formatDate(dateRange.upperBound)) — fetching...")
-
-        guard let accessToken = tokenStorage.get() else {
-            throw FoodRecordError.noAccessToken
-        }
-
-        let startDateString = formatDate(dateRange.lowerBound)
-        let endDateString = formatDate(dateRange.upperBound)
-
-        let endpoint = DiaryEndpoint.byDateRangeSummary(
-            startDate: startDateString,
-            endDate: endDateString,
-            testMode: testMode
-        )
-
-        let response: DiariesByDateRangeSummaryResponseDTO = try await httpClient.request(
-            endpoint,
-            accessToken: accessToken
-        )
-
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-
-        let result = response.reduce(into: [Date: [URL]]()) { result, entry in
-            guard let date = formatter.date(from: entry.key) else { return }
-            result[date] = entry.value.photos.compactMap { URL(string: $0.url) }
-        }
-
-        photoURLCache.set(result, for: dateRange)
-        print("[FoodRecordRepository] Cache STORED: \(formatDate(dateRange.lowerBound)) ~ \(formatDate(dateRange.upperBound))")
-        return result
-    }
-
-    public func invalidatePhotoURLCache(in dateRange: ClosedRange<Date>) {
-        photoURLCache.remove(for: dateRange)
     }
 
     // MARK: - 수정/삭제 API

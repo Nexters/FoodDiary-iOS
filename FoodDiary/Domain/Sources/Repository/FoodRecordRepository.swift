@@ -7,10 +7,11 @@ import Foundation
 
 /// 음식 기록 Repository 프로토콜 (서버 API)
 public protocol FoodRecordRepository: Sendable {
-    /// 특정 날짜 범위 내의 사진 URL 조회
+    /// 특정 날짜 범위 내의 사진 URL 조회 (stale-while-revalidate)
+    /// - 캐시가 있으면 즉시 방출 후 서버 검증, 데이터가 다를 경우 갱신 값 재방출
+    /// - 캐시가 없으면 서버 응답만 방출
     /// - Parameter dateRange: 조회할 날짜 범위
-    /// - Returns: 날짜별 기록된 이미지 URL
-    func fetchPhotoURLs(in dateRange: ClosedRange<Date>) async throws -> [Date: [URL]]
+    func fetchPhotoURLs(in dateRange: ClosedRange<Date>) -> AsyncThrowingStream<[Date: [URL]], Error>
     
     /// 특정 날짜 범위 내의 기록 조회
     /// - Parameter dateRange: 조회할 날짜 범위
@@ -35,8 +36,4 @@ public protocol FoodRecordRepository: Sendable {
     /// 음식 기록 삭제
     /// - Parameter id: 삭제할 기록 ID
     func deleteRecord(id: String) async throws
-
-    /// 특정 날짜 범위의 사진 URL 캐시 무효화
-    /// - Parameter dateRange: 무효화할 날짜 범위
-    func invalidatePhotoURLCache(in dateRange: ClosedRange<Date>)
 }
