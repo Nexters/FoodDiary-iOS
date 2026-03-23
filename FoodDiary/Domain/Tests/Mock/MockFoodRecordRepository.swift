@@ -14,8 +14,19 @@ final class MockFoodRecordRepository: FoodRecordRepository, @unchecked Sendable 
     ]
     var shouldThrowError: Bool = false
 
-    func fetchPhotoURLs(in dateRange: ClosedRange<Date>) async throws -> [Date : [URL]] {
-        return [:]
+    var photoURLsToReturn: [Date: [URL]] = [:]
+
+    func fetchPhotoURLs(in dateRange: ClosedRange<Date>) -> AsyncThrowingStream<[Date: [URL]], Error> {
+        let result = photoURLsToReturn
+        let shouldThrow = shouldThrowError
+        return AsyncThrowingStream { continuation in
+            if shouldThrow {
+                continuation.finish(throwing: MockError.testError)
+            } else {
+                continuation.yield(result)
+                continuation.finish()
+            }
+        }
     }
 
     func fetchRecords(in dateRange: ClosedRange<Date>) async throws -> [Date: [FoodRecord]] {

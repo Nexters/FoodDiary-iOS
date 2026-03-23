@@ -13,19 +13,26 @@ public struct FetchMonthlyCalendarDaysUseCase<Repository: FoodRecordRepository>:
         self.repository = repository
     }
 
-    public func execute(for period: DateInterval, currentMonth: Date) async throws -> [MonthlyCalendarDay] {
-        let calendar = Calendar.seoul
-        let recordsByDate = try await repository.fetchPhotoURLs(in: period.start...period.end)
-
-        prefetchAdjacentMonths(for: currentMonth)
-
-        // 캘린더 날짜 배열 생성 (records 포함)
-        return generateCalendarDays(
-            for: period,
-            currentMonth: currentMonth,
-            calendar: calendar,
-            recordsByDate: recordsByDate
-        )
+    public func execute(for period: DateInterval, currentMonth: Date) -> AsyncThrowingStream<[MonthlyCalendarDay], Error> {
+        AsyncThrowingStream { continuation in
+            Task {
+                do {
+                    for try await recordsByDate in repository.fetchPhotoURLs(in: period.start...period.end) {
+                        let days = generateCalendarDays(
+                            for: period,
+                            currentMonth: currentMonth,
+                            calendar: .seoul,
+                            recordsByDate: recordsByDate
+                        )
+                        continuation.yield(days)
+                    }
+                    prefetchAdjacentMonths(for: currentMonth)
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+        }
     }
 
     private func prefetchAdjacentMonths(for date: Date) {
@@ -41,8 +48,11 @@ public struct FetchMonthlyCalendarDaysUseCase<Repository: FoodRecordRepository>:
         let period = Calendar.current.monthlyCalendarPeriod(for: date)
         print("[Prefetch] 시작: \(label)")
         do {
-            let urls = try await repository.fetchPhotoURLs(in: period.start...period.end)
-            print("[Prefetch] 완료: \(label) — \(urls.count)개 URL")
+            var urlCount = 0
+            for try await recordsByDate in repository.fetchPhotoURLs(in: period.start...period.end) {
+                urlCount = recordsByDate.values.reduce(0) { $0 + $1.count }
+            }
+            print("[Prefetch] 완료: \(label) — \(urlCount)개 URL")
         } catch {
             print("[Prefetch] 실패: \(label) — \(error)")
         }

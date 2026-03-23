@@ -41,7 +41,6 @@ public final class MonthlyCalendarViewModel<
     // MARK: - Dependencies
 
     private let fetchMonthlyCalendarDaysUseCase: FetchMonthlyCalendarDaysUseCase<RecordRepo>
-    private let invalidateMonthCacheUseCase: InvalidateMonthCacheUseCase<RecordRepo>
     private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>
     private let fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
     private let getNicknameUseCase: GetNicknameUseCase
@@ -50,13 +49,11 @@ public final class MonthlyCalendarViewModel<
 
     public init(
         fetchMonthlyCalendarDaysUseCase: FetchMonthlyCalendarDaysUseCase<RecordRepo>,
-        invalidateMonthCacheUseCase: InvalidateMonthCacheUseCase<RecordRepo>,
         requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>,
         fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>,
         getNicknameUseCase: GetNicknameUseCase
     ) {
         self.fetchMonthlyCalendarDaysUseCase = fetchMonthlyCalendarDaysUseCase
-        self.invalidateMonthCacheUseCase = invalidateMonthCacheUseCase
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
         self.fetchFoodRecordsUseCase = fetchFoodRecordsUseCase
         self.getNicknameUseCase = getNicknameUseCase
@@ -119,7 +116,6 @@ public final class MonthlyCalendarViewModel<
             }
 
         case .refreshCurrentMonth:
-            invalidateMonthCacheUseCase.execute(for: state.currentDisplayDate)
             await loadMonth(for: state.currentDisplayDate)
 
         case .updateMonth(let date):
@@ -141,13 +137,14 @@ public final class MonthlyCalendarViewModel<
         state.monthYearText = date.formatMonthText()
 
         let period = Calendar.current.monthlyCalendarPeriod(for: date)
+        
         do {
-            let monthDays = try await fetchMonthlyCalendarDaysUseCase.execute(for: period, currentMonth: date)
-            state.monthDays = monthDays
-            state.numberOfWeeks = monthDays.count / 7
+            for try await monthDays in fetchMonthlyCalendarDaysUseCase.execute(for: period, currentMonth: date) {
+                state.monthDays = monthDays
+                state.numberOfWeeks = monthDays.count / 7
+            }
         } catch {
             print("Failed to load monthly calendar: \(error)")
-            return
         }
 
     }
