@@ -44,18 +44,10 @@ public struct FetchMonthlyCalendarDaysUseCase<Repository: FoodRecordRepository>:
     }
 
     private func prefetch(_ date: Date) async {
-        let label = date.formatMonthText()
         let period = Calendar.current.monthlyCalendarPeriod(for: date)
-        print("[Prefetch] 시작: \(label)")
         do {
-            var urlCount = 0
-            for try await recordsByDate in repository.fetchPhotoURLs(in: period.start...period.end) {
-                urlCount = recordsByDate.values.reduce(0) { $0 + $1.count }
-            }
-            print("[Prefetch] 완료: \(label) — \(urlCount)개 URL")
-        } catch {
-            print("[Prefetch] 실패: \(label) — \(error)")
-        }
+            for try await _ in repository.fetchPhotoURLs(in: period.start...period.end) {}
+        } catch {}
     }
 
     // MARK: - Private Methods
