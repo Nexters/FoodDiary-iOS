@@ -22,20 +22,24 @@ let project = Project(
             sources: ["Sources/**"],
             resources: ["Resources/**"],
             entitlements: "App.entitlements",
+            scripts: [
+                .crashlyticsUploadDSYM()
+            ],
             dependencies: [
                 .project(target: "Data", path: "../Data"),
                 .project(target: "DesignSystem", path: "../DesignSystem"),
                 .project(target: "DI", path: "../DI"),
                 .project(target: "Domain", path: "../Domain"),
                 .project(target: "Presentation", path: "../Presentation"),
-                .external(name: "FirebaseCore"),
+                .external(name: "FirebaseCrashlytics"),
                 .external(name: "FirebaseMessaging"),
             ],
             settings: .settings(
                 base: [
                     "MARKETING_VERSION": "1.0.0",
                     "BASE_URL": "$(BASE_URL)",
-                    "TARGETED_DEVICE_FAMILY": "1"
+                    "TARGETED_DEVICE_FAMILY": "1",
+                    "DEBUG_INFORMATION_FORMAT": "dwarf-with-dsym",
                 ],
                 configurations: []
             )
