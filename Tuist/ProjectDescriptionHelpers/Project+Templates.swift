@@ -11,25 +11,64 @@ public extension ProjectDescription.TargetScript {
     static func crashlyticsUploadDSYM() -> Self {
         .post(
             script: """
-                ROOT_PATH="$SRCROOT"
-                while [ "$ROOT_PATH" != "/" ]; do
-                  if [ -d "$ROOT_PATH/Tuist" ]; then
-                    break
-                  fi
-                  ROOT_PATH=$(dirname "$ROOT_PATH")
-                done
+                echo "===== 🔍 DEBUG START ====="
 
-                CRASHLYTICS_RUN="${ROOT_PATH}/Tuist/.build/checkouts/firebase-ios-sdk/Crashlytics/run"
-                echo "[Crashlytics] ROOT_PATH = ${ROOT_PATH}"
-                echo "[Crashlytics] run script path = ${CRASHLYTICS_RUN}"
+                # 1. ROOT PATH
+                ROOT_PATH="$(cd "$SRCROOT/../.." && pwd)"
+                echo "[1] ROOT_PATH: >>>${ROOT_PATH}<<<"
 
-                if [ -f "$CRASHLYTICS_RUN" ]; then
-                  echo "[Crashlytics] ✅ run script found"
-                  "$CRASHLYTICS_RUN"
+                # 공백 체크
+                if [[ "$ROOT_PATH" =~ [[:space:]] ]]; then
+                  echo "[WARN] ROOT_PATH contains whitespace"
                 else
-                  echo "[Crashlytics] ❌ run script NOT found at ${CRASHLYTICS_RUN}"
-                  exit 1
+                  echo "[OK] ROOT_PATH has no whitespace"
                 fi
+
+                # 2. CRASHLYTICS PATH
+                CRASHLYTICS_PATH="${ROOT_PATH}/Tuist/.build/checkouts/firebase-ios-sdk/Crashlytics/run"
+                echo "[2] CRASHLYTICS_PATH: >>>${CRASHLYTICS_PATH}<<<"
+
+                # 개행/공백 체크 (눈으로 보이게)
+                echo "[CHECK] Printing with cat -A (hidden chars)"
+                echo "$CRASHLYTICS_PATH" | cat -A
+
+                # 3. 파일 존재 여부
+                if [ -e "$CRASHLYTICS_PATH" ]; then
+                  echo "[OK] File exists"
+                else
+                  echo "[ERROR] File does NOT exist"
+                fi
+
+                # 4. 파일 타입
+                if [ -f "$CRASHLYTICS_PATH" ]; then
+                  echo "[OK] It is a regular file"
+                else
+                  echo "[ERROR] Not a regular file"
+                fi
+
+                # 5. 실행 권한 체크
+                if [ -x "$CRASHLYTICS_PATH" ]; then
+                  echo "[OK] File is executable"
+                else
+                  echo "[ERROR] File is NOT executable"
+                fi
+
+                # 6. 권한 상세 출력
+                echo "[INFO] ls -l result:"
+                ls -l "$CRASHLYTICS_PATH" 2>/dev/null || echo "[ERROR] ls failed"
+
+                # 7. 실제 실행 시도
+                echo "[RUN] Trying to execute..."
+                "$CRASHLYTICS_PATH"
+                RESULT=$?
+
+                echo "[RESULT] Exit code: $RESULT"
+
+                # 8. dirname / basename 체크 (경로 깨짐 확인용)
+                echo "[INFO] dirname: $(dirname "$CRASHLYTICS_PATH")"
+                echo "[INFO] basename: $(basename "$CRASHLYTICS_PATH")"
+
+                echo "===== 🔍 DEBUG END ====="
                 """,
             name: "FirebaseCrashlytics",
             inputPaths: [
@@ -39,7 +78,7 @@ public extension ProjectDescription.TargetScript {
                 "$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist",
                 "$(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)"
             ],
-            basedOnDependencyAnalysis: false
+            basedOnDependencyAnalysis: true
         )
     }
 }
