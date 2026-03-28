@@ -21,7 +21,7 @@ public struct FetchMonthlyCalendarDaysUseCase<Repository: FoodRecordRepository>:
                         let days = generateCalendarDays(
                             for: period,
                             currentMonth: currentMonth,
-                            calendar: .seoul,
+                            calendar: .current,
                             recordsByDate: recordsByDate
                         )
                         continuation.yield(days)
