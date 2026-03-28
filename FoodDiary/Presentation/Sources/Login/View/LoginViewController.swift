@@ -51,10 +51,20 @@ private extension LoginViewController {
         appleLoginBtn.layer.cornerRadius = 10
         appleLoginBtn.addTarget(self, action: #selector(loginButtonTapped), for: .touchUpInside)
         
+        let crashButton = UIButton(type: .system)
+        crashButton.setTitle("Test Crash", for: .normal)
+        crashButton.addTarget(self, action: #selector(crashButtonTapped), for: .touchUpInside)
+
         view.addSubview(logoImageView)
         view.addSubview(characterImageView)
         view.addSubview(appleLoginBtn)
-        
+        view.addSubview(crashButton)
+
+        crashButton.snp.makeConstraints {
+            $0.top.equalTo(view.safeAreaLayoutGuide).inset(16)
+            $0.trailing.equalTo(view.safeAreaLayoutGuide).inset(16)
+        }
+
         logoImageView.snp.makeConstraints {
             $0.centerX.equalTo(view.snp.centerX)
             $0.width.equalTo(215)
@@ -75,6 +85,11 @@ private extension LoginViewController {
         }
     }
     
+    @objc func crashButtonTapped() {
+        let numbers = [0]
+        let _ = numbers[1]
+    }
+
     @objc func loginButtonTapped() {
         let provider = ASAuthorizationAppleIDProvider()
         let request = provider.createRequest()
