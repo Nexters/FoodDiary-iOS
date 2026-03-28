@@ -165,8 +165,7 @@ jobs:
             CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM=W35T2QAC67 \
-            CODE_SIGN_IDENTITY="iPhone Distribution" \
-            OTHER_CODE_SIGN_FLAGS="--keychain ${{ env.KEYCHAIN_PATH }}" \
+            CODE_SIGN_IDENTITY="APPLE Distribution" \
             2>&1 | tee "$RUNNER_TEMP/archive.log" | xcpretty --color
 
           # 아카이브에서 버전 추출
