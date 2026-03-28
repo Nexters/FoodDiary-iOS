@@ -9,6 +9,7 @@ import UIKit
 import UserNotifications
 import FirebaseCore
 import FirebaseMessaging
+import Sentry
 import Domain
 import Data
 import DI
@@ -18,11 +19,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         logBuildConfiguration()
+        configureSentry()
         FirebaseApp.configure()
         Messaging.messaging().delegate = self
         setupAppearance()
         UNUserNotificationCenter.current().delegate = self
         return true
+    }
+
+    private func configureSentry() {
+        guard let dsn = Bundle.main.infoDictionary?["SENTRY_DSN"] as? String, !dsn.isEmpty else { return }
+        SentrySDK.start { options in
+            options.dsn = dsn
+            options.debug = false
+            options.tracesSampleRate = 0.2
+        }
     }
 
     private func logBuildConfiguration() {

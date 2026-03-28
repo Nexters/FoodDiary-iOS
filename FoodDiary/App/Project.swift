@@ -22,6 +22,27 @@ let project = Project(
             sources: ["Sources/**"],
             resources: ["Resources/**"],
             entitlements: "App.entitlements",
+            scripts: [
+                .post(
+                    script: """
+                    if [[ "$(uname -m)" == arm64 ]]; then
+                        export PATH="/opt/homebrew/bin:$PATH"
+                    fi
+                    if which sentry-cli >/dev/null; then
+                        export SENTRY_ORG=mumuk-cs
+                        export SENTRY_PROJECT=mumuk-ios
+                        export SENTRY_AUTH_TOKEN="${SENTRY_AUTH_TOKEN}"
+                        ERROR=$(sentry-cli debug-files upload "$DWARF_DSYM_FOLDER_PATH" 2>&1 >/dev/null)
+                        if [ ! $? -eq 0 ]; then
+                            echo "warning: sentry-cli - $ERROR"
+                        fi
+                    else
+                        echo "warning: sentry-cli not installed, download from https://github.com/getsentry/sentry-cli/releases"
+                    fi
+                    """,
+                    name: "Upload dSYM to Sentry"
+                )
+            ],
             dependencies: [
                 .project(target: "Data", path: "../Data"),
                 .project(target: "DesignSystem", path: "../DesignSystem"),
@@ -30,11 +51,13 @@ let project = Project(
                 .project(target: "Presentation", path: "../Presentation"),
                 .external(name: "FirebaseCore"),
                 .external(name: "FirebaseMessaging"),
+                .external(name: "Sentry"),
             ],
             settings: .settings(
                 base: [
                     "MARKETING_VERSION": "1.0.0",
                     "BASE_URL": "$(BASE_URL)",
+                    "SENTRY_DSN": "$(SENTRY_DSN)",
                     "TARGETED_DEVICE_FAMILY": "1"
                 ],
                 configurations: []
