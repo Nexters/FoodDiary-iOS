@@ -9,10 +9,13 @@ import ProjectDescription
 
 public extension ProjectDescription.Settings {
     static func makeSettings() -> Self {
-        return .settings(configurations: [
-            .debug(name: "Debug", xcconfig: "../../Configs/debug.xcconfig"),
-            .release(name: "Release", xcconfig: "../../Configs/release.xcconfig"),
-        ])
+        return .settings(
+            base: ["DEBUG_INFORMATION_FORMAT": "dwarf-with-dsym"],
+            configurations: [
+                .debug(name: "Debug", xcconfig: "../../Configs/debug.xcconfig"),
+                .release(name: "Release", xcconfig: "../../Configs/release.xcconfig"),
+            ]
+        )
     }
 }
 
