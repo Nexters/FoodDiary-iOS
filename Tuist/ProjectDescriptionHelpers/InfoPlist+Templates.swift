@@ -32,6 +32,7 @@ extension InfoPlist {
                 "NSPhotoLibraryUsageDescription": "음식 사진을 분류하기 위해 사진 라이브러리 접근 권한이 필요합니다.",
                 "NSUserNotificationsUsageDescription": "AI 분석 완료 알림을 받기 위해선 알림 권한이 필요합니다.",
                 "BASE_URL": "$(BASE_URL)",
+                "SENTRY_DSN": "$(SENTRY_DSN)",
                 "NSAppTransportSecurity": [
                     "NSAllowsArbitraryLoads": true
                 ],
