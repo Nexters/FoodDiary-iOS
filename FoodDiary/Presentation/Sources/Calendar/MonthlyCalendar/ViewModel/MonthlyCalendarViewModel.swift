@@ -37,6 +37,7 @@ public final class MonthlyCalendarViewModel<
     private let stateSubject: CurrentValueSubject<State, Never>
     private let eventSubject = PassthroughSubject<Event, Never>()
     private var cancellables = Set<AnyCancellable>()
+    @MainActor private var currentLoadTask: Task<Void, Never>?
 
     // MARK: - Dependencies
 
@@ -95,7 +96,7 @@ public final class MonthlyCalendarViewModel<
 
         case .loadInitialData:
             await requestPhotoAuthorizationIfNeeded()
-            await loadMonth(for: state.currentDisplayDate)
+            startLoadMonth(for: state.currentDisplayDate)
 
         case .selectMonth(let date):
             let calendar = Calendar.current
@@ -105,7 +106,7 @@ public final class MonthlyCalendarViewModel<
                   let todayYearMonth = calendar.date(from: todayComponents),
                   newYearMonth <= todayYearMonth else { return }
             state.currentDisplayDate = date
-            await loadMonth(for: state.currentDisplayDate)
+            startLoadMonth(for: state.currentDisplayDate)
 
         case .selectDay(let date):
             do {
@@ -116,20 +117,29 @@ public final class MonthlyCalendarViewModel<
             }
 
         case .refreshCurrentMonth:
-            await loadMonth(for: state.currentDisplayDate)
+            startLoadMonth(for: state.currentDisplayDate)
 
         case .updateMonth(let date):
             let calendar = Calendar.current
             if calendar.component(.year, from: date) != calendar.component(.year, from: state.currentDisplayDate)
                 || calendar.component(.month, from: date) != calendar.component(.month, from: state.currentDisplayDate) {
-                await loadMonth(for: date)
+                startLoadMonth(for: date)
             } else {
-                await loadMonth(for: state.currentDisplayDate)
+                startLoadMonth(for: state.currentDisplayDate)
             }
         }
     }
 
     // MARK: - Private Methods
+
+    @MainActor
+    private func startLoadMonth(for date: Date) {
+        currentLoadTask?.cancel()
+        currentLoadTask = nil
+        currentLoadTask = Task {
+            await loadMonth(for: date)
+        }
+    }
 
     @MainActor
     private func loadMonth(for date: Date) async {
@@ -140,13 +150,15 @@ public final class MonthlyCalendarViewModel<
         
         do {
             for try await monthDays in fetchMonthlyCalendarDaysUseCase.execute(for: period, currentMonth: date) {
+                try await Task.sleep(for: .seconds(1))
                 state.monthDays = monthDays
                 state.numberOfWeeks = monthDays.count / 7
             }
+        } catch is CancellationError {
+            print("Task Cancelled")
         } catch {
             print("Failed to load monthly calendar: \(error)")
         }
-
     }
 
     private static func generatePlaceholderDays(
