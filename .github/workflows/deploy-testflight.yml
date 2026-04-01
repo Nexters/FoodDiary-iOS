@@ -113,7 +113,9 @@ jobs:
           RELEASE_XCCONFIG: ${{ secrets.RELEASE_XCCONFIG }}
         run: |
           mkdir -p Configs
-          echo "$RELEASE_XCCONFIG" | grep -v -E 'CURRENT_PROJECT_VERSION|MARKETING_VERSION' > Configs/release.xcconfig
+          echo "$RELEASE_XCCONFIG" | grep -v -E 'CURRENT_PROJECT_VERSION|MARKETING_VERSION|PROVISIONING_PROFILE_SPECIFIER|CODE_SIGN_IDENTITY' > Configs/release.xcconfig
+          echo "PROVISIONING_PROFILE_SPECIFIER = FoodDiary-Distribution" >> Configs/release.xcconfig
+          echo "CODE_SIGN_IDENTITY = iPhone Distribution" >> Configs/release.xcconfig
           echo "// Debug Configuration (CI)" > Configs/debug.xcconfig
 
       - name: Create GoogleService-Info.plist
