@@ -172,17 +172,16 @@ jobs:
             CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM=W35T2QAC67 \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
-            PROVISIONING_PROFILE_SPECIFIER="FoodDiary-Distribution" \
+            CODE_SIGN_IDENTITY="iPhone Distribution" \
+            OTHER_CODE_SIGN_FLAGS="--keychain ${{ env.KEYCHAIN_PATH }}" \
             2>&1 | tee "$RUNNER_TEMP/archive.log" | xcpretty --color
-          exit ${PIPESTATUS[0]}
-      
+
           VERSION=$(/usr/libexec/PlistBuddy -c "Print :ApplicationProperties:CFBundleShortVersionString" "$ARCHIVE_PATH/Info.plist")
           if [ -z "$VERSION" ]; then
             echo "::error::VERSION 추출 실패"
             exit 1
           fi
-      
+
           echo "ARCHIVE_PATH=$ARCHIVE_PATH" >> $GITHUB_ENV
           echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_ENV
