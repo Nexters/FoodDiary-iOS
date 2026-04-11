@@ -50,6 +50,7 @@ public final class WeeklyCalendarViewModel<
     private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>
     private let pushNotificationObserver: PushObserver
     private let getNicknameUseCase: GetNicknameUseCase
+    private let coachmarkStorage: any CoachmarkStoring
 
     // MARK: - Init
 
@@ -58,13 +59,15 @@ public final class WeeklyCalendarViewModel<
         loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase<RecordRepo, AssetRepo>,
         saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>,
         pushNotificationObserver: PushObserver,
-        getNicknameUseCase: GetNicknameUseCase
+        getNicknameUseCase: GetNicknameUseCase,
+        coachmarkStorage: any CoachmarkStoring
     ) {
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
         self.loadWeeklyCalendarDataUseCase = loadWeeklyCalendarDataUseCase
         self.saveFoodRecordUseCase = saveFoodRecordUseCase
         self.pushNotificationObserver = pushNotificationObserver
         self.getNicknameUseCase = getNicknameUseCase
+        self.coachmarkStorage = coachmarkStorage
 
         let cal = Calendar.current
         self.calendar = cal
@@ -166,6 +169,15 @@ public final class WeeklyCalendarViewModel<
             }
             await loadWeekData(for: currentWeekBaseDate)
             await updateDateContent(for: state.selectedDate)
+
+        case .viewDidAppear:
+            if !coachmarkStorage.get() {
+                state.shouldShowCoachmark = true
+            }
+
+        case .dismissCoachmark:
+            coachmarkStorage.set()
+            state.shouldShowCoachmark = false
         }
     }
 
@@ -308,6 +320,7 @@ extension WeeklyCalendarViewModel {
         public internal(set) var dateContent: DateContent?
         public internal(set) var nickname: String? = nil
         public internal(set) var canGoToNextWeek: Bool = false
+        public internal(set) var shouldShowCoachmark: Bool = false
     }
 
     public enum Input {
@@ -320,6 +333,8 @@ extension WeeklyCalendarViewModel {
         case saveSelectedPhotos([AssetRepo.Asset])
         case handlePushNotification(AnalysisResultNotification)
         case refreshData(Date? = nil)
+        case viewDidAppear
+        case dismissCoachmark
     }
 
     public enum Event {
