@@ -28,7 +28,12 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         #endif
         guard let windowScene = scene as? UIWindowScene else { return }
         window = UIWindow(windowScene: windowScene)
-        window?.rootViewController = AppFlowController(container: container)
+
+        guard let appFlowController = try? container.resolve(AppFlowController.self) else {
+            fatalError("AppFlowController Failed Resolve")
+        }
+        
+        window?.rootViewController = appFlowController
         window?.makeKeyAndVisible()
     }
 }
@@ -192,15 +197,24 @@ extension SceneDelegate {
         container.register(InitialLaunchStorage.self) { _ in
             InitialLaunchStorage()
         }
+
+        container.register(CoachmarkStoring.self) { _ in
+            CoachmarkStorage()
+        }
     }
 
     fileprivate func registerDomain() {
+        container.register(LoginSession.self, scope: .container) { _ in
+            LoginSession()
+        }
+
         container.register(FinalizeAppleLoginUseCase.self) { resolver in
             guard let repository = resolver.resolve(AuthRepository.self),
                 let pushTokenStorage = resolver.resolve(PushTokenStoring.self),
                 let notificationAuthProvider = resolver.resolve(
                     NotificationAuthorizationProviding.self),
                 let launchStorage = resolver.resolve(InitialLaunchStorage.self),
+                let loginSession = resolver.resolve(LoginSession.self),
                 let deviceId = UIDevice.current.identifierForVendor?.uuidString
             else {
                 fatalError("FinalizeAppleLoginUseCase dependencies not registered")
@@ -212,7 +226,8 @@ extension SceneDelegate {
                 osVersion: UIDevice.current.systemVersion,
                 pushTokenStorage: pushTokenStorage,
                 notificationAuthorizationProvider: notificationAuthProvider,
-                initialLaunchStorage: launchStorage
+                initialLaunchStorage: launchStorage,
+                loginSession: loginSession
             )
         }
 
@@ -373,17 +388,19 @@ extension SceneDelegate {
         }
 
         container.register(LogoutUseCase.self) { resolver in
-            guard let authRepository = resolver.resolve(AuthRepository.self) else {
-                fatalError("AuthRepository not registered")
+            guard let authRepository = resolver.resolve(AuthRepository.self),
+                  let loginSession = resolver.resolve(LoginSession.self) else {
+                fatalError("LogoutUseCase dependencies not registered")
             }
-            return LogoutUseCase(authRepository: authRepository)
+            return LogoutUseCase(authRepository: authRepository, loginSession: loginSession)
         }
 
         container.register(WithdrawUserUseCase.self) { resolver in
-            guard let authRepository = resolver.resolve(AuthRepository.self) else {
-                fatalError("AuthRepository not registered")
+            guard let authRepository = resolver.resolve(AuthRepository.self),
+                  let loginSession = resolver.resolve(LoginSession.self) else {
+                fatalError("WithdrawUserUseCase dependencies not registered")
             }
-            return WithdrawUserUseCase(authRepository: authRepository)
+            return WithdrawUserUseCase(authRepository: authRepository, loginSession: loginSession)
         }
 
         container.register(
@@ -497,7 +514,8 @@ extension SceneDelegate {
                     >.self
                 ),
                 let pushObserver = resolver.resolve(PushNotificationObserver.self),
-                let getNicknameUseCase = resolver.resolve(GetNicknameUseCase.self)
+                let getNicknameUseCase = resolver.resolve(GetNicknameUseCase.self),
+                let coachmarkStorage = resolver.resolve(CoachmarkStoring.self)
             else {
                 fatalError("WeeklyCalendarViewModel dependencies not registered")
             }
@@ -507,7 +525,8 @@ extension SceneDelegate {
                 loadWeeklyCalendarDataUseCase: loadWeeklyUseCase,
                 saveFoodRecordUseCase: saveFoodRecordUseCase,
                 pushNotificationObserver: pushObserver,
-                getNicknameUseCase: getNicknameUseCase
+                getNicknameUseCase: getNicknameUseCase,
+                coachmarkStorage: coachmarkStorage
             )
         }
 
@@ -661,6 +680,14 @@ extension SceneDelegate {
                 getNicknameUseCase: getNicknameUseCase,
                 getAppVersionUseCase: getAppVersionUseCase
             )
+        }
+
+        container.register(MainSceneProducer.self, scope: .container) { _ in
+            MainSceneProducer(container: DIContainer.shared)
+        }
+
+        container.register(AppFlowController.self, scope: .container) { _ in
+            AppFlowController(container: DIContainer.shared)
         }
     }
 
