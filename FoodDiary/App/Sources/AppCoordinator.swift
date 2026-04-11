@@ -5,7 +5,6 @@
 //  Created by 강대훈 on 4/8/26.
 //
 
-import Combine
 import DI
 import Data
 import Domain
@@ -13,22 +12,15 @@ import Presentation
 import UIKit
 
 final class AppCoordinator: Coordinator {
-    var childCoordinators: [Coordinator] = []
+    var childCoordinators: [any Coordinator] = []
 
     weak var sceneTransitioner: SceneTransitioning?
     private let container: DIContainer
-    private let sceneProducer: MainSceneProducer
+    private let factories: Factories
 
-    var currentNavigationController: UINavigationController? {
-        childCoordinators.compactMap { $0 as? MainCoordinator }.last?.navigationController
-    }
-
-    init(
-        container: DIContainer,
-        sceneProducer: MainSceneProducer
-    ) {
+    init(factories: Factories, container: DIContainer) {
+        self.factories = factories
         self.container = container
-        self.sceneProducer = sceneProducer
     }
 
     func start() {}
@@ -38,20 +30,20 @@ final class AppCoordinator: Coordinator {
 
 extension AppCoordinator {
     func pushLoginVC() {
-        let loginCoordinator = LoginCoordinator(sceneProducer: sceneProducer)
+        let loginCoordinator = LoginCoordinator(factory: factories.login)
         loginCoordinator.sceneTransitioner = sceneTransitioner
         loginCoordinator.parentCoordinator = self
         addChild(loginCoordinator)
-        
+
         loginCoordinator.start()
     }
 
     func pushMainVC() {
-        let mainCoordinator = MainCoordinator(sceneProducer: sceneProducer)
+        let mainCoordinator = MainCoordinator(factories: factories)
         mainCoordinator.sceneTransitioner = sceneTransitioner
         mainCoordinator.parentCoordinator = self
         addChild(mainCoordinator)
-        
+
         mainCoordinator.start()
     }
 
@@ -76,10 +68,11 @@ extension AppCoordinator {
             return
         }
 
-        guard let navController = currentNavigationController else {
-            print("[DeepLink] NavigationController를 찾을 수 없음")
-            return
-        }
+        let navController = childCoordinators
+            .compactMap({ $0 as? MainCoordinator })
+            .last?.childCoordinators
+            .compactMap({ $0 as? CalendarCoordinator })
+            .last?.navigationController
 
         typealias DeepLinkDetailVM = DetailViewModel<
             FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
@@ -90,12 +83,12 @@ extension AppCoordinator {
         }
         let detailVC = DetailViewController(viewModel: detailVM)
 
-        if let presented = navController.presentedViewController {
+        if let presented = navController?.presentedViewController {
             presented.dismiss(animated: false) {
-                navController.pushViewController(detailVC, animated: true)
+                navController?.pushViewController(detailVC, animated: true)
             }
         } else {
-            navController.pushViewController(detailVC, animated: true)
+            navController?.pushViewController(detailVC, animated: true)
         }
     }
 }

@@ -10,26 +10,21 @@ import Presentation
 import UIKit
 
 final class MainCoordinator: Coordinator {
-    var childCoordinators: [Coordinator] = []
-    weak var parentCoordinator: AppCoordinator?
+    var childCoordinators: [any Coordinator] = []
+    weak var parentCoordinator: (any Coordinator)?
     weak var sceneTransitioner: SceneTransitioning?
 
-    private let sceneProducer: MainSceneProducer
+    private let factories: Factories
     private var cancellables = Set<AnyCancellable>()
-    private let calendarCoordinator: CalendarCoordinator
-    private let insightCoordinator: InsightCoordinator
 
-    var navigationController: UINavigationController? {
-        calendarCoordinator.navigationController
-    }
-
-    init(sceneProducer: MainSceneProducer) {
-        self.sceneProducer = sceneProducer
-        self.calendarCoordinator = CalendarCoordinator(sceneProducer: sceneProducer)
-        self.insightCoordinator = InsightCoordinator(sceneProducer: sceneProducer)
+    init(factories: Factories) {
+        self.factories = factories
     }
 
     func start() {
+        let calendarCoordinator = CalendarCoordinator(factory: factories.calendar)
+        let insightCoordinator = InsightCoordinator(factory: factories.insight)
+
         calendarCoordinator.parentCoordinator = self
         insightCoordinator.parentCoordinator = self
         addChild(calendarCoordinator)
@@ -48,15 +43,14 @@ final class MainCoordinator: Coordinator {
             .store(in: &cancellables)
 
         let navController = makeNavigationController(root: tabBarController)
-        calendarCoordinator.configure(navigationController: navController)
         sceneTransitioner?.transition(to: navController)
     }
 }
 
 extension MainCoordinator {
     func pushMyPageVC() {
-        guard let navController = navigationController else { return }
-        let myPageCoordinator = MyPageCoordinator(sceneProducer: sceneProducer, navigationController: navController)
+        let navController = (childCoordinators.first { $0 is CalendarCoordinator } as? CalendarCoordinator)?.navigationController
+        let myPageCoordinator = MyPageCoordinator(factory: factories.myPage, navigationController: navController)
         myPageCoordinator.parentCoordinator = self
         addChild(myPageCoordinator)
         myPageCoordinator.start()
