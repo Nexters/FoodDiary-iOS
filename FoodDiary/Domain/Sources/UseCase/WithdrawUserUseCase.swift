@@ -9,15 +9,19 @@ import Foundation
 
 public struct WithdrawUserUseCase {
     private let authRepository: AuthRepository
+    private let loginSession: LoginSession
 
-    public init(authRepository: AuthRepository) {
+    public init(authRepository: AuthRepository, loginSession: LoginSession) {
         self.authRepository = authRepository
+        self.loginSession = loginSession
     }
 
     /// 회원탈퇴를 수행합니다.
     ///
     /// 서버에 회원탈퇴 요청을 전송하고, 로컬에 저장된 토큰을 삭제합니다.
+    /// LoginSession을 통해 로그아웃 이벤트를 전달합니다.
     public func execute() async throws {
         try await authRepository.withdraw()
+        loginSession.notifyLogout()
     }
 }

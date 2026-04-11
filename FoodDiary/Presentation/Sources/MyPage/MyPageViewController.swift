@@ -53,17 +53,7 @@ public final class MyPageViewController: UIViewController {
         case logout
     }
 
-    // MARK: - Output
 
-    public var didLogoutPublisher: AnyPublisher<Void, Never> {
-        viewModel.eventPublisher
-            .compactMap { event -> Void? in
-                switch event {
-                case .didLogout, .didWithdraw: return ()
-                }
-            }
-            .eraseToAnyPublisher()
-    }
 
     // MARK: - Dependencies
 
