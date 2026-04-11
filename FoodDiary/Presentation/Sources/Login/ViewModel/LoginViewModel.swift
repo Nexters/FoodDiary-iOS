@@ -15,7 +15,7 @@ final public class LoginViewModel {
         self.finalizeAppleLoginUseCase = finalizeAppleLoginUseCase
     }
     
-    public func sendIdentityToken(_ token: String) async throws -> LoginResult {
-        return try await finalizeAppleLoginUseCase.execute(token)
+    public func sendIdentityToken(_ token: String) async throws {
+        try await finalizeAppleLoginUseCase.execute(token)
     }
 }

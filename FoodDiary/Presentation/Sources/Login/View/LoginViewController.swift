@@ -6,19 +6,11 @@
 //
 
 import AuthenticationServices
-import Combine
 import UIKit
 import SnapKit
 import DesignSystem
-import Domain
 
 final public class LoginViewController: UIViewController {
-    private let didLoginSubject = PassthroughSubject<LoginResult, Never>()
-
-    public var didLoginPublisher: AnyPublisher<LoginResult, Never> {
-        didLoginSubject.eraseToAnyPublisher()
-    }
-    
     private let viewModel: LoginViewModel
     
     public init(viewModel: LoginViewModel) {
@@ -94,8 +86,7 @@ extension LoginViewController: ASAuthorizationControllerDelegate {
                let tokenString = String(data: token, encoding: .utf8) {
                 Task {
                     do {
-                        let result = try await viewModel.sendIdentityToken(tokenString)
-                        didLoginSubject.send(result)
+                        try await viewModel.sendIdentityToken(tokenString)
                     } catch {
                         print(error.localizedDescription)
                     }
