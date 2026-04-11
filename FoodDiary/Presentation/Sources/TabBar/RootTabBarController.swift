@@ -12,23 +12,19 @@ import Combine
 public final class RootTabBarController: UITabBarController {
     let calendarVC: CalendarViewController
     let insightVC: UIViewController
-    private let myPageViewControllerFactory: (@escaping () -> Void) -> UIViewController
-    private let didLogoutSubject = PassthroughSubject<Void, Never>()
+    private let mypageButtonTapSubject = PassthroughSubject<Void, Never>()
     private var cancellables = Set<AnyCancellable>()
 
-    public var didLogoutPublisher: AnyPublisher<Void, Never> {
-        didLogoutSubject.eraseToAnyPublisher()
+    public var mypageButtonTapPublisher: AnyPublisher<Void, Never> {
+        mypageButtonTapSubject.eraseToAnyPublisher()
     }
 
     public init(
-        weeklyVC: UIViewController,
-        monthlyVC: UIViewController,
-        insightVC: UIViewController,
-        myPageViewControllerFactory: @escaping (@escaping () -> Void) -> UIViewController
+        calendarVC: CalendarViewController,
+        insightVC: UIViewController
     ) {
-        self.calendarVC = CalendarViewController(weeklyVC: weeklyVC, monthlyVC: monthlyVC)
+        self.calendarVC = calendarVC
         self.insightVC = insightVC
-        self.myPageViewControllerFactory = myPageViewControllerFactory
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -83,20 +79,16 @@ public final class RootTabBarController: UITabBarController {
     }
 
     @objc private func mypageButtonTapped() {
-        let myPageVC = myPageViewControllerFactory { [weak self] in
-            self?.didLogoutSubject.send()
-        }
-        myPageVC.hidesBottomBarWhenPushed = true
-        navigationController?.pushViewController(myPageVC, animated: true)
+        mypageButtonTapSubject.send()
     }
-    
+
     private func toggleViewMode() {
         calendarVC.toggleViewMode()
     }
-    
+
     private func updateToggleIcon(for mode: CalendarViewController.ViewMode) {
         guard let items = tabBar.items, items.count > 2 else { return }
-        
+
         let newImage = mode == .monthly ? DesignSystemAsset.iconWeekly.image : DesignSystemAsset.iconMonthly.image
         items[2].image = newImage
     }
@@ -105,15 +97,15 @@ public final class RootTabBarController: UITabBarController {
 extension RootTabBarController: UITabBarControllerDelegate {
     public func tabBarController(_ tabBarController: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
         guard let index = viewControllers?.firstIndex(of: viewController) else { return true }
-        
+
         if index == 2 {
             toggleViewMode()
             return false
         }
-        
+
         return true
     }
-    
+
     public func tabBarController(_ tabBarController: UITabBarController, didSelect viewController: UIViewController) {
         for subview in self.tabBar.subviews {
             if subview.frame.origin.x > self.tabBar.bounds.width * 0.6 {
