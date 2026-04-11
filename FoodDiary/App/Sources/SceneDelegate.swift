@@ -23,17 +23,10 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     ) {
         registerDependencies()
 
-        #if DEBUG
-            // saveDebugImageToPhotoLibrary()
-        #endif
         guard let windowScene = scene as? UIWindowScene else { return }
         window = UIWindow(windowScene: windowScene)
 
-        guard let appFlowController = try? container.resolve(AppFlowController.self) else {
-            fatalError("AppFlowController Failed Resolve")
-        }
-        
-        window?.rootViewController = appFlowController
+        window?.rootViewController = makeAppFlowController()
         window?.makeKeyAndVisible()
     }
 }
@@ -465,30 +458,6 @@ extension SceneDelegate {
     }
 
     fileprivate func registerPresentation() {
-        container.register(LoginViewModel.self, scope: .transient) { resolver in
-            guard let useCase = resolver.resolve(FinalizeAppleLoginUseCase.self) else {
-                fatalError("FinalizeAppleLoginUseCase not registered")
-            }
-
-            return LoginViewModel(finalizeAppleLoginUseCase: useCase)
-        }
-
-        typealias InsightVM = InsightViewModel<
-            InsightRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-        >
-
-        container.register(InsightVM.self, scope: .transient) { resolver in
-            guard let fetchInsightUseCase = resolver.resolve(
-                FetchInsightUseCase<
-                    InsightRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-                >.self
-            ) else {
-                fatalError("FetchInsightUseCase not registered")
-            }
-
-            return InsightViewModel(fetchInsightUseCase: fetchInsightUseCase)
-        }
-
         // WeeklyCalendarViewModel 타입 별칭
         typealias WeeklyVM = WeeklyCalendarViewModel<
             FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
@@ -660,59 +629,81 @@ extension SceneDelegate {
             )
         }
 
-        container.register(MyPageViewModel.self, scope: .transient) { resolver in
-            guard let updateDeviceUseCase = resolver.resolve(
-                UpdateDeviceNotificationSettingUseCase.self
-            ),
-                  let notificationAuthProvider = resolver.resolve(NotificationAuthorizationProviding.self),
-                  let logoutUseCase = resolver.resolve(LogoutUseCase.self),
-                  let withdrawUserUseCase = resolver.resolve(WithdrawUserUseCase.self),
-                  let getNicknameUseCase = resolver.resolve(GetNicknameUseCase.self),
-                  let getAppVersionUseCase = resolver.resolve(GetAppVersionUseCase.self) else {
-                fatalError("MyPageViewModel dependencies not registered")
-            }
+    }
 
-            return MyPageViewModel(
-                updateDeviceNotificationSettingUseCase: updateDeviceUseCase,
-                notificationAuthorizationProvider: notificationAuthProvider,
+    fileprivate func makeAppFlowController() -> AppFlowController {
+        // Login
+        guard let finalizeUseCase = try? container.resolve(FinalizeAppleLoginUseCase.self) else {
+            fatalError("FinalizeAppleLoginUseCase not registered")
+        }
+
+        // Calendar
+        typealias WeeklyVM = WeeklyCalendarViewModel<
+            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
+            FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>,
+            PhotoAuthorizationFetcher,
+            PushNotificationObserver
+        >
+        typealias MonthlyVM = MonthlyCalendarViewModel<
+            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
+            PhotoAuthorizationFetcher
+        >
+        guard let weeklyVM = try? container.resolve(WeeklyVM.self),
+              let monthlyVM = try? container.resolve(MonthlyVM.self),
+              let imageProvider = try? container.resolve(UIImageLoader.self) else {
+            fatalError("CalendarSceneFactory dependencies not registered")
+        }
+
+        // Insight
+        typealias FetchInsightUC = FetchInsightUseCase<
+            InsightRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
+        >
+        guard let fetchInsightUseCase = try? container.resolve(FetchInsightUC.self) else {
+            fatalError("FetchInsightUseCase not registered")
+        }
+
+        // MyPage
+        guard let updateDeviceUseCase = try? container.resolve(UpdateDeviceNotificationSettingUseCase.self),
+              let notificationAuthProvider = try? container.resolve(NotificationAuthorizationProviding.self),
+              let logoutUseCase = try? container.resolve(LogoutUseCase.self),
+              let withdrawUserUseCase = try? container.resolve(WithdrawUserUseCase.self),
+              let getNicknameUseCase = try? container.resolve(GetNicknameUseCase.self),
+              let getAppVersionUseCase = try? container.resolve(GetAppVersionUseCase.self) else {
+            fatalError("MyPageSceneFactory dependencies not registered")
+        }
+
+        let factories = Factories(
+            login: LoginSceneFactory(useCase: finalizeUseCase),
+            calendar: CalendarSceneFactory(
+                weeklyVM: weeklyVM,
+                monthlyVM: monthlyVM,
+                imageProvider: imageProvider,
+                container: container
+            ),
+            insight: InsightSceneFactory(useCase: fetchInsightUseCase),
+            myPage: MyPageSceneFactory(
+                updateDeviceUseCase: updateDeviceUseCase,
+                notificationAuthProvider: notificationAuthProvider,
                 logoutUseCase: logoutUseCase,
                 withdrawUserUseCase: withdrawUserUseCase,
                 getNicknameUseCase: getNicknameUseCase,
                 getAppVersionUseCase: getAppVersionUseCase
             )
+        )
+
+        guard let loginSession = try? container.resolve(LoginSession.self) else {
+            fatalError("LoginSession not registered")
         }
 
-        container.register(MainSceneProducer.self, scope: .container) { _ in
-            MainSceneProducer(container: DIContainer.shared)
-        }
-
-        container.register(AppFlowController.self, scope: .container) { _ in
-            AppFlowController(container: DIContainer.shared)
-        }
+        let appCoordinator = AppCoordinator(factories: factories, container: container)
+        let transitionHandler = DefaultViewTransitionHandler()
+        let appFlowController = AppFlowController(
+            appCoordinator: appCoordinator,
+            loginSession: loginSession,
+            container: container,
+            transitionHandler: transitionHandler
+        )
+        appCoordinator.sceneTransitioner = appFlowController
+        return appFlowController
     }
-
-    #if DEBUG
-        fileprivate func saveDebugImageToPhotoLibrary() {
-            // PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
-            //     guard status == .authorized || status == .limited else { return }
-
-            //     guard let path = Bundle.main.path(forResource: "food", ofType: "jpg"),
-            //         let image = UIImage(contentsOfFile: path)
-            //     else { return }
-
-            //     let calendar = Calendar.current
-            //     let today = calendar.startOfDay(for: Date())
-
-            //     for dayOffset in 0..<7 {
-            //         guard
-            //             let targetDate = calendar.date(byAdding: .day, value: -dayOffset, to: today)
-            //         else { continue }
-            //         PHPhotoLibrary.shared().performChanges {
-            //             let request = PHAssetChangeRequest.creationRequestForAsset(from: image)
-            //             request.creationDate = targetDate
-            //         }
-            //     }
-            // }
-        }
-    #endif
 }

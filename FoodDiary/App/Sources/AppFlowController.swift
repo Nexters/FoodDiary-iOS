@@ -18,32 +18,24 @@ final class AppFlowController: UIViewController, SceneTransitioning {
     private typealias AssetFetcher = FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>
     private typealias FetchUseCase = FetchFoodImageAssetUseCase<AssetFetcher>
 
-    private var currentChild: UIViewController?
     private var networkCancellable: AnyCancellable?
     private var cancellables = Set<AnyCancellable>()
     private let container: DIContainer
     private let loginSession: LoginSession
     private var splashView: SplashView?
-    private var pendingDeepLinkDate: String?
+    private let coordinator: AppCoordinator
+    private let transitionHandler: ViewTransitionHandling
 
-    private lazy var coordinator: AppCoordinator = {
-        guard let sceneProducer = try? container.resolve(MainSceneProducer.self) else {
-            fatalError("MainSceneProducer not registered")
-        }
-        let coordinator = AppCoordinator(
-            container: container,
-            sceneProducer: sceneProducer
-        )
-        coordinator.sceneTransitioner = self
-        return coordinator
-    }()
-
-    public init(container: DIContainer) {
-        guard let loginSession = try? container.resolve(LoginSession.self) else {
-            fatalError("LoginSession not registered")
-        }
-        self.container = container
+    public init(
+        appCoordinator: AppCoordinator,
+        loginSession: LoginSession,
+        container: DIContainer,
+        transitionHandler: ViewTransitionHandling
+    ) {
+        self.coordinator = appCoordinator
         self.loginSession = loginSession
+        self.container = container
+        self.transitionHandler = transitionHandler
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -118,8 +110,7 @@ final class AppFlowController: UIViewController, SceneTransitioning {
     }
 
     private func showOnboarding() {
-        guard let sceneProducer = try? container.resolve(MainSceneProducer.self) else { return }
-        let onboardingVC = sceneProducer.makeOnboardingScene()
+        let onboardingVC = OnboardingViewController()
         var cancellable: AnyCancellable?
         cancellable = onboardingVC.didCompletePublisher
             .receive(on: DispatchQueue.main)
@@ -133,10 +124,6 @@ final class AppFlowController: UIViewController, SceneTransitioning {
     }
 
     private func navigateToDetailFromDeepLink(diaryDateString: String) {
-        guard coordinator.currentNavigationController != nil else {
-            pendingDeepLinkDate = diaryDateString
-            return
-        }
         coordinator.navigateToDetail(diaryDateString: diaryDateString)
     }
 }
@@ -200,13 +187,6 @@ extension AppFlowController {
         if isLogin {
             coordinator.pushMainVC()
             registerForRemoteNotificationsAfterLogin()
-            if let deepLink = pendingDeepLinkDate {
-                pendingDeepLinkDate = nil
-                Task { [weak self] in
-                    try? await Task.sleep(for: .seconds(0.5))
-                    await MainActor.run { self?.coordinator.navigateToDetail(diaryDateString: deepLink) }
-                }
-            }
         } else {
             coordinator.pushLoginVC()
         }
@@ -272,29 +252,6 @@ extension AppFlowController {
     }
 
     func transition(to viewController: UIViewController) {
-        let previousChild = currentChild
-
-        addChild(viewController)
-        view.addSubview(viewController.view)
-        viewController.view.snp.makeConstraints {
-            $0.edges.equalToSuperview()
-        }
-        viewController.view.alpha = 0
-
-        UIView.animate(
-            withDuration: 0.3,
-            animations: {
-                previousChild?.view.alpha = 0
-                viewController.view.alpha = 1
-            },
-            completion: { _ in
-                previousChild?.willMove(toParent: nil)
-                previousChild?.view.removeFromSuperview()
-                previousChild?.removeFromParent()
-
-                viewController.didMove(toParent: self)
-                self.currentChild = viewController
-            }
-        )
+        transitionHandler.transition(from: self, to: viewController)
     }
 }
