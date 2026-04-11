@@ -4,7 +4,9 @@
 //
 
 import Combine
+import Data
 import DesignSystem
+import DI
 import Domain
 import SnapKit
 import UIKit
@@ -21,7 +23,7 @@ public final class MonthlyCalendarViewController<
     // MARK: - Dependencies
 
     private let viewModel: MonthlyCalendarViewModel<RecordRepo, AuthRepo>
-    private let detailViewControllerFactory: ((Date, [FoodRecord], MealType?, Bool, ((Date) -> Void)?) -> UIViewController)
+    private let container: DIContainer
 
     // MARK: - UI Components
 
@@ -69,10 +71,10 @@ public final class MonthlyCalendarViewController<
 
     public init(
         viewModel: MonthlyCalendarViewModel<RecordRepo, AuthRepo>,
-        detailViewControllerFactory: @escaping (Date, [FoodRecord], MealType?, Bool, ((Date) -> Void)?) -> UIViewController
+        container: DIContainer
     ) {
         self.viewModel = viewModel
-        self.detailViewControllerFactory = detailViewControllerFactory
+        self.container = container
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -323,11 +325,184 @@ public final class MonthlyCalendarViewController<
     // MARK: - Navigation
 
     private func navigateToDetail(date: Date, records: [FoodRecord]) {
-        let detailVC = detailViewControllerFactory(date, records, nil, false) { [weak self] date in
-            self?.viewModel.input.send(.updateMonth(date))
-        }
+        let detailVC = makeDetailViewController(
+            date: date,
+            records: records,
+            onDismissWithDate: { [weak self] date in
+                self?.viewModel.input.send(.updateMonth(date))
+            }
+        )
         detailVC.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(detailVC, animated: true)
+    }
+
+    private typealias DetailVM = DetailViewModel<
+        FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
+        PushNotificationObserver
+    >
+    private typealias EditVM = EditFoodRecordViewModel<
+        FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
+    >
+    private typealias AddressSearchVM = AddressSearchViewModel<AddressSearchRepositoryImpl>
+    private typealias AssetFetcher = FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>
+    private typealias FetchUseCase = FetchFoodImageAssetUseCase<AssetFetcher>
+    private typealias AuthUseCase = RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>
+
+    private func makeDetailViewController(
+        date: Date,
+        records: [FoodRecord],
+        scrollToMealType: MealType? = nil,
+        shouldPopToRoot: Bool = false,
+        onDismissWithDate: ((Date) -> Void)? = nil
+    ) -> UIViewController {
+        guard let detailVM = try? container.resolve(DetailVM.self, argument: (date, records)) else {
+            fatalError("DetailViewModel not registered")
+        }
+        return DetailViewController(
+            viewModel: detailVM,
+            initialScrollTarget: scrollToMealType,
+            shouldPopToRoot: shouldPopToRoot,
+            onDismissWithDate: onDismissWithDate,
+            editViewControllerFactory: { [weak self] record in
+                self?.makeEditViewController(for: record) ?? UIViewController()
+            },
+            presentImagePickerHandler: makeDetailImagePickerHandler()
+        )
+    }
+
+    private func makeEditViewController(for record: FoodRecord) -> UIViewController {
+        guard let editVM = try? container.resolve(EditVM.self, argument: record) else {
+            fatalError("EditFoodRecordViewModel not registered")
+        }
+        let addressSearchVCFactory: (Int, @escaping (AddressSearchResult) -> Void) -> UIViewController = {
+            [container] diaryId, onSelect in
+            guard let addressVM = try? container.resolve(AddressSearchVM.self, argument: diaryId) else {
+                fatalError("AddressSearchViewModel not registered")
+            }
+            return AddressSearchViewController(viewModel: addressVM, onAddressSelected: onSelect)
+        }
+        return EditFoodRecordViewController(viewModel: editVM, addressSearchViewControllerFactory: addressSearchVCFactory)
+    }
+
+    private func makeDetailImagePickerHandler()
+        -> (UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void) -> Void
+    {
+        return { [weak self] nav, date, onSelected in
+            guard let self else { return }
+            self.presentImagePicker(
+                from: nav,
+                date: date,
+                configuration: .withMaxSelectionCount(10),
+                autoPreselectByProbability: true,
+                loadPreviewImages: false,
+                onSelected: { assets, _ in onSelected(assets) }
+            )
+        }
+    }
+
+    private func presentImagePicker(
+        from nav: UINavigationController,
+        date: Date,
+        configuration: ImagePickerConfiguration,
+        autoPreselectByProbability: Bool,
+        loadPreviewImages: Bool,
+        onSelected: @escaping ([any ImageAssetable], [UIImage]) -> Void
+    ) {
+        guard let fetchUseCase = try? container.resolve(FetchUseCase.self),
+              let imageProvider = try? container.resolve(UIImageLoader.self),
+              let authUseCase = try? container.resolve(AuthUseCase.self)
+        else {
+            fatalError("ImagePicker dependencies not registered")
+        }
+
+        Task { @MainActor in
+            if !authUseCase.isAuthorized() {
+                let status = await authUseCase.execute()
+                if status == .denied || status == .restricted {
+                    Self.presentPhotoAccessDeniedAlert(on: nav)
+                    return
+                }
+            }
+
+            do {
+                let calendar = Calendar.current
+                let startOfDay = calendar.startOfDay(for: date)
+                let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)
+                let photosByDate = try await fetchUseCase.execute(from: startOfDay, to: endOfDay)
+                let foodImageAssets = photosByDate[startOfDay] ?? []
+                let photos = foodImageAssets.map { $0.imageAsset }
+
+                let preselectedFoodPhotoIds: Set<String> =
+                    autoPreselectByProbability
+                    ? Set(foodImageAssets.filter { $0.foodProbability >= 0.5 }.map { $0.id })
+                    : []
+
+                let picker = ImagePickerViewController(
+                    photos: photos,
+                    preselectedFoodPhotoIds: preselectedFoodPhotoIds,
+                    imageProvider: imageProvider,
+                    configuration: configuration
+                )
+
+                var cancellable: AnyCancellable?
+                cancellable = picker.resultPublisher
+                    .sink { [weak nav] result in
+                        defer { cancellable = nil }
+                        switch result {
+                        case .selected(let assets):
+                            nav?.popViewController(animated: true)
+                            if loadPreviewImages {
+                                Task { @MainActor in
+                                    var previewImages: [UIImage] = []
+                                    for asset in assets {
+                                        if let image = try? await imageProvider.loadImage(
+                                            for: asset,
+                                            targetSize: CGSize(width: 300, height: 300)
+                                        ) {
+                                            previewImages.append(image)
+                                        }
+                                    }
+                                    onSelected(assets, previewImages)
+                                }
+                            } else {
+                                onSelected(assets, [])
+                            }
+                        case .cancelled:
+                            break
+                        }
+                    }
+
+                nav.pushViewController(picker, animated: true)
+            } catch {
+                Self.presentPhotoLoadFailedAlert(error: error, on: nav)
+            }
+        }
+    }
+
+    private static func presentPhotoAccessDeniedAlert(on nav: UINavigationController) {
+        let alert = UIAlertController(
+            title: "사진 접근 권한 필요",
+            message: "음식 사진을 추가하려면 사진 라이브러리 접근 권한이 필요합니다. 설정에서 권한을 허용해 주세요.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(
+            UIAlertAction(title: "설정으로 이동", style: .default) { _ in
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            })
+        nav.topViewController?.present(alert, animated: true)
+    }
+
+    private static func presentPhotoLoadFailedAlert(error: Error, on nav: UINavigationController) {
+        let alert = UIAlertController(
+            title: "사진 불러오기 실패",
+            message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        nav.topViewController?.present(alert, animated: true)
     }
 
     private func showErrorAlert(_ error: Error) {
