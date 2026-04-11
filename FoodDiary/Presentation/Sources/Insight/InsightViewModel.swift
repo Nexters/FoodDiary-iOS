@@ -7,7 +7,6 @@ import Combine
 import Domain
 import Foundation
 
-@MainActor
 public final class InsightViewModel<Repo: InsightRepository> {
 
     // MARK: - Output
