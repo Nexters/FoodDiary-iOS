@@ -698,7 +698,9 @@ extension SceneDelegate {
                 getAppVersionUseCase: getAppVersionUseCase
             ),
             detail: DetailSceneFactory(container: container),
-            imagePicker: imagePickerFactory
+            imagePicker: imagePickerFactory,
+            edit: EditSceneFactory(container: container),
+            addressSearch: AddressSearchSceneFactory(container: container)
         )
 
         guard let loginSession = try? container.resolve(LoginSession.self) else {
