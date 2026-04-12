@@ -6,12 +6,6 @@
 import Domain
 import UIKit
 
-// MARK: - Protocol
-
-public protocol ImagePickerDelegate: AnyObject {
-    func pushImagePicker(input: ImagePickerSceneInput)
-}
-
 // MARK: - Coordinator
 
 public final class ImagePickerCoordinator: Coordinator {

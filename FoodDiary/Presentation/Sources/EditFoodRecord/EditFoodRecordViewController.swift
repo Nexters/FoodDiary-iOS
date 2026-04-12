@@ -29,7 +29,14 @@ public final class EditFoodRecordViewController<
     // MARK: - Dependencies
 
     private let viewModel: EditFoodRecordViewModel<RecordRepo>
-    private let addressSearchViewControllerFactory: ((Int, @escaping (AddressSearchResult) -> Void) -> UIViewController)?
+
+    // MARK: - Flow
+
+    private let flowSubject = PassthroughSubject<EditFlow, Never>()
+    public var flowPublisher: AnyPublisher<EditFlow, Never> {
+        flowSubject.eraseToAnyPublisher()
+    }
+
     // MARK: - UI Components
 
     private let scrollView: UIScrollView = {
@@ -109,11 +116,9 @@ public final class EditFoodRecordViewController<
     // MARK: - Init
 
     public init(
-        viewModel: EditFoodRecordViewModel<RecordRepo>,
-        addressSearchViewControllerFactory: ((Int, @escaping (AddressSearchResult) -> Void) -> UIViewController)? = nil
+        viewModel: EditFoodRecordViewModel<RecordRepo>
     ) {
         self.viewModel = viewModel
-        self.addressSearchViewControllerFactory = addressSearchViewControllerFactory
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -405,10 +410,11 @@ public final class EditFoodRecordViewController<
 
     private func presentAddressSearchModal() {
         guard let diaryId = Int(viewModel.state.originalRecord.id) else { return }
-        guard let addressSearchVC = addressSearchViewControllerFactory?(diaryId, { [weak self] result in
-            self?.viewModel.input.send(.selectAddress(result))
-        }) else { return }
-        present(addressSearchVC, animated: true)
+        flowSubject.send(.presentAddressSearch(
+            AddressSearchSceneInput(diaryId: diaryId) { [weak self] result in
+                self?.viewModel.input.send(.selectAddress(result))
+            }
+        ))
     }
 
     private func presentAddTagAlert() {
@@ -484,3 +490,7 @@ public final class EditFoodRecordViewController<
         return true
     }
 }
+
+// MARK: - EditFlowEmitting
+
+extension EditFoodRecordViewController: EditFlowEmitting {}
