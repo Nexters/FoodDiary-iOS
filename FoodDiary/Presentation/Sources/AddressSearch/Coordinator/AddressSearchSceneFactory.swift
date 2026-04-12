@@ -4,7 +4,6 @@
 //
 
 import Data
-import DI
 import Domain
 import UIKit
 
@@ -17,20 +16,19 @@ public protocol AddressSearchSceneProducing {
 // MARK: - Factory
 
 public final class AddressSearchSceneFactory: AddressSearchSceneProducing {
-    private typealias AddressSearchVM = AddressSearchViewModel<AddressSearchRepositoryImpl>
+    private let searchAddressUseCase: SearchAddressUseCase<AddressSearchRepositoryImpl>
 
-    private let container: DIContainer
-
-    public init(container: DIContainer) {
-        self.container = container
+    public init(searchAddressUseCase: SearchAddressUseCase<AddressSearchRepositoryImpl>) {
+        self.searchAddressUseCase = searchAddressUseCase
     }
 
     public func makeScene(input: AddressSearchSceneInput) -> UIViewController {
-        guard let addressVM = try? container.resolve(AddressSearchVM.self, argument: input.diaryId) else {
-            fatalError("AddressSearchViewModel not registered")
-        }
+        let viewModel = AddressSearchViewModel(
+            searchAddressUseCase: searchAddressUseCase,
+            diaryId: input.diaryId
+        )
         return AddressSearchViewController(
-            viewModel: addressVM,
+            viewModel: viewModel,
             onAddressSelected: input.onSelected
         )
     }
