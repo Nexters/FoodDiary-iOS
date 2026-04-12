@@ -22,7 +22,13 @@ public final class MonthlyCalendarViewController<
     // MARK: - Dependencies
 
     private let viewModel: MonthlyCalendarViewModel<RecordRepo, AuthRepo>
-    private weak var delegate: (any CalendarViewControllerDelegate)?
+
+    // MARK: - Flow
+
+    private let flowSubject = PassthroughSubject<CalendarFlow, Never>()
+    public var flowPublisher: AnyPublisher<CalendarFlow, Never> {
+        flowSubject.eraseToAnyPublisher()
+    }
 
     // MARK: - UI Components
 
@@ -69,11 +75,9 @@ public final class MonthlyCalendarViewController<
     // MARK: - Init
 
     public init(
-        viewModel: MonthlyCalendarViewModel<RecordRepo, AuthRepo>,
-        delegate: (any CalendarViewControllerDelegate)? = nil
+        viewModel: MonthlyCalendarViewModel<RecordRepo, AuthRepo>
     ) {
         self.viewModel = viewModel
-        self.delegate = delegate
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -331,7 +335,7 @@ public final class MonthlyCalendarViewController<
                 self?.viewModel.input.send(.updateMonth(date))
             }
         )
-        delegate?.pushDetail(input: input)
+        flowSubject.send(.pushDetail(input))
     }
 
     private func showErrorAlert(_ error: Error) {
@@ -340,6 +344,10 @@ public final class MonthlyCalendarViewController<
         present(alert, animated: true)
     }
 }
+
+// MARK: - CalendarFlowEmitting
+
+extension MonthlyCalendarViewController: CalendarFlowEmitting {}
 
 // MARK: - Constants
 

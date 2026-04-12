@@ -3,6 +3,7 @@
 //  Presentation
 //
 
+import Combine
 import UIKit
 
 // MARK: - CalendarCoordinator
@@ -13,6 +14,7 @@ public final class CalendarCoordinator: Coordinator {
     public weak var navigationController: UINavigationController?
 
     private let factories: Factories
+    private var cancellables = Set<AnyCancellable>()
 
     public init(factories: Factories) {
         self.factories = factories
@@ -25,17 +27,22 @@ public final class CalendarCoordinator: Coordinator {
     }
 
     public func makeViewController() -> CalendarViewController {
-        factories.calendar.makeCalendarViewController(
-            delegate: self,
-            imagePickerDelegate: self
-        )
+        let calendarVC = factories.calendar.makeScene()
+        calendarVC.flowPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] event in
+                switch event {
+                case .pushDetail(let input):
+                    self?.pushDetail(input: input)
+                case .pushImagePicker(let input):
+                    self?.pushImagePicker(input: input)
+                }
+            }
+            .store(in: &cancellables)
+        return calendarVC
     }
-}
 
-// MARK: - CalendarViewControllerDelegate
-
-extension CalendarCoordinator: CalendarViewControllerDelegate {
-    public func pushDetail(input: DetailSceneInput) {
+    private func pushDetail(input: DetailSceneInput) {
         let detailCoordinator = DetailCoordinator(
             factories: factories,
             navigationController: navigationController
@@ -44,12 +51,8 @@ extension CalendarCoordinator: CalendarViewControllerDelegate {
         addChild(detailCoordinator)
         detailCoordinator.start(input: input)
     }
-}
 
-// MARK: - ImagePickerDelegate
-
-extension CalendarCoordinator: ImagePickerDelegate {
-    public func pushImagePicker(input: ImagePickerSceneInput) {
+    private func pushImagePicker(input: ImagePickerSceneInput) {
         let imagePickerCoordinator = ImagePickerCoordinator(
             factories: factories,
             navigationController: navigationController
