@@ -10,16 +10,22 @@ public struct Factories {
     public let calendar: any CalendarSceneProducing
     public let insight: any InsightSceneProducing
     public let myPage: any MyPageSceneProducing
+    public let detail: any DetailSceneProducing
+    public let imagePicker: any ImagePickerSceneProducing
 
     public init(
         login: any LoginSceneProducing,
         calendar: any CalendarSceneProducing,
         insight: any InsightSceneProducing,
-        myPage: any MyPageSceneProducing
+        myPage: any MyPageSceneProducing,
+        detail: any DetailSceneProducing,
+        imagePicker: any ImagePickerSceneProducing
     ) {
         self.login = login
         self.calendar = calendar
         self.insight = insight
         self.myPage = myPage
+        self.detail = detail
+        self.imagePicker = imagePicker
     }
 }
