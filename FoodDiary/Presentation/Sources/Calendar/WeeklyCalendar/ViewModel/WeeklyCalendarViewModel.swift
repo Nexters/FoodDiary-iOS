@@ -367,8 +367,4 @@ extension WeeklyCalendarViewModel {
         return nextWeekStart <= today
     }
 
-    /// 특정 날짜의 사진 로드
-    public func photos(for date: Date) async throws -> [FoodImageAsset<AssetRepo.Asset>] {
-        try await loadWeeklyCalendarDataUseCase.loadPhotos(for: date)
-    }
 }

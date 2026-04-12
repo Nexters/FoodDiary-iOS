@@ -10,11 +10,17 @@ import Combine
 import DesignSystem
 import SnapKit
 
+public protocol CalendarViewControllerDelegate: AnyObject {
+    func pushDetail(input: DetailSceneInput)
+}
+
 public final class CalendarViewController: UIViewController {
     public enum ViewMode {
         case weekly
         case monthly
     }
+
+    public weak var delegate: (any CalendarViewControllerDelegate)?
 
     private let weeklyVC: UIViewController
     private let monthlyVC: UIViewController

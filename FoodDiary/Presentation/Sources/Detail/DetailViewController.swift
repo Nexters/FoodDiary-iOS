@@ -32,8 +32,7 @@ public final class DetailViewController<
     private let viewModel: DetailViewModel<RecordRepo, PushObserver>
     private let onDismissWithDate: ((Date) -> Void)?
     private let editViewControllerFactory: ((FoodRecord) -> UIViewController)?
-    private let presentImagePickerHandler:
-        ((UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void) -> Void)?
+    private weak var imagePickerDelegate: (any ImagePickerDelegate)?
 
     // MARK: - UI Components
 
@@ -126,9 +125,7 @@ public final class DetailViewController<
         shouldPopToRoot: Bool = false,
         onDismissWithDate: ((Date) -> Void)? = nil,
         editViewControllerFactory: ((FoodRecord) -> UIViewController)? = nil,
-        presentImagePickerHandler: (
-            (UINavigationController, Date, @escaping ([any ImageAssetable]) -> Void) -> Void
-        )? = nil
+        imagePickerDelegate: (any ImagePickerDelegate)? = nil
     ) {
         self.viewModel = viewModel
         self.pendingScrollTarget = initialScrollTarget
@@ -136,7 +133,7 @@ public final class DetailViewController<
         self.shouldPopToRoot = shouldPopToRoot
         self.onDismissWithDate = onDismissWithDate
         self.editViewControllerFactory = editViewControllerFactory
-        self.presentImagePickerHandler = presentImagePickerHandler
+        self.imagePickerDelegate = imagePickerDelegate
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -516,12 +513,12 @@ public final class DetailViewController<
     }
 
     private func handleAddPhoto() {
-        guard let nav = navigationController else { return }
         let date = viewModel.state.currentDate
-
-        presentImagePickerHandler?(nav, date) { [weak self] assets in
-            self?.viewModel.input.send(.saveSelectedPhotos(assets))
-        }
+        imagePickerDelegate?.pushImagePicker(
+            input: ImagePickerSceneInput(date: date) { [weak self] assets in
+                self?.viewModel.input.send(.saveSelectedPhotos(assets))
+            }
+        )
     }
 
     private func showShareUnavailableAlert() {
