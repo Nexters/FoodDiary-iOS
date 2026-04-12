@@ -457,107 +457,15 @@ extension SceneDelegate {
         }
     }
 
-    fileprivate func registerPresentation() {
-        // WeeklyCalendarViewModel 타입 별칭
-        typealias WeeklyVM = WeeklyCalendarViewModel<
-            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
-            FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>,
-            PhotoAuthorizationFetcher,
-            PushNotificationObserver
-        >
-
-        container.register(WeeklyVM.self, scope: .transient) { resolver in
-            guard
-                let requestPhotoAuthUseCase = resolver.resolve(
-                    RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>.self
-                ),
-                let loadWeeklyUseCase = resolver.resolve(
-                    LoadWeeklyRecordUseCase<
-                        FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
-                        FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>
-                    >.self
-                ),
-                let saveFoodRecordUseCase = resolver.resolve(
-                    SaveFoodRecordUseCase<
-                        FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-                    >.self
-                ),
-                let pushObserver = resolver.resolve(PushNotificationObserver.self),
-                let getNicknameUseCase = resolver.resolve(GetNicknameUseCase.self),
-                let coachmarkStorage = resolver.resolve(CoachmarkStoring.self)
-            else {
-                fatalError("WeeklyCalendarViewModel dependencies not registered")
-            }
-
-            return WeeklyCalendarViewModel(
-                requestPhotoAuthorizationUseCase: requestPhotoAuthUseCase,
-                loadWeeklyCalendarDataUseCase: loadWeeklyUseCase,
-                saveFoodRecordUseCase: saveFoodRecordUseCase,
-                pushNotificationObserver: pushObserver,
-                getNicknameUseCase: getNicknameUseCase,
-                coachmarkStorage: coachmarkStorage
-            )
-        }
-
-        // MonthlyCalendarViewModel 타입 별칭
-        typealias MonthlyVM = MonthlyCalendarViewModel<
-            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
-            PhotoAuthorizationFetcher
-        >
-
-        container.register(MonthlyVM.self, scope: .transient) { resolver in
-            guard
-                let fetchMonthlyUseCase = resolver.resolve(
-                    FetchMonthlyCalendarDaysUseCase<
-                        FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-                    >.self
-                ),
-                let requestPhotoAuthUseCase = resolver.resolve(
-                    RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>.self
-                ),
-                let fetchFoodRecordsUseCase = resolver.resolve(
-                    FetchFoodRecordsUseCase<
-                        FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-                    >.self
-                ),
-                let getNicknameUseCase = resolver.resolve(GetNicknameUseCase.self)
-            else {
-                fatalError("MonthlyCalendarViewModel dependencies not registered")
-            }
-
-            return MonthlyCalendarViewModel(
-                fetchMonthlyCalendarDaysUseCase: fetchMonthlyUseCase,
-                requestPhotoAuthorizationUseCase: requestPhotoAuthUseCase,
-                fetchFoodRecordsUseCase: fetchFoodRecordsUseCase,
-                getNicknameUseCase: getNicknameUseCase
-            )
-        }
-
-    }
+    fileprivate func registerPresentation() {}
 
     fileprivate func makeAppFlowController() -> AppFlowController {
         typealias RecordRepo = FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
+        typealias AssetFetcher = FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>
 
         // Login
         guard let finalizeUseCase = try? container.resolve(FinalizeAppleLoginUseCase.self) else {
             fatalError("FinalizeAppleLoginUseCase not registered")
-        }
-
-        // Calendar
-        typealias WeeklyVM = WeeklyCalendarViewModel<
-            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
-            FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>,
-            PhotoAuthorizationFetcher,
-            PushNotificationObserver
-        >
-        typealias MonthlyVM = MonthlyCalendarViewModel<
-            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
-            PhotoAuthorizationFetcher
-        >
-        guard let weeklyVM = try? container.resolve(WeeklyVM.self),
-              let monthlyVM = try? container.resolve(MonthlyVM.self),
-              let imageProvider = try? container.resolve(UIImageLoader.self) else {
-            fatalError("CalendarSceneFactory dependencies not registered")
         }
 
         // Insight
@@ -579,10 +487,9 @@ extension SceneDelegate {
         }
 
         // ImagePicker
-        typealias FetchImageAssetUC = FetchFoodImageAssetUseCase<
-            FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>
-        >
-        guard let fetchImageAssetUseCase = try? container.resolve(FetchImageAssetUC.self) else {
+        typealias FetchImageAssetUC = FetchFoodImageAssetUseCase<AssetFetcher>
+        guard let fetchImageAssetUseCase = try? container.resolve(FetchImageAssetUC.self),
+              let imageProvider = try? container.resolve(UIImageLoader.self) else {
             fatalError("ImagePickerCoordinator dependencies not registered")
         }
 
@@ -611,9 +518,28 @@ extension SceneDelegate {
             fatalError("AddressSearchSceneFactory dependencies not registered")
         }
 
+        // Calendar
+        guard
+            let requestPhotoAuthUseCase = try? container.resolve(RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>.self),
+            let loadWeeklyUseCase = try? container.resolve(LoadWeeklyRecordUseCase<RecordRepo, AssetFetcher>.self),
+            let coachmarkStorage = try? container.resolve(CoachmarkStoring.self),
+            let fetchMonthlyUseCase = try? container.resolve(FetchMonthlyCalendarDaysUseCase<RecordRepo>.self)
+        else {
+            fatalError("CalendarSceneFactory dependencies not registered")
+        }
+
         let factories = Factories(
             login: LoginSceneFactory(useCase: finalizeUseCase),
-            calendar: CalendarSceneFactory(weeklyVM: weeklyVM, monthlyVM: monthlyVM),
+            calendar: CalendarSceneFactory(
+                requestPhotoAuthorizationUseCase: requestPhotoAuthUseCase,
+                loadWeeklyCalendarDataUseCase: loadWeeklyUseCase,
+                saveFoodRecordUseCase: saveFoodRecordUseCase,
+                pushNotificationObserver: pushNotificationObserver,
+                getNicknameUseCase: getNicknameUseCase,
+                coachmarkStorage: coachmarkStorage,
+                fetchMonthlyCalendarDaysUseCase: fetchMonthlyUseCase,
+                fetchFoodRecordsUseCase: fetchRecordsUseCase
+            ),
             insight: InsightSceneFactory(useCase: fetchInsightUseCase),
             myPage: MyPageSceneFactory(
                 updateDeviceUseCase: updateDeviceUseCase,
