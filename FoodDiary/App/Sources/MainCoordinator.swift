@@ -16,14 +16,15 @@ final class MainCoordinator: Coordinator {
 
     private let factories: Factories
     private var cancellables = Set<AnyCancellable>()
+    var navigationController: UINavigationController?
 
     init(factories: Factories) {
         self.factories = factories
     }
 
     func start() {
-        let calendarCoordinator = CalendarCoordinator(factory: factories.calendar)
-        let insightCoordinator = InsightCoordinator(factory: factories.insight)
+        let calendarCoordinator = CalendarCoordinator(factories: factories)
+        let insightCoordinator = InsightCoordinator(factories: factories)
 
         calendarCoordinator.parentCoordinator = self
         insightCoordinator.parentCoordinator = self
@@ -42,15 +43,15 @@ final class MainCoordinator: Coordinator {
             }
             .store(in: &cancellables)
 
-        let navController = makeNavigationController(root: tabBarController)
-        sceneTransitioner?.transition(to: navController)
+        navigationController = makeNavigationController(root: tabBarController)
+        calendarCoordinator.configure(navigationController: navigationController)
+        sceneTransitioner?.transition(to: navigationController!)
     }
 }
 
 extension MainCoordinator {
     func pushMyPageVC() {
-        let navController = (childCoordinators.first { $0 is CalendarCoordinator } as? CalendarCoordinator)?.navigationController
-        let myPageCoordinator = MyPageCoordinator(factory: factories.myPage, navigationController: navController)
+        let myPageCoordinator = MyPageCoordinator(factories: factories, navigationController: navigationController)
         myPageCoordinator.parentCoordinator = self
         addChild(myPageCoordinator)
         myPageCoordinator.start()

@@ -10,14 +10,14 @@ public final class LoginCoordinator: Coordinator {
     public weak var parentCoordinator: (any Coordinator)?
     public weak var sceneTransitioner: SceneTransitioning?
 
-    private let factory: any LoginSceneProducing
+    private let factories: Factories
 
-    public init(factory: any LoginSceneProducing) {
-        self.factory = factory
+    public init(factories: Factories) {
+        self.factories = factories
     }
 
     public func start() {
-        let loginVC = factory.makeLoginScene()
+        let loginVC = factories.login.makeLoginScene()
         sceneTransitioner?.transition(to: loginVC)
     }
 }
