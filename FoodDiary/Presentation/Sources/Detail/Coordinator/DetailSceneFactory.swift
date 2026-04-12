@@ -4,7 +4,6 @@
 //
 
 import Data
-import DI
 import Domain
 import UIKit
 
@@ -13,23 +12,36 @@ public protocol DetailSceneProducing {
 }
 
 public final class DetailSceneFactory: DetailSceneProducing {
-    private typealias DetailVM = DetailViewModel<
-        FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
-        PushNotificationObserver
-    >
+    private typealias RecordRepo = FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
 
-    private let container: DIContainer
+    private let fetchRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
+    private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>
+    private let deleteFoodRecordUseCase: DeleteFoodRecordUseCase<RecordRepo>
+    private let pushNotificationObserver: PushNotificationObserver
 
-    public init(container: DIContainer) {
-        self.container = container
+    public init(
+        fetchRecordsUseCase: FetchFoodRecordsUseCase<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>,
+        saveFoodRecordUseCase: SaveFoodRecordUseCase<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>,
+        deleteFoodRecordUseCase: DeleteFoodRecordUseCase<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>,
+        pushNotificationObserver: PushNotificationObserver
+    ) {
+        self.fetchRecordsUseCase = fetchRecordsUseCase
+        self.saveFoodRecordUseCase = saveFoodRecordUseCase
+        self.deleteFoodRecordUseCase = deleteFoodRecordUseCase
+        self.pushNotificationObserver = pushNotificationObserver
     }
 
     public func makeDetailScene(input: DetailSceneInput) -> UIViewController {
-        guard let detailVM = try? container.resolve(DetailVM.self, argument: (input.date, input.records)) else {
-            fatalError("DetailViewModel not registered")
-        }
+        let viewModel = DetailViewModel(
+            initialDate: input.date,
+            initialRecords: input.records,
+            fetchRecordsUseCase: fetchRecordsUseCase,
+            saveFoodRecordUseCase: saveFoodRecordUseCase,
+            deleteFoodRecordUseCase: deleteFoodRecordUseCase,
+            pushNotificationObserver: pushNotificationObserver
+        )
         return DetailViewController(
-            viewModel: detailVM,
+            viewModel: viewModel,
             initialScrollTarget: input.scrollToMealType,
             shouldPopToRoot: input.shouldPopToRoot,
             onDismissWithDate: input.onDismissWithDate
