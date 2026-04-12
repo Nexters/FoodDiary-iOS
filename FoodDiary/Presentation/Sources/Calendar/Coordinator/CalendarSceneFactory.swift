@@ -3,13 +3,15 @@
 //  Presentation
 //
 
-import DI
 import Data
+import Domain
 import UIKit
 
 public protocol CalendarSceneProducing {
-    func makeWeeklyCalendarVC() -> UIViewController
-    func makeMonthlyCalendarVC() -> UIViewController
+    func makeCalendarViewController(
+        delegate: any CalendarViewControllerDelegate,
+        imagePickerDelegate: (any ImagePickerDelegate)?
+    ) -> CalendarViewController
 }
 
 public final class CalendarSceneFactory: CalendarSceneProducing {
@@ -26,34 +28,27 @@ public final class CalendarSceneFactory: CalendarSceneProducing {
 
     private let weeklyVM: WeeklyVM
     private let monthlyVM: MonthlyVM
-    private let imageProvider: UIImageLoader
-    // WeeklyCalendarVC / MonthlyCalendarVC 의 하위 화면 생성에 전달 — Factory 내부에서 resolve 하지 않음
-    private let container: DIContainer
 
-    public init(
-        weeklyVM: WeeklyVM,
-        monthlyVM: MonthlyVM,
-        imageProvider: UIImageLoader,
-        container: DIContainer
-    ) {
+    public init(weeklyVM: WeeklyVM, monthlyVM: MonthlyVM) {
         self.weeklyVM = weeklyVM
         self.monthlyVM = monthlyVM
-        self.imageProvider = imageProvider
-        self.container = container
     }
 
-    public func makeWeeklyCalendarVC() -> UIViewController {
-        WeeklyCalendarViewController(
+    public func makeCalendarViewController(
+        delegate: any CalendarViewControllerDelegate,
+        imagePickerDelegate: (any ImagePickerDelegate)?
+    ) -> CalendarViewController {
+        let weeklyVC = WeeklyCalendarViewController(
             viewModel: weeklyVM,
-            imageProvider: imageProvider,
-            container: container
+            imagePickerDelegate: imagePickerDelegate,
+            delegate: delegate
         )
-    }
-
-    public func makeMonthlyCalendarVC() -> UIViewController {
-        MonthlyCalendarViewController(
+        let monthlyVC = MonthlyCalendarViewController(
             viewModel: monthlyVM,
-            container: container
+            delegate: delegate
         )
+        let calendarVC = CalendarViewController(weeklyVC: weeklyVC, monthlyVC: monthlyVC)
+        calendarVC.delegate = delegate
+        return calendarVC
     }
 }
