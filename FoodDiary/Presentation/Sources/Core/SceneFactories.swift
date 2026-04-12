@@ -12,6 +12,8 @@ public struct Factories {
     public let myPage: any MyPageSceneProducing
     public let detail: any DetailSceneProducing
     public let imagePicker: any ImagePickerSceneProducing
+    public let edit: any EditSceneProducing
+    public let addressSearch: any AddressSearchSceneProducing
 
     public init(
         login: any LoginSceneProducing,
@@ -19,7 +21,9 @@ public struct Factories {
         insight: any InsightSceneProducing,
         myPage: any MyPageSceneProducing,
         detail: any DetailSceneProducing,
-        imagePicker: any ImagePickerSceneProducing
+        imagePicker: any ImagePickerSceneProducing,
+        edit: any EditSceneProducing,
+        addressSearch: any AddressSearchSceneProducing
     ) {
         self.login = login
         self.calendar = calendar
@@ -27,5 +31,7 @@ public struct Factories {
         self.myPage = myPage
         self.detail = detail
         self.imagePicker = imagePicker
+        self.edit = edit
+        self.addressSearch = addressSearch
     }
 }
