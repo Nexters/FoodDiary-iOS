@@ -49,12 +49,14 @@ final class MainCoordinator: Coordinator {
     }
 }
 
-extension MainCoordinator {
+// MARK: - Screen Routing
+
+private extension MainCoordinator {
     func pushMyPageVC() {
-        let myPageCoordinator = MyPageCoordinator(factories: factories, navigationController: navigationController)
-        myPageCoordinator.parentCoordinator = self
-        addChild(myPageCoordinator)
-        myPageCoordinator.start()
+        let coord = MyPageCoordinator(factories: factories, navigationController: navigationController)
+        coord.parentCoordinator = self
+        addChild(coord)
+        coord.start()
     }
 }
 

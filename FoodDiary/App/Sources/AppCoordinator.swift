@@ -18,8 +18,6 @@ final class AppCoordinator: Coordinator {
     init(factories: Factories) {
         self.factories = factories
     }
-
-    func start() {}
 }
 
 // MARK: - Screen Routing

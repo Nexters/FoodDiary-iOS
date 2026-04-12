@@ -27,7 +27,7 @@ public final class DetailSceneFactory {
         self.pushNotificationObserver = pushNotificationObserver
     }
 
-    public func makeDetailScene(input: DetailSceneInput) -> DetailViewController<
+    public func makeScene(input: DetailSceneInput) -> DetailViewController<
         FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
         PushNotificationObserver
     > {

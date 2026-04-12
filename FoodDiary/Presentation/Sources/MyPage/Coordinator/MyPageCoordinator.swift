@@ -18,8 +18,8 @@ public final class MyPageCoordinator: Coordinator {
     }
 
     public func start() {
-        let myPageVC = factories.myPage.makeMyPageScene()
-        myPageVC.hidesBottomBarWhenPushed = true
-        navigationController?.pushViewController(myPageVC, animated: true)
+        let vc = factories.myPage.makeScene()
+        vc.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(vc, animated: true)
     }
 }

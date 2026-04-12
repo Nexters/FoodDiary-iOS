@@ -17,7 +17,7 @@ public final class LoginCoordinator: Coordinator {
     }
 
     public func start() {
-        let loginVC = factories.login.makeLoginScene()
-        sceneTransitioner?.transition(to: loginVC)
+        let vc = factories.login.makeScene()
+        sceneTransitioner?.transition(to: vc)
     }
 }

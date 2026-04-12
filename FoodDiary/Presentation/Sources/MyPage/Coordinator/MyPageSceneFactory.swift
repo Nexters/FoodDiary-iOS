@@ -29,7 +29,7 @@ public final class MyPageSceneFactory {
         self.getAppVersionUseCase = getAppVersionUseCase
     }
 
-    public func makeMyPageScene() -> MyPageViewController {
+    public func makeScene() -> MyPageViewController {
         MyPageViewController(viewModel: MyPageViewModel(
             updateDeviceNotificationSettingUseCase: updateDeviceUseCase,
             notificationAuthorizationProvider: notificationAuthProvider,

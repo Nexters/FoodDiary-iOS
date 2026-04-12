@@ -20,11 +20,8 @@ public final class ImagePickerCoordinator: Coordinator {
         self.navigationController = navigationController
     }
 
-    public func start() {}
-
     public func start(input: ImagePickerSceneInput) {
-        guard let nav = navigationController else { return }
         let vc = factories.imagePicker.makeScene(input: input)
-        nav.pushViewController(vc, animated: true)
+        navigationController?.pushViewController(vc, animated: true)
     }
 }

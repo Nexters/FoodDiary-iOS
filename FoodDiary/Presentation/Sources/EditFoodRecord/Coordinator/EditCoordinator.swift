@@ -5,6 +5,7 @@
 
 import Combine
 import UIKit
+import Data
 
 // MARK: - Coordinator
 
@@ -21,12 +22,17 @@ public final class EditCoordinator: Coordinator {
         self.navigationController = navigationController
     }
 
-    public func start() {}
-
     public func start(input: EditSceneInput) {
-        guard let nav = navigationController else { return }
         let vc = factories.edit.makeScene(input: input)
-        nav.pushViewController(vc, animated: true)
+        flowBind(vc: vc)
+        navigationController?.pushViewController(vc, animated: true)
+    }
+}
+
+// MARK: - Screen Routing
+
+private extension EditCoordinator {
+    func flowBind(vc: EditFoodRecordViewController<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>) {
         vc.flowPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] event in
@@ -37,8 +43,10 @@ public final class EditCoordinator: Coordinator {
             }
             .store(in: &cancellables)
     }
+}
 
-    private func presentAddressSearch(input: AddressSearchSceneInput) {
+private extension EditCoordinator {
+    func presentAddressSearch(input: AddressSearchSceneInput) {
         let coord = AddressSearchCoordinator(
             factories: factories,
             navigationController: navigationController
