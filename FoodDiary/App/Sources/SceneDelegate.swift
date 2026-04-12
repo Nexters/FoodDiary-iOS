@@ -499,102 +499,6 @@ extension SceneDelegate {
             )
         }
 
-        typealias DetailVM = DetailViewModel<
-            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
-            PushNotificationObserver
-        >
-
-        container.register(
-            DetailVM.self,
-            argument: (Date, [FoodRecord]).self,
-            scope: .transient,
-            factory: { resolver, args in
-                let (initialDate, initialRecords) = args
-                guard
-                    let fetchRecordsUseCase = resolver.resolve(
-                        FetchFoodRecordsUseCase<
-                            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-                        >.self
-                    ),
-                    let saveFoodRecordUseCase = resolver.resolve(
-                        SaveFoodRecordUseCase<
-                            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-                        >.self
-                    ),
-                    let deleteFoodRecordUseCase = resolver.resolve(
-                        DeleteFoodRecordUseCase<
-                            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-                        >.self
-                    ),
-                    let pushObserver = resolver.resolve(PushNotificationObserver.self)
-                else {
-                    fatalError("DetailViewModel dependencies not registered")
-                }
-
-                return DetailViewModel(
-                    initialDate: initialDate,
-                    initialRecords: initialRecords,
-                    fetchRecordsUseCase: fetchRecordsUseCase,
-                    saveFoodRecordUseCase: saveFoodRecordUseCase,
-                    deleteFoodRecordUseCase: deleteFoodRecordUseCase,
-                    pushNotificationObserver: pushObserver
-                )
-            }
-        )
-
-        typealias EditVM = EditFoodRecordViewModel<
-            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-        >
-
-        container.register(
-            EditVM.self,
-            argument: FoodRecord.self,
-            scope: .transient,
-            factory: { resolver, record in
-                guard
-                    let updateUseCase = resolver.resolve(
-                        UpdateFoodRecordUseCase<
-                            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-                        >.self
-                    ),
-                    let deleteUseCase = resolver.resolve(
-                        DeleteFoodRecordUseCase<
-                            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-                        >.self
-                    )
-                else {
-                    fatalError("EditFoodRecordViewModel dependencies not registered")
-                }
-
-                return EditFoodRecordViewModel(
-                    record: record,
-                    updateFoodRecordUseCase: updateUseCase,
-                    deleteFoodRecordUseCase: deleteUseCase
-                )
-            }
-        )
-
-        typealias AddressSearchVM = AddressSearchViewModel<AddressSearchRepositoryImpl>
-
-        container.register(
-            AddressSearchVM.self,
-            argument: Int.self,
-            scope: .transient,
-            factory: { resolver, diaryId in
-                guard
-                    let searchUseCase = resolver.resolve(
-                        SearchAddressUseCase<AddressSearchRepositoryImpl>.self
-                    )
-                else {
-                    fatalError("SearchAddressUseCase not registered")
-                }
-                return AddressSearchViewModel(
-                    searchAddressUseCase: searchUseCase,
-                    diaryId: diaryId
-                )
-            }
-        )
-
         // MonthlyCalendarViewModel 타입 별칭
         typealias MonthlyVM = MonthlyCalendarViewModel<
             FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
@@ -632,6 +536,8 @@ extension SceneDelegate {
     }
 
     fileprivate func makeAppFlowController() -> AppFlowController {
+        typealias RecordRepo = FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
+
         // Login
         guard let finalizeUseCase = try? container.resolve(FinalizeAppleLoginUseCase.self) else {
             fatalError("FinalizeAppleLoginUseCase not registered")
@@ -685,6 +591,26 @@ extension SceneDelegate {
             fetchUseCase: fetchImageAssetUseCase
         )
 
+        // Detail
+        guard
+            let fetchRecordsUseCase = try? container.resolve(FetchFoodRecordsUseCase<RecordRepo>.self),
+            let saveFoodRecordUseCase = try? container.resolve(SaveFoodRecordUseCase<RecordRepo>.self),
+            let deleteFoodRecordUseCase = try? container.resolve(DeleteFoodRecordUseCase<RecordRepo>.self),
+            let pushNotificationObserver = try? container.resolve(PushNotificationObserver.self)
+        else {
+            fatalError("DetailSceneFactory dependencies not registered")
+        }
+
+        // Edit
+        guard let updateFoodRecordUseCase = try? container.resolve(UpdateFoodRecordUseCase<RecordRepo>.self) else {
+            fatalError("EditSceneFactory dependencies not registered")
+        }
+
+        // AddressSearch
+        guard let searchAddressUseCase = try? container.resolve(SearchAddressUseCase<AddressSearchRepositoryImpl>.self) else {
+            fatalError("AddressSearchSceneFactory dependencies not registered")
+        }
+
         let factories = Factories(
             login: LoginSceneFactory(useCase: finalizeUseCase),
             calendar: CalendarSceneFactory(weeklyVM: weeklyVM, monthlyVM: monthlyVM),
@@ -697,10 +623,18 @@ extension SceneDelegate {
                 getNicknameUseCase: getNicknameUseCase,
                 getAppVersionUseCase: getAppVersionUseCase
             ),
-            detail: DetailSceneFactory(container: container),
+            detail: DetailSceneFactory(
+                fetchRecordsUseCase: fetchRecordsUseCase,
+                saveFoodRecordUseCase: saveFoodRecordUseCase,
+                deleteFoodRecordUseCase: deleteFoodRecordUseCase,
+                pushNotificationObserver: pushNotificationObserver
+            ),
             imagePicker: imagePickerFactory,
-            edit: EditSceneFactory(container: container),
-            addressSearch: AddressSearchSceneFactory(container: container)
+            edit: EditSceneFactory(
+                updateFoodRecordUseCase: updateFoodRecordUseCase,
+                deleteFoodRecordUseCase: deleteFoodRecordUseCase
+            ),
+            addressSearch: AddressSearchSceneFactory(searchAddressUseCase: searchAddressUseCase)
         )
 
         guard let loginSession = try? container.resolve(LoginSession.self) else {

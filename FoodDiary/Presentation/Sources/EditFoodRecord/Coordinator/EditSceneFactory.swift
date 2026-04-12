@@ -4,7 +4,7 @@
 //
 
 import Data
-import DI
+import Domain
 import UIKit
 
 // MARK: - Protocol
@@ -16,20 +16,25 @@ public protocol EditSceneProducing {
 // MARK: - Factory
 
 public final class EditSceneFactory: EditSceneProducing {
-    private typealias EditVM = EditFoodRecordViewModel<
-        FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-    >
+    private typealias RecordRepo = FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
 
-    private let container: DIContainer
+    private let updateFoodRecordUseCase: UpdateFoodRecordUseCase<RecordRepo>
+    private let deleteFoodRecordUseCase: DeleteFoodRecordUseCase<RecordRepo>
 
-    public init(container: DIContainer) {
-        self.container = container
+    public init(
+        updateFoodRecordUseCase: UpdateFoodRecordUseCase<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>,
+        deleteFoodRecordUseCase: DeleteFoodRecordUseCase<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>
+    ) {
+        self.updateFoodRecordUseCase = updateFoodRecordUseCase
+        self.deleteFoodRecordUseCase = deleteFoodRecordUseCase
     }
 
     public func makeScene(input: EditSceneInput) -> UIViewController {
-        guard let editVM = try? container.resolve(EditVM.self, argument: input.record) else {
-            fatalError("EditFoodRecordViewModel not registered")
-        }
-        return EditFoodRecordViewController(viewModel: editVM)
+        let viewModel = EditFoodRecordViewModel(
+            record: input.record,
+            updateFoodRecordUseCase: updateFoodRecordUseCase,
+            deleteFoodRecordUseCase: deleteFoodRecordUseCase
+        )
+        return EditFoodRecordViewController(viewModel: viewModel)
     }
 }
