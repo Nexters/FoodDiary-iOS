@@ -5,8 +5,6 @@
 //  Created by 강대훈 on 4/8/26.
 //
 
-import DI
-import Data
 import Domain
 import Presentation
 import UIKit
@@ -15,12 +13,10 @@ final class AppCoordinator: Coordinator {
     var childCoordinators: [any Coordinator] = []
 
     weak var sceneTransitioner: SceneTransitioning?
-    private let container: DIContainer
     private let factories: Factories
 
-    init(factories: Factories, container: DIContainer) {
+    init(factories: Factories) {
         self.factories = factories
-        self.container = container
     }
 
     func start() {}
@@ -30,7 +26,7 @@ final class AppCoordinator: Coordinator {
 
 extension AppCoordinator {
     func pushLoginVC() {
-        let loginCoordinator = LoginCoordinator(factory: factories.login)
+        let loginCoordinator = LoginCoordinator(factories: factories)
         loginCoordinator.sceneTransitioner = sceneTransitioner
         loginCoordinator.parentCoordinator = self
         addChild(loginCoordinator)
@@ -70,25 +66,19 @@ extension AppCoordinator {
 
         let navController = childCoordinators
             .compactMap({ $0 as? MainCoordinator })
-            .last?.childCoordinators
-            .compactMap({ $0 as? CalendarCoordinator })
             .last?.navigationController
 
-        typealias DeepLinkDetailVM = DetailViewModel<
-            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
-            PushNotificationObserver
-        >
-        guard let detailVM = try? container.resolve(DeepLinkDetailVM.self, argument: (date, [FoodRecord]())) else {
-            fatalError("DetailViewModel not registered")
-        }
-        let detailVC = DetailViewController(viewModel: detailVM)
+        let input = DetailSceneInput(date: date, records: [])
+        let coord = DetailCoordinator(factories: factories, navigationController: navController)
+        coord.parentCoordinator = self
+        addChild(coord)
 
         if let presented = navController?.presentedViewController {
             presented.dismiss(animated: false) {
-                navController?.pushViewController(detailVC, animated: true)
+                coord.start(input: input)
             }
         } else {
-            navController?.pushViewController(detailVC, animated: true)
+            coord.start(input: input)
         }
     }
 }
