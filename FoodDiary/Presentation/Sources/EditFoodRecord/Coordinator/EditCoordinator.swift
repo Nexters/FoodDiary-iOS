@@ -39,6 +39,8 @@ private extension EditCoordinator {
                 switch event {
                 case .presentAddressSearch(let input):
                     self?.presentAddressSearch(input: input)
+                case .finish:
+                    self?.finish()
                 }
             }
             .store(in: &cancellables)
@@ -54,5 +56,9 @@ private extension EditCoordinator {
         coord.parentCoordinator = self
         addChild(coord)
         coord.start(input: input)
+    }
+    
+    func finish() {
+        parentCoordinator?.removeChild(self)
     }
 }
