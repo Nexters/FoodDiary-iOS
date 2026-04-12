@@ -16,7 +16,7 @@ public final class InsightSceneFactory {
         self.useCase = useCase
     }
 
-    public func makeInsightScene() -> InsightViewController<InsightRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>> {
+    public func makeScene() -> InsightViewController<InsightRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>> {
         InsightViewController(viewModel: InsightViewModel(fetchInsightUseCase: useCase))
     }
 }

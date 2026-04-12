@@ -12,7 +12,7 @@ public final class LoginSceneFactory {
         self.useCase = useCase
     }
 
-    public func makeLoginScene() -> LoginViewController {
+    public func makeScene() -> LoginViewController {
         LoginViewController(viewModel: LoginViewModel(finalizeAppleLoginUseCase: useCase))
     }
 }

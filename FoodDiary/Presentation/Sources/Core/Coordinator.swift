@@ -7,7 +7,6 @@ import UIKit
 
 public protocol Coordinator: AnyObject {
     var childCoordinators: [any Coordinator] { get set }
-    func start()
 }
 
 public extension Coordinator {
