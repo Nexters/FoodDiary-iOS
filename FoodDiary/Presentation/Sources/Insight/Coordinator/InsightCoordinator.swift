@@ -9,15 +9,15 @@ public final class InsightCoordinator: Coordinator {
     public var childCoordinators: [any Coordinator] = []
     public weak var parentCoordinator: (any Coordinator)?
 
-    private let factory: any InsightSceneProducing
+    private let factories: Factories
 
-    public init(factory: any InsightSceneProducing) {
-        self.factory = factory
+    public init(factories: Factories) {
+        self.factories = factories
     }
 
     public func start() {}
 
     public func makeViewController() -> UIViewController {
-        factory.makeInsightScene()
+        factories.insight.makeInsightScene()
     }
 }

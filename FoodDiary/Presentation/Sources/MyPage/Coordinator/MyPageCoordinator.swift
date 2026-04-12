@@ -9,16 +9,16 @@ public final class MyPageCoordinator: Coordinator {
     public var childCoordinators: [any Coordinator] = []
     public weak var parentCoordinator: (any Coordinator)?
 
-    private let factory: any MyPageSceneProducing
+    private let factories: Factories
     private weak var navigationController: UINavigationController?
 
-    public init(factory: any MyPageSceneProducing, navigationController: UINavigationController?) {
-        self.factory = factory
+    public init(factories: Factories, navigationController: UINavigationController?) {
+        self.factories = factories
         self.navigationController = navigationController
     }
 
     public func start() {
-        let myPageVC = factory.makeMyPageScene()
+        let myPageVC = factories.myPage.makeMyPageScene()
         myPageVC.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(myPageVC, animated: true)
     }
