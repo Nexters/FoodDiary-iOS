@@ -5,14 +5,10 @@
 //  Created by 강대훈 on 2/13/26.
 //
 
-import UIKit
 import Combine
 import DesignSystem
 import SnapKit
-
-public protocol CalendarViewControllerDelegate: AnyObject {
-    func pushDetail(input: DetailSceneInput)
-}
+import UIKit
 
 public final class CalendarViewController: UIViewController {
     public enum ViewMode {
@@ -20,23 +16,35 @@ public final class CalendarViewController: UIViewController {
         case monthly
     }
 
-    public weak var delegate: (any CalendarViewControllerDelegate)?
-
     private let weeklyVC: UIViewController
     private let monthlyVC: UIViewController
     private let currentModeSubject = CurrentValueSubject<ViewMode, Never>(.weekly)
     private var currentChild: UIViewController?
 
+    private let flowSubject = PassthroughSubject<CalendarFlow, Never>()
+    public var flowPublisher: AnyPublisher<CalendarFlow, Never> {
+        flowSubject.eraseToAnyPublisher()
+    }
+    private var cancellables = Set<AnyCancellable>()
+
     public var currentModePublisher: AnyPublisher<ViewMode, Never> {
         currentModeSubject.eraseToAnyPublisher()
     }
 
-    public init(weeklyVC: UIViewController, monthlyVC: UIViewController) {
+    public init<W: UIViewController & CalendarFlowEmitting, M: UIViewController & CalendarFlowEmitting>(
+        weeklyVC: W,
+        monthlyVC: M
+    ) {
         self.weeklyVC = weeklyVC
         self.monthlyVC = monthlyVC
         super.init(nibName: nil, bundle: nil)
+        
+        Publishers.Merge(weeklyVC.flowPublisher, monthlyVC.flowPublisher)
+            .sink { [weak self] flow in self?.flowSubject.send(flow) }
+            .store(in: &cancellables)
     }
 
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

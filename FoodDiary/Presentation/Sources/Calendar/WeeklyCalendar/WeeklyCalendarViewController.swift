@@ -24,8 +24,13 @@ public final class WeeklyCalendarViewController<
     // MARK: - Dependencies
 
     private let viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo, PushObserver>
-    private weak var imagePickerDelegate: (any ImagePickerDelegate)?
-    private weak var delegate: (any CalendarViewControllerDelegate)?
+
+    // MARK: - Flow
+
+    private let flowSubject = PassthroughSubject<CalendarFlow, Never>()
+    public var flowPublisher: AnyPublisher<CalendarFlow, Never> {
+        flowSubject.eraseToAnyPublisher()
+    }
 
     // MARK: - UI Components
 
@@ -56,13 +61,9 @@ public final class WeeklyCalendarViewController<
     // MARK: - Init
 
     public init(
-        viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo, PushObserver>,
-        imagePickerDelegate: (any ImagePickerDelegate)? = nil,
-        delegate: (any CalendarViewControllerDelegate)? = nil
+        viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo, PushObserver>
     ) {
         self.viewModel = viewModel
-        self.imagePickerDelegate = imagePickerDelegate
-        self.delegate = delegate
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -280,12 +281,12 @@ public final class WeeklyCalendarViewController<
 
     private func handleAddButtonTap() {
         let date = viewModel.state.selectedDate
-        imagePickerDelegate?.pushImagePicker(
-            input: ImagePickerSceneInput(date: date) { [weak self] assets in
+        flowSubject.send(.pushImagePicker(
+            ImagePickerSceneInput(date: date) { [weak self] assets in
                 let typed = assets.compactMap { $0 as? AssetRepo.Asset }
                 self?.viewModel.input.send(.saveSelectedPhotos(typed))
             }
-        )
+        ))
     }
 
     private func showPhotoAuthorizationDeniedAlert() {
@@ -323,7 +324,7 @@ public final class WeeklyCalendarViewController<
                 self?.viewModel.input.send(.refreshData(date))
             }
         )
-        delegate?.pushDetail(input: input)
+        flowSubject.send(.pushDetail(input))
     }
 
     private func showLoadErrorAlert(_ error: Error) {
@@ -346,3 +347,7 @@ public final class WeeklyCalendarViewController<
         present(alert, animated: true)
     }
 }
+
+// MARK: - CalendarFlowEmitting
+
+extension WeeklyCalendarViewController: CalendarFlowEmitting {}

@@ -8,10 +8,7 @@ import Domain
 import UIKit
 
 public protocol CalendarSceneProducing {
-    func makeCalendarViewController(
-        delegate: any CalendarViewControllerDelegate,
-        imagePickerDelegate: (any ImagePickerDelegate)?
-    ) -> CalendarViewController
+    func makeScene() -> CalendarViewController
 }
 
 public final class CalendarSceneFactory: CalendarSceneProducing {
@@ -34,21 +31,9 @@ public final class CalendarSceneFactory: CalendarSceneProducing {
         self.monthlyVM = monthlyVM
     }
 
-    public func makeCalendarViewController(
-        delegate: any CalendarViewControllerDelegate,
-        imagePickerDelegate: (any ImagePickerDelegate)?
-    ) -> CalendarViewController {
-        let weeklyVC = WeeklyCalendarViewController(
-            viewModel: weeklyVM,
-            imagePickerDelegate: imagePickerDelegate,
-            delegate: delegate
-        )
-        let monthlyVC = MonthlyCalendarViewController(
-            viewModel: monthlyVM,
-            delegate: delegate
-        )
-        let calendarVC = CalendarViewController(weeklyVC: weeklyVC, monthlyVC: monthlyVC)
-        calendarVC.delegate = delegate
-        return calendarVC
+    public func makeScene() -> CalendarViewController {
+        let weeklyVC = WeeklyCalendarViewController(viewModel: weeklyVM)
+        let monthlyVC = MonthlyCalendarViewController(viewModel: monthlyVM)
+        return CalendarViewController(weeklyVC: weeklyVC, monthlyVC: monthlyVC)
     }
 }
