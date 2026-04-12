@@ -491,6 +491,3 @@ public final class EditFoodRecordViewController<
     }
 }
 
-// MARK: - EditFlowEmitting
-
-extension EditFoodRecordViewController: EditFlowEmitting {}

@@ -7,11 +7,7 @@ import Data
 import Domain
 import UIKit
 
-public protocol DetailSceneProducing {
-    func makeDetailScene(input: DetailSceneInput) -> UIViewController
-}
-
-public final class DetailSceneFactory: DetailSceneProducing {
+public final class DetailSceneFactory {
     private typealias RecordRepo = FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
 
     private let fetchRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
@@ -31,7 +27,10 @@ public final class DetailSceneFactory: DetailSceneProducing {
         self.pushNotificationObserver = pushNotificationObserver
     }
 
-    public func makeDetailScene(input: DetailSceneInput) -> UIViewController {
+    public func makeDetailScene(input: DetailSceneInput) -> DetailViewController<
+        FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
+        PushNotificationObserver
+    > {
         let viewModel = DetailViewModel(
             initialDate: input.date,
             initialRecords: input.records,

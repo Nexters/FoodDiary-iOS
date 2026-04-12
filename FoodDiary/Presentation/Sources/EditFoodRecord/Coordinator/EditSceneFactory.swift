@@ -7,15 +7,9 @@ import Data
 import Domain
 import UIKit
 
-// MARK: - Protocol
-
-public protocol EditSceneProducing {
-    func makeScene(input: EditSceneInput) -> UIViewController
-}
-
 // MARK: - Factory
 
-public final class EditSceneFactory: EditSceneProducing {
+public final class EditSceneFactory {
     private typealias RecordRepo = FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
 
     private let updateFoodRecordUseCase: UpdateFoodRecordUseCase<RecordRepo>
@@ -29,7 +23,9 @@ public final class EditSceneFactory: EditSceneProducing {
         self.deleteFoodRecordUseCase = deleteFoodRecordUseCase
     }
 
-    public func makeScene(input: EditSceneInput) -> UIViewController {
+    public func makeScene(input: EditSceneInput) -> EditFoodRecordViewController<
+        FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
+    > {
         let viewModel = EditFoodRecordViewModel(
             record: input.record,
             updateFoodRecordUseCase: updateFoodRecordUseCase,

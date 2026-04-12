@@ -601,6 +601,3 @@ public final class DetailViewController<
     }
 }
 
-// MARK: - DetailFlowEmitting
-
-extension DetailViewController: DetailFlowEmitting {}

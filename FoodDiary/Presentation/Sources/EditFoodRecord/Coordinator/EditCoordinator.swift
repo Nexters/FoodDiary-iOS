@@ -27,17 +27,15 @@ public final class EditCoordinator: Coordinator {
         guard let nav = navigationController else { return }
         let vc = factories.edit.makeScene(input: input)
         nav.pushViewController(vc, animated: true)
-        if let flowVC = vc as? any EditFlowEmitting {
-            flowVC.flowPublisher
-                .receive(on: DispatchQueue.main)
-                .sink { [weak self] event in
-                    switch event {
-                    case .presentAddressSearch(let input):
-                        self?.presentAddressSearch(input: input)
-                    }
+        vc.flowPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] event in
+                switch event {
+                case .presentAddressSearch(let input):
+                    self?.presentAddressSearch(input: input)
                 }
-                .store(in: &cancellables)
-        }
+            }
+            .store(in: &cancellables)
     }
 
     private func presentAddressSearch(input: AddressSearchSceneInput) {
