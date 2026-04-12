@@ -11,45 +11,6 @@ import UIKit
 
 // MARK: - ImagePickerViewController
 
-/// 음식 사진을 선택할 수 있는 커스텀 이미지 피커 뷰 컨트롤러입니다.
-///
-/// ## Overview
-/// `ImagePickerViewController`는 `FoodImageAsset` 배열을 받아 그리드 형태로 표시하고,
-/// 사용자가 사진을 선택하면 `resultPublisher`를 통해 결과를 전달합니다.
-///
-/// ## Usage
-/// ```swift
-/// // 1. 피커 생성
-/// let picker = ImagePickerViewController(
-///     photos: foodPhotos,
-///     imageProvider: myImageProvider,
-///     configuration: .default
-/// )
-///
-/// // 2. 결과 구독
-/// picker.resultPublisher
-///     .sink { result in
-///         switch result {
-///         case .selected(let photos):
-///             // 선택된 사진 처리
-///             self.dismiss(animated: true)
-///         case .cancelled:
-///             // 취소 처리
-///             self.dismiss(animated: true)
-///         }
-///     }
-///     .store(in: &cancellables)
-///
-/// // 3. 피커 표시
-/// present(picker, animated: true)
-/// ```
-///
-/// ## Configuration
-/// `ImagePickerConfiguration`을 통해 다음 항목을 커스터마이징할 수 있습니다:
-/// - `primaryColor`: 선택 테두리 및 버튼 색상
-/// - `maxSelectionCount`: 최대 선택 가능 수 (nil이면 무제한)
-/// - `confirmButtonTitle`: 확인 버튼 텍스트
-///
 public final class ImagePickerViewController<
     Asset: ImageAssetable,
     ImageProvider: RenderableImageRepository<Asset>
@@ -98,13 +59,15 @@ public final class ImagePickerViewController<
     private let resultSubject = PassthroughSubject<ImagePickerResult<Asset>, Never>()
     private var cancellables = Set<AnyCancellable>()
 
-    private let photos: [Asset]
-    private let preselectedFoodPhotoIds: Set<String>
+    private var photos: [Asset] = []
+    private var preselectedFoodPhotoIds: Set<String> = []
     private let imageProvider: ImageProvider
     private let configuration: ImagePickerConfiguration
-    // preselected된 사진은 food/all 양쪽 섹션에 나타날 수 있어, id 기준 인덱스를 캐싱한다.
-    private let foodPhotos: [Asset]
-    private let indexPathsByPhotoId: [String: [IndexPath]]
+    private var foodPhotos: [Asset] = []
+    private var indexPathsByPhotoId: [String: [IndexPath]] = [:]
+
+    private let photosFetcher: () async throws -> (photos: [Asset], preselectedIds: Set<String>)
+    private let onSelected: (([Asset]) -> Void)?
 
     // MARK: - State
 
@@ -192,30 +155,16 @@ public final class ImagePickerViewController<
 
     // MARK: - Initialization
 
-    /// 이미지 피커 초기화
-    /// - Parameters:
-    ///   - photos: 표시할 사진 목록
-    ///   - preselectedFoodPhotoIds: 미리 선택될 음식 사진 ID 집합
-    ///   - imageProvider: 이미지 로딩 제공자
-    ///   - configuration: 피커 설정
     public init(
-        photos: [Asset],
-        preselectedFoodPhotoIds: Set<String> = [],
         imageProvider: ImageProvider,
-        configuration: ImagePickerConfiguration = .default
+        configuration: ImagePickerConfiguration = .default,
+        photosFetcher: @escaping () async throws -> (photos: [Asset], preselectedIds: Set<String>),
+        onSelected: (([Asset]) -> Void)? = nil
     ) {
-        // 매 접근마다 filter하지 않도록 음식 섹션 데이터를 1회 계산해 둔다.
-        let foodPhotos = photos.filter { preselectedFoodPhotoIds.contains($0.id) }
-
-        self.photos = photos
-        self.preselectedFoodPhotoIds = preselectedFoodPhotoIds
         self.imageProvider = imageProvider
         self.configuration = configuration
-        self.foodPhotos = foodPhotos
-        self.indexPathsByPhotoId = Self.makeIndexPathsByPhotoId(
-            allPhotos: photos,
-            foodPhotos: foodPhotos
-        )
+        self.photosFetcher = photosFetcher
+        self.onSelected = onSelected
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -231,7 +180,17 @@ public final class ImagePickerViewController<
         setupNavigationBar()
         setupUI()
         setupConstraints()
-        applyPreselection()
+        loadPhotos()
+
+        resultPublisher
+            .compactMap { if case .selected(let a) = $0 { return a } else { return nil } }
+            .first()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] assets in
+                self?.navigationController?.popViewController(animated: true)
+                self?.onSelected?(assets)
+            }
+            .store(in: &cancellables)
     }
 
     public override func viewWillAppear(_ animated: Bool) {
@@ -244,6 +203,35 @@ public final class ImagePickerViewController<
         if isMovingFromParent {
             resultSubject.send(.cancelled)
         }
+    }
+
+    // MARK: - Data Loading
+
+    private func loadPhotos() {
+        Task { @MainActor in
+            do {
+                let (photos, preselectedIds) = try await photosFetcher()
+                applyPhotos(photos, preselectedIds: preselectedIds)
+            } catch {
+                showLoadErrorAndPop(error)
+            }
+        }
+    }
+
+    private func applyPhotos(_ photos: [Asset], preselectedIds: Set<String>) {
+        self.photos = photos
+        self.preselectedFoodPhotoIds = preselectedIds
+        let foodPhotos = photos.filter { preselectedIds.contains($0.id) }
+        self.foodPhotos = foodPhotos
+        self.indexPathsByPhotoId = Self.makeIndexPathsByPhotoId(
+            allPhotos: photos,
+            foodPhotos: foodPhotos
+        )
+
+        emptyView.isHidden = !photos.isEmpty
+        collectionView.isHidden = photos.isEmpty
+        collectionView.reloadData()
+        applyPreselection()
     }
 
     // MARK: - Setup
@@ -266,8 +254,8 @@ public final class ImagePickerViewController<
         view.addSubview(emptyView)
         view.addSubview(confirmButton)
 
-        emptyView.isHidden = !photos.isEmpty
-        collectionView.isHidden = photos.isEmpty
+        emptyView.isHidden = true
+        collectionView.isHidden = true
     }
 
     private func setupConstraints() {
@@ -319,7 +307,6 @@ public final class ImagePickerViewController<
             selectedPhotoIds.insert(photo.id)
         }
 
-        // 같은 사진이 양쪽 섹션에 동시에 보일 수 있어, 매핑된 셀을 함께 갱신한다.
         let affectedIndexPaths = indexPathsByPhotoId[photo.id] ?? [indexPath]
         collectionView.reloadItems(at: affectedIndexPaths)
 
@@ -330,7 +317,6 @@ public final class ImagePickerViewController<
         allPhotos: [Asset],
         foodPhotos: [Asset]
     ) -> [String: [IndexPath]] {
-        // photo id -> [food 섹션 indexPath, all 섹션 indexPath]
         var indexPathsById: [String: [IndexPath]] = [:]
 
         for (item, photo) in foodPhotos.enumerated() {
@@ -390,6 +376,20 @@ public final class ImagePickerViewController<
     @objc private func confirmButtonTapped() {
         let selectedAssets = photos.filter { selectedPhotoIds.contains($0.id) }
         resultSubject.send(.selected(selectedAssets))
+    }
+
+    // MARK: - Error
+
+    private func showLoadErrorAndPop(_ error: Error) {
+        let alert = UIAlertController(
+            title: "사진 불러오기 실패",
+            message: error.localizedDescription,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "확인", style: .default) { [weak self] _ in
+            self?.navigationController?.popViewController(animated: true)
+        })
+        present(alert, animated: true)
     }
 
     // MARK: - UICollectionViewDataSource
