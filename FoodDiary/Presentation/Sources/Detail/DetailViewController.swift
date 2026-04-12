@@ -31,8 +31,13 @@ public final class DetailViewController<
 
     private let viewModel: DetailViewModel<RecordRepo, PushObserver>
     private let onDismissWithDate: ((Date) -> Void)?
-    private let editViewControllerFactory: ((FoodRecord) -> UIViewController)?
-    private weak var imagePickerDelegate: (any ImagePickerDelegate)?
+
+    // MARK: - Flow
+
+    private let flowSubject = PassthroughSubject<DetailFlow, Never>()
+    public var flowPublisher: AnyPublisher<DetailFlow, Never> {
+        flowSubject.eraseToAnyPublisher()
+    }
 
     // MARK: - UI Components
 
@@ -123,17 +128,13 @@ public final class DetailViewController<
         initialScrollTarget: MealType? = nil,
         scrollToFirstRecord: Bool = true,
         shouldPopToRoot: Bool = false,
-        onDismissWithDate: ((Date) -> Void)? = nil,
-        editViewControllerFactory: ((FoodRecord) -> UIViewController)? = nil,
-        imagePickerDelegate: (any ImagePickerDelegate)? = nil
+        onDismissWithDate: ((Date) -> Void)? = nil
     ) {
         self.viewModel = viewModel
         self.pendingScrollTarget = initialScrollTarget
         self.scrollToFirstRecord = scrollToFirstRecord
         self.shouldPopToRoot = shouldPopToRoot
         self.onDismissWithDate = onDismissWithDate
-        self.editViewControllerFactory = editViewControllerFactory
-        self.imagePickerDelegate = imagePickerDelegate
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -503,9 +504,8 @@ public final class DetailViewController<
     }
 
     private func handleEdit(record: FoodRecord) {
-        guard let editVC = editViewControllerFactory?(record) else { return }
         pendingScrollTarget = record.mealType
-        navigationController?.pushViewController(editVC, animated: true)
+        flowSubject.send(.pushEdit(EditSceneInput(record: record)))
     }
 
     @objc private func floatingAddButtonTapped() {
@@ -514,11 +514,11 @@ public final class DetailViewController<
 
     private func handleAddPhoto() {
         let date = viewModel.state.currentDate
-        imagePickerDelegate?.pushImagePicker(
-            input: ImagePickerSceneInput(date: date) { [weak self] assets in
+        flowSubject.send(.pushImagePicker(
+            ImagePickerSceneInput(date: date) { [weak self] assets in
                 self?.viewModel.input.send(.saveSelectedPhotos(assets))
             }
-        )
+        ))
     }
 
     private func showShareUnavailableAlert() {
@@ -592,6 +592,7 @@ public final class DetailViewController<
     private func scrollToMealSection(_ mealType: MealType) {
         let targetSection = mealSectionView(for: mealType)
         let sectionFrame = targetSection.convert(targetSection.bounds, to: scrollView)
+
         let targetOffset = CGPoint(
             x: 0,
             y: sectionFrame.origin.y - scrollView.adjustedContentInset.top
@@ -599,3 +600,7 @@ public final class DetailViewController<
         scrollView.setContentOffset(targetOffset, animated: false)
     }
 }
+
+// MARK: - DetailFlowEmitting
+
+extension DetailViewController: DetailFlowEmitting {}
