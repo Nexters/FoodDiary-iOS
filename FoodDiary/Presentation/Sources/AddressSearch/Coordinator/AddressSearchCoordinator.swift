@@ -5,8 +5,6 @@
 
 import UIKit
 
-// MARK: - Coordinator
-
 public final class AddressSearchCoordinator: Coordinator {
     public var childCoordinators: [any Coordinator] = []
     public weak var parentCoordinator: (any Coordinator)?
@@ -18,8 +16,6 @@ public final class AddressSearchCoordinator: Coordinator {
         self.factories = factories
         self.navigationController = navigationController
     }
-
-    public func start() {}
 
     public func start(input: AddressSearchSceneInput) {
         guard let presentingVC = navigationController?.topViewController else { return }

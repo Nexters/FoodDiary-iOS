@@ -5,6 +5,7 @@
 
 import Combine
 import UIKit
+import Data
 
 public final class DetailCoordinator: Coordinator {
     public var childCoordinators: [any Coordinator] = []
@@ -19,12 +20,18 @@ public final class DetailCoordinator: Coordinator {
         self.navigationController = navigationController
     }
 
-    public func start() {}
-
     public func start(input: DetailSceneInput) {
-        let vc = factories.detail.makeDetailScene(input: input)
+        let vc = factories.detail.makeScene(input: input)
         vc.hidesBottomBarWhenPushed = true
+        flowBind(vc: vc)
         navigationController?.pushViewController(vc, animated: true)
+    }
+}
+
+// MARK: - Screen Routing
+
+private extension DetailCoordinator {
+    func flowBind(vc: DetailViewController<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>, PushNotificationObserver>) {
         vc.flowPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] event in
@@ -37,8 +44,10 @@ public final class DetailCoordinator: Coordinator {
             }
             .store(in: &cancellables)
     }
+}
 
-    private func pushImagePicker(input: ImagePickerSceneInput) {
+private extension DetailCoordinator {
+    func pushImagePicker(input: ImagePickerSceneInput) {
         let coord = ImagePickerCoordinator(
             factories: factories,
             navigationController: navigationController
@@ -48,7 +57,7 @@ public final class DetailCoordinator: Coordinator {
         coord.start(input: input)
     }
 
-    private func pushEdit(input: EditSceneInput) {
+    func pushEdit(input: EditSceneInput) {
         let coord = EditCoordinator(
             factories: factories,
             navigationController: navigationController

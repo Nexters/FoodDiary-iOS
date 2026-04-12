@@ -6,21 +6,17 @@
 import Combine
 import UIKit
 
-// MARK: - CalendarCoordinator
-
 public final class CalendarCoordinator: Coordinator {
     public var childCoordinators: [any Coordinator] = []
     public weak var parentCoordinator: (any Coordinator)?
-    public weak var navigationController: UINavigationController?
 
     private let factories: Factories
+    public weak var navigationController: UINavigationController?
     private var cancellables = Set<AnyCancellable>()
 
     public init(factories: Factories) {
         self.factories = factories
     }
-
-    public func start() {}
 
     public func configure(navigationController: UINavigationController?) {
         self.navigationController = navigationController
@@ -28,7 +24,16 @@ public final class CalendarCoordinator: Coordinator {
 
     public func makeViewController() -> CalendarViewController {
         let calendarVC = factories.calendar.makeScene()
-        calendarVC.flowPublisher
+        flowBind(vc: calendarVC)
+        return calendarVC
+    }
+}
+
+// MARK: - Screen Routing
+
+private extension CalendarCoordinator {
+    func flowBind(vc: CalendarViewController) {
+        vc.flowPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] event in
                 switch event {
@@ -39,26 +44,27 @@ public final class CalendarCoordinator: Coordinator {
                 }
             }
             .store(in: &cancellables)
-        return calendarVC
     }
+}
 
-    private func pushDetail(input: DetailSceneInput) {
-        let detailCoordinator = DetailCoordinator(
+private extension CalendarCoordinator {
+    func pushDetail(input: DetailSceneInput) {
+        let coord = DetailCoordinator(
             factories: factories,
             navigationController: navigationController
         )
-        detailCoordinator.parentCoordinator = self
-        addChild(detailCoordinator)
-        detailCoordinator.start(input: input)
+        coord.parentCoordinator = self
+        addChild(coord)
+        coord.start(input: input)
     }
-
-    private func pushImagePicker(input: ImagePickerSceneInput) {
-        let imagePickerCoordinator = ImagePickerCoordinator(
+    
+    func pushImagePicker(input: ImagePickerSceneInput) {
+        let coord = ImagePickerCoordinator(
             factories: factories,
             navigationController: navigationController
         )
-        imagePickerCoordinator.parentCoordinator = self
-        addChild(imagePickerCoordinator)
-        imagePickerCoordinator.start(input: input)
+        coord.parentCoordinator = self
+        addChild(coord)
+        coord.start(input: input)
     }
 }

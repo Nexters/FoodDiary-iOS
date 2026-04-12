@@ -15,9 +15,7 @@ public final class InsightCoordinator: Coordinator {
         self.factories = factories
     }
 
-    public func start() {}
-
     public func makeViewController() -> UIViewController {
-        factories.insight.makeInsightScene()
+        factories.insight.makeScene()
     }
 }
