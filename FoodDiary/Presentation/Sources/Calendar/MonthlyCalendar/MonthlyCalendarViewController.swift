@@ -345,9 +345,6 @@ public final class MonthlyCalendarViewController<
     }
 }
 
-// MARK: - CalendarFlowEmitting
-
-extension MonthlyCalendarViewController: CalendarFlowEmitting {}
 
 // MARK: - Constants
 

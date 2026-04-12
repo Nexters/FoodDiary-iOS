@@ -6,24 +6,24 @@
 import UIKit
 
 public struct Factories {
-    public let login: any LoginSceneProducing
-    public let calendar: any CalendarSceneProducing
-    public let insight: any InsightSceneProducing
-    public let myPage: any MyPageSceneProducing
-    public let detail: any DetailSceneProducing
-    public let imagePicker: any ImagePickerSceneProducing
-    public let edit: any EditSceneProducing
-    public let addressSearch: any AddressSearchSceneProducing
+    public let login: LoginSceneFactory
+    public let calendar: CalendarSceneFactory
+    public let insight: InsightSceneFactory
+    public let myPage: MyPageSceneFactory
+    public let detail: DetailSceneFactory
+    public let imagePicker: ImagePickerSceneFactory
+    public let edit: EditSceneFactory
+    public let addressSearch: AddressSearchSceneFactory
 
     public init(
-        login: any LoginSceneProducing,
-        calendar: any CalendarSceneProducing,
-        insight: any InsightSceneProducing,
-        myPage: any MyPageSceneProducing,
-        detail: any DetailSceneProducing,
-        imagePicker: any ImagePickerSceneProducing,
-        edit: any EditSceneProducing,
-        addressSearch: any AddressSearchSceneProducing
+        login: LoginSceneFactory,
+        calendar: CalendarSceneFactory,
+        insight: InsightSceneFactory,
+        myPage: MyPageSceneFactory,
+        detail: DetailSceneFactory,
+        imagePicker: ImagePickerSceneFactory,
+        edit: EditSceneFactory,
+        addressSearch: AddressSearchSceneFactory
     ) {
         self.login = login
         self.calendar = calendar

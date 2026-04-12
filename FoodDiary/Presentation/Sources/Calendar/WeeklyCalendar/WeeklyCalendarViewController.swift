@@ -348,6 +348,3 @@ public final class WeeklyCalendarViewController<
     }
 }
 
-// MARK: - CalendarFlowEmitting
-
-extension WeeklyCalendarViewController: CalendarFlowEmitting {}

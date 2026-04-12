@@ -5,11 +5,7 @@
 
 import Domain
 
-public protocol MyPageSceneProducing {
-    func makeMyPageScene() -> MyPageViewController
-}
-
-public final class MyPageSceneFactory: MyPageSceneProducing {
+public final class MyPageSceneFactory {
     private let updateDeviceUseCase: UpdateDeviceNotificationSettingUseCase
     private let notificationAuthProvider: NotificationAuthorizationProviding
     private let logoutUseCase: LogoutUseCase

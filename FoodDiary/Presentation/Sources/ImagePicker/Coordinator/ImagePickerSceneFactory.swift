@@ -8,15 +8,9 @@ import Domain
 import Photos
 import UIKit
 
-// MARK: - Protocol
-
-public protocol ImagePickerSceneProducing {
-    func makeScene(input: ImagePickerSceneInput) -> UIViewController
-}
-
 // MARK: - Factory
 
-public final class ImagePickerSceneFactory: ImagePickerSceneProducing {
+public final class ImagePickerSceneFactory {
     private let imageProvider: UIImageLoader
     private let fetchUseCase: FetchFoodImageAssetUseCase<FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>
 
@@ -28,7 +22,7 @@ public final class ImagePickerSceneFactory: ImagePickerSceneProducing {
         self.fetchUseCase = fetchUseCase
     }
 
-    public func makeScene(input: ImagePickerSceneInput) -> UIViewController {
+    public func makeScene(input: ImagePickerSceneInput) -> ImagePickerViewController<PHAsset, UIImageLoader> {
         let date = input.date
         let fetchUseCase = self.fetchUseCase
         
