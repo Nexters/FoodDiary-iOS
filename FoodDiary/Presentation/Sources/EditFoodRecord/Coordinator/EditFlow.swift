@@ -7,5 +7,6 @@ import Combine
 
 public enum EditFlow {
     case presentAddressSearch(AddressSearchSceneInput)
+    case finish
 }
 
