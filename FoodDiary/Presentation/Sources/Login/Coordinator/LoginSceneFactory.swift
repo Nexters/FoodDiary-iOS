@@ -5,11 +5,7 @@
 
 import Domain
 
-public protocol LoginSceneProducing {
-    func makeLoginScene() -> LoginViewController
-}
-
-public final class LoginSceneFactory: LoginSceneProducing {
+public final class LoginSceneFactory {
     private let useCase: FinalizeAppleLoginUseCase
 
     public init(useCase: FinalizeAppleLoginUseCase) {

@@ -31,15 +31,17 @@ public final class CalendarViewController: UIViewController {
         currentModeSubject.eraseToAnyPublisher()
     }
 
-    public init<W: UIViewController & CalendarFlowEmitting, M: UIViewController & CalendarFlowEmitting>(
-        weeklyVC: W,
-        monthlyVC: M
+    public init(
+        weeklyVC: UIViewController,
+        monthlyVC: UIViewController,
+        weeklyFlowPublisher: AnyPublisher<CalendarFlow, Never>,
+        monthlyFlowPublisher: AnyPublisher<CalendarFlow, Never>
     ) {
         self.weeklyVC = weeklyVC
         self.monthlyVC = monthlyVC
         super.init(nibName: nil, bundle: nil)
-        
-        Publishers.Merge(weeklyVC.flowPublisher, monthlyVC.flowPublisher)
+
+        Publishers.Merge(weeklyFlowPublisher, monthlyFlowPublisher)
             .sink { [weak self] flow in self?.flowSubject.send(flow) }
             .store(in: &cancellables)
     }

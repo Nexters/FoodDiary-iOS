@@ -25,19 +25,17 @@ public final class DetailCoordinator: Coordinator {
         let vc = factories.detail.makeDetailScene(input: input)
         vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
-        if let flowVC = vc as? any DetailFlowEmitting {
-            flowVC.flowPublisher
-                .receive(on: DispatchQueue.main)
-                .sink { [weak self] event in
-                    switch event {
-                    case .pushEdit(let input):
-                        self?.pushEdit(input: input)
-                    case .pushImagePicker(let input):
-                        self?.pushImagePicker(input: input)
-                    }
+        vc.flowPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] event in
+                switch event {
+                case .pushEdit(let input):
+                    self?.pushEdit(input: input)
+                case .pushImagePicker(let input):
+                    self?.pushImagePicker(input: input)
                 }
-                .store(in: &cancellables)
-        }
+            }
+            .store(in: &cancellables)
     }
 
     private func pushImagePicker(input: ImagePickerSceneInput) {

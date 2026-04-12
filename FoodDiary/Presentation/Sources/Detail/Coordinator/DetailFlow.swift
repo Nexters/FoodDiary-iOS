@@ -10,6 +10,3 @@ public enum DetailFlow {
     case pushImagePicker(ImagePickerSceneInput)
 }
 
-public protocol DetailFlowEmitting: AnyObject {
-    var flowPublisher: AnyPublisher<DetailFlow, Never> { get }
-}

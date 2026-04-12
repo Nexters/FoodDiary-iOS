@@ -7,11 +7,7 @@ import Data
 import Domain
 import UIKit
 
-public protocol CalendarSceneProducing {
-    func makeScene() -> CalendarViewController
-}
-
-public final class CalendarSceneFactory: CalendarSceneProducing {
+public final class CalendarSceneFactory {
     private typealias RecordRepo = FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
     private typealias AssetFetcher = FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>
 
@@ -64,6 +60,11 @@ public final class CalendarSceneFactory: CalendarSceneProducing {
         )
         let weeklyVC = WeeklyCalendarViewController(viewModel: weeklyVM)
         let monthlyVC = MonthlyCalendarViewController(viewModel: monthlyVM)
-        return CalendarViewController(weeklyVC: weeklyVC, monthlyVC: monthlyVC)
+        return CalendarViewController(
+            weeklyVC: weeklyVC,
+            monthlyVC: monthlyVC,
+            weeklyFlowPublisher: weeklyVC.flowPublisher,
+            monthlyFlowPublisher: monthlyVC.flowPublisher
+        )
     }
 }

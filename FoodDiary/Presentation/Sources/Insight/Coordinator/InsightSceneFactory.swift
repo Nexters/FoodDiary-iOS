@@ -7,11 +7,7 @@ import Data
 import Domain
 import UIKit
 
-public protocol InsightSceneProducing {
-    func makeInsightScene() -> UIViewController
-}
-
-public final class InsightSceneFactory: InsightSceneProducing {
+public final class InsightSceneFactory {
     public typealias UseCase = FetchInsightUseCase<InsightRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>
 
     private let useCase: UseCase
@@ -20,7 +16,7 @@ public final class InsightSceneFactory: InsightSceneProducing {
         self.useCase = useCase
     }
 
-    public func makeInsightScene() -> UIViewController {
+    public func makeInsightScene() -> InsightViewController<InsightRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>> {
         InsightViewController(viewModel: InsightViewModel(fetchInsightUseCase: useCase))
     }
 }

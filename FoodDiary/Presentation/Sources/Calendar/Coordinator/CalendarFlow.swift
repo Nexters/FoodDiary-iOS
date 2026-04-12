@@ -10,6 +10,3 @@ public enum CalendarFlow {
     case pushImagePicker(ImagePickerSceneInput)
 }
 
-public protocol CalendarFlowEmitting: AnyObject {
-    var flowPublisher: AnyPublisher<CalendarFlow, Never> { get }
-}
