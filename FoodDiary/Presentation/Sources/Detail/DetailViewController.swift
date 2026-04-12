@@ -168,6 +168,13 @@ public final class DetailViewController<
         }
     }
 
+    public override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        if isMovingFromParent {
+            flowSubject.send(.finish)
+        }
+    }
+
     // MARK: - Setup
 
     private func setupNavigation() {
@@ -202,7 +209,6 @@ public final class DetailViewController<
     }
 
     private func dismissDetail() {
-        onDismissWithDate?(viewModel.state.currentDate)
         if shouldPopToRoot {
             navigationController?.popToRootViewController(animated: true)
         } else {

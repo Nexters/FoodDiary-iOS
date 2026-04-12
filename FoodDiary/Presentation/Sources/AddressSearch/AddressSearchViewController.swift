@@ -32,6 +32,13 @@ public final class AddressSearchViewController<
     private let viewModel: AddressSearchViewModel<AddressRepo>
     private let onAddressSelected: ((AddressSearchResult) -> Void)?
     private var cancellables = Set<AnyCancellable>()
+
+    // MARK: - Flow
+
+    private let flowSubject = PassthroughSubject<AddressSearchFlow, Never>()
+    public var flowPublisher: AnyPublisher<AddressSearchFlow, Never> {
+        flowSubject.eraseToAnyPublisher()
+    }
     private var containerHeightConstraint: Constraint?
 
     // MARK: - TableView Handler
@@ -134,6 +141,13 @@ public final class AddressSearchViewController<
     public override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         searchTextField.becomeFirstResponder()
+    }
+
+    public override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        if isBeingDismissed || isMovingFromParent {
+            flowSubject.send(.finish)
+        }
     }
 
     public override func viewDidLayoutSubviews() {

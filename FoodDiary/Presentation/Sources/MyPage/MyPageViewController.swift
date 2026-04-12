@@ -59,6 +59,13 @@ public final class MyPageViewController: UIViewController {
 
     private let viewModel: MyPageViewModel
 
+    // MARK: - Flow
+
+    private let flowSubject = PassthroughSubject<MyPageFlow, Never>()
+    public var flowPublisher: AnyPublisher<MyPageFlow, Never> {
+        flowSubject.eraseToAnyPublisher()
+    }
+
     // MARK: - State
 
     private var cancellables = Set<AnyCancellable>()
@@ -106,6 +113,13 @@ public final class MyPageViewController: UIViewController {
 
     deinit {
         NotificationCenter.default.removeObserver(self)
+    }
+
+    public override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        if isMovingFromParent {
+            flowSubject.send(.finish)
+        }
     }
 
     public override func viewDidLoad() {

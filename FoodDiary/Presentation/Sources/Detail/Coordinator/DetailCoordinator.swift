@@ -40,6 +40,8 @@ private extension DetailCoordinator {
                     self?.pushEdit(input: input)
                 case .pushImagePicker(let input):
                     self?.pushImagePicker(input: input)
+                case .finish:
+                    self?.finish()
                 }
             }
             .store(in: &cancellables)
@@ -65,5 +67,9 @@ private extension DetailCoordinator {
         coord.parentCoordinator = self
         addChild(coord)
         coord.start(input: input)
+    }
+    
+    func finish() {
+        parentCoordinator?.removeChild(self)
     }
 }

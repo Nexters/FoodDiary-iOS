@@ -149,6 +149,13 @@ public final class EditFoodRecordViewController<
         super.viewWillDisappear(animated)
     }
 
+    public override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        if isMovingFromParent {
+            flowSubject.send(.finish)
+        }
+    }
+
     // MARK: - Setup
 
     private func setupNavigation() {
