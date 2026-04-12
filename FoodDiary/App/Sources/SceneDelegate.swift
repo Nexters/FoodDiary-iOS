@@ -672,14 +672,22 @@ extension SceneDelegate {
             fatalError("MyPageSceneFactory dependencies not registered")
         }
 
+        // ImagePicker
+        typealias FetchImageAssetUC = FetchFoodImageAssetUseCase<
+            FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>
+        >
+        guard let fetchImageAssetUseCase = try? container.resolve(FetchImageAssetUC.self) else {
+            fatalError("ImagePickerCoordinator dependencies not registered")
+        }
+
+        let imagePickerFactory = ImagePickerSceneFactory(
+            imageProvider: imageProvider,
+            fetchUseCase: fetchImageAssetUseCase
+        )
+
         let factories = Factories(
             login: LoginSceneFactory(useCase: finalizeUseCase),
-            calendar: CalendarSceneFactory(
-                weeklyVM: weeklyVM,
-                monthlyVM: monthlyVM,
-                imageProvider: imageProvider,
-                container: container
-            ),
+            calendar: CalendarSceneFactory(weeklyVM: weeklyVM, monthlyVM: monthlyVM),
             insight: InsightSceneFactory(useCase: fetchInsightUseCase),
             myPage: MyPageSceneFactory(
                 updateDeviceUseCase: updateDeviceUseCase,
@@ -688,14 +696,16 @@ extension SceneDelegate {
                 withdrawUserUseCase: withdrawUserUseCase,
                 getNicknameUseCase: getNicknameUseCase,
                 getAppVersionUseCase: getAppVersionUseCase
-            )
+            ),
+            detail: DetailSceneFactory(container: container),
+            imagePicker: imagePickerFactory
         )
 
         guard let loginSession = try? container.resolve(LoginSession.self) else {
             fatalError("LoginSession not registered")
         }
 
-        let appCoordinator = AppCoordinator(factories: factories, container: container)
+        let appCoordinator = AppCoordinator(factories: factories)
         let transitionHandler = DefaultViewTransitionHandler()
         let appFlowController = AppFlowController(
             appCoordinator: appCoordinator,
