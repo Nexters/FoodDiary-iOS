@@ -24,6 +24,8 @@ final class AppCoordinator: Coordinator {
 
 extension AppCoordinator {
     func pushLoginVC() {
+        childCoordinators.removeAll()
+
         let loginCoordinator = LoginCoordinator(factories: factories)
         loginCoordinator.sceneTransitioner = sceneTransitioner
         loginCoordinator.parentCoordinator = self
@@ -33,6 +35,8 @@ extension AppCoordinator {
     }
 
     func pushMainVC() {
+        childCoordinators.removeAll()
+
         let mainCoordinator = MainCoordinator(factories: factories)
         mainCoordinator.sceneTransitioner = sceneTransitioner
         mainCoordinator.parentCoordinator = self
