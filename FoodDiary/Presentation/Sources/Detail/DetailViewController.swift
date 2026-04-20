@@ -13,7 +13,7 @@ import UIKit
 public final class DetailViewController<
     RecordRepo: FoodRecordRepository,
     PushObserver: PushNotificationObserving
->: UIViewController {
+>: UIViewController, UIGestureRecognizerDelegate {
 
     // MARK: - Constants
 
@@ -158,6 +158,7 @@ public final class DetailViewController<
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(false, animated: animated)
+        navigationController?.interactivePopGestureRecognizer?.delegate = self
         navigationController?.hidesBarsOnSwipe = true
         viewModel.input.send(.loadRecords)
     }
@@ -600,5 +601,11 @@ public final class DetailViewController<
             y: sectionFrame.origin.y - scrollView.adjustedContentInset.top
         )
         scrollView.setContentOffset(targetOffset, animated: false)
+    }
+
+    // MARK: - UIGestureRecognizerDelegate
+
+    public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        return true
     }
 }
