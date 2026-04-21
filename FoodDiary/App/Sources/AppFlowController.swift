@@ -25,17 +25,20 @@ final class AppFlowController: UIViewController, SceneTransitioning {
     private var splashView: SplashView?
     private let coordinator: AppCoordinator
     private let transitionHandler: ViewTransitionHandling
+    private let photoAuthFetcher: PhotoAuthorizationFetcher
 
     public init(
         appCoordinator: AppCoordinator,
         loginSession: LoginSession,
         container: DIContainer,
-        transitionHandler: ViewTransitionHandling
+        transitionHandler: ViewTransitionHandling,
+        photoAuthFetcher: PhotoAuthorizationFetcher
     ) {
         self.coordinator = appCoordinator
         self.loginSession = loginSession
         self.container = container
         self.transitionHandler = transitionHandler
+        self.photoAuthFetcher = photoAuthFetcher
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -64,6 +67,8 @@ final class AppFlowController: UIViewController, SceneTransitioning {
         loginSession.logoutPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in
+                // 로그아웃 시 열려있는 모달(권한 화면 등)을 닫은 후 로그인 화면으로 전환
+                self?.dismiss(animated: false)
                 self?.coordinator.pushLoginVC()
             }
             .store(in: &cancellables)
@@ -104,7 +109,7 @@ final class AppFlowController: UIViewController, SceneTransitioning {
             }
             await MainActor.run { [weak self] in
                 guard let self else { return }
-                loginResult.isFirst ? showOnboarding() : coordinator.pushMainVC()
+                loginResult.isFirst ? showOnboarding() : pushMain()
             }
         }
     }
@@ -117,10 +122,21 @@ final class AppFlowController: UIViewController, SceneTransitioning {
             .sink { [weak self] _ in
                 guard let self else { return }
                 registerForRemoteNotificationsAfterLogin()
-                coordinator.pushMainVC()
+                pushMain()
                 _ = cancellable
             }
         transition(to: UINavigationController(rootViewController: onboardingVC))
+    }
+
+    private func pushMain() {
+        coordinator.pushMainVC()
+        checkPhotoPermission()
+    }
+
+    private func checkPhotoPermission() {
+        let status = photoAuthFetcher.authorizationStatus()
+        guard status == .denied || status == .restricted else { return }
+        coordinator.presentPermissionVC(from: self)
     }
 
     private func navigateToDetailFromDeepLink(diaryDateString: String) {
@@ -185,7 +201,7 @@ extension AppFlowController {
 
     fileprivate func routeToAppropriateScreen(isLogin: Bool) {
         if isLogin {
-            coordinator.pushMainVC()
+            pushMain()
             registerForRemoteNotificationsAfterLogin()
         } else {
             coordinator.pushLoginVC()

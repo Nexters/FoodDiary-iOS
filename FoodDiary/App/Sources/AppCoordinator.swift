@@ -50,6 +50,17 @@ extension AppCoordinator {
     }
 }
 
+// MARK: - Permission
+
+extension AppCoordinator {
+    func presentPermissionVC(from presenter: UIViewController) {
+        let coord = PermissionCoordinator(factories: factories, presentingViewController: presenter)
+        coord.parentCoordinator = self
+        addChild(coord)
+        coord.start()
+    }
+}
+
 // MARK: - Deep Link Navigation
 
 extension AppCoordinator {
