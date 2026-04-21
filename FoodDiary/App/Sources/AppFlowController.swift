@@ -67,8 +67,6 @@ final class AppFlowController: UIViewController, SceneTransitioning {
         loginSession.logoutPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in
-                // 로그아웃 시 열려있는 모달(권한 화면 등)을 닫은 후 로그인 화면으로 전환
-                self?.dismiss(animated: false)
                 self?.coordinator.pushLoginVC()
             }
             .store(in: &cancellables)
