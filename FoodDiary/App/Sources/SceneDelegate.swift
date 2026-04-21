@@ -528,6 +528,10 @@ extension SceneDelegate {
             fatalError("CalendarSceneFactory dependencies not registered")
         }
 
+        guard let photoAuthFetcher = try? container.resolve(PhotoAuthorizationFetcher.self) else {
+            fatalError("PhotoAuthorizationFetcher not registered")
+        }
+
         let factories = Factories(
             login: LoginSceneFactory(useCase: finalizeUseCase),
             calendar: CalendarSceneFactory(
@@ -560,7 +564,8 @@ extension SceneDelegate {
                 updateFoodRecordUseCase: updateFoodRecordUseCase,
                 deleteFoodRecordUseCase: deleteFoodRecordUseCase
             ),
-            addressSearch: AddressSearchSceneFactory(searchAddressUseCase: searchAddressUseCase)
+            addressSearch: AddressSearchSceneFactory(searchAddressUseCase: searchAddressUseCase),
+            permission: PermissionSceneFactory()
         )
 
         guard let loginSession = try? container.resolve(LoginSession.self) else {
@@ -573,7 +578,8 @@ extension SceneDelegate {
             appCoordinator: appCoordinator,
             loginSession: loginSession,
             container: container,
-            transitionHandler: transitionHandler
+            transitionHandler: transitionHandler,
+            photoAuthFetcher: photoAuthFetcher
         )
         appCoordinator.sceneTransitioner = appFlowController
         return appFlowController
