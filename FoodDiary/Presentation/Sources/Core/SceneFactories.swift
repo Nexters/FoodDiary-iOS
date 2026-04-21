@@ -14,6 +14,7 @@ public struct Factories {
     public let imagePicker: ImagePickerSceneFactory
     public let edit: EditSceneFactory
     public let addressSearch: AddressSearchSceneFactory
+    public let permission: PermissionSceneFactory
 
     public init(
         login: LoginSceneFactory,
@@ -23,7 +24,8 @@ public struct Factories {
         detail: DetailSceneFactory,
         imagePicker: ImagePickerSceneFactory,
         edit: EditSceneFactory,
-        addressSearch: AddressSearchSceneFactory
+        addressSearch: AddressSearchSceneFactory,
+        permission: PermissionSceneFactory
     ) {
         self.login = login
         self.calendar = calendar
@@ -33,5 +35,6 @@ public struct Factories {
         self.imagePicker = imagePicker
         self.edit = edit
         self.addressSearch = addressSearch
+        self.permission = permission
     }
 }
