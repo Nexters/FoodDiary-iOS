@@ -150,7 +150,6 @@ public final class MonthlyCalendarViewModel<
         
         do {
             for try await monthDays in fetchMonthlyCalendarDaysUseCase.execute(for: period, currentMonth: date) {
-                try await Task.sleep(for: .seconds(1))
                 state.monthDays = monthDays
                 state.numberOfWeeks = monthDays.count / 7
             }
