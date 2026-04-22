@@ -57,6 +57,12 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
         return view
     }()
 
+    private lazy var gradientBackgroundView: GradientBackgroundView = {
+        let view = GradientBackgroundView(cornerRadius: Constants.cornerRadius)
+        view.isHidden = true
+        return view
+    }()
+
     // MARK: - Init
 
     override init(frame: CGRect) {
@@ -82,6 +88,7 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
         dashedBorderView.layer.cornerRadius = Constants.cornerRadius
 
         contentView.addSubview(containerView)
+        containerView.addSubview(gradientBackgroundView)
         containerView.addSubview(stackView)
     }
 
@@ -102,6 +109,10 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
 
         polaroidImageCardsView.snp.makeConstraints {
             $0.height.equalTo(polaroidImageCardsView.snp.width)
+        }
+
+        gradientBackgroundView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
         }
     }
 
@@ -134,10 +145,11 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
         dashedBorderView.isHidden = false
         polaroidImageCardsView.isHidden = true
         polaroidImageCardsView.alpha = 1
+        gradientBackgroundView.isHidden = true
     }
 
     private func applyTodayStyle() {
-        containerView.backgroundColor = .primary
+        gradientBackgroundView.isHidden = false
         containerView.layer.borderWidth = Constants.todayBorderWidth
         containerView.layer.borderColor = UIColor.white.withAlphaComponent(0.3).cgColor
         containerView.applyGlow(
