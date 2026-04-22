@@ -27,6 +27,12 @@ final class DayCellView: UIView {
         return view
     }()
 
+    private lazy var gradientBackgroundView: GradientBackgroundView = {
+        let view = GradientBackgroundView(cornerRadius: Constants.cornerRadius)
+        view.isHidden = true
+        return view
+    }()
+
     private let dayOfWeekLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .center
@@ -64,11 +70,16 @@ final class DayCellView: UIView {
 
     private func setupUI() {
         addSubview(containerView)
+        containerView.addSubview(gradientBackgroundView)
         containerView.addSubview(dayOfWeekLabel)
         containerView.addSubview(dayNumberLabel)
         containerView.addSubview(recordIndicator)
 
         containerView.snp.makeConstraints { $0.edges.equalToSuperview().inset(2) }
+
+        gradientBackgroundView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
 
         recordIndicator.snp.makeConstraints {
             $0.top.equalToSuperview().offset(8)
@@ -109,9 +120,12 @@ final class DayCellView: UIView {
     }
 
     private func applyStyle(dayOfWeek: String, dayNumber: String, isToday: Bool, isFuture: Bool, isSelected: Bool) {
+        containerView.backgroundColor = .clear
+        containerView.layer.cornerRadius = Constants.cornerRadius
+
         if isSelected {
-            containerView.backgroundColor = DesignSystemAsset.primary.color
-            containerView.layer.cornerRadius = Constants.cornerRadius
+            gradientBackgroundView.isHidden = false
+            gradientBackgroundView.alpha = 1
             containerView.applyGlow(
                 glowColor: .primary,
                 borderColor: UIColor.white.withAlphaComponent(0.3),
@@ -121,22 +135,20 @@ final class DayCellView: UIView {
             dayNumberLabel.setText(dayNumber, style: .p12, color: .white)
             recordIndicator.backgroundColor = .white
         } else if isFuture {
-            containerView.backgroundColor = .clear
-            containerView.layer.cornerRadius = Constants.cornerRadius
+            gradientBackgroundView.isHidden = true
             containerView.removeGlow()
             dayOfWeekLabel.setText(dayOfWeek, style: .p12, color: .gray700)
             dayNumberLabel.setText(dayNumber, style: .p12, color: .gray700)
             recordIndicator.isHidden = true
         } else if isToday {
-            containerView.backgroundColor = DesignSystemAsset.primary.color.withAlphaComponent(0.2)
-            containerView.layer.cornerRadius = Constants.cornerRadius
+            gradientBackgroundView.isHidden = false
+            gradientBackgroundView.alpha = 0.2
             containerView.removeGlow()
             dayOfWeekLabel.setText(dayOfWeek, style: .p12, color: .gray300)
             dayNumberLabel.setText(dayNumber, style: .p12, color: .white)
             recordIndicator.backgroundColor = DesignSystemAsset.primary.color
         } else {
-            containerView.backgroundColor = .clear
-            containerView.layer.cornerRadius = Constants.cornerRadius
+            gradientBackgroundView.isHidden = true
             containerView.removeGlow()
             dayOfWeekLabel.setText(dayOfWeek, style: .p12, color: .gray300)
             dayNumberLabel.setText(dayNumber, style: .p12, color: .white)
