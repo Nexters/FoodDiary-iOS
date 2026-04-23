@@ -7,7 +7,7 @@ import Combine
 import Domain
 import Foundation
 
-public final class AddressSearchViewModel<AddressRepo: AddressSearchRepository> {
+public final class AddressSearchViewModel {
 
     // MARK: - Output
 
@@ -28,13 +28,13 @@ public final class AddressSearchViewModel<AddressRepo: AddressSearchRepository> 
     private let stateSubject: CurrentValueSubject<State, Never>
     private let eventSubject = PassthroughSubject<Event, Never>()
     private var cancellables = Set<AnyCancellable>()
-    private let searchAddressUseCase: SearchAddressUseCase<AddressRepo>
+    private let searchAddressUseCase: SearchAddressUseCase
     private let diaryId: Int
 
     // MARK: - Init
 
     public init(
-        searchAddressUseCase: SearchAddressUseCase<AddressRepo>,
+        searchAddressUseCase: SearchAddressUseCase,
         diaryId: Int
     ) {
         self.searchAddressUseCase = searchAddressUseCase

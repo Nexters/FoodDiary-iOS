@@ -16,7 +16,7 @@ private enum InsightConstants {
     static let contentInset: CGFloat = 20
 }
 
-public final class InsightViewController<Repo: InsightRepository>: UIViewController {
+public final class InsightViewController: UIViewController {
 
     // MARK: - UI Components
 
@@ -58,12 +58,12 @@ public final class InsightViewController<Repo: InsightRepository>: UIViewControl
 
     // MARK: - Properties
 
-    private let viewModel: InsightViewModel<Repo>
+    private let viewModel: InsightViewModel
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Init
 
-    public init(viewModel: InsightViewModel<Repo>) {
+    public init(viewModel: InsightViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }

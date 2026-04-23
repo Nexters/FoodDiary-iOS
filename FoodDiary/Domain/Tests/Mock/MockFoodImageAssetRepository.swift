@@ -9,11 +9,9 @@
 import Foundation
 
 final class MockFoodImageAssetRepository: FoodImageAssetRepository, @unchecked Sendable {
-    typealias Asset = MockImageAssetable
+    var resultToReturn: [Date: [FoodImageAsset]] = [:]
 
-    var resultToReturn: [Date: [FoodImageAsset<MockImageAssetable>]] = [:]
-
-    func fetchFoodImageAssets(from startDate: Date, to endDate: Date?) async throws -> [Date: [FoodImageAsset<MockImageAssetable>]] {
+    func fetchFoodImageAssets(from startDate: Date, to endDate: Date?) async throws -> [Date: [FoodImageAsset]] {
         resultToReturn
     }
 

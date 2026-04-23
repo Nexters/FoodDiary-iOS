@@ -8,32 +8,26 @@ import Domain
 import UIKit
 
 public final class CalendarSceneFactory {
-    private typealias RecordRepo = FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-    private typealias AssetFetcher = FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>
-
-    private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>
-    private let loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase<RecordRepo, AssetFetcher>
-    private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>
+    private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase
+    private let loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase
+    private let saveFoodRecordUseCase: SaveFoodRecordUseCase
     private let pushNotificationObserver: PushNotificationObserver
     private let getNicknameUseCase: GetNicknameUseCase
     private let coachmarkStorage: any CoachmarkStoring
     private let checkAppReviewEligibilityUseCase: CheckAppReviewEligibilityUseCase
-    private let fetchMonthlyCalendarDaysUseCase: FetchMonthlyCalendarDaysUseCase<RecordRepo>
-    private let fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
+    private let fetchMonthlyCalendarDaysUseCase: FetchMonthlyCalendarDaysUseCase
+    private let fetchFoodRecordsUseCase: FetchFoodRecordsUseCase
 
     public init(
-        requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>,
-        loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase<
-            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
-            FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>
-        >,
-        saveFoodRecordUseCase: SaveFoodRecordUseCase<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>,
+        requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase,
+        loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase,
+        saveFoodRecordUseCase: SaveFoodRecordUseCase,
         pushNotificationObserver: PushNotificationObserver,
         getNicknameUseCase: GetNicknameUseCase,
         coachmarkStorage: any CoachmarkStoring,
         checkAppReviewEligibilityUseCase: CheckAppReviewEligibilityUseCase,
-        fetchMonthlyCalendarDaysUseCase: FetchMonthlyCalendarDaysUseCase<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>,
-        fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>
+        fetchMonthlyCalendarDaysUseCase: FetchMonthlyCalendarDaysUseCase,
+        fetchFoodRecordsUseCase: FetchFoodRecordsUseCase
     ) {
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
         self.loadWeeklyCalendarDataUseCase = loadWeeklyCalendarDataUseCase

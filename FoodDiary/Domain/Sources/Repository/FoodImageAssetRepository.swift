@@ -8,8 +8,6 @@
 import Foundation
 
 public protocol FoodImageAssetRepository: Sendable {
-    associatedtype Asset: ImageAssetable
-
     /// 날짜별 음식 사진 조회 (음식 확률 순 정렬)
     /// - Parameters:
     ///   - startDate: 조회 시작 날짜 (필수)
@@ -18,7 +16,7 @@ public protocol FoodImageAssetRepository: Sendable {
     func fetchFoodImageAssets(
         from startDate: Date,
         to endDate: Date?
-    ) async throws -> [Date: [FoodImageAsset<Asset>]]
+    ) async throws -> [Date: [FoodImageAsset]]
 
     /// 현재 주 + 과거 N주 범위의 사진 데이터를 백그라운드에서 미리 로드하여 캐시 워밍
     /// - Parameters:

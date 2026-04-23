@@ -7,13 +7,11 @@ import Foundation
 
 /// Asset을 서버에 업로드하는 UseCase
 /// 분석 결과는 Remote Push로 수신
-public struct SaveFoodRecordUseCase<
-    RecordRepo: FoodRecordRepository
->: Sendable {
-    private let repository: RecordRepo
+public struct SaveFoodRecordUseCase: Sendable {
+    private let repository: any FoodRecordRepository
 
     public init(
-        repository: RecordRepo
+        repository: any FoodRecordRepository
     ) {
         self.repository = repository
     }

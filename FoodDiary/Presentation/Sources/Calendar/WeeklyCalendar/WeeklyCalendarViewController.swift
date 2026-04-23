@@ -14,16 +14,11 @@ private enum Constants {
     static let horizontalInset: CGFloat = 20
 }
 
-public final class WeeklyCalendarViewController<
-    RecordRepo: FoodRecordRepository,
-    AssetRepo: FoodImageAssetRepository,
-    AuthRepo: PhotoAuthorizationRepository,
-    PushObserver: PushNotificationObserving
->: UIViewController {
+public final class WeeklyCalendarViewController: UIViewController {
 
     // MARK: - Dependencies
 
-    private let viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo, PushObserver>
+    private let viewModel: WeeklyCalendarViewModel
 
     // MARK: - Flow
 
@@ -61,7 +56,7 @@ public final class WeeklyCalendarViewController<
     // MARK: - Init
 
     public init(
-        viewModel: WeeklyCalendarViewModel<RecordRepo, AssetRepo, AuthRepo, PushObserver>
+        viewModel: WeeklyCalendarViewModel
     ) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
@@ -285,8 +280,7 @@ public final class WeeklyCalendarViewController<
         let date = viewModel.state.selectedDate
         flowSubject.send(.pushImagePicker(
             ImagePickerSceneInput(date: date) { [weak self] assets in
-                let typed = assets.compactMap { $0 as? AssetRepo.Asset }
-                self?.viewModel.input.send(.saveSelectedPhotos(typed))
+                self?.viewModel.input.send(.saveSelectedPhotos(assets))
             }
         ))
     }

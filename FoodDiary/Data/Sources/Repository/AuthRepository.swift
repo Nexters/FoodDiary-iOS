@@ -8,11 +8,11 @@
 import Domain
 import Foundation
 
-public struct AuthRepositoryImpl<Storage: AuthTokenStoring, Client: HTTPClienting>: AuthRepository {
-    let httpClient: Client
-    let tokenStorage: Storage
+public struct AuthRepositoryImpl: AuthRepository {
+    let httpClient: any HTTPClienting
+    let tokenStorage: any AuthTokenStoring
 
-    public init(httpClient: Client, tokenStorage: Storage) {
+    public init(httpClient: any HTTPClienting, tokenStorage: any AuthTokenStoring) {
         self.httpClient = httpClient
         self.tokenStorage = tokenStorage
     }

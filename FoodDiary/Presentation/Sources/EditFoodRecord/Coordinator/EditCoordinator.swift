@@ -32,7 +32,7 @@ public final class EditCoordinator: Coordinator {
 // MARK: - Screen Routing
 
 private extension EditCoordinator {
-    func flowBind(vc: EditFoodRecordViewController<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>) {
+    func flowBind(vc: EditFoodRecordViewController) {
         vc.flowPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] event in

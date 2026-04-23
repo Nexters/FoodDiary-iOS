@@ -7,10 +7,7 @@ import Combine
 import Domain
 import Foundation
 
-public final class MonthlyCalendarViewModel<
-    RecordRepo: FoodRecordRepository,
-    AuthRepo: PhotoAuthorizationRepository
-> {
+public final class MonthlyCalendarViewModel {
     // MARK: - Output
 
     var statePublisher: AnyPublisher<State, Never> {
@@ -41,17 +38,17 @@ public final class MonthlyCalendarViewModel<
 
     // MARK: - Dependencies
 
-    private let fetchMonthlyCalendarDaysUseCase: FetchMonthlyCalendarDaysUseCase<RecordRepo>
-    private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>
-    private let fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
+    private let fetchMonthlyCalendarDaysUseCase: FetchMonthlyCalendarDaysUseCase
+    private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase
+    private let fetchFoodRecordsUseCase: FetchFoodRecordsUseCase
     private let getNicknameUseCase: GetNicknameUseCase
 
     // MARK: - Init
 
     public init(
-        fetchMonthlyCalendarDaysUseCase: FetchMonthlyCalendarDaysUseCase<RecordRepo>,
-        requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>,
-        fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>,
+        fetchMonthlyCalendarDaysUseCase: FetchMonthlyCalendarDaysUseCase,
+        requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase,
+        fetchFoodRecordsUseCase: FetchFoodRecordsUseCase,
         getNicknameUseCase: GetNicknameUseCase
     ) {
         self.fetchMonthlyCalendarDaysUseCase = fetchMonthlyCalendarDaysUseCase

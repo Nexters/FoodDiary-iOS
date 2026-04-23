@@ -31,7 +31,7 @@ public final class AddressSearchCoordinator: Coordinator {
 // MARK: - Screen Routing
 
 private extension AddressSearchCoordinator {
-    func flowBind(vc: AddressSearchViewController<AddressSearchRepositoryImpl>) {
+    func flowBind(vc: AddressSearchViewController) {
         vc.flowPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] event in
