@@ -194,6 +194,10 @@ extension SceneDelegate {
         container.register(CoachmarkStoring.self) { _ in
             CoachmarkStorage()
         }
+
+        container.register(AnalysisCountStorage.self) { _ in
+            AnalysisCountStorage()
+        }
     }
 
     fileprivate func registerDomain() {
@@ -375,6 +379,13 @@ extension SceneDelegate {
             return GetNicknameUseCase(nicknameStorage: nicknameStorage)
         }
 
+        container.register(CheckAppReviewEligibilityUseCase.self) { resolver in
+            guard let storage = resolver.resolve(AnalysisCountStorage.self) else {
+                fatalError("AnalysisCountStorage not registered")
+            }
+            return CheckAppReviewEligibilityUseCase(analysisCountStorage: storage)
+        }
+
         container.register(GetAppVersionUseCase.self) { _ in
             let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
             return GetAppVersionUseCase(appVersion: version)
@@ -523,6 +534,7 @@ extension SceneDelegate {
             let requestPhotoAuthUseCase = try? container.resolve(RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>.self),
             let loadWeeklyUseCase = try? container.resolve(LoadWeeklyRecordUseCase<RecordRepo, AssetFetcher>.self),
             let coachmarkStorage = try? container.resolve(CoachmarkStoring.self),
+            let checkAppReviewUseCase = try? container.resolve(CheckAppReviewEligibilityUseCase.self),
             let fetchMonthlyUseCase = try? container.resolve(FetchMonthlyCalendarDaysUseCase<RecordRepo>.self)
         else {
             fatalError("CalendarSceneFactory dependencies not registered")
@@ -541,6 +553,7 @@ extension SceneDelegate {
                 pushNotificationObserver: pushNotificationObserver,
                 getNicknameUseCase: getNicknameUseCase,
                 coachmarkStorage: coachmarkStorage,
+                checkAppReviewEligibilityUseCase: checkAppReviewUseCase,
                 fetchMonthlyCalendarDaysUseCase: fetchMonthlyUseCase,
                 fetchFoodRecordsUseCase: fetchRecordsUseCase
             ),

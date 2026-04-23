@@ -17,6 +17,7 @@ public final class CalendarSceneFactory {
     private let pushNotificationObserver: PushNotificationObserver
     private let getNicknameUseCase: GetNicknameUseCase
     private let coachmarkStorage: any CoachmarkStoring
+    private let checkAppReviewEligibilityUseCase: CheckAppReviewEligibilityUseCase
     private let fetchMonthlyCalendarDaysUseCase: FetchMonthlyCalendarDaysUseCase<RecordRepo>
     private let fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
 
@@ -30,6 +31,7 @@ public final class CalendarSceneFactory {
         pushNotificationObserver: PushNotificationObserver,
         getNicknameUseCase: GetNicknameUseCase,
         coachmarkStorage: any CoachmarkStoring,
+        checkAppReviewEligibilityUseCase: CheckAppReviewEligibilityUseCase,
         fetchMonthlyCalendarDaysUseCase: FetchMonthlyCalendarDaysUseCase<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>,
         fetchFoodRecordsUseCase: FetchFoodRecordsUseCase<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>
     ) {
@@ -39,6 +41,7 @@ public final class CalendarSceneFactory {
         self.pushNotificationObserver = pushNotificationObserver
         self.getNicknameUseCase = getNicknameUseCase
         self.coachmarkStorage = coachmarkStorage
+        self.checkAppReviewEligibilityUseCase = checkAppReviewEligibilityUseCase
         self.fetchMonthlyCalendarDaysUseCase = fetchMonthlyCalendarDaysUseCase
         self.fetchFoodRecordsUseCase = fetchFoodRecordsUseCase
     }
@@ -50,7 +53,8 @@ public final class CalendarSceneFactory {
             saveFoodRecordUseCase: saveFoodRecordUseCase,
             pushNotificationObserver: pushNotificationObserver,
             getNicknameUseCase: getNicknameUseCase,
-            coachmarkStorage: coachmarkStorage
+            coachmarkStorage: coachmarkStorage,
+            checkAppReviewEligibilityUseCase: checkAppReviewEligibilityUseCase
         )
         let monthlyVM = MonthlyCalendarViewModel(
             fetchMonthlyCalendarDaysUseCase: fetchMonthlyCalendarDaysUseCase,
