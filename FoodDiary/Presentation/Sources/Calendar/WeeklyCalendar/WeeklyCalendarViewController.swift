@@ -7,6 +7,7 @@ import Combine
 import DesignSystem
 import Domain
 import SnapKit
+import StoreKit
 import UIKit
 
 private enum Constants {
@@ -246,6 +247,8 @@ public final class WeeklyCalendarViewController<
                     self?.showSaveErrorAlert(error)
                 case .loadFailed(let error):
                     self?.showLoadErrorAlert(error)
+                case .requestAppReview:
+                    self?.requestAppReview()
                 }
             }
             .store(in: &cancellables)
@@ -344,6 +347,11 @@ public final class WeeklyCalendarViewController<
         )
         alert.addAction(UIAlertAction(title: "확인", style: .default))
         present(alert, animated: true)
+    }
+
+    private func requestAppReview() {
+        guard let windowScene = view.window?.windowScene else { return }
+        AppStore.requestReview(in: windowScene)
     }
 }
 

@@ -51,6 +51,7 @@ public final class WeeklyCalendarViewModel<
     private let pushNotificationObserver: PushObserver
     private let getNicknameUseCase: GetNicknameUseCase
     private let coachmarkStorage: any CoachmarkStoring
+    private let checkAppReviewEligibilityUseCase: CheckAppReviewEligibilityUseCase
 
     // MARK: - Init
 
@@ -60,7 +61,8 @@ public final class WeeklyCalendarViewModel<
         saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>,
         pushNotificationObserver: PushObserver,
         getNicknameUseCase: GetNicknameUseCase,
-        coachmarkStorage: any CoachmarkStoring
+        coachmarkStorage: any CoachmarkStoring,
+        checkAppReviewEligibilityUseCase: CheckAppReviewEligibilityUseCase
     ) {
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
         self.loadWeeklyCalendarDataUseCase = loadWeeklyCalendarDataUseCase
@@ -68,6 +70,7 @@ public final class WeeklyCalendarViewModel<
         self.pushNotificationObserver = pushNotificationObserver
         self.getNicknameUseCase = getNicknameUseCase
         self.coachmarkStorage = coachmarkStorage
+        self.checkAppReviewEligibilityUseCase = checkAppReviewEligibilityUseCase
 
         let cal = Calendar.current
         self.calendar = cal
@@ -305,6 +308,10 @@ public final class WeeklyCalendarViewModel<
         if notificationDate == selectedDate {
             await updateDateContent(for: state.selectedDate)
         }
+
+        if checkAppReviewEligibilityUseCase.execute() {
+            eventSubject.send(.requestAppReview)
+        }
     }
 }
 
@@ -342,6 +349,7 @@ extension WeeklyCalendarViewModel {
         case uploadCompleted(date: Date, mealType: MealType)
         case saveFailed(Error)
         case loadFailed(Error)
+        case requestAppReview
     }
 }
 
