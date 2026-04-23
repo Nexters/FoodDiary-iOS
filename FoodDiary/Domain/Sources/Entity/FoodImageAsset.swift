@@ -7,15 +7,15 @@
 
 import Foundation
 
-public struct FoodImageAsset<ImageAsset: ImageAssetable>: Sendable, Equatable {
-    public let imageAsset: ImageAsset
+public struct FoodImageAsset: Sendable, Equatable {
+    public let imageAsset: any ImageAssetable
     /// 음식일 확률 (0.0 ~ 1.0)
     public let foodProbability: Float
 
     public var id: String { imageAsset.id }
     public var creationDate: Date? { imageAsset.creationDate }
 
-    public init(imageAsset: ImageAsset, foodProbability: Float) {
+    public init(imageAsset: any ImageAssetable, foodProbability: Float) {
         self.imageAsset = imageAsset
         self.foodProbability = foodProbability
     }

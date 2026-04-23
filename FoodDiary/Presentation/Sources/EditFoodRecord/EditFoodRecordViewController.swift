@@ -22,13 +22,11 @@ private enum EditFoodRecordConstants {
     static let buttonCornerRadius: CGFloat = 25
 }
 
-public final class EditFoodRecordViewController<
-    RecordRepo: FoodRecordRepository
->: UIViewController, UIGestureRecognizerDelegate {
+public final class EditFoodRecordViewController: UIViewController, UIGestureRecognizerDelegate {
 
     // MARK: - Dependencies
 
-    private let viewModel: EditFoodRecordViewModel<RecordRepo>
+    private let viewModel: EditFoodRecordViewModel
 
     // MARK: - Flow
 
@@ -116,7 +114,7 @@ public final class EditFoodRecordViewController<
     // MARK: - Init
 
     public init(
-        viewModel: EditFoodRecordViewModel<RecordRepo>
+        viewModel: EditFoodRecordViewModel
     ) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
@@ -395,7 +393,7 @@ public final class EditFoodRecordViewController<
         }
     }
 
-    private func handleEvent(_ event: EditFoodRecordViewModel<RecordRepo>.Event) {
+    private func handleEvent(_ event: EditFoodRecordViewModel.Event) {
         switch event {
         case .saveCompleted:
             ToastView.show(type: .infoUpdate)

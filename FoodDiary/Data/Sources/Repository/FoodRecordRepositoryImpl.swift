@@ -9,12 +9,9 @@ import Photos
 import UIKit
 
 /// FoodRecordRepository 구현체
-public struct FoodRecordRepositoryImpl<
-    Client: HTTPClienting & Sendable,
-    Storage: AuthTokenStoring & Sendable
->: FoodRecordRepository {
-    private let httpClient: Client
-    private let tokenStorage: Storage
+public struct FoodRecordRepositoryImpl: FoodRecordRepository {
+    private let httpClient: any HTTPClienting
+    private let tokenStorage: any AuthTokenStoring
     private let deviceId: String
     private let imageConverter: PHAssetConverter
     private let calendar = Calendar.current
@@ -27,7 +24,7 @@ public struct FoodRecordRepositoryImpl<
     #endif
 
     public init(
-        httpClient: Client, tokenStorage: Storage, deviceId: String,
+        httpClient: any HTTPClienting, tokenStorage: any AuthTokenStoring, deviceId: String,
         imageConverter: PHAssetConverter
     ) {
         self.httpClient = httpClient

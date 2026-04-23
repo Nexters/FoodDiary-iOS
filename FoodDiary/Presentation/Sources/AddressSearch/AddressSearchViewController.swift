@@ -23,13 +23,11 @@ enum AddressSearchConstants {
     static let resultCellHeight: CGFloat = 72
 }
 
-public final class AddressSearchViewController<
-    AddressRepo: AddressSearchRepository
->: UIViewController, UITextFieldDelegate {
+public final class AddressSearchViewController: UIViewController, UITextFieldDelegate {
 
     // MARK: - Dependencies
 
-    private let viewModel: AddressSearchViewModel<AddressRepo>
+    private let viewModel: AddressSearchViewModel
     private let onAddressSelected: ((AddressSearchResult) -> Void)?
     private var cancellables = Set<AnyCancellable>()
 
@@ -114,7 +112,7 @@ public final class AddressSearchViewController<
     // MARK: - Init
 
     public init(
-        viewModel: AddressSearchViewModel<AddressRepo>,
+        viewModel: AddressSearchViewModel,
         onAddressSelected: ((AddressSearchResult) -> Void)?
     ) {
         self.viewModel = viewModel
@@ -233,7 +231,7 @@ public final class AddressSearchViewController<
 
     // MARK: - Private Methods
 
-    private func updateUI(with state: AddressSearchViewModel<AddressRepo>.State) {
+    private func updateUI(with state: AddressSearchViewModel.State) {
         let displayResults: [AddressSearchResult]
 
         switch state.mode {
@@ -268,7 +266,7 @@ public final class AddressSearchViewController<
         }
     }
 
-    private func handleEvent(_ event: AddressSearchViewModel<AddressRepo>.Event) {
+    private func handleEvent(_ event: AddressSearchViewModel.Event) {
         switch event {
         case .addressSelected(let result):
             onAddressSelected?(result)

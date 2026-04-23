@@ -9,11 +9,11 @@ import Foundation
 import Domain
 
 /// Keychain을 사용한 인증 토큰 저장소 구현체
-public struct AuthTokenStorage<Service: KeychainServicing>: AuthTokenStoring {
-    private let keychainService: Service
+public struct AuthTokenStorage: AuthTokenStoring {
+    private let keychainService: any KeychainServicing
     private let tokenKey = "access_token"
 
-    public init(keychainService: Service) {
+    public init(keychainService: any KeychainServicing) {
         self.keychainService = keychainService
     }
 

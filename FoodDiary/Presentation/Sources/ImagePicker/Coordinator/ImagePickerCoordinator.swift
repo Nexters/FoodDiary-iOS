@@ -34,7 +34,7 @@ public final class ImagePickerCoordinator: Coordinator {
 // MARK: - Screen Routing
 
 private extension ImagePickerCoordinator {
-    func flowBind(vc: ImagePickerViewController<PHAsset, UIImageLoader>) {
+    func flowBind(vc: ImagePickerViewController) {
         vc.resultPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in

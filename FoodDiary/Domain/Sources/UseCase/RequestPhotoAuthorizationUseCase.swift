@@ -5,10 +5,10 @@
 
 import Foundation
 
-public struct RequestPhotoAuthorizationUseCase<Repository: PhotoAuthorizationRepository> {
-    private let repository: Repository
+public struct RequestPhotoAuthorizationUseCase {
+    private let repository: any PhotoAuthorizationRepository
 
-    public init(repository: Repository) {
+    public init(repository: any PhotoAuthorizationRepository) {
         self.repository = repository
     }
 

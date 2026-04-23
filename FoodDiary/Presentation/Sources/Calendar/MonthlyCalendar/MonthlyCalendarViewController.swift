@@ -10,10 +10,7 @@ import Domain
 import SnapKit
 import UIKit
 
-public final class MonthlyCalendarViewController<
-    RecordRepo: FoodRecordRepository,
-    AuthRepo: PhotoAuthorizationRepository
->: UIViewController, UICollectionViewDelegate {
+public final class MonthlyCalendarViewController: UIViewController, UICollectionViewDelegate {
 
     private enum Section: Hashable {
         case calendar
@@ -21,7 +18,7 @@ public final class MonthlyCalendarViewController<
 
     // MARK: - Dependencies
 
-    private let viewModel: MonthlyCalendarViewModel<RecordRepo, AuthRepo>
+    private let viewModel: MonthlyCalendarViewModel
 
     // MARK: - Flow
 
@@ -75,7 +72,7 @@ public final class MonthlyCalendarViewController<
     // MARK: - Init
 
     public init(
-        viewModel: MonthlyCalendarViewModel<RecordRepo, AuthRepo>
+        viewModel: MonthlyCalendarViewModel
     ) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)

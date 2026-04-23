@@ -59,33 +59,27 @@ extension SceneDelegate {
             HTTPClient()
         }
 
-        container.register(AuthTokenStorage<KeychainService>.self) { resolver in
+        container.register(AuthTokenStorage.self) { resolver in
             guard let service = resolver.resolve(KeychainService.self) else {
                 fatalError("KeychainService not registered")
             }
-
             return AuthTokenStorage(keychainService: service)
         }
 
         container.register(AuthRepository.self) { resolver in
-            guard let storage = resolver.resolve(AuthTokenStorage<KeychainService>.self) else {
-                fatalError("AuthTokenStorage not registered")
+            guard let storage = resolver.resolve(AuthTokenStorage.self),
+                  let client = resolver.resolve(HTTPClient.self) else {
+                fatalError("AuthRepositoryImpl dependencies not registered")
             }
-
-            guard let client = resolver.resolve(HTTPClient.self) else {
-                fatalError("HTTPClient not registered")
-            }
-
             return AuthRepositoryImpl(httpClient: client, tokenStorage: storage)
         }
 
         container.register(TokenRepository.self) { resolver in
             guard let client = resolver.resolve(HTTPClient.self),
-                  let storage = resolver.resolve(AuthTokenStorage<KeychainService>.self),
+                  let storage = resolver.resolve(AuthTokenStorage.self),
                   let launchStorage = resolver.resolve(InitialLaunchStorage.self) else {
                 fatalError("TokenRepositoryImpl dependencies not registered")
             }
-
             return TokenRepositoryImpl(httpClient: client, storage: storage, launchStorage: launchStorage)
         }
 
@@ -112,12 +106,10 @@ extension SceneDelegate {
             ClassificationCacheManager()
         }
 
-        container.register(FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>.self) {
-            resolver in
+        container.register(FoodImageAssetFetcher.self) { resolver in
             guard let classifier = resolver.resolve(TFLiteFoodClassifier.self),
-                let imageRepository = resolver.resolve(UIImageLoader.self),
-                let cache = resolver.resolve(ClassificationCacheManager.self)
-            else {
+                  let imageRepository = resolver.resolve(UIImageLoader.self),
+                  let cache = resolver.resolve(ClassificationCacheManager.self) else {
                 fatalError("FoodImageAssetFetcher dependencies not registered")
             }
             return FoodImageAssetFetcher(
@@ -127,13 +119,10 @@ extension SceneDelegate {
             )
         }
 
-        container.register(
-            FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>.self
-        ) { resolver in
+        container.register(FoodRecordRepositoryImpl.self) { resolver in
             guard let client = resolver.resolve(HTTPClient.self),
-                let storage = resolver.resolve(AuthTokenStorage<KeychainService>.self),
-                let imageConverter = resolver.resolve(PHAssetConverter.self)
-            else {
+                  let storage = resolver.resolve(AuthTokenStorage.self),
+                  let imageConverter = resolver.resolve(PHAssetConverter.self) else {
                 fatalError("FoodRecordRepositoryImpl dependencies not registered")
             }
             let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? ""
@@ -152,8 +141,7 @@ extension SceneDelegate {
 
         container.register(AddressSearchRepositoryImpl.self) { resolver in
             guard let client = resolver.resolve(HTTPClient.self),
-                let storage = resolver.resolve(AuthTokenStorage<KeychainService>.self)
-            else {
+                  let storage = resolver.resolve(AuthTokenStorage.self) else {
                 fatalError("AddressSearchRepositoryImpl dependencies not registered")
             }
             return AddressSearchRepositoryImpl(httpClient: client, tokenStorage: storage)
@@ -161,7 +149,7 @@ extension SceneDelegate {
 
         container.register(DeviceRepository.self) { resolver in
             guard let client = resolver.resolve(HTTPClient.self),
-                  let storage = resolver.resolve(AuthTokenStorage<KeychainService>.self) else {
+                  let storage = resolver.resolve(AuthTokenStorage.self) else {
                 fatalError("DeviceRepository dependencies not registered")
             }
             return DeviceRepositoryImpl(httpClient: client, tokenStorage: storage)
@@ -169,15 +157,15 @@ extension SceneDelegate {
 
         container.register(UserRepository.self) { resolver in
             guard let client = resolver.resolve(HTTPClient.self),
-                  let storage = resolver.resolve(AuthTokenStorage<KeychainService>.self) else {
+                  let storage = resolver.resolve(AuthTokenStorage.self) else {
                 fatalError("UserRepositoryImpl dependencies not registered")
             }
             return UserRepositoryImpl(httpClient: client, tokenStorage: storage)
         }
 
-        container.register(InsightRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>.self) { resolver in
+        container.register(InsightRepositoryImpl.self) { resolver in
             guard let client = resolver.resolve(HTTPClient.self),
-                  let storage = resolver.resolve(AuthTokenStorage<KeychainService>.self) else {
+                  let storage = resolver.resolve(AuthTokenStorage.self) else {
                 fatalError("InsightRepositoryImpl dependencies not registered")
             }
             return InsightRepositoryImpl(httpClient: client, tokenStorage: storage)
@@ -207,16 +195,13 @@ extension SceneDelegate {
 
         container.register(FinalizeAppleLoginUseCase.self) { resolver in
             guard let repository = resolver.resolve(AuthRepository.self),
-                let pushTokenStorage = resolver.resolve(PushTokenStoring.self),
-                let notificationAuthProvider = resolver.resolve(
-                    NotificationAuthorizationProviding.self),
-                let launchStorage = resolver.resolve(InitialLaunchStorage.self),
-                let loginSession = resolver.resolve(LoginSession.self),
-                let deviceId = UIDevice.current.identifierForVendor?.uuidString
-            else {
+                  let pushTokenStorage = resolver.resolve(PushTokenStoring.self),
+                  let notificationAuthProvider = resolver.resolve(NotificationAuthorizationProviding.self),
+                  let launchStorage = resolver.resolve(InitialLaunchStorage.self),
+                  let loginSession = resolver.resolve(LoginSession.self),
+                  let deviceId = UIDevice.current.identifierForVendor?.uuidString else {
                 fatalError("FinalizeAppleLoginUseCase dependencies not registered")
             }
-
             return FinalizeAppleLoginUseCase(
                 authRepository: repository,
                 deviceId: deviceId,
@@ -228,104 +213,51 @@ extension SceneDelegate {
             )
         }
 
-        container.register(
-            ValidateAccessTokenUseCase<
-                TokenRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>, InitialLaunchStorage>
-            >.self
-        ) { resolver in
+        container.register(ValidateAccessTokenUseCase.self) { resolver in
             guard let repository = resolver.resolve(TokenRepository.self) else {
                 fatalError("TokenRepository not registered")
             }
-
-            guard
-                let concreteRepository = repository
-                    as? TokenRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>, InitialLaunchStorage>
-            else {
-                fatalError("TokenRepository is not of expected type")
-            }
-
-            return ValidateAccessTokenUseCase(repository: concreteRepository)
+            return ValidateAccessTokenUseCase(repository: repository)
         }
 
-        container.register(
-            FetchFoodImageAssetUseCase<FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>
-                .self
-        ) { resolver in
-            guard
-                let repository = resolver.resolve(
-                    FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>.self)
-            else {
+        container.register(FetchFoodImageAssetUseCase.self) { resolver in
+            guard let repository = resolver.resolve(FoodImageAssetFetcher.self) else {
                 fatalError("FoodImageAssetFetcher not registered")
             }
             return FetchFoodImageAssetUseCase(repository: repository)
         }
 
-        container.register(
-            RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>.self
-        ) { resolver in
+        container.register(RequestPhotoAuthorizationUseCase.self) { resolver in
             guard let repository = resolver.resolve(PhotoAuthorizationFetcher.self) else {
                 fatalError("PhotoAuthorizationFetcher not registered")
             }
             return RequestPhotoAuthorizationUseCase(repository: repository)
         }
 
-        container.register(
-            SaveFoodRecordUseCase<
-                FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-            >.self
-        ) { resolver in
-            guard
-                let recordRepo = resolver.resolve(
-                    FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>.self)
-            else {
+        container.register(SaveFoodRecordUseCase.self) { resolver in
+            guard let recordRepo = resolver.resolve(FoodRecordRepositoryImpl.self) else {
                 fatalError("SaveFoodRecordUseCase dependencies not registered")
             }
             return SaveFoodRecordUseCase(repository: recordRepo)
         }
 
-        container.register(
-            FetchMonthlyCalendarDaysUseCase<
-                FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-            >.self
-        ) { resolver in
-            guard
-                let repository = resolver.resolve(
-                    FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>.self)
-            else {
+        container.register(FetchMonthlyCalendarDaysUseCase.self) { resolver in
+            guard let repository = resolver.resolve(FoodRecordRepositoryImpl.self) else {
                 fatalError("FoodRecordRepositoryImpl not registered")
             }
             return FetchMonthlyCalendarDaysUseCase(repository: repository)
         }
 
-        container.register(
-            FetchFoodRecordsUseCase<
-                FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-            >.self
-        ) { resolver in
-            guard
-                let repository = resolver.resolve(
-                    FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>.self)
-            else {
+        container.register(FetchFoodRecordsUseCase.self) { resolver in
+            guard let repository = resolver.resolve(FoodRecordRepositoryImpl.self) else {
                 fatalError("FoodRecordRepositoryImpl not registered")
             }
             return FetchFoodRecordsUseCase(repository: repository)
         }
 
-        container.register(
-            LoadWeeklyRecordUseCase<
-                FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
-                FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>
-            >.self
-        ) { resolver in
-            guard
-                let recordRepo = resolver.resolve(
-                    FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>.self),
-                let fetchAssetUseCase = resolver.resolve(
-                    FetchFoodImageAssetUseCase<
-                        FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>
-                    >.self
-                )
-            else {
+        container.register(LoadWeeklyRecordUseCase.self) { resolver in
+            guard let recordRepo = resolver.resolve(FoodRecordRepositoryImpl.self),
+                  let fetchAssetUseCase = resolver.resolve(FetchFoodImageAssetUseCase.self) else {
                 fatalError("LoadWeeklyRecordUseCase dependencies not registered")
             }
             return LoadWeeklyRecordUseCase(
@@ -335,37 +267,21 @@ extension SceneDelegate {
             )
         }
 
-        container.register(
-            UpdateFoodRecordUseCase<
-                FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-            >.self
-        ) { resolver in
-            guard
-                let repository = resolver.resolve(
-                    FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>.self)
-            else {
+        container.register(UpdateFoodRecordUseCase.self) { resolver in
+            guard let repository = resolver.resolve(FoodRecordRepositoryImpl.self) else {
                 fatalError("FoodRecordRepositoryImpl not registered")
             }
             return UpdateFoodRecordUseCase(repository: repository)
         }
 
-        container.register(
-            DeleteFoodRecordUseCase<
-                FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-            >.self
-        ) { resolver in
-            guard
-                let repository = resolver.resolve(
-                    FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>.self)
-            else {
+        container.register(DeleteFoodRecordUseCase.self) { resolver in
+            guard let repository = resolver.resolve(FoodRecordRepositoryImpl.self) else {
                 fatalError("FoodRecordRepositoryImpl not registered")
             }
             return DeleteFoodRecordUseCase(repository: repository)
         }
 
-        container.register(
-            SearchAddressUseCase<AddressSearchRepositoryImpl>.self
-        ) { resolver in
+        container.register(SearchAddressUseCase.self) { resolver in
             guard let addressRepo = resolver.resolve(AddressSearchRepositoryImpl.self) else {
                 fatalError("AddressSearchRepositoryImpl not registered")
             }
@@ -407,58 +323,32 @@ extension SceneDelegate {
             return WithdrawUserUseCase(authRepository: authRepository, loginSession: loginSession)
         }
 
-        container.register(
-            FetchInsightUseCase<
-                InsightRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-            >.self
-        ) { resolver in
-            guard let repository = resolver.resolve(
-                InsightRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>.self
-            ) else {
+        container.register(FetchInsightUseCase.self) { resolver in
+            guard let repository = resolver.resolve(InsightRepositoryImpl.self) else {
                 fatalError("FetchInsightUseCase dependencies not registered")
             }
             return FetchInsightUseCase(repository: repository)
         }
 
-        container.register(
-            FetchUserProfileUseCase<
-                UserRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
-                NicknameStorage
-            >.self
-        ) { resolver in
+        container.register(FetchUserProfileUseCase.self) { resolver in
             guard let repository = resolver.resolve(UserRepository.self),
-                  let concreteRepository = repository
-                      as? UserRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
-                  let nicknameStorage = resolver.resolve(NicknameStoring.self),
-                  let concreteNicknameStorage = nicknameStorage as? NicknameStorage
-            else {
-                fatalError("FetchUserProfileUseCase dependencies not registered or unexpected type")
+                  let nicknameStorage = resolver.resolve(NicknameStoring.self) else {
+                fatalError("FetchUserProfileUseCase dependencies not registered")
             }
-            return FetchUserProfileUseCase(
-                repository: concreteRepository,
-                nicknameStorage: concreteNicknameStorage
-            )
+            return FetchUserProfileUseCase(repository: repository, nicknameStorage: nicknameStorage)
         }
 
-        container.register(
-            UpdateDeviceNotificationSettingUseCase.self
-        ) { resolver in
+        container.register(UpdateDeviceNotificationSettingUseCase.self) { resolver in
             guard let repository = resolver.resolve(DeviceRepository.self),
                   let pushTokenProvider = resolver.resolve(PushTokenStoring.self),
                   let notificationAuthProvider = resolver.resolve(NotificationAuthorizationProviding.self),
                   let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String else {
                 fatalError("UpdateDeviceNotificationSettingUseCase dependencies not registered")
             }
-
-            guard let concreteRepository = repository as? DeviceRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>> else {
-                fatalError("DeviceRepository is not of expected type")
-            }
-
             let deviceID = UIDevice.current.identifierForVendor?.uuidString
             let osVersion = UIDevice.current.systemVersion
-
             return UpdateDeviceNotificationSettingUseCase(
-                repository: concreteRepository,
+                repository: repository,
                 notificationAuthorizationProvider: notificationAuthProvider,
                 pushTokenProvider: pushTokenProvider,
                 appVersion: appVersion,
@@ -471,23 +361,14 @@ extension SceneDelegate {
     fileprivate func registerPresentation() {}
 
     fileprivate func makeAppFlowController() -> AppFlowController {
-        typealias RecordRepo = FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-        typealias AssetFetcher = FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>
-
-        // Login
         guard let finalizeUseCase = try? container.resolve(FinalizeAppleLoginUseCase.self) else {
             fatalError("FinalizeAppleLoginUseCase not registered")
         }
 
-        // Insight
-        typealias FetchInsightUC = FetchInsightUseCase<
-            InsightRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-        >
-        guard let fetchInsightUseCase = try? container.resolve(FetchInsightUC.self) else {
+        guard let fetchInsightUseCase = try? container.resolve(FetchInsightUseCase.self) else {
             fatalError("FetchInsightUseCase not registered")
         }
 
-        // MyPage
         guard let updateDeviceUseCase = try? container.resolve(UpdateDeviceNotificationSettingUseCase.self),
               let notificationAuthProvider = try? container.resolve(NotificationAuthorizationProviding.self),
               let logoutUseCase = try? container.resolve(LogoutUseCase.self),
@@ -497,9 +378,7 @@ extension SceneDelegate {
             fatalError("MyPageSceneFactory dependencies not registered")
         }
 
-        // ImagePicker
-        typealias FetchImageAssetUC = FetchFoodImageAssetUseCase<AssetFetcher>
-        guard let fetchImageAssetUseCase = try? container.resolve(FetchImageAssetUC.self),
+        guard let fetchImageAssetUseCase = try? container.resolve(FetchFoodImageAssetUseCase.self),
               let imageProvider = try? container.resolve(UIImageLoader.self) else {
             fatalError("ImagePickerCoordinator dependencies not registered")
         }
@@ -509,33 +388,28 @@ extension SceneDelegate {
             fetchUseCase: fetchImageAssetUseCase
         )
 
-        // Detail
-        guard
-            let fetchRecordsUseCase = try? container.resolve(FetchFoodRecordsUseCase<RecordRepo>.self),
-            let saveFoodRecordUseCase = try? container.resolve(SaveFoodRecordUseCase<RecordRepo>.self),
-            let deleteFoodRecordUseCase = try? container.resolve(DeleteFoodRecordUseCase<RecordRepo>.self),
-            let pushNotificationObserver = try? container.resolve(PushNotificationObserver.self)
-        else {
+        guard let fetchRecordsUseCase = try? container.resolve(FetchFoodRecordsUseCase.self),
+              let saveFoodRecordUseCase = try? container.resolve(SaveFoodRecordUseCase.self),
+              let deleteFoodRecordUseCase = try? container.resolve(DeleteFoodRecordUseCase.self),
+              let pushNotificationObserver = try? container.resolve(PushNotificationObserver.self) else {
             fatalError("DetailSceneFactory dependencies not registered")
         }
 
-        // Edit
-        guard let updateFoodRecordUseCase = try? container.resolve(UpdateFoodRecordUseCase<RecordRepo>.self) else {
+        guard let updateFoodRecordUseCase = try? container.resolve(UpdateFoodRecordUseCase.self) else {
             fatalError("EditSceneFactory dependencies not registered")
         }
 
-        // AddressSearch
-        guard let searchAddressUseCase = try? container.resolve(SearchAddressUseCase<AddressSearchRepositoryImpl>.self) else {
+        guard let searchAddressUseCase = try? container.resolve(SearchAddressUseCase.self) else {
             fatalError("AddressSearchSceneFactory dependencies not registered")
         }
 
         // Calendar
         guard
-            let requestPhotoAuthUseCase = try? container.resolve(RequestPhotoAuthorizationUseCase<PhotoAuthorizationFetcher>.self),
-            let loadWeeklyUseCase = try? container.resolve(LoadWeeklyRecordUseCase<RecordRepo, AssetFetcher>.self),
+            let requestPhotoAuthUseCase = try? container.resolve(RequestPhotoAuthorizationUseCase.self),
+            let loadWeeklyUseCase = try? container.resolve(LoadWeeklyRecordUseCase.self),
             let coachmarkStorage = try? container.resolve(CoachmarkStoring.self),
             let checkAppReviewUseCase = try? container.resolve(CheckAppReviewEligibilityUseCase.self),
-            let fetchMonthlyUseCase = try? container.resolve(FetchMonthlyCalendarDaysUseCase<RecordRepo>.self)
+            let fetchMonthlyUseCase = try? container.resolve(FetchMonthlyCalendarDaysUseCase.self)
         else {
             fatalError("CalendarSceneFactory dependencies not registered")
         }

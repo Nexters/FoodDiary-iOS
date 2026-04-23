@@ -15,9 +15,6 @@ import UIKit
 import UserNotifications
 
 final class AppFlowController: UIViewController, SceneTransitioning {
-    private typealias AssetFetcher = FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>
-    private typealias FetchUseCase = FetchFoodImageAssetUseCase<AssetFetcher>
-
     private var networkCancellable: AnyCancellable?
     private var cancellables = Set<AnyCancellable>()
     private let container: DIContainer
@@ -187,7 +184,7 @@ extension AppFlowController {
     }
 
     private func prefetchFoodImageAssets() {
-        guard let useCase = try? container.resolve(FetchUseCase.self) else { return }
+        guard let useCase = try? container.resolve(FetchFoodImageAssetUseCase.self) else { return }
         useCase.prefetch(forPreviousWeeks: 2, of: Date())
     }
 
@@ -237,31 +234,16 @@ extension AppFlowController {
     }
 
     fileprivate func validateToken() async -> Bool {
-        guard
-            let validateAccessTokenUseCase = try? container.resolve(
-                ValidateAccessTokenUseCase<
-                    TokenRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>, InitialLaunchStorage>
-                >.self
-            )
-        else {
+        guard let validateAccessTokenUseCase = try? container.resolve(ValidateAccessTokenUseCase.self) else {
             fatalError("ValidateAccessTokenUseCase Failed Resolve")
         }
-
         return await validateAccessTokenUseCase.execute()
     }
 
     fileprivate func fetchUserProfile() async throws {
-        guard
-            let fetchUserProfileUseCase = try? container.resolve(
-                FetchUserProfileUseCase<
-                    UserRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
-                    NicknameStorage
-                >.self
-            )
-        else {
+        guard let fetchUserProfileUseCase = try? container.resolve(FetchUserProfileUseCase.self) else {
             fatalError("FetchUserProfileUseCase Failed Resolve")
         }
-
         try await fetchUserProfileUseCase.execute()
     }
 

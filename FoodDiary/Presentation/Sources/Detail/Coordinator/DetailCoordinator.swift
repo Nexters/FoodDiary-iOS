@@ -31,7 +31,7 @@ public final class DetailCoordinator: Coordinator {
 // MARK: - Screen Routing
 
 private extension DetailCoordinator {
-    func flowBind(vc: DetailViewController<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>, PushNotificationObserver>) {
+    func flowBind(vc: DetailViewController) {
         vc.flowPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] event in

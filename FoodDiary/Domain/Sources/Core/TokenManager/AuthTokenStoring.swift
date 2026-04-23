@@ -8,7 +8,7 @@
 import Foundation
 
 /// 인증 토큰(Access Token)을 저장하고 관리하는 프로토콜
-public protocol AuthTokenStoring {
+public protocol AuthTokenStoring: Sendable {
     /// 저장된 인증 토큰을 가져옴
     /// - Returns: 인증 토큰 문자열, 없을 경우 nil
     func get() -> String?

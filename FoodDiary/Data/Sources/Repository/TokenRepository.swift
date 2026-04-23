@@ -8,16 +8,12 @@
 import Domain
 import Foundation
 
-public struct TokenRepositoryImpl<
-    Client: HTTPClienting,
-    Storage: AuthTokenStoring,
-    LaunchStorage: InitialLaunchStoring
->: TokenRepository {
-    let httpClient: Client
-    let storage: Storage
-    let launchStorage: LaunchStorage
+public struct TokenRepositoryImpl: TokenRepository {
+    let httpClient: any HTTPClienting
+    let storage: any AuthTokenStoring
+    let launchStorage: any InitialLaunchStoring
 
-    public init(httpClient: Client, storage: Storage, launchStorage: LaunchStorage) {
+    public init(httpClient: any HTTPClienting, storage: any AuthTokenStoring, launchStorage: any InitialLaunchStoring) {
         self.httpClient = httpClient
         self.storage = storage
         self.launchStorage = launchStorage

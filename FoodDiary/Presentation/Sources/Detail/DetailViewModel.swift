@@ -7,10 +7,7 @@ import Combine
 import Domain
 import Foundation
 
-public final class DetailViewModel<
-    RecordRepo: FoodRecordRepository,
-    PushObserver: PushNotificationObserving
-> {
+public final class DetailViewModel {
 
     // MARK: - Output
 
@@ -41,20 +38,20 @@ public final class DetailViewModel<
 
     // MARK: - Dependencies
 
-    private let fetchRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
-    private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>
-    private let deleteFoodRecordUseCase: DeleteFoodRecordUseCase<RecordRepo>
-    private let pushNotificationObserver: PushObserver
+    private let fetchRecordsUseCase: FetchFoodRecordsUseCase
+    private let saveFoodRecordUseCase: SaveFoodRecordUseCase
+    private let deleteFoodRecordUseCase: DeleteFoodRecordUseCase
+    private let pushNotificationObserver: any PushNotificationObserving
 
     // MARK: - Init
 
     public init(
         initialDate: Date,
         initialRecords: [FoodRecord],
-        fetchRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>,
-        saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>,
-        deleteFoodRecordUseCase: DeleteFoodRecordUseCase<RecordRepo>,
-        pushNotificationObserver: PushObserver
+        fetchRecordsUseCase: FetchFoodRecordsUseCase,
+        saveFoodRecordUseCase: SaveFoodRecordUseCase,
+        deleteFoodRecordUseCase: DeleteFoodRecordUseCase,
+        pushNotificationObserver: any PushNotificationObserving
     ) {
         self.fetchRecordsUseCase = fetchRecordsUseCase
         self.saveFoodRecordUseCase = saveFoodRecordUseCase

@@ -10,22 +10,18 @@ import UIKit
 // MARK: - Factory
 
 public final class EditSceneFactory {
-    private typealias RecordRepo = FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-
-    private let updateFoodRecordUseCase: UpdateFoodRecordUseCase<RecordRepo>
-    private let deleteFoodRecordUseCase: DeleteFoodRecordUseCase<RecordRepo>
+    private let updateFoodRecordUseCase: UpdateFoodRecordUseCase
+    private let deleteFoodRecordUseCase: DeleteFoodRecordUseCase
 
     public init(
-        updateFoodRecordUseCase: UpdateFoodRecordUseCase<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>,
-        deleteFoodRecordUseCase: DeleteFoodRecordUseCase<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>
+        updateFoodRecordUseCase: UpdateFoodRecordUseCase,
+        deleteFoodRecordUseCase: DeleteFoodRecordUseCase
     ) {
         self.updateFoodRecordUseCase = updateFoodRecordUseCase
         self.deleteFoodRecordUseCase = deleteFoodRecordUseCase
     }
 
-    public func makeScene(input: EditSceneInput) -> EditFoodRecordViewController<
-        FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-    > {
+    public func makeScene(input: EditSceneInput) -> EditFoodRecordViewController {
         let viewModel = EditFoodRecordViewModel(
             record: input.record,
             updateFoodRecordUseCase: updateFoodRecordUseCase,

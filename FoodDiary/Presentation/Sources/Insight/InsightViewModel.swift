@@ -7,7 +7,7 @@ import Combine
 import Domain
 import Foundation
 
-public final class InsightViewModel<Repo: InsightRepository> {
+public final class InsightViewModel {
 
     // MARK: - Output
 
@@ -36,11 +36,11 @@ public final class InsightViewModel<Repo: InsightRepository> {
 
     // MARK: - Dependencies
 
-    private let fetchInsightUseCase: FetchInsightUseCase<Repo>
+    private let fetchInsightUseCase: FetchInsightUseCase
 
     // MARK: - Init
 
-    public init(fetchInsightUseCase: FetchInsightUseCase<Repo>) {
+    public init(fetchInsightUseCase: FetchInsightUseCase) {
         self.fetchInsightUseCase = fetchInsightUseCase
         self.stateSubject = CurrentValueSubject(State())
         setupBindings()

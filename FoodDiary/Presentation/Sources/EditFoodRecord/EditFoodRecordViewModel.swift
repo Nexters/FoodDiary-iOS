@@ -8,7 +8,7 @@ import Domain
 import Foundation
 import UIKit
 
-public final class EditFoodRecordViewModel<RecordRepo: FoodRecordRepository> {
+public final class EditFoodRecordViewModel {
 
     // MARK: - Output
 
@@ -37,15 +37,15 @@ public final class EditFoodRecordViewModel<RecordRepo: FoodRecordRepository> {
 
     // MARK: - Dependencies
 
-    private let updateFoodRecordUseCase: UpdateFoodRecordUseCase<RecordRepo>
-    private let deleteFoodRecordUseCase: DeleteFoodRecordUseCase<RecordRepo>
+    private let updateFoodRecordUseCase: UpdateFoodRecordUseCase
+    private let deleteFoodRecordUseCase: DeleteFoodRecordUseCase
 
     // MARK: - Init
 
     public init(
         record: FoodRecord,
-        updateFoodRecordUseCase: UpdateFoodRecordUseCase<RecordRepo>,
-        deleteFoodRecordUseCase: DeleteFoodRecordUseCase<RecordRepo>
+        updateFoodRecordUseCase: UpdateFoodRecordUseCase,
+        deleteFoodRecordUseCase: DeleteFoodRecordUseCase
     ) {
         self.updateFoodRecordUseCase = updateFoodRecordUseCase
         self.deleteFoodRecordUseCase = deleteFoodRecordUseCase

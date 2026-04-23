@@ -12,21 +12,21 @@ import UIKit
 
 public final class ImagePickerSceneFactory {
     private let imageProvider: UIImageLoader
-    private let fetchUseCase: FetchFoodImageAssetUseCase<FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>
+    private let fetchUseCase: FetchFoodImageAssetUseCase
 
     public init(
         imageProvider: UIImageLoader,
-        fetchUseCase: FetchFoodImageAssetUseCase<FoodImageAssetFetcher<TFLiteFoodClassifier, UIImageLoader>>
+        fetchUseCase: FetchFoodImageAssetUseCase
     ) {
         self.imageProvider = imageProvider
         self.fetchUseCase = fetchUseCase
     }
 
-    public func makeScene(input: ImagePickerSceneInput) -> ImagePickerViewController<PHAsset, UIImageLoader> {
+    public func makeScene(input: ImagePickerSceneInput) -> ImagePickerViewController {
         let date = input.date
         let fetchUseCase = self.fetchUseCase
-        
-        let fetcher: () async throws -> (photos: [PHAsset], preselectedIds: Set<String>) = {
+
+        let fetcher: () async throws -> (photos: [any ImageAssetable], preselectedIds: Set<String>) = {
             let calendar = Calendar.current
             let startOfDay = calendar.startOfDay(for: date)
             let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
@@ -36,7 +36,7 @@ public final class ImagePickerSceneFactory {
             let preselectedIds = Set(assets.filter { $0.foodProbability >= 0.5 }.map { $0.id })
             return (photos, preselectedIds)
         }
-        
+
         return ImagePickerViewController(
             imageProvider: imageProvider,
             configuration: .withMaxSelectionCount(10),

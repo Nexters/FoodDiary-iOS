@@ -10,12 +10,7 @@ import UIKit
 
 // MARK: - ViewModel
 
-public final class WeeklyCalendarViewModel<
-    RecordRepo: FoodRecordRepository,
-    AssetRepo: FoodImageAssetRepository,
-    AuthRepo: PhotoAuthorizationRepository,
-    PushObserver: PushNotificationObserving
-> {
+public final class WeeklyCalendarViewModel {
     // MARK: - Output
 
     public var statePublisher: AnyPublisher<State, Never> {
@@ -45,10 +40,10 @@ public final class WeeklyCalendarViewModel<
 
     // MARK: - Dependencies
 
-    private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>
-    private let loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase<RecordRepo, AssetRepo>
-    private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>
-    private let pushNotificationObserver: PushObserver
+    private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase
+    private let loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase
+    private let saveFoodRecordUseCase: SaveFoodRecordUseCase
+    private let pushNotificationObserver: any PushNotificationObserving
     private let getNicknameUseCase: GetNicknameUseCase
     private let coachmarkStorage: any CoachmarkStoring
     private let checkAppReviewEligibilityUseCase: CheckAppReviewEligibilityUseCase
@@ -56,10 +51,10 @@ public final class WeeklyCalendarViewModel<
     // MARK: - Init
 
     public init(
-        requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase<AuthRepo>,
-        loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase<RecordRepo, AssetRepo>,
-        saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>,
-        pushNotificationObserver: PushObserver,
+        requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase,
+        loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase,
+        saveFoodRecordUseCase: SaveFoodRecordUseCase,
+        pushNotificationObserver: any PushNotificationObserving,
         getNicknameUseCase: GetNicknameUseCase,
         coachmarkStorage: any CoachmarkStoring,
         checkAppReviewEligibilityUseCase: CheckAppReviewEligibilityUseCase
@@ -234,7 +229,7 @@ public final class WeeklyCalendarViewModel<
     }
 
     @MainActor
-    private func savePhotosAsRecord(_ assets: [AssetRepo.Asset]) async {
+    private func savePhotosAsRecord(_ assets: [any ImageAssetable]) async {
         guard !assets.isEmpty else { return }
 
         do {
@@ -337,7 +332,7 @@ extension WeeklyCalendarViewModel {
         case goToPreviousWeek
         case goToNextWeek
         case selectDate(Date)
-        case saveSelectedPhotos([AssetRepo.Asset])
+        case saveSelectedPhotos([any ImageAssetable])
         case handlePushNotification(AnalysisResultNotification)
         case refreshData(Date? = nil)
         case viewDidAppear
