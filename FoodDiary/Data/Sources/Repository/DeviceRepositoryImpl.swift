@@ -8,11 +8,11 @@
 import Domain
 import Foundation
 
-public struct DeviceRepositoryImpl<Client: HTTPClienting, Storage: AuthTokenStoring>: DeviceRepository {
-    private let httpClient: Client
-    private let tokenStorage: Storage
+public struct DeviceRepositoryImpl: DeviceRepository {
+    private let httpClient: any HTTPClienting
+    private let tokenStorage: any AuthTokenStoring
 
-    public init(httpClient: Client, tokenStorage: Storage) {
+    public init(httpClient: any HTTPClienting, tokenStorage: any AuthTokenStoring) {
         self.httpClient = httpClient
         self.tokenStorage = tokenStorage
     }

@@ -7,10 +7,10 @@
 
 import Foundation
 
-public struct FetchFoodImageAssetUseCase<Repository: FoodImageAssetRepository> {
-    private let repository: Repository
+public struct FetchFoodImageAssetUseCase {
+    private let repository: any FoodImageAssetRepository
 
-    public init(repository: Repository) {
+    public init(repository: any FoodImageAssetRepository) {
         self.repository = repository
     }
 
@@ -18,7 +18,7 @@ public struct FetchFoodImageAssetUseCase<Repository: FoodImageAssetRepository> {
         from startDate: Date,
         to endDate: Date?,
         priority: TaskPriority = .utility
-    ) async throws -> [Date: [FoodImageAsset<Repository.Asset>]] {
+    ) async throws -> [Date: [FoodImageAsset]] {
         try await Task(priority: priority) {
             try await repository.fetchFoodImageAssets(from: startDate, to: endDate)
         }.value

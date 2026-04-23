@@ -11,10 +11,7 @@ import UIKit
 
 // MARK: - ImagePickerViewController
 
-public final class ImagePickerViewController<
-    Asset: ImageAssetable,
-    ImageProvider: RenderableImageRepository<Asset>
->:
+public final class ImagePickerViewController:
     UIViewController, UICollectionViewDataSource, UICollectionViewDelegate,
     UICollectionViewDelegateFlowLayout
 {
@@ -50,24 +47,24 @@ public final class ImagePickerViewController<
     // MARK: - Public Publisher
 
     /// 피커 결과 Publisher
-    public var resultPublisher: AnyPublisher<ImagePickerResult<Asset>, Never> {
+    public var resultPublisher: AnyPublisher<ImagePickerResult, Never> {
         resultSubject.eraseToAnyPublisher()
     }
 
     // MARK: - Private Properties
 
-    private let resultSubject = PassthroughSubject<ImagePickerResult<Asset>, Never>()
+    private let resultSubject = PassthroughSubject<ImagePickerResult, Never>()
     private var cancellables = Set<AnyCancellable>()
 
-    private var photos: [Asset] = []
+    private var photos: [any ImageAssetable] = []
     private var preselectedFoodPhotoIds: Set<String> = []
-    private let imageProvider: ImageProvider
+    private let imageProvider: any RenderableImageRepository
     private let configuration: ImagePickerConfiguration
-    private var foodPhotos: [Asset] = []
+    private var foodPhotos: [any ImageAssetable] = []
     private var indexPathsByPhotoId: [String: [IndexPath]] = [:]
 
-    private let photosFetcher: () async throws -> (photos: [Asset], preselectedIds: Set<String>)
-    private let onSelected: (([Asset]) -> Void)?
+    private let photosFetcher: () async throws -> (photos: [any ImageAssetable], preselectedIds: Set<String>)
+    private let onSelected: (([any ImageAssetable]) -> Void)?
 
     // MARK: - State
 
@@ -75,7 +72,7 @@ public final class ImagePickerViewController<
 
     // MARK: - Computed Properties
 
-    private func photosInSection(_ section: PhotoSection) -> [Asset] {
+    private func photosInSection(_ section: PhotoSection) -> [any ImageAssetable] {
         switch section {
         case .food: return foodPhotos
         case .all: return photos
@@ -156,10 +153,10 @@ public final class ImagePickerViewController<
     // MARK: - Initialization
 
     public init(
-        imageProvider: ImageProvider,
+        imageProvider: any RenderableImageRepository,
         configuration: ImagePickerConfiguration = .default,
-        photosFetcher: @escaping () async throws -> (photos: [Asset], preselectedIds: Set<String>),
-        onSelected: (([Asset]) -> Void)? = nil
+        photosFetcher: @escaping () async throws -> (photos: [any ImageAssetable], preselectedIds: Set<String>),
+        onSelected: (([any ImageAssetable]) -> Void)? = nil
     ) {
         self.imageProvider = imageProvider
         self.configuration = configuration
@@ -218,7 +215,7 @@ public final class ImagePickerViewController<
         }
     }
 
-    private func applyPhotos(_ photos: [Asset], preselectedIds: Set<String>) {
+    private func applyPhotos(_ photos: [any ImageAssetable], preselectedIds: Set<String>) {
         self.photos = photos
         self.preselectedFoodPhotoIds = preselectedIds
         let foodPhotos = photos.filter { preselectedIds.contains($0.id) }
@@ -314,8 +311,8 @@ public final class ImagePickerViewController<
     }
 
     private static func makeIndexPathsByPhotoId(
-        allPhotos: [Asset],
-        foodPhotos: [Asset]
+        allPhotos: [any ImageAssetable],
+        foodPhotos: [any ImageAssetable]
     ) -> [String: [IndexPath]] {
         var indexPathsById: [String: [IndexPath]] = [:]
 
@@ -451,7 +448,7 @@ public final class ImagePickerViewController<
         return header
     }
 
-    private func loadImage(for photo: Asset, cell: ImagePickerCell, at indexPath: IndexPath) {
+    private func loadImage(for photo: any ImageAssetable, cell: ImagePickerCell, at indexPath: IndexPath) {
         Task {
             do {
                 let image = try await imageProvider.loadImage(

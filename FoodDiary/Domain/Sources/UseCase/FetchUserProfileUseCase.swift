@@ -7,11 +7,11 @@
 
 import Foundation
 
-public struct FetchUserProfileUseCase<Repository: UserRepository, Storage: NicknameStoring> {
-    private let repository: Repository
-    private let nicknameStorage: Storage
+public struct FetchUserProfileUseCase {
+    private let repository: any UserRepository
+    private let nicknameStorage: any NicknameStoring
 
-    public init(repository: Repository, nicknameStorage: Storage) {
+    public init(repository: any UserRepository, nicknameStorage: any NicknameStoring) {
         self.repository = repository
         self.nicknameStorage = nicknameStorage
     }

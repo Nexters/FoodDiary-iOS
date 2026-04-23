@@ -7,10 +7,10 @@
 
 import Foundation
 
-public struct ValidateAccessTokenUseCase<Repository: TokenRepository> {
-    private let repository: Repository
-    
-    public init(repository: Repository) {
+public struct ValidateAccessTokenUseCase {
+    private let repository: any TokenRepository
+
+    public init(repository: any TokenRepository) {
         self.repository = repository
     }
     

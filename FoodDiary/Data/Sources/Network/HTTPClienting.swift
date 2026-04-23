@@ -7,7 +7,7 @@
 
 import Foundation
 
-public protocol HTTPClienting {
+public protocol HTTPClienting: Sendable {
     func request<T: Decodable>(_ request: some Requestable, accessToken: String?) async throws -> T
     func request(_ request: some Requestable, accessToken: String?) async throws
 }

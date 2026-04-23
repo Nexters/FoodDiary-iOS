@@ -5,10 +5,10 @@
 
 import Foundation
 
-public struct SearchAddressUseCase<Repository: AddressSearchRepository>: Sendable {
-    private let repository: Repository
+public struct SearchAddressUseCase: Sendable {
+    private let repository: any AddressSearchRepository
 
-    public init(repository: Repository) {
+    public init(repository: any AddressSearchRepository) {
         self.repository = repository
     }
 

@@ -5,10 +5,10 @@
 
 import Foundation
 
-public struct FetchInsightUseCase<Repository: InsightRepository> {
-    private let repository: Repository
+public struct FetchInsightUseCase {
+    private let repository: any InsightRepository
 
-    public init(repository: Repository) {
+    public init(repository: any InsightRepository) {
         self.repository = repository
     }
 

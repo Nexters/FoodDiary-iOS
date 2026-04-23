@@ -5,10 +5,10 @@
 
 import Foundation
 
-public struct UpdateFoodRecordUseCase<Repository: FoodRecordRepository>: Sendable {
-    private let repository: Repository
+public struct UpdateFoodRecordUseCase: Sendable {
+    private let repository: any FoodRecordRepository
 
-    public init(repository: Repository) {
+    public init(repository: any FoodRecordRepository) {
         self.repository = repository
     }
 

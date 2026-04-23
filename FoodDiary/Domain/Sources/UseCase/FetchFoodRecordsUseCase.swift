@@ -6,10 +6,10 @@
 import Foundation
 
 /// 특정 날짜의 음식 기록 조회 UseCase
-public struct FetchFoodRecordsUseCase<Repository: FoodRecordRepository>: Sendable {
-    private let repository: Repository
+public struct FetchFoodRecordsUseCase: Sendable {
+    private let repository: any FoodRecordRepository
 
-    public init(repository: Repository) {
+    public init(repository: any FoodRecordRepository) {
         self.repository = repository
     }
 

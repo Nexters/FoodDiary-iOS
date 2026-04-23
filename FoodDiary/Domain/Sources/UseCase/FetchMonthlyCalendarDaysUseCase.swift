@@ -6,10 +6,10 @@
 import Foundation
 
 /// 월간 캘린더 데이터 조회 UseCase
-public struct FetchMonthlyCalendarDaysUseCase<Repository: FoodRecordRepository>: Sendable {
-    private let repository: Repository
+public struct FetchMonthlyCalendarDaysUseCase: Sendable {
+    private let repository: any FoodRecordRepository
 
-    public init(repository: Repository) {
+    public init(repository: any FoodRecordRepository) {
         self.repository = repository
     }
 

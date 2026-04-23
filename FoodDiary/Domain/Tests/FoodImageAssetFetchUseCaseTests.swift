@@ -68,7 +68,7 @@ private func createMockFoodImageAssets(
     startIndex: Int = 0,
     count: Int,
     probabilities: [Float]
-) -> [FoodImageAsset<MockImageAssetable>] {
+) -> [FoodImageAsset] {
     (0..<count).map { index in
         FoodImageAsset(
             imageAsset: MockImageAssetable(

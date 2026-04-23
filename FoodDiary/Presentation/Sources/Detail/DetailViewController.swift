@@ -10,10 +10,7 @@ import Kingfisher
 import SnapKit
 import UIKit
 
-public final class DetailViewController<
-    RecordRepo: FoodRecordRepository,
-    PushObserver: PushNotificationObserving
->: UIViewController {
+public final class DetailViewController: UIViewController {
 
     // MARK: - Constants
 
@@ -29,7 +26,7 @@ public final class DetailViewController<
 
     // MARK: - Dependencies
 
-    private let viewModel: DetailViewModel<RecordRepo, PushObserver>
+    private let viewModel: DetailViewModel
     private let onDismissWithDate: ((Date) -> Void)?
 
     // MARK: - Flow
@@ -124,7 +121,7 @@ public final class DetailViewController<
     // MARK: - Init
 
     public init(
-        viewModel: DetailViewModel<RecordRepo, PushObserver>,
+        viewModel: DetailViewModel,
         initialScrollTarget: MealType? = nil,
         scrollToFirstRecord: Bool = true,
         shouldPopToRoot: Bool = false,
@@ -573,7 +570,7 @@ public final class DetailViewController<
     }
 
     private func resolveScrollTarget(
-        _ state: DetailViewModel<RecordRepo, PushObserver>.State
+        _ state: DetailViewModel.State
     ) -> MealType? {
         if let mealType = pendingScrollTarget {
             pendingScrollTarget = nil
@@ -585,7 +582,7 @@ public final class DetailViewController<
         return nil
     }
 
-    private func firstContentMealType(_ state: DetailViewModel<RecordRepo, PushObserver>.State)
+    private func firstContentMealType(_ state: DetailViewModel.State)
         -> MealType?
     {
         let orderedMealTypes: [MealType] = [.breakfast, .lunch, .dinner, .snack]

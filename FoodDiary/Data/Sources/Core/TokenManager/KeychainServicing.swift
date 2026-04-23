@@ -7,7 +7,7 @@
 
 import Foundation
 
-public protocol KeychainServicing {
+public protocol KeychainServicing: Sendable {
     func save(key: String, value: String) -> Bool
     func load(key: String) -> String?
     func delete(key: String) -> Bool

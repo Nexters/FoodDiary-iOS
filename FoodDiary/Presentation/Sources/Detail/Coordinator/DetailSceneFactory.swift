@@ -8,17 +8,15 @@ import Domain
 import UIKit
 
 public final class DetailSceneFactory {
-    private typealias RecordRepo = FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>
-
-    private let fetchRecordsUseCase: FetchFoodRecordsUseCase<RecordRepo>
-    private let saveFoodRecordUseCase: SaveFoodRecordUseCase<RecordRepo>
-    private let deleteFoodRecordUseCase: DeleteFoodRecordUseCase<RecordRepo>
+    private let fetchRecordsUseCase: FetchFoodRecordsUseCase
+    private let saveFoodRecordUseCase: SaveFoodRecordUseCase
+    private let deleteFoodRecordUseCase: DeleteFoodRecordUseCase
     private let pushNotificationObserver: PushNotificationObserver
 
     public init(
-        fetchRecordsUseCase: FetchFoodRecordsUseCase<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>,
-        saveFoodRecordUseCase: SaveFoodRecordUseCase<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>,
-        deleteFoodRecordUseCase: DeleteFoodRecordUseCase<FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>,
+        fetchRecordsUseCase: FetchFoodRecordsUseCase,
+        saveFoodRecordUseCase: SaveFoodRecordUseCase,
+        deleteFoodRecordUseCase: DeleteFoodRecordUseCase,
         pushNotificationObserver: PushNotificationObserver
     ) {
         self.fetchRecordsUseCase = fetchRecordsUseCase
@@ -27,10 +25,7 @@ public final class DetailSceneFactory {
         self.pushNotificationObserver = pushNotificationObserver
     }
 
-    public func makeScene(input: DetailSceneInput) -> DetailViewController<
-        FoodRecordRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>,
-        PushNotificationObserver
-    > {
+    public func makeScene(input: DetailSceneInput) -> DetailViewController {
         let viewModel = DetailViewModel(
             initialDate: input.date,
             initialRecords: input.records,

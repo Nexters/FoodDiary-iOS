@@ -7,7 +7,7 @@
 
 import Foundation
 
-public protocol InitialLaunchStoring {
+public protocol InitialLaunchStoring: Sendable {
     func get() -> Bool
     func set()
 }

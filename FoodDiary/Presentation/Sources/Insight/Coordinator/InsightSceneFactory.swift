@@ -8,15 +8,13 @@ import Domain
 import UIKit
 
 public final class InsightSceneFactory {
-    public typealias UseCase = FetchInsightUseCase<InsightRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>>
+    private let useCase: FetchInsightUseCase
 
-    private let useCase: UseCase
-
-    public init(useCase: UseCase) {
+    public init(useCase: FetchInsightUseCase) {
         self.useCase = useCase
     }
 
-    public func makeScene() -> InsightViewController<InsightRepositoryImpl<HTTPClient, AuthTokenStorage<KeychainService>>> {
+    public func makeScene() -> InsightViewController {
         InsightViewController(viewModel: InsightViewModel(fetchInsightUseCase: useCase))
     }
 }

@@ -6,10 +6,7 @@
 import Foundation
 
 /// 주간 캘린더 데이터 로딩을 담당하는 UseCase
-public struct LoadWeeklyRecordUseCase<
-    RecordRepo: FoodRecordRepository,
-    AssetRepo: FoodImageAssetRepository
->: Sendable {
+public struct LoadWeeklyRecordUseCase: Sendable {
     public struct WeekData: Sendable {
         public let weekDays: [WeeklyCalendarDay]
         public let monthText: String
@@ -21,11 +18,11 @@ public struct LoadWeeklyRecordUseCase<
     }
 
     public struct DateData: Sendable {
-        public let photos: [FoodImageAsset<AssetRepo.Asset>]
+        public let photos: [FoodImageAsset]
         public let records: [FoodRecord]
         public let startOfDay: Date
 
-        public init(photos: [FoodImageAsset<AssetRepo.Asset>], records: [FoodRecord], startOfDay: Date) {
+        public init(photos: [FoodImageAsset], records: [FoodRecord], startOfDay: Date) {
             self.photos = photos
             self.records = records
             self.startOfDay = startOfDay
@@ -33,13 +30,13 @@ public struct LoadWeeklyRecordUseCase<
     }
 
     private let calendar: Calendar
-    private let recordRepository: RecordRepo
-    private let fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase<AssetRepo>
+    private let recordRepository: any FoodRecordRepository
+    private let fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase
 
     public init(
         calendar: Calendar,
-        recordRepository: RecordRepo,
-        fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase<AssetRepo>
+        recordRepository: any FoodRecordRepository,
+        fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase
     ) {
         self.calendar = calendar
         self.recordRepository = recordRepository
@@ -75,7 +72,7 @@ public struct LoadWeeklyRecordUseCase<
     }
 
     /// 특정 날짜의 사진만 로드
-    public func loadPhotos(for date: Date) async throws -> [FoodImageAsset<AssetRepo.Asset>] {
+    public func loadPhotos(for date: Date) async throws -> [FoodImageAsset] {
         let startOfDay = calendar.startOfDay(for: date)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)
 
