@@ -15,7 +15,7 @@ let project = Project(
             destinations: [.iPhone],
             product: .framework,
             bundleId: "com.fooddiary.data",
-            deploymentTargets: .iOS("18.0"),
+            deploymentTargets: .iOS("26.0"),
             sources: ["Sources/**"],
             resources: ["Resources/**"],
             dependencies: [
@@ -29,7 +29,7 @@ let project = Project(
             destinations: [.iPhone],
             product: .unitTests,
             bundleId: "com.fooddiary.data.tests",
-            deploymentTargets: .iOS("18.0"),
+            deploymentTargets: .iOS("26.0"),
             sources: ["Tests/**"],
             resources: ["Tests/Resources/**"],
             dependencies: [

@@ -17,7 +17,7 @@ let project = Project(
             destinations: [.iPhone],
             product: .app,
             bundleId: "com.fooddiary.ios.app",
-            deploymentTargets: .iOS("18.0"),
+            deploymentTargets: .iOS("26.0"),
             infoPlist: .sceneDelegateApp(),
             sources: ["Sources/**"],
             resources: ["Resources/**"],
