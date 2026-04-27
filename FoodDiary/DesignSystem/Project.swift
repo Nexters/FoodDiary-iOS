@@ -15,7 +15,7 @@ let project = Project(
             destinations: [.iPhone],
             product: .framework,
             bundleId: "com.fooddiary.designsystem",
-            deploymentTargets: .iOS("18.0"),
+            deploymentTargets: .iOS("26.0"),
             sources: ["Sources/**"],
             resources: ["Resources/**"],
             dependencies: [
