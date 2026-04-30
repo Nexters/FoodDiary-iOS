@@ -51,6 +51,10 @@ extension SceneDelegate {
             NotificationAuthorizationProvider()
         }
 
+        container.register(LocalNotificationScheduling.self) { _ in
+            LocalNotificationScheduler()
+        }
+
         container.register(KeychainService.self) { _ in
             KeychainService()
         }
@@ -355,6 +359,14 @@ extension SceneDelegate {
                 deviceID: deviceID,
                 osVersion: osVersion
             )
+        }
+
+        container.register(ScheduleDailyReminderUseCase.self) { resolver in
+            guard let scheduler = resolver.resolve(LocalNotificationScheduling.self),
+                  let provider = resolver.resolve(NotificationAuthorizationProviding.self) else {
+                fatalError("ScheduleDailyReminderUseCase dependencies not registered")
+            }
+            return ScheduleDailyReminderUseCase(scheduler: scheduler, authorizationProvider: provider)
         }
     }
 
