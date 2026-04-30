@@ -415,7 +415,11 @@ extension MyPageViewController: UITableViewDelegate {
 
         switch row {
         case .notificationSetting:
-            openAppSettings()
+            if viewModel.state.isNotificationEnabled {
+                showNotificationDisableConfirmAlert()
+            } else {
+                openAppSettings()
+            }
         case .privacy:
             openExternalLink("https://www.notion.so/enebin/311c690fca2b80bc8c89c5f7cc5cb35c?source=copy_link")
         case .customerInquiry:
@@ -438,6 +442,19 @@ extension MyPageViewController: UITableViewDelegate {
         alert.addAction(UIAlertAction(title: "취소", style: .cancel))
         alert.addAction(UIAlertAction(title: "로그아웃", style: .destructive) { [weak self] _ in
             self?.viewModel.input.send(.logout)
+        })
+        present(alert, animated: true)
+    }
+
+    private func showNotificationDisableConfirmAlert() {
+        let alert = UIAlertController(
+            title: "알림을 끄시겠어요?",
+            message: "알림을 끄면 AI 분석결과와 기록 리마인드 알림을 받아 볼 수 없어요.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { [weak self] _ in
+            self?.openAppSettings()
         })
         present(alert, animated: true)
     }
