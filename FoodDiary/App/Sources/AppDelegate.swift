@@ -141,8 +141,10 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
     ) {
         let userInfo = response.notification.request.content.userInfo
 
-        if userInfo["is_local_notification"] as? Bool == true {
-            // 로컬 알림 탭 → 딥링크로 상세 화면 이동
+        if userInfo["notification_type"] as? String == "daily_reminder" {
+            // 매일 리마인더 탭 → 앱이 열리는 기본 동작만 수행
+        } else if userInfo["is_local_notification"] as? Bool == true {
+            // 분석 완료 로컬 알림 탭 → 딥링크로 상세 화면 이동
             if let diaryDate = userInfo["diary_date"] as? String {
                 NotificationCenter.default.post(
                     name: AppNotification.Push.deepLinkToDetail,
@@ -164,8 +166,11 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
     ) {
         let userInfo = notification.request.content.userInfo
 
-        if userInfo["is_local_notification"] as? Bool == true {
-            // 로컬 알림이 포그라운드에서 도착 → 배너 표시 안 함 (토스트로 이미 처리됨)
+        if userInfo["notification_type"] as? String == "daily_reminder" {
+            // 매일 리마인더가 포그라운드에 도착 → 배너 표시 안 함 (이미 앱 사용 중)
+            completionHandler([])
+        } else if userInfo["is_local_notification"] as? Bool == true {
+            // 분석 완료 로컬 알림이 포그라운드에서 도착 → 배너 표시 안 함 (토스트로 이미 처리됨)
             completionHandler([])
         } else {
             handlePushNotification(userInfo)
