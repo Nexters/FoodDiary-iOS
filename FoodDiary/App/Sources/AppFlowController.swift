@@ -51,6 +51,16 @@ final class AppFlowController: UIViewController, SceneTransitioning {
         setupAnalysisCompletionToast()
         setupDeepLinkHandling()
         setupLoginSessionObservation()
+        setupForegroundReminderScheduling()
+    }
+
+    private func setupForegroundReminderScheduling() {
+        NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.tryScheduleDailyReminder()
+            }
+            .store(in: &cancellables)
     }
 
     private func setupLoginSessionObservation() {
@@ -210,6 +220,7 @@ extension AppFlowController {
             switch settings.authorizationStatus {
             case .authorized, .provisional, .ephemeral:
                 UIApplication.shared.registerForRemoteNotifications()
+                tryScheduleDailyReminder()
             case .notDetermined:
                 await requestSystemNotificationAuthorization()
             case .denied:
@@ -228,9 +239,15 @@ extension AppFlowController {
             )
             guard granted else { return }
             UIApplication.shared.registerForRemoteNotifications()
+            tryScheduleDailyReminder()
         } catch {
             print("알림 권한 요청 실패: \(error)")
         }
+    }
+
+    fileprivate func tryScheduleDailyReminder() {
+        guard let useCase = try? container.resolve(ScheduleDailyReminderUseCase.self) else { return }
+        Task { await useCase.execute() }
     }
 
     fileprivate func validateToken() async -> Bool {
