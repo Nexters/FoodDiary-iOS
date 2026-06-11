@@ -478,7 +478,7 @@ public final class DetailViewController: UIViewController {
     }
 
     private func formatRecordForShare(_ name: String, _ url: String) -> String {
-        return "\(name) 맛을 기억하시나요?\n\n\(url)"
+        return "\(name) 맛을 기억하시나요?\n뭐먹었지에서 확인해보세요.\n\(url)\n\n 나도 시작하기\nhttps://mumuk.ai.kr/"
     }
 
     private func presentShareSheet(items: [Any]) {
