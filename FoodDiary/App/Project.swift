@@ -55,7 +55,7 @@ let project = Project(
             ],
             settings: .settings(
                 base: [
-                    "MARKETING_VERSION": "1.0.0",
+                    "MARKETING_VERSION": "1.1.1",
                     "BASE_URL": "$(BASE_URL)",
                     "SENTRY_DSN": "$(SENTRY_DSN)",
                     "TARGETED_DEVICE_FAMILY": "1"
