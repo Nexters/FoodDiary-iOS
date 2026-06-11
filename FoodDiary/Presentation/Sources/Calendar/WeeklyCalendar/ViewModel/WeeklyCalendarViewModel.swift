@@ -147,6 +147,13 @@ public final class WeeklyCalendarViewModel {
             await loadWeekData(for: currentWeekBaseDate)
             await updateDateContent(for: state.selectedDate)
 
+        case .goToToday:
+            let today = calendar.startOfDay(for: Date())
+            currentWeekBaseDate = today
+            state.selectedDate = today
+            await loadWeekData(for: currentWeekBaseDate)
+            await updateDateContent(for: today)
+
         case .selectDate(let date):
             if !calendar.isDate(state.selectedDate, inSameDayAs: date) {
                 state.selectedDate = date
@@ -331,6 +338,7 @@ extension WeeklyCalendarViewModel {
         case requestPhotoAuthorization
         case goToPreviousWeek
         case goToNextWeek
+        case goToToday
         case selectDate(Date)
         case saveSelectedPhotos([any ImageAssetable])
         case handlePushNotification(AnalysisResultNotification)
