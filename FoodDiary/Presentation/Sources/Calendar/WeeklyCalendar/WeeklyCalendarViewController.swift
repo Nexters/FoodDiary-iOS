@@ -129,6 +129,12 @@ public final class WeeklyCalendarViewController: UIViewController {
             }
             .store(in: &cancellables)
 
+        headerView.todayTapPublisher
+            .sink { [weak self] in
+                self?.viewModel.input.send(.goToToday)
+            }
+            .store(in: &cancellables)
+
         weekGridView.dateTapPublisher
             .sink { [weak self] date in
                 self?.viewModel.input.send(.selectDate(date))
@@ -166,6 +172,15 @@ public final class WeeklyCalendarViewController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] text in
                 self?.headerView.setMonthText(text)
+            }
+            .store(in: &cancellables)
+
+        viewModel.statePublisher
+            .map(\.selectedDate)
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] date in
+                self?.headerView.setTodayButtonHidden(Calendar.current.isDateInToday(date))
             }
             .store(in: &cancellables)
 

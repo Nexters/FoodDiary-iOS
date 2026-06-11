@@ -17,6 +17,9 @@ final class WeeklyCalendarHeaderView: UIView {
         static let headerHeight: CGFloat = 44
         static let navigationSpacing: CGFloat = 8
         static let buttonSize: CGFloat = 44
+        static let todayButtonSpacing: CGFloat = 8
+        static let todayButtonCornerRadius: CGFloat = 12
+        static let todayButtonInsets = UIEdgeInsets(top: 4, left: 10, bottom: 4, right: 10)
     }
 
     // MARK: - Publishers
@@ -29,8 +32,13 @@ final class WeeklyCalendarHeaderView: UIView {
         nextTapSubject.eraseToAnyPublisher()
     }
 
+    var todayTapPublisher: AnyPublisher<Void, Never> {
+        todayTapSubject.eraseToAnyPublisher()
+    }
+
     private let previousTapSubject = PassthroughSubject<Void, Never>()
     private let nextTapSubject = PassthroughSubject<Void, Never>()
+    private let todayTapSubject = PassthroughSubject<Void, Never>()
 
     // MARK: - UI Components
 
@@ -39,6 +47,20 @@ final class WeeklyCalendarHeaderView: UIView {
         label.textColor = .white
         label.textAlignment = .left
         return label
+    }()
+
+    private let todayButton: UIButton = {
+        let button = UIButton()
+        button.setAttributedTitle(
+            Typography.p12.styled("오늘", color: DesignSystemAsset.primary.color),
+            for: .normal
+        )
+        button.contentEdgeInsets = Constants.todayButtonInsets
+        button.layer.cornerRadius = Constants.todayButtonCornerRadius
+        button.layer.borderWidth = 1
+        button.layer.borderColor = DesignSystemAsset.primary.color.cgColor
+        button.isHidden = true
+        return button
     }()
 
     private let previousButton: UIButton = {
@@ -80,6 +102,7 @@ final class WeeklyCalendarHeaderView: UIView {
 
     private func setupUI() {
         addSubview(monthLabel)
+        addSubview(todayButton)
         addSubview(navigationStack)
         navigationStack.addArrangedSubview(previousButton)
         navigationStack.addArrangedSubview(nextButton)
@@ -92,6 +115,11 @@ final class WeeklyCalendarHeaderView: UIView {
 
         monthLabel.snp.makeConstraints {
             $0.leading.equalToSuperview()
+            $0.centerY.equalToSuperview()
+        }
+
+        todayButton.snp.makeConstraints {
+            $0.leading.equalTo(monthLabel.snp.trailing).offset(Constants.todayButtonSpacing)
             $0.centerY.equalToSuperview()
         }
 
@@ -112,6 +140,7 @@ final class WeeklyCalendarHeaderView: UIView {
     private func setupActions() {
         previousButton.addTarget(self, action: #selector(previousTapped), for: .touchUpInside)
         nextButton.addTarget(self, action: #selector(nextTapped), for: .touchUpInside)
+        todayButton.addTarget(self, action: #selector(todayTapped), for: .touchUpInside)
     }
 
     // MARK: - Public Methods
@@ -125,6 +154,10 @@ final class WeeklyCalendarHeaderView: UIView {
         nextButton.alpha = isEnabled ? 1.0 : 0.3
     }
 
+    func setTodayButtonHidden(_ isHidden: Bool) {
+        todayButton.isHidden = isHidden
+    }
+
     // MARK: - Actions
 
     @objc private func previousTapped() {
@@ -133,5 +166,9 @@ final class WeeklyCalendarHeaderView: UIView {
 
     @objc private func nextTapped() {
         nextTapSubject.send()
+    }
+
+    @objc private func todayTapped() {
+        todayTapSubject.send()
     }
 }
