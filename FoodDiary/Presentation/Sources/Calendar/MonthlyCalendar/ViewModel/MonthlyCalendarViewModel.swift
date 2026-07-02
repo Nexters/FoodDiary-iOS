@@ -180,7 +180,7 @@ public final class MonthlyCalendarViewModel {
         state.monthYearText = date.formatMonthText()
 
         let period = Calendar.current.monthlyCalendarPeriod(for: date)
-        
+
         do {
             for try await monthDays in fetchMonthlyCalendarDaysUseCase.execute(for: period, currentMonth: date) {
                 state.monthDays = monthDays
