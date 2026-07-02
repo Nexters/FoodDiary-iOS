@@ -43,7 +43,7 @@ final class AddressSearchResultCell: UITableViewCell {
         let button = UIButton(type: .system)
         var config = UIButton.Configuration.plain()
         config.attributedTitle = {
-            var attributed = AttributedString(Typography.p14.styled("선택", color: .white))
+            var attributed = AttributedString(Typography.p12.styled("선택", color: .gray850))
             attributed.underlineStyle = .single
             return attributed
         }()
@@ -104,8 +104,8 @@ final class AddressSearchResultCell: UITableViewCell {
     // MARK: - Configure
 
     func configure(with result: AddressSearchResult) {
-        placeNameLabel.setText(result.placeName, style: .hd16)
-        roadAddressLabel.setText(result.roadAddress, style: .p14, color: .gray400)
+        placeNameLabel.setText(result.placeName, style: .hd16, color: .gray850)
+        roadAddressLabel.setText(result.roadAddress, style: .p14, color: .gray800)
     }
 
 }
