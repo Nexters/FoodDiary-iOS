@@ -22,8 +22,8 @@ public final class MyPageViewController: UIViewController {
 
         var headerIcon: UIImage? {
             switch self {
-            case .notifications: return DesignSystemAsset.iconAlert.image
-            case .management: return DesignSystemAsset.iconSetting.image
+            case .notifications: return DesignSystemAsset.iconAlert.image.withRenderingMode(.alwaysTemplate)
+            case .management: return DesignSystemAsset.iconSetting.image.withRenderingMode(.alwaysTemplate)
             case .logout: return nil
             }
         }
@@ -69,12 +69,13 @@ public final class MyPageViewController: UIViewController {
     // MARK: - State
 
     private var cancellables = Set<AnyCancellable>()
+    private var withdrawalFooterView: WithdrawalFooterView?
 
     // MARK: - UI Components
 
     private lazy var scrollView: UIScrollView = {
         let sv = UIScrollView()
-        sv.backgroundColor = .sdBase
+        sv.backgroundColor = .white
         sv.showsVerticalScrollIndicator = false
         return sv
     }()
@@ -86,7 +87,7 @@ public final class MyPageViewController: UIViewController {
 
     private lazy var tableView: UITableView = {
         let tv = UITableView(frame: .zero, style: .insetGrouped)
-        tv.backgroundColor = .sdBase
+        tv.backgroundColor = .white
         tv.showsVerticalScrollIndicator = false
         tv.separatorColor = .clear
         tv.isScrollEnabled = false
@@ -136,17 +137,36 @@ public final class MyPageViewController: UIViewController {
     public override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         updateTableViewHeight()
+        updateTableFooterWidthIfNeeded()
     }
 
     // MARK: - Setup
 
     private func setupNavigation() {
-        title = "마이페이지"
         navigationController?.navigationBar.prefersLargeTitles = false
+        navigationController?.navigationBar.tintColor = .gray900
+
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .white
+        appearance.shadowColor = .gray150
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        navigationController?.navigationBar.compactAppearance = appearance
+
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            image: UIImage(systemName: "chevron.left"),
+            style: .plain,
+            target: self,
+            action: #selector(backButtonTapped)
+        )
+        navigationItem.rightBarButtonItem = UIBarButtonItem(
+            customView: makeProfileIconView()
+        )
     }
 
     private func setupUI() {
-        view.backgroundColor = .sdBase
+        view.backgroundColor = .white
         view.addSubview(scrollView)
         scrollView.addSubview(profileHeaderView)
         scrollView.addSubview(tableView)
@@ -154,16 +174,16 @@ public final class MyPageViewController: UIViewController {
 
     private func setupConstraints() {
         scrollView.snp.makeConstraints {
-            $0.edges.equalToSuperview()
+            $0.edges.equalTo(view.safeAreaLayoutGuide)
         }
 
         profileHeaderView.snp.makeConstraints {
-            $0.top.equalTo(view.snp.top)
+            $0.top.equalTo(scrollView.contentLayoutGuide)
             $0.leading.trailing.equalTo(scrollView.frameLayoutGuide)
         }
 
         tableView.snp.makeConstraints {
-            $0.top.equalTo(profileHeaderView.snp.bottom).offset(30)
+            $0.top.equalTo(profileHeaderView.snp.bottom).offset(24)
             $0.leading.trailing.equalTo(scrollView.frameLayoutGuide)
             $0.bottom.equalTo(scrollView.contentLayoutGuide)
             tableViewHeightConstraint = $0.height.equalTo(0).constraint
@@ -178,10 +198,20 @@ public final class MyPageViewController: UIViewController {
 
     private func setupTableFooter() {
         let footer = WithdrawalFooterView()
-        footer.frame = CGRect(x: 0, y: 0, width: tableView.frame.width, height: 44)
+        footer.frame = CGRect(x: 0, y: 0, width: view.bounds.width, height: 44)
         footer.onTap = { [weak self] in
             self?.showWithdrawalAlert()
         }
+        tableView.tableFooterView = footer
+        withdrawalFooterView = footer
+    }
+
+    private func updateTableFooterWidthIfNeeded() {
+        guard let footer = withdrawalFooterView else { return }
+        let width = tableView.bounds.width
+        guard width > 0, abs(footer.frame.width - width) > .ulpOfOne else { return }
+
+        footer.frame = CGRect(x: 0, y: 0, width: width, height: footer.frame.height)
         tableView.tableFooterView = footer
     }
 
@@ -221,7 +251,7 @@ public final class MyPageViewController: UIViewController {
                 if let cell = tableView.cellForRow(at: indexPath),
                    let badge = cell.contentView.viewWithTag(999) as? UILabel {
                     badge.text = isEnabled ? "ON" : "OFF"
-                    badge.backgroundColor = isEnabled ? DesignSystemAsset.primary.color : DesignSystemAsset.gray600.color
+                    badge.backgroundColor = isEnabled ? DesignSystemAsset.primary.color : DesignSystemAsset.sd800.color
                 } else {
                     tableView.reloadRows(at: [indexPath], with: .none)
                 }
@@ -258,14 +288,14 @@ public final class MyPageViewController: UIViewController {
 
     private func configureCell(_ cell: UITableViewCell, for row: Row, at indexPath: IndexPath) {
         var backgroundConfig = UIBackgroundConfiguration.listCell()
-        backgroundConfig.backgroundColor = .sd700
+        backgroundConfig.backgroundColor = .gray040
         cell.backgroundConfiguration = backgroundConfig
         cell.selectionStyle = .none
         cell.contentConfiguration = nil
 
         switch row {
         case .notificationSetting:
-            cell.textLabel?.setText("알림설정", style: .p14, color: .gray050)
+            cell.textLabel?.setText("알림설정", style: .p14, color: .gray900)
             cell.accessoryView = makeChevronAccessory()
 
             // 기존 배지 제거 (재사용 대비)
@@ -279,7 +309,7 @@ public final class MyPageViewController: UIViewController {
             // 알림 권한 상태에 따라 배지 텍스트/색상 결정
             let isEnabled = viewModel.state.isNotificationEnabled
             let badgeText = isEnabled ? "ON" : "OFF"
-            let badgeColor = isEnabled ? DesignSystemAsset.primary.color : DesignSystemAsset.gray600.color
+            let badgeColor = isEnabled ? DesignSystemAsset.primary.color : DesignSystemAsset.sd800.color
 
             let badge = makeBadgeLabel(text: badgeText, backgroundColor: badgeColor)
             badge.tag = 999
@@ -294,19 +324,19 @@ public final class MyPageViewController: UIViewController {
             ])
 
         case .appVersion:
-            cell.textLabel?.setText("앱 버전", style: .p14, color: .gray050)
+            cell.textLabel?.setText("앱 버전", style: .p14, color: .gray900)
             cell.accessoryView = makeVersionLabel(text: viewModel.state.appVersion)
 
         case .privacy:
-            cell.textLabel?.setText("개인정보 처리방침", style: .p14, color: .gray050)
+            cell.textLabel?.setText("개인정보 처리방침", style: .p14, color: .gray900)
             cell.accessoryView = makeChevronAccessory()
 
         case .customerInquiry:
-            cell.textLabel?.setText("문의하기", style: .p14, color: .gray050)
+            cell.textLabel?.setText("문의하기", style: .p14, color: .gray900)
             cell.accessoryView = makeChevronAccessory()
 
         case .logout:
-            cell.textLabel?.setText("로그아웃", style: .p14, color: .gray050)
+            cell.textLabel?.setText("로그아웃", style: .p14, color: .gray900)
             cell.accessoryView = makeLogoutIconAccessory()
         }
     }
@@ -315,18 +345,22 @@ public final class MyPageViewController: UIViewController {
 
     private func makeVersionLabel(text: String) -> UILabel {
         let label = UILabel()
-        label.setText(text, style: .p14, color: .gray700)
+        label.setText(text, style: .p14, color: .gray600)
         label.sizeToFit()
         return label
     }
 
     private func makeChevronAccessory() -> UIImageView {
-        let iv = UIImageView(image: DesignSystemAsset.iconNext.image)
+        let iv = UIImageView(image: DesignSystemAsset.iconArrow.image.withRenderingMode(.alwaysTemplate))
+        iv.tintColor = .gray850
+        iv.frame = CGRect(x: 0, y: 0, width: 18, height: 18)
+        iv.contentMode = .scaleAspectFit
         return iv
     }
 
     private func makeLogoutIconAccessory() -> UIImageView {
-        let iv = UIImageView(image: DesignSystemAsset.iconLogout.image)
+        let iv = UIImageView(image: DesignSystemAsset.iconLogout.image.withRenderingMode(.alwaysTemplate))
+        iv.tintColor = .gray850
         return iv
     }
 
@@ -340,6 +374,20 @@ public final class MyPageViewController: UIViewController {
         label.clipsToBounds = true
         label.textAlignment = .center
         return label
+    }
+
+    private func makeProfileIconView() -> UIImageView {
+        let imageView = UIImageView(
+            image: DesignSystemAsset.iconMypage.image.withRenderingMode(.alwaysTemplate)
+        )
+        imageView.contentMode = .scaleAspectFit
+        imageView.tintColor = .gray850
+        imageView.frame = CGRect(x: 0, y: 0, width: 24, height: 24)
+        return imageView
+    }
+
+    @objc private func backButtonTapped() {
+        navigationController?.popViewController(animated: true)
     }
 }
 
@@ -383,7 +431,7 @@ extension MyPageViewController: UITableViewDelegate {
         if let icon = sec.headerIcon {
             let iconImageView = UIImageView(image: icon)
             iconImageView.contentMode = .scaleAspectFit
-            iconImageView.tintColor = .gray400
+            iconImageView.tintColor = .gray850
             iconImageView.snp.makeConstraints {
                 $0.size.equalTo(18)
             }
@@ -391,7 +439,7 @@ extension MyPageViewController: UITableViewDelegate {
         }
 
         let label = UILabel()
-        label.setText(title, style: .p12, color: .gray050)
+        label.setText(title, style: .p12, color: .gray900)
         stackView.addArrangedSubview(label)
 
         headerView.addSubview(stackView)
@@ -469,4 +517,3 @@ extension MyPageViewController: UITableViewDelegate {
         UIApplication.shared.open(url)
     }
 }
-
