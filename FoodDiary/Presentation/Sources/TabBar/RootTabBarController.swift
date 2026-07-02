@@ -46,6 +46,26 @@ public final class RootTabBarController: UITabBarController {
         self.delegate = self
         tabBar.isHidden = false
         tabBar.tintColor = DesignSystemAsset.primary.color
+        tabBar.isTranslucent = true
+        tabBar.backgroundColor = .clear
+        tabBar.barTintColor = .clear
+        tabBar.backgroundImage = UIImage()
+        tabBar.shadowImage = UIImage()
+        tabBar.layer.backgroundColor = UIColor.clear.cgColor
+
+        let appearance = UITabBarAppearance()
+        appearance.configureWithTransparentBackground()
+        appearance.backgroundEffect = nil
+        appearance.backgroundColor = .clear
+        appearance.shadowColor = .clear
+        appearance.stackedLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.gray600]
+        appearance.stackedLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: DesignSystemAsset.primary.color]
+        appearance.inlineLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.gray600]
+        appearance.inlineLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: DesignSystemAsset.primary.color]
+        appearance.compactInlineLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.gray600]
+        appearance.compactInlineLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: DesignSystemAsset.primary.color]
+        tabBar.standardAppearance = appearance
+        tabBar.scrollEdgeAppearance = appearance
 
         calendarVC.tabBarItem = UITabBarItem(title: "홈", image: DesignSystemAsset.iconHome.image, tag: 0)
         insightVC.tabBarItem = UITabBarItem(title: "인사이트", image: DesignSystemAsset.iconInsight.image, tag: 1)
@@ -96,10 +116,5 @@ extension RootTabBarController: UITabBarControllerDelegate {
     }
 
     public func tabBarController(_ tabBarController: UITabBarController, didSelect viewController: UIViewController) {
-        for subview in self.tabBar.subviews {
-            if subview.frame.origin.x > self.tabBar.bounds.width * 0.6 {
-                subview.isHidden = selectedIndex == 1
-            }
-        }
     }
 }
