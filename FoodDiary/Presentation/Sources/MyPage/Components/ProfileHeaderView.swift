@@ -18,21 +18,21 @@ final class ProfileHeaderView: UIView {
         iv.layer.cornerRadius = 36
         iv.clipsToBounds = true
         iv.layer.borderWidth = 3
-        iv.layer.borderColor = UIColor.sd800.cgColor
+        iv.layer.borderColor = UIColor.white.cgColor
 
         return iv
     }()
 
     private let greetingLabel: UILabel = {
         let label = UILabel()
-        label.setText("안녕하세요,", style: .p12, color: .gray050)
+        label.setText("안녕하세요,", style: .p12, color: .gray500)
         label.textAlignment = .center
         return label
     }()
 
     private let nameLabel: UILabel = {
         let label = UILabel()
-        label.setText("홍길동님", style: .hd18, color: .white)
+        label.setText("홍길동님", style: .hd18, color: .gray900)
         label.textAlignment = .center
         return label
     }()
@@ -55,12 +55,12 @@ final class ProfileHeaderView: UIView {
 
     private let separatorView: UIView = {
         let view = UIView()
-        view.backgroundColor = .sd800
+        view.backgroundColor = .gray150
         return view
     }()
 
     func configure(nickname: String) {
-        nameLabel.setText("\(nickname)님", style: .hd18, color: .white)
+        nameLabel.setText("\(nickname)님", style: .hd18, color: .gray900)
     }
 
     override init(frame: CGRect) {
@@ -75,13 +75,13 @@ final class ProfileHeaderView: UIView {
     }
 
     private func setupUI() {
-        backgroundColor = .sd700
+        backgroundColor = .gray040
         [contentStackView, separatorView].forEach { addSubview($0) }
     }
 
     private func setupConstraints() {
         self.snp.makeConstraints {
-            $0.height.equalTo(280)
+            $0.height.equalTo(248)
         }
 
         characterImageView.snp.makeConstraints {
@@ -89,7 +89,7 @@ final class ProfileHeaderView: UIView {
         }
 
         contentStackView.snp.makeConstraints {
-            $0.centerY.equalToSuperview().offset(40)
+            $0.centerY.equalToSuperview()
             $0.centerX.equalToSuperview()
         }
 

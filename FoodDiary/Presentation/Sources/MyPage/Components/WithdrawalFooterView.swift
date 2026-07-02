@@ -13,7 +13,7 @@ final class WithdrawalFooterView: UIView {
 
     private let withdrawalLabel: UILabel = {
         let label = UILabel()
-        let base = Typography.p12.styled("탈퇴", color: .gray050)
+        let base = Typography.p12.styled("탈퇴", color: .gray900)
         let mutable = NSMutableAttributedString(attributedString: base)
         mutable.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: 0, length: mutable.length))
         label.attributedText = mutable
@@ -27,7 +27,7 @@ final class WithdrawalFooterView: UIView {
         addSubview(withdrawalLabel)
 
         withdrawalLabel.snp.makeConstraints {
-            $0.trailing.equalToSuperview().offset(-28)
+            $0.trailing.equalToSuperview().offset(-16)
             $0.centerY.equalToSuperview()
         }
 
