@@ -74,19 +74,19 @@ public final class DetailViewController: UIViewController {
             config.cornerStyle = .capsule
             button = UIButton(configuration: config)
         }
-        button.tintColor = .white
+        button.tintColor = .primary
         return button
     }()
 
     private let emptyDayTitleLabel: UILabel = {
         let label = UILabel()
-        label.setText("기록된 다이어리가 없어요", style: .p18, color: .gray050)
+        label.setText("기록된 다이어리가 없어요", style: .p18, color: .detailPrimaryText)
         return label
     }()
 
     private let emptyDaySubtitleLabel: UILabel = {
         let label = UILabel()
-        label.setText("음식 사진을 추가해보세요", style: .p15, color: .gray100)
+        label.setText("음식 사진을 추가해보세요", style: .p15, color: .detailMutedText)
         return label
     }()
 
@@ -152,6 +152,7 @@ public final class DetailViewController: UIViewController {
 
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        applyNavigationBarAppearance()
         navigationController?.setNavigationBarHidden(false, animated: animated)
         navigationController?.hidesBarsOnSwipe = true
         viewModel.input.send(.loadRecords)
@@ -159,6 +160,7 @@ public final class DetailViewController: UIViewController {
 
     public override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        resetNavigationBarAppearance()
         navigationController?.hidesBarsOnSwipe = false
         if isMovingFromParent {
             onDismissWithDate?(viewModel.state.currentDate)
@@ -205,6 +207,28 @@ public final class DetailViewController: UIViewController {
         dismissDetail()
     }
 
+    private func applyNavigationBarAppearance() {
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .white
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.detailPrimaryText]
+        appearance.shadowColor = .detailStroke
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        navigationController?.navigationBar.tintColor = .detailPrimaryText
+    }
+
+    private func resetNavigationBarAppearance() {
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithTransparentBackground()
+        appearance.backgroundColor = .clear
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+        appearance.shadowColor = .clear
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        navigationController?.navigationBar.tintColor = .white
+    }
+
     private func dismissDetail() {
         if shouldPopToRoot {
             navigationController?.popToRootViewController(animated: true)
@@ -214,7 +238,7 @@ public final class DetailViewController: UIViewController {
     }
 
     private func setupUI() {
-        view.backgroundColor = .sdBase
+        view.backgroundColor = .white
 
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
@@ -603,4 +627,3 @@ public final class DetailViewController: UIViewController {
         scrollView.setContentOffset(targetOffset, animated: false)
     }
 }
-

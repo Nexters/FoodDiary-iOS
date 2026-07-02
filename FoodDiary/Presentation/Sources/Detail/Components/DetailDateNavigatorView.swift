@@ -24,14 +24,6 @@ final class DetailDateNavigatorView: UIView {
     private let previousTapSubject = PassthroughSubject<Void, Never>()
     private let nextTapSubject = PassthroughSubject<Void, Never>()
 
-    private let defaultTintColor: UIColor = {
-        if #available(iOS 26, *) {
-            return .label
-        } else {
-            return .white
-        }
-    }()
-
     // MARK: - Constants
 
     private enum Constants {
@@ -42,18 +34,13 @@ final class DetailDateNavigatorView: UIView {
 
     // MARK: - UI Components
 
-    private lazy var containerView: UIView = {
-        if #available(iOS 26, *) {
-            let effectView = UIVisualEffectView(effect: UIGlassEffect())
-            effectView.layer.cornerRadius = Constants.cornerRadius
-            effectView.clipsToBounds = true
-            return effectView
-        } else {
-            let effectView = UIVisualEffectView(effect: UIBlurEffect(style: .systemMaterialDark))
-            effectView.layer.cornerRadius = Constants.cornerRadius
-            effectView.clipsToBounds = true
-            return effectView
-        }
+    private let containerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .white
+        view.layer.cornerRadius = Constants.cornerRadius
+        view.layer.borderWidth = Constants.borderWidth
+        view.layer.borderColor = UIColor.detailPrimaryText.cgColor
+        return view
     }()
 
     private let previousButton: UIButton = {
@@ -103,26 +90,14 @@ final class DetailDateNavigatorView: UIView {
 
     private func setupUI() {
         addSubview(containerView)
-        let contentView: UIView
-        if let effectView = containerView as? UIVisualEffectView {
-            contentView = effectView.contentView
-        } else {
-            contentView = containerView
-        }
-        contentView.addSubview(previousButton)
-        contentView.addSubview(dateLabel)
-        contentView.addSubview(shimmerView)
-        contentView.addSubview(nextButton)
+        containerView.addSubview(previousButton)
+        containerView.addSubview(dateLabel)
+        containerView.addSubview(shimmerView)
+        containerView.addSubview(nextButton)
 
-        if #available(iOS 26, *) {
-            previousButton.tintColor = .label
-            dateLabel.textColor = .label
-            nextButton.tintColor = .label
-        } else {
-            previousButton.tintColor = .white
-            dateLabel.textColor = .white
-            nextButton.tintColor = .white
-        }
+        previousButton.tintColor = .detailPrimaryText
+        dateLabel.textColor = .detailPrimaryText
+        nextButton.tintColor = .detailPrimaryText
     }
 
     private func setupConstraints() {
@@ -162,16 +137,12 @@ final class DetailDateNavigatorView: UIView {
     // MARK: - Public Methods
 
     func setDateText(_ text: String) {
-        if #available(iOS 26, *) {
-            dateLabel.setText(text, style: .p15, color: .label)
-        } else {
-            dateLabel.setText(text, style: .p15)
-        }
+        dateLabel.setText(text, style: .p15, color: .detailPrimaryText)
     }
 
     func setNextButtonEnabled(_ enabled: Bool) {
         nextButton.isEnabled = enabled
-        nextButton.tintColor = enabled ? defaultTintColor : .gray400
+        nextButton.tintColor = enabled ? .detailPrimaryText : .gray400
     }
 
     func setPending(_ isPending: Bool) {

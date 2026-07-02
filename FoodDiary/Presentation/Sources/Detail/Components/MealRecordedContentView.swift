@@ -67,7 +67,7 @@ final class MealRecordedContentView: UIView {
     private lazy var pageControl: UIPageControl = {
         let pc = UIPageControl()
         pc.currentPageIndicatorTintColor = .primary
-        pc.pageIndicatorTintColor = UIColor.white.withAlphaComponent(0.3)
+        pc.pageIndicatorTintColor = .detailStroke
         pc.addTarget(self, action: #selector(pageControlChanged), for: .valueChanged)
         return pc
     }()
@@ -135,6 +135,10 @@ final class MealRecordedContentView: UIView {
     // MARK: - Setup
 
     private func setupUI() {
+        backgroundColor = .detailCardBackground
+        layer.cornerRadius = 10
+        clipsToBounds = true
+
         addSubview(collectionView)
         addSubview(pageControl)
         addSubview(infoContainerView)
@@ -255,27 +259,30 @@ final class MealRecordedContentView: UIView {
         let hasName = !(record.restaurantName ?? "").isEmpty
 
         if hasName {
-            restaurantNameLabel.setText(record.restaurantName!, style: .hd16, color: .white)
+            restaurantNameLabel.setText(record.restaurantName!, style: .hd16, color: .detailPrimaryText)
             copyButton.isHidden = false
             shareButton.isHidden = false
             labelTrailingWithButton?.activate()
             labelTrailingWithoutButton?.deactivate()
         } else {
-            restaurantNameLabel.setText("수정버튼을 눌러 내용을 기록해 보세요", style: .p12, color: .gray400)
+            restaurantNameLabel.setText("수정버튼을 눌러 내용을 기록해 보세요", style: .p12, color: .detailMutedText)
             copyButton.isHidden = true
             shareButton.isHidden = true
             labelTrailingWithButton?.deactivate()
             labelTrailingWithoutButton?.activate()
         }
 
-        let copyTitle = Typography.p12.styled("복사", color: .white)
+        copyButton.tintColor = .detailPrimaryText
+        shareButton.tintColor = .detailPrimaryText
+
+        let copyTitle = Typography.p12.styled("복사", color: .detailPrimaryText)
         copyButton.setAttributedTitle(copyTitle, for: .normal)
 
-        let shareTitle = Typography.p12.styled("공유", color: .white)
+        let shareTitle = Typography.p12.styled("공유", color: .detailPrimaryText)
         shareButton.setAttributedTitle(shareTitle, for: .normal)
 
         let hashtagText = record.hashtags.map { "#\($0)" }.joined(separator: " ")
-        hashtagLabel.setText(hashtagText, style: .p12, color: .white)
+        hashtagLabel.setText(hashtagText, style: .p12, color: .detailMutedText)
         hashtagLabel.isHidden = record.hashtags.isEmpty
 
         configureNoteSection(with: record)
