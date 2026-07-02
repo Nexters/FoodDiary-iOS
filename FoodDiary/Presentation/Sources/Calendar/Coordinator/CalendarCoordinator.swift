@@ -22,7 +22,7 @@ public final class CalendarCoordinator: Coordinator {
         self.navigationController = navigationController
     }
 
-    public func makeViewController() -> CalendarViewController {
+    public func makeViewController() -> MonthlyCalendarViewController {
         let calendarVC = factories.calendar.makeScene()
         flowBind(vc: calendarVC)
         return calendarVC
@@ -32,7 +32,7 @@ public final class CalendarCoordinator: Coordinator {
 // MARK: - Screen Routing
 
 private extension CalendarCoordinator {
-    func flowBind(vc: CalendarViewController) {
+    func flowBind(vc: MonthlyCalendarViewController) {
         vc.flowPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] event in

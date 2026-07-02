@@ -40,7 +40,7 @@ public final class CalendarSceneFactory {
         self.fetchFoodRecordsUseCase = fetchFoodRecordsUseCase
     }
 
-    public func makeScene() -> CalendarViewController {
+    public func makeScene() -> MonthlyCalendarViewController {
         let monthlyVM = MonthlyCalendarViewModel(
             fetchMonthlyCalendarDaysUseCase: fetchMonthlyCalendarDaysUseCase,
             requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase,
@@ -51,7 +51,6 @@ public final class CalendarSceneFactory {
             pushNotificationObserver: pushNotificationObserver,
             checkAppReviewEligibilityUseCase: checkAppReviewEligibilityUseCase
         )
-        let monthlyVC = MonthlyCalendarViewController(viewModel: monthlyVM)
-        return CalendarViewController(mainVC: monthlyVC)
+        return MonthlyCalendarViewController(viewModel: monthlyVM)
     }
 }
