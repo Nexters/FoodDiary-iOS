@@ -54,7 +54,7 @@ public final class AddressSearchViewController: UIViewController, UITextFieldDel
     private lazy var closeButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: "xmark"), for: .normal)
-        button.tintColor = .white
+        button.tintColor = .gray850
         button.addTarget(self, action: #selector(closeButtonTapped), for: .touchUpInside)
         return button
     }()
@@ -68,17 +68,14 @@ public final class AddressSearchViewController: UIViewController, UITextFieldDel
 
     private let guideLabel: UILabel = {
         let label = UILabel()
-        label.setText("이 식당을 찾고 계신가요?", style: .hd16)
+        label.setText("이 식당을 찾고 계신가요?", style: .hd16, color: .gray850)
         return label
     }()
 
     private let resultsContainerView: UIView = {
         let view = UIView()
-        view.backgroundColor = .clear
-        view.layer.borderColor = UIColor.sd800.cgColor
-        view.layer.borderWidth = 1
-
-        view.layer.cornerRadius = 12
+        view.backgroundColor = .gray040
+        view.layer.cornerRadius = 10
         view.clipsToBounds = true
         view.isHidden = true
         return view
@@ -86,7 +83,7 @@ public final class AddressSearchViewController: UIViewController, UITextFieldDel
 
     private let emptyResultLabel: UILabel = {
         let label = UILabel()
-        label.setText("검색 결과가 없습니다.", style: .p14, color: .gray400)
+        label.setText("검색 결과가 없습니다.", style: .p14, color: .gray500)
         label.textAlignment = .center
         label.isHidden = true
         return label
@@ -95,8 +92,8 @@ public final class AddressSearchViewController: UIViewController, UITextFieldDel
     private lazy var resultsTableView: UITableView = {
         let tv = UITableView()
         tv.backgroundColor = .clear
-        tv.separatorColor = .sd600
-        tv.separatorInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        tv.separatorColor = .gray150
+        tv.separatorInset = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20)
         tv.delegate = tableViewHandler
         tv.dataSource = tableViewHandler
         tv.register(
@@ -157,7 +154,13 @@ public final class AddressSearchViewController: UIViewController, UITextFieldDel
     // MARK: - Setup
 
     private func setupUI() {
-        view.backgroundColor = .sdBase
+        view.backgroundColor = .white
+        searchTextField.applyColors(
+            backgroundColor: .gray040,
+            textColor: .gray850,
+            placeholderColor: .gray600,
+            iconColor: .gray850
+        )
 
         view.addSubview(closeButton)
         view.addSubview(searchTextField)
@@ -236,10 +239,10 @@ public final class AddressSearchViewController: UIViewController, UITextFieldDel
 
         switch state.mode {
         case .suggestions:
-            guideLabel.setText("이 식당을 찾고 계신가요?", style: .hd16)
+            guideLabel.setText("이 식당을 찾고 계신가요?", style: .hd16, color: .gray850)
             displayResults = state.suggestions
         case .searchResults:
-            guideLabel.setText("검색 결과", style: .hd16)
+            guideLabel.setText("검색 결과", style: .hd16, color: .gray850)
             displayResults = state.searchResults
         }
 
@@ -250,12 +253,22 @@ public final class AddressSearchViewController: UIViewController, UITextFieldDel
         if displayResults.isEmpty {
             switch state.mode {
             case .suggestions:
-                emptyResultLabel.setText("추천 목록이 없습니다.", style: .p14, color: .gray400)
+                emptyResultLabel.setText("추천 목록이 없습니다.", style: .p14, color: .gray500)
             case .searchResults:
-                emptyResultLabel.setText("검색 결과가 없습니다.", style: .p14, color: .gray400)
+                emptyResultLabel.setText("검색 결과가 없습니다.", style: .p14, color: .gray500)
             }
         }
         emptyResultLabel.isHidden = !displayResults.isEmpty
+
+        let isSearching = !(state.searchKeyword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        searchTextField.applyColors(
+            backgroundColor: .gray040,
+            textColor: .gray850,
+            placeholderColor: .gray600,
+            iconColor: .gray850,
+            borderColor: isSearching ? .primary : nil,
+            borderWidth: isSearching ? 1 : 0
+        )
 
         Task { @MainActor [weak self] in
             guard let self else { return }

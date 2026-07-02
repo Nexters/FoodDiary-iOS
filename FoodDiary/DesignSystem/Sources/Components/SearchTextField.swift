@@ -82,6 +82,34 @@ public final class SearchTextField: UITextField {
         }
     }
 
+    public func applyColors(
+        backgroundColor: UIColor,
+        textColor: UIColor,
+        placeholderColor: UIColor,
+        iconColor: UIColor,
+        borderColor: UIColor? = nil,
+        borderWidth: CGFloat = 0
+    ) {
+        self.backgroundColor = backgroundColor
+        self.textColor = textColor
+        layer.borderColor = borderColor?.cgColor
+        layer.borderWidth = borderWidth
+
+        if let placeholder = attributedPlaceholder?.string {
+            attributedPlaceholder = NSAttributedString(
+                string: placeholder,
+                attributes: [
+                    .font: DesignSystemFontFamily.Pretendard.regular.font(size: 14),
+                    .foregroundColor: placeholderColor
+                ]
+            )
+        }
+
+        if let iconButton = rightView as? UIButton {
+            iconButton.tintColor = iconColor
+        }
+    }
+
     @objc private func searchIconTapped() {
         onSearchIconTapped?()
     }
