@@ -37,10 +37,10 @@ final class ImagePickerSectionHeaderView: UICollectionReusableView {
     }
 
     func configure(title: String, guideText: String? = nil) {
-        titleLabel.setText(title, style: .hd16, color: .white)
+        titleLabel.setText(title, style: .hd16, color: .gray900)
 
         if let guideText {
-            guideLabel.setText(guideText, style: .p14, color: .gray400)
+            guideLabel.setText(guideText, style: .p14, color: .gray500)
             guideLabel.isHidden = false
         } else {
             guideLabel.isHidden = true
