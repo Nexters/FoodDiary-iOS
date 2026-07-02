@@ -8,11 +8,19 @@ import SnapKit
 import DesignSystem
 
 final class OnboardPageContentViewController: UIViewController {
+    private enum Constants {
+        static let imageSize: CGFloat = 180
+        static let imageTopOffset: CGFloat = 104
+        static let textTopSpacing: CGFloat = 36
+        static let textHorizontalInset: CGFloat = 20
+    }
+
     let pageIndex: Int
 
     private let imageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
+        imageView.clipsToBounds = true
         return imageView
     }()
 
@@ -23,19 +31,16 @@ final class OnboardPageContentViewController: UIViewController {
         return label
     }()
 
-    private lazy var stackView: UIStackView = {
-        let stackView = UIStackView(arrangedSubviews: [imageView, textLabel])
-        stackView.axis = .vertical
-        stackView.spacing = 40
-        stackView.alignment = .center
-        return stackView
-    }()
-
     init(pageIndex: Int, image: UIImage?, text: String) {
         self.pageIndex = pageIndex
         super.init(nibName: nil, bundle: nil)
         imageView.image = image
-        textLabel.setText(text, style: .p15)
+        textLabel.attributedText = Typography.p15.styled(
+            text,
+            color: .gray850,
+            alignment: .center,
+            lineSpacing: 3.75
+        )
         textLabel.textAlignment = .center
     }
 
@@ -51,18 +56,19 @@ final class OnboardPageContentViewController: UIViewController {
 
 private extension OnboardPageContentViewController {
     func setupUI() {
-        view.backgroundColor = DesignSystemAsset.sdBase.color
-        view.addSubview(stackView)
-
-        stackView.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(130)
-            $0.leading.trailing.equalToSuperview().inset(65)
-            $0.centerX.equalToSuperview()
-        }
+        view.backgroundColor = .white
+        view.addSubview(imageView)
+        view.addSubview(textLabel)
 
         imageView.snp.makeConstraints {
-            $0.height.equalTo(220)
-            $0.width.equalTo(imageView.snp.height)
+            $0.centerX.equalToSuperview()
+            $0.top.equalToSuperview().offset(Constants.imageTopOffset)
+            $0.size.equalTo(Constants.imageSize)
+        }
+
+        textLabel.snp.makeConstraints {
+            $0.top.equalTo(imageView.snp.bottom).offset(Constants.textTopSpacing)
+            $0.leading.trailing.equalToSuperview().inset(Constants.textHorizontalInset)
             $0.centerX.equalToSuperview()
         }
     }
