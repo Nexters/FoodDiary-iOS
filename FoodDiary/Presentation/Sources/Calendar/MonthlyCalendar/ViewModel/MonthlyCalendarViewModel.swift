@@ -42,7 +42,7 @@ public final class MonthlyCalendarViewModel {
     private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase
     private let fetchFoodRecordsUseCase: FetchFoodRecordsUseCase
     private let getNicknameUseCase: GetNicknameUseCase
-    private let loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase
+    private let fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase
     private let saveFoodRecordUseCase: SaveFoodRecordUseCase
     private let pushNotificationObserver: any PushNotificationObserving
     private let checkAppReviewEligibilityUseCase: CheckAppReviewEligibilityUseCase
@@ -54,7 +54,7 @@ public final class MonthlyCalendarViewModel {
         requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase,
         fetchFoodRecordsUseCase: FetchFoodRecordsUseCase,
         getNicknameUseCase: GetNicknameUseCase,
-        loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase,
+        fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase,
         saveFoodRecordUseCase: SaveFoodRecordUseCase,
         pushNotificationObserver: any PushNotificationObserving,
         checkAppReviewEligibilityUseCase: CheckAppReviewEligibilityUseCase
@@ -63,7 +63,7 @@ public final class MonthlyCalendarViewModel {
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
         self.fetchFoodRecordsUseCase = fetchFoodRecordsUseCase
         self.getNicknameUseCase = getNicknameUseCase
-        self.loadWeeklyCalendarDataUseCase = loadWeeklyCalendarDataUseCase
+        self.fetchFoodImageAssetUseCase = fetchFoodImageAssetUseCase
         self.saveFoodRecordUseCase = saveFoodRecordUseCase
         self.pushNotificationObserver = pushNotificationObserver
         self.checkAppReviewEligibilityUseCase = checkAppReviewEligibilityUseCase
@@ -256,7 +256,14 @@ public final class MonthlyCalendarViewModel {
             return false
         }
         do {
-            let photos = try await loadWeeklyCalendarDataUseCase.loadPhotos(for: date)
+            let calendar = Calendar.current
+            let startOfDay = calendar.startOfDay(for: date)
+            let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)
+            let photosByDate = try await fetchFoodImageAssetUseCase.execute(
+                from: startOfDay,
+                to: endOfDay
+            )
+            let photos = photosByDate[startOfDay] ?? []
             return !photos.isEmpty
         } catch {
             return false

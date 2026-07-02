@@ -9,7 +9,7 @@ import UIKit
 
 public final class CalendarSceneFactory {
     private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase
-    private let loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase
+    private let fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase
     private let saveFoodRecordUseCase: SaveFoodRecordUseCase
     private let pushNotificationObserver: PushNotificationObserver
     private let getNicknameUseCase: GetNicknameUseCase
@@ -20,7 +20,7 @@ public final class CalendarSceneFactory {
 
     public init(
         requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase,
-        loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase,
+        fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase,
         saveFoodRecordUseCase: SaveFoodRecordUseCase,
         pushNotificationObserver: PushNotificationObserver,
         getNicknameUseCase: GetNicknameUseCase,
@@ -30,7 +30,7 @@ public final class CalendarSceneFactory {
         fetchFoodRecordsUseCase: FetchFoodRecordsUseCase
     ) {
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
-        self.loadWeeklyCalendarDataUseCase = loadWeeklyCalendarDataUseCase
+        self.fetchFoodImageAssetUseCase = fetchFoodImageAssetUseCase
         self.saveFoodRecordUseCase = saveFoodRecordUseCase
         self.pushNotificationObserver = pushNotificationObserver
         self.getNicknameUseCase = getNicknameUseCase
@@ -46,7 +46,7 @@ public final class CalendarSceneFactory {
             requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase,
             fetchFoodRecordsUseCase: fetchFoodRecordsUseCase,
             getNicknameUseCase: getNicknameUseCase,
-            loadWeeklyCalendarDataUseCase: loadWeeklyCalendarDataUseCase,
+            fetchFoodImageAssetUseCase: fetchFoodImageAssetUseCase,
             saveFoodRecordUseCase: saveFoodRecordUseCase,
             pushNotificationObserver: pushNotificationObserver,
             checkAppReviewEligibilityUseCase: checkAppReviewEligibilityUseCase
