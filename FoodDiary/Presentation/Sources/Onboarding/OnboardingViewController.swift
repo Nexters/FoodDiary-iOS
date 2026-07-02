@@ -17,13 +17,15 @@ public final class OnboardingViewController: UIViewController {
         didCompleteSubject.eraseToAnyPublisher()
     }
 
-    @Published private var currentPage: Int = 0
-
-    private var cancellables = Set<AnyCancellable>()
+    private var currentPage: Int = 0 {
+        didSet {
+            updateCurrentPageAppearance()
+        }
+    }
 
     private let pages: [(image: UIImage?, text: String)] = [
-        (DesignSystemAsset.onboard1.image, "여기저기 흩어진 음식 기록을,\n간편히 정리해 드릴게요"),
-        (DesignSystemAsset.onboard2.image, "음식 기록은 간편하게 시작하고\n활용은 자유롭게 이어가세요."),
+        (DesignSystemAsset.onboard1.image, "여기저기 흩어진 음식 기록들,\n간편히 정리해 드릴게요"),
+        (DesignSystemAsset.onboard2.image, "음식 기록은 간편하게 시작하고,\n활용은 자유롭게 이어가세요."),
         (DesignSystemAsset.onboard3.image, "음식 사진을 올리면 식당, 메뉴,\n방문 정보를 자동으로 정리해줘요."),
         (DesignSystemAsset.onboard4.image, "정리된 기록을 블로그나 SNS에\n바로 활용할 수 있어요."),
         (DesignSystemAsset.onboard5.image, "기록이 쌓일수록 무엇을, 언제,\n얼마나 먹는지 한눈에 보여요.")
@@ -42,21 +44,59 @@ public final class OnboardingViewController: UIViewController {
         return pageVC
     }()
 
-    private let pageControl: UIPageControl = {
-        let pageControl = UIPageControl()
-        pageControl.currentPageIndicatorTintColor = DesignSystemAsset.primary.color
-        pageControl.pageIndicatorTintColor = DesignSystemAsset.sd800.color
-        pageControl.isUserInteractionEnabled = false
-        return pageControl
+    private lazy var pageIndicatorDots: [UIView] = {
+        pages.indices.map { index in
+            let dot = UIView()
+            dot.backgroundColor = index == 0 ? .primary : .sd800
+            dot.layer.cornerRadius = 3
+            dot.clipsToBounds = true
+            dot.snp.makeConstraints {
+                $0.size.equalTo(6)
+            }
+            return dot
+        }
+    }()
+
+    private lazy var pageIndicatorStackView: UIStackView = {
+        let stackView = UIStackView(arrangedSubviews: pageIndicatorDots)
+        stackView.axis = .horizontal
+        stackView.alignment = .center
+        stackView.distribution = .equalSpacing
+        stackView.spacing = 4
+        return stackView
+    }()
+
+    private let headerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .white
+        return view
+    }()
+
+    private let headerSeparatorView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .gray150
+        return view
+    }()
+
+    private lazy var skipButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setAttributedTitle(
+            Typography.p15.styled("건너뛰기", color: .black, alignment: .right),
+            for: .normal
+        )
+        button.addTarget(self, action: #selector(skipButtonTapped), for: .touchUpInside)
+        return button
     }()
 
     private lazy var nextButton: UIButton = {
         let button = UIButton(type: .system)
-        button.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
-        button.setTitle("다음", for: .normal)
+        button.setAttributedTitle(
+            Typography.hd15.styled("다음", color: .sdBase, alignment: .center),
+            for: .normal
+        )
         button.backgroundColor = DesignSystemAsset.primary.color
-        button.setTitleColor(DesignSystemAsset.sdBase.color, for: .normal)
         button.clipsToBounds = true
+        button.addTarget(self, action: #selector(nextButtonTapped), for: .touchUpInside)
         return button
     }()
 
@@ -71,11 +111,18 @@ public final class OnboardingViewController: UIViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
         configureUI()
-        configureNavigationBar()
-        setupActions()
-        setupBindings()
-        pageControl.numberOfPages = pages.count
+        updateCurrentPageAppearance()
         pageViewController.setViewControllers([pageViewControllers[0]], direction: .forward, animated: false)
+    }
+
+    public override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(true, animated: animated)
+    }
+
+    public override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: animated)
     }
 
     public override func viewDidLayoutSubviews() {
@@ -86,61 +133,67 @@ public final class OnboardingViewController: UIViewController {
 
 private extension OnboardingViewController {
     func configureUI() {
-        view.backgroundColor = DesignSystemAsset.sdBase.color
+        view.backgroundColor = .white
+
+        view.addSubview(headerView)
+        headerView.addSubview(skipButton)
+        view.addSubview(headerSeparatorView)
 
         addChild(pageViewController)
         view.addSubview(pageViewController.view)
         pageViewController.didMove(toParent: self)
 
-        view.addSubview(pageControl)
+        view.addSubview(pageIndicatorStackView)
         view.addSubview(nextButton)
 
-        pageViewController.view.snp.makeConstraints {
+        headerView.snp.makeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
             $0.leading.trailing.equalToSuperview()
-            $0.bottom.equalTo(pageControl.snp.top).offset(-10)
+            $0.height.equalTo(60)
         }
 
-        pageControl.snp.makeConstraints {
+        skipButton.snp.makeConstraints {
+            $0.trailing.equalToSuperview().inset(20)
+            $0.centerY.equalToSuperview()
+        }
+
+        headerSeparatorView.snp.makeConstraints {
+            $0.top.equalTo(headerView.snp.bottom)
+            $0.leading.trailing.equalToSuperview()
+            $0.height.equalTo(1)
+        }
+
+        pageIndicatorStackView.snp.makeConstraints {
             $0.centerX.equalToSuperview()
-            $0.bottom.equalTo(nextButton.snp.top).offset(-100)
+            $0.bottom.equalTo(nextButton.snp.top).offset(-136)
+        }
+
+        pageViewController.view.snp.makeConstraints {
+            $0.top.equalTo(headerSeparatorView.snp.bottom)
+            $0.leading.trailing.equalToSuperview()
+            $0.bottom.equalTo(pageIndicatorStackView.snp.top)
         }
 
         nextButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(16)
-            $0.height.equalTo(55)
-            $0.bottom.equalTo(view.safeAreaLayoutGuide).inset(18)
+            $0.height.equalTo(50)
+            $0.bottom.equalToSuperview().inset(36)
         }
     }
 
-    func configureNavigationBar() {
-        let skipButton = UIBarButtonItem(
-            title: "건너뛰기",
-            style: .plain,
-            target: self,
-            action: #selector(skipButtonTapped)
+    func updateCurrentPageAppearance() {
+        updateNextButtonTitle()
+        pageIndicatorDots.enumerated().forEach { index, dot in
+            dot.backgroundColor = index == currentPage ? .primary : .sd800
+        }
+    }
+
+    func updateNextButtonTitle() {
+        let title = currentPage == pages.count - 1 ? "시작하기" : "다음"
+        nextButton.setAttributedTitle(
+            Typography.hd15.styled(title, color: .sdBase, alignment: .center),
+            for: .normal
         )
-
-        navigationItem.rightBarButtonItem = skipButton
-    }
-
-    func setupActions() {
-        nextButton.addTarget(self, action: #selector(nextButtonTapped), for: .touchUpInside)
-    }
-
-    func setupBindings() {
-        $currentPage
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] page in
-                guard let self = self else { return }
-                self.pageControl.currentPage = page
-                self.updateNextButton()
-            }
-            .store(in: &cancellables)
-    }
-
-    func updateNextButton() {
-        nextButton.setTitle(currentPage == pages.count - 1 ? "시작하기" : "다음", for: .normal)
     }
 
     @objc func skipButtonTapped() {
