@@ -57,7 +57,7 @@ final class MealSectionView: UIView {
 
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.textColor = .white
+        label.textColor = .detailSectionText
         return label
     }()
 
@@ -128,12 +128,12 @@ final class MealSectionView: UIView {
         case .snack:
             title = "야식"
         }
-        titleLabel.setText(title, style: .hd20, color: .white)
+        titleLabel.setText(title, style: .hd20, color: .detailSectionText)
     }
 
     private func configureEditButton() {
         let attributed = NSMutableAttributedString(
-            attributedString: Typography.p14.styled("수정", color: .white))
+            attributedString: Typography.p14.styled("수정", color: .detailSectionText))
         attributed.addAttribute(
             .underlineStyle, value: NSUnderlineStyle.single.rawValue,
             range: NSRange(location: 0, length: attributed.length))
@@ -169,12 +169,12 @@ final class MealSectionView: UIView {
         imageView.contentMode = .scaleAspectFit
 
         let label = UILabel()
-        label.setText("오늘의 음식 사진을 촬영해보세요", style: .p12, color: .gray100)
+        label.setText("오늘의 음식 사진을 촬영해보세요", style: .p12, color: .detailMutedText)
         label.textAlignment = .center
 
-        let container = DashedBorderView()
+        let container = DashedBorderView(strokeColor: .detailStroke)
         container.cornerRadius = 16
-        container.backgroundColor = .sd900
+        container.backgroundColor = .detailCardBackground
         container.layer.cornerRadius = 16
         container.clipsToBounds = true
         container.addSubview(imageView)

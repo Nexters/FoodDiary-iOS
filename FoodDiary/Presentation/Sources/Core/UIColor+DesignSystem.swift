@@ -64,5 +64,12 @@ public extension UIColor {
     static let gray050 = DesignSystemAsset.gray050.color
     static let gray020 = DesignSystemAsset.gray020.color
     static let gray850 = DesignSystemAsset.gray850.color
-    static let calendarTileBackground = UIColor(red: 0.953, green: 0.965, blue: 0.976, alpha: 1)
+    static let calendarTileBackground = DesignSystemAsset.calendarTileBackground.color
+    static let detailBadgeBackground = DesignSystemAsset.detailBadgeBackground.color
+    static let detailBodyText = DesignSystemAsset.detailBodyText.color
+    static let detailCardBackground = DesignSystemAsset.detailCardBackground.color
+    static let detailMutedText = DesignSystemAsset.detailMutedText.color
+    static let detailPrimaryText = DesignSystemAsset.detailPrimaryText.color
+    static let detailSectionText = DesignSystemAsset.detailSectionText.color
+    static let detailStroke = DesignSystemAsset.detailStroke.color
 }

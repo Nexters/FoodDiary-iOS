@@ -54,7 +54,7 @@ final class NoteContentView: UIView {
     // MARK: - Setup
 
     private func setupUI() {
-        backgroundColor = .sd900
+        backgroundColor = .detailCardBackground
         layer.cornerRadius = Constants.cornerRadius
         clipsToBounds = true
 
@@ -83,7 +83,7 @@ final class NoteContentView: UIView {
     }
 
     private func configure(note: String) {
-        headerLabel.setText("AI가 요약했어요", style: .p12, color: .gray050)
-        contentLabel.setText(note, style: .p12, color: .gray100, lineSpacing: 4)
+        headerLabel.setText("AI가 요약했어요", style: .p12, color: .primary)
+        contentLabel.setText(note, style: .p12, color: .detailBodyText, lineSpacing: 4)
     }
 }

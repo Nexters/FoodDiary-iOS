@@ -43,7 +43,7 @@ final class PillBadgeView: UIView {
     // MARK: - Setup
 
     private func setupUI() {
-        backgroundColor = UIColor.black.withAlphaComponent(0.65)
+        backgroundColor = .detailBadgeBackground
         layer.cornerRadius = Constants.cornerRadius
         clipsToBounds = true
         addSubview(label)

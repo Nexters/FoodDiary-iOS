@@ -274,7 +274,7 @@ public final class MonthlyCalendarViewController: UIViewController, UICollection
 
     private func setupDetailButton() {
         let attributedTitle = NSMutableAttributedString(
-            attributedString: Typography.p12.styled("기록보기", color: .gray600)
+            attributedString: Typography.p12.styled("기록보기", color: .detailPrimaryText)
         )
         attributedTitle.addAttribute(
             .underlineStyle,
@@ -370,7 +370,7 @@ public final class MonthlyCalendarViewController: UIViewController, UICollection
     }
 
     private func updateSelectedDate(_ date: Date) {
-        selectedDateLabel.setText("\(Calendar.current.component(.day, from: date))일", style: .p18, color: .grayBase)
+        selectedDateLabel.setText("\(Calendar.current.component(.day, from: date))일", style: .p18, color: .detailSectionText)
     }
 
     @objc private func detailButtonTapped() {
