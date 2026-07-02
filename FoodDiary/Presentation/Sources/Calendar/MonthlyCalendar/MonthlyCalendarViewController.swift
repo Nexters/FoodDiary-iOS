@@ -31,6 +31,8 @@ public final class MonthlyCalendarViewController: UIViewController, UICollection
 
     // MARK: - UI Components
 
+    private let scrollView = UIScrollView()
+    private let contentView = UIView()
     private let monthYearHeaderView = MonthlyCalendarHeaderView()
     private let weekdayHeaderView = WeekdayHeaderView()
     private let progressView = MonthlyRecordProgressView()
@@ -109,12 +111,14 @@ public final class MonthlyCalendarViewController: UIViewController, UICollection
 
     private func setupUI() {
         view.backgroundColor = .white
-        view.addSubview(monthYearHeaderView)
-        view.addSubview(stackView)
-        view.addSubview(progressView)
-        view.addSubview(selectedDateLabel)
-        view.addSubview(detailButton)
-        view.addSubview(mealSummaryView)
+        view.addSubview(scrollView)
+        scrollView.addSubview(contentView)
+        contentView.addSubview(monthYearHeaderView)
+        contentView.addSubview(stackView)
+        contentView.addSubview(progressView)
+        contentView.addSubview(selectedDateLabel)
+        contentView.addSubview(detailButton)
+        contentView.addSubview(mealSummaryView)
 
         setupSwipeGestures()
         setupDetailButton()
@@ -130,8 +134,17 @@ public final class MonthlyCalendarViewController: UIViewController, UICollection
     }
 
     private func setupConstraints() {
+        scrollView.snp.makeConstraints {
+            $0.edges.equalTo(view.safeAreaLayoutGuide)
+        }
+
+        contentView.snp.makeConstraints {
+            $0.edges.equalTo(scrollView.contentLayoutGuide)
+            $0.width.equalTo(scrollView.frameLayoutGuide)
+        }
+
         monthYearHeaderView.snp.makeConstraints {
-            $0.top.equalTo(view.safeAreaLayoutGuide).offset(Constants.monthYearHeaderTopOffset)
+            $0.top.equalToSuperview().offset(Constants.monthYearHeaderTopOffset)
             $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
         }
 
@@ -164,6 +177,7 @@ public final class MonthlyCalendarViewController: UIViewController, UICollection
             $0.top.equalTo(selectedDateLabel.snp.bottom).offset(Constants.summaryTopOffset)
             $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
             $0.height.equalTo(Constants.summaryHeight)
+            $0.bottom.equalToSuperview().inset(24)
         }
     }
 
@@ -528,16 +542,22 @@ private final class MonthlyRecordProgressView: UIView {
     }
 
     private func progressCountText(recordCount: Int, totalCount: Int) -> NSAttributedString {
-        let text = "\(recordCount)/\(totalCount)"
-        let attributed = NSMutableAttributedString(attributedString: Typography.p12.styled(text, color: .primary, alignment: .right))
-        if let slashRange = text.range(of: "/") {
-            let start = text.distance(from: text.startIndex, to: slashRange.lowerBound)
-            attributed.addAttribute(
-                .foregroundColor,
-                value: UIColor.primary.withAlphaComponent(0.75),
-                range: NSRange(location: start, length: text.count - start)
+        let attributed = NSMutableAttributedString(
+            string: "\(recordCount)",
+            attributes: [
+                .font: UIFont.systemFont(ofSize: 12, weight: .semibold),
+                .foregroundColor: UIColor.primary
+            ]
+        )
+        attributed.append(
+            NSAttributedString(
+                string: "/\(totalCount)",
+                attributes: [
+                    .font: UIFont.systemFont(ofSize: 12, weight: .regular),
+                    .foregroundColor: UIColor.primary.withAlphaComponent(0.75)
+                ]
             )
-        }
+        )
         return attributed
     }
 }
