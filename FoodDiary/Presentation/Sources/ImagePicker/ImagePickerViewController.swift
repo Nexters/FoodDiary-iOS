@@ -134,7 +134,7 @@ public final class ImagePickerViewController:
         }
 
         let label = UILabel()
-        label.setText("오늘은 촬영된 사진이 없어요", style: .p12, color: .gray050)
+        label.setText("오늘은 촬영된 사진이 없어요", style: .p12, color: .gray500)
         label.textAlignment = .center
 
         let stackView = UIStackView(arrangedSubviews: [imageView, label])
@@ -178,6 +178,7 @@ public final class ImagePickerViewController:
         setupUI()
         setupConstraints()
         loadPhotos()
+        navigationController?.navigationBar.tintColor = .gray900
 
         resultPublisher
             .compactMap { if case .selected(let a) = $0 { return a } else { return nil } }
@@ -240,12 +241,12 @@ public final class ImagePickerViewController:
             target: self,
             action: #selector(selectAllButtonTapped)
         )
-        selectAllButton.tintColor = .white
+        selectAllButton.tintColor = .gray900
         navigationItem.rightBarButtonItem = selectAllButton
     }
 
     private func setupUI() {
-        view.backgroundColor = DesignSystemAsset.sdBase.color
+        view.backgroundColor = .white
 
         view.addSubview(collectionView)
         view.addSubview(emptyView)
