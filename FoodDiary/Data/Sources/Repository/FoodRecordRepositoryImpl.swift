@@ -128,11 +128,12 @@ public struct FoodRecordRepositoryImpl: FoodRecordRepository {
                         result[date] = entry.value.photos.compactMap { URL(string: $0.url) }
                     }
 
-                    let current = await photoURLCache.get(for: dateRange)
-                    if current != fresh {
-                        await photoURLCache.set(fresh, for: dateRange)
-                        continuation.yield(fresh)
-                    }
+                    // 이 호출의 응답은 항상 그대로 방출한다.
+                    // 전역 캐시와 비교해서 동일하면 건너뛰는 방식은, 동시에 같은 기간을 요청한
+                    // 다른 호출(예: 콜드 스타트 시 loadInitialData/refreshCurrentMonth 경쟁)이
+                    // 먼저 캐시를 채워버리는 경우 이 호출의 결과가 통째로 유실되는 문제가 있었다.
+                    await photoURLCache.set(fresh, for: dateRange)
+                    continuation.yield(fresh)
 
                     continuation.finish()
                 } catch {
