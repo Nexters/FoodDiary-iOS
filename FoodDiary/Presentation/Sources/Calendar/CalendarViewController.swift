@@ -6,20 +6,11 @@
 //
 
 import Combine
-import DesignSystem
 import SnapKit
 import UIKit
 
 public final class CalendarViewController: UIViewController {
-    public enum ViewMode {
-        case weekly
-        case monthly
-    }
-
-    private let weeklyVC: UIViewController
-    private let monthlyVC: UIViewController
-    private let currentModeSubject = CurrentValueSubject<ViewMode, Never>(.weekly)
-    private var currentChild: UIViewController?
+    private let mainVC: MonthlyCalendarViewController
 
     private let flowSubject = PassthroughSubject<CalendarFlow, Never>()
     public var flowPublisher: AnyPublisher<CalendarFlow, Never> {
@@ -27,22 +18,16 @@ public final class CalendarViewController: UIViewController {
     }
     private var cancellables = Set<AnyCancellable>()
 
-    public var currentModePublisher: AnyPublisher<ViewMode, Never> {
-        currentModeSubject.eraseToAnyPublisher()
-    }
-
     public init(
-        weeklyVC: UIViewController,
-        monthlyVC: UIViewController,
-        weeklyFlowPublisher: AnyPublisher<CalendarFlow, Never>,
-        monthlyFlowPublisher: AnyPublisher<CalendarFlow, Never>
+        mainVC: MonthlyCalendarViewController
     ) {
-        self.weeklyVC = weeklyVC
-        self.monthlyVC = monthlyVC
+        self.mainVC = mainVC
         super.init(nibName: nil, bundle: nil)
 
-        Publishers.Merge(weeklyFlowPublisher, monthlyFlowPublisher)
-            .sink { [weak self] flow in self?.flowSubject.send(flow) }
+        mainVC.flowPublisher
+            .sink { [weak self] flow in
+                self?.flowSubject.send(flow)
+            }
             .store(in: &cancellables)
     }
 
@@ -54,43 +39,13 @@ public final class CalendarViewController: UIViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .sdBase
-        showViewController(for: currentModeSubject.value)
+        addChild(mainVC)
+        view.addSubview(mainVC.view)
+        mainVC.view.snp.makeConstraints { $0.edges.equalToSuperview() }
+        mainVC.didMove(toParent: self)
     }
 
-    public func toggleViewMode() {
-        let newMode: ViewMode = currentModeSubject.value == .weekly ? .monthly : .weekly
-        currentModeSubject.send(newMode)
-        showViewController(for: newMode)
-    }
-
-    private func showViewController(for mode: ViewMode) {
-        let targetVC = mode == .weekly ? weeklyVC : monthlyVC
-
-        // 초기 로드: 애니메이션 없이 바로 추가
-        guard let outgoingVC = currentChild else {
-            addChild(targetVC)
-            view.addSubview(targetVC.view)
-            targetVC.view.snp.makeConstraints { $0.edges.equalToSuperview() }
-            targetVC.didMove(toParent: self)
-            currentChild = targetVC
-            return
-        }
-
-        addChild(targetVC)
-        targetVC.view.alpha = 0
-        view.addSubview(targetVC.view)
-        targetVC.view.snp.makeConstraints { $0.edges.equalToSuperview() }
-
-        UIView.animate(withDuration: 0.4) {
-            targetVC.view.alpha = 1
-            outgoingVC.view.alpha = 0
-        } completion: { _ in
-            outgoingVC.view.alpha = 1
-            outgoingVC.willMove(toParent: nil)
-            outgoingVC.view.removeFromSuperview()
-            outgoingVC.removeFromParent()
-            targetVC.didMove(toParent: self)
-            self.currentChild = targetVC
-        }
+    public func addFoodRecord() {
+        mainVC.addFoodRecord()
     }
 }

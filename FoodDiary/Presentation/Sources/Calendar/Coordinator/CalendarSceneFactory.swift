@@ -41,28 +41,17 @@ public final class CalendarSceneFactory {
     }
 
     public func makeScene() -> CalendarViewController {
-        let weeklyVM = WeeklyCalendarViewModel(
-            requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase,
-            loadWeeklyCalendarDataUseCase: loadWeeklyCalendarDataUseCase,
-            saveFoodRecordUseCase: saveFoodRecordUseCase,
-            pushNotificationObserver: pushNotificationObserver,
-            getNicknameUseCase: getNicknameUseCase,
-            coachmarkStorage: coachmarkStorage,
-            checkAppReviewEligibilityUseCase: checkAppReviewEligibilityUseCase
-        )
         let monthlyVM = MonthlyCalendarViewModel(
             fetchMonthlyCalendarDaysUseCase: fetchMonthlyCalendarDaysUseCase,
             requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase,
             fetchFoodRecordsUseCase: fetchFoodRecordsUseCase,
-            getNicknameUseCase: getNicknameUseCase
+            getNicknameUseCase: getNicknameUseCase,
+            loadWeeklyCalendarDataUseCase: loadWeeklyCalendarDataUseCase,
+            saveFoodRecordUseCase: saveFoodRecordUseCase,
+            pushNotificationObserver: pushNotificationObserver,
+            checkAppReviewEligibilityUseCase: checkAppReviewEligibilityUseCase
         )
-        let weeklyVC = WeeklyCalendarViewController(viewModel: weeklyVM)
         let monthlyVC = MonthlyCalendarViewController(viewModel: monthlyVM)
-        return CalendarViewController(
-            weeklyVC: weeklyVC,
-            monthlyVC: monthlyVC,
-            weeklyFlowPublisher: weeklyVC.flowPublisher,
-            monthlyFlowPublisher: monthlyVC.flowPublisher
-        )
+        return CalendarViewController(mainVC: monthlyVC)
     }
 }
