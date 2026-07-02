@@ -16,7 +16,7 @@ public final class FoodRecordCardView: UIView {
 
     private enum Constants {
         static let cornerRadius: CGFloat = 20
-        static let imageInset: CGFloat = 4
+        static let imageInset: CGFloat = 0
         static let badgeTopInset: CGFloat = 16
         static let badgeLeadingInset: CGFloat = 16
         static let badgeSpacing: CGFloat = 4

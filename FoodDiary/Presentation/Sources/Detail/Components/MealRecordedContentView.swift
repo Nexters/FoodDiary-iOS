@@ -20,6 +20,7 @@ final class MealRecordedContentView: UIView {
         static let textTopSpacing: CGFloat = 16
         static let hashtagTopSpacing: CGFloat = 6
         static let actionSpacing: CGFloat = 10
+        static let badgeSpacing: CGFloat = 12
         static let buttonImagePadding: CGFloat = 4
     }
 
@@ -36,6 +37,14 @@ final class MealRecordedContentView: UIView {
 
     private var contentTopWithPageControl: Constraint?
     private var contentTopWithoutPageControl: Constraint?
+
+    private let badgeStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.alignment = .center
+        stackView.spacing = Constants.badgeSpacing
+        return stackView
+    }()
 
     private let actionStackView: UIStackView = {
         let stackView = UIStackView()
@@ -77,13 +86,12 @@ final class MealRecordedContentView: UIView {
 
     private lazy var copyButton = ActionButton(
         title: "복사",
-        image: DesignSystemAsset.iconCopy.image.withRenderingMode(.alwaysTemplate)
+        image: DesignSystemAsset.iconCopy.image
     )
 
     private lazy var shareButton = ActionButton(
         title: "공유",
-        image: UIImage(systemName: "point.3.connected.trianglepath.dotted")?
-            .withConfiguration(UIImage.SymbolConfiguration(pointSize: 12, weight: .regular))
+        image: DesignSystemAsset.iconShare.image
     )
 
     init(
@@ -115,6 +123,7 @@ final class MealRecordedContentView: UIView {
         layer.cornerRadius = 10
         clipsToBounds = true
 
+        addSubview(badgeStackView)
         addSubview(actionStackView)
         addSubview(collectionView)
         addSubview(pageControl)
@@ -128,6 +137,13 @@ final class MealRecordedContentView: UIView {
     }
 
     private func setupConstraints() {
+        badgeStackView.snp.makeConstraints {
+            $0.top.equalToSuperview().inset(Constants.verticalInset)
+            $0.leading.equalToSuperview().inset(Constants.horizontalInset)
+            $0.centerY.equalTo(actionStackView)
+            $0.trailing.lessThanOrEqualTo(actionStackView.snp.leading).offset(-12)
+        }
+
         actionStackView.snp.makeConstraints {
             $0.top.equalToSuperview().inset(Constants.verticalInset)
             $0.trailing.equalToSuperview().inset(Constants.horizontalInset)
@@ -213,7 +229,23 @@ final class MealRecordedContentView: UIView {
 
         if let record = cardItems.first?.record {
             currentRecord = record
+            configureBadges(with: record)
             configureText(with: record)
+        }
+    }
+
+    private func configureBadges(with record: FoodRecord) {
+        badgeStackView.arrangedSubviews.forEach {
+            badgeStackView.removeArrangedSubview($0)
+            $0.removeFromSuperview()
+        }
+
+        let timeBadge = PillBadgeView(text: record.formattedShortTime)
+        badgeStackView.addArrangedSubview(timeBadge)
+
+        if let district = record.district, !district.isEmpty {
+            let districtBadge = PillBadgeView(text: district)
+            badgeStackView.addArrangedSubview(districtBadge)
         }
     }
 
@@ -248,6 +280,7 @@ final class MealRecordedContentView: UIView {
         let record = cardItems[page].record
         guard record != currentRecord else { return }
         currentRecord = record
+        configureBadges(with: record)
         configureText(with: record)
     }
 
@@ -307,6 +340,10 @@ private final class ActionButton: UIButton {
         configuration.contentInsets = .zero
         self.configuration = configuration
         tintColor = .detailPrimaryText
+        imageView?.contentMode = .scaleAspectFit
+        imageView?.snp.makeConstraints {
+            $0.width.height.equalTo(18)
+        }
         setAttributedTitle(
             NSAttributedString(
                 string: title,
