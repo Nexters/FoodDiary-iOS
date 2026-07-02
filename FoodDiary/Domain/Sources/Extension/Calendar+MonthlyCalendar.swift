@@ -9,7 +9,7 @@ public extension Calendar {
     /// 월간 캘린더 표시 기간 계산 (이전/다음 달 포함)
     func monthlyCalendarPeriod(for date: Date) -> DateInterval {
         var calendar = self
-        calendar.firstWeekday = 2  // 월요일 시작
+        calendar.firstWeekday = 1
         calendar.timeZone = TimeZone(identifier: "Asia/Seoul") ?? TimeZone.current
 
         guard let monthInterval = calendar.dateInterval(of: .month, for: date),
@@ -35,12 +35,7 @@ public extension Calendar {
         ).day ?? 0
 
         let remainder = daysFromStartToMonthEnd % 7
-        var trailingCount = remainder > 0 ? 7 - remainder : 0
-
-        // 28일(4주)인 경우 다음 주 7일 추가
-        if daysFromStartToMonthEnd == 28 {
-            trailingCount += 7
-        }
+        let trailingCount = remainder > 0 ? 7 - remainder : 0
 
         let endDate = calendar.date(
             byAdding: .day,

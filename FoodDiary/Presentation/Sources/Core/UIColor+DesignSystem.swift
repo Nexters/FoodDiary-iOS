@@ -64,4 +64,5 @@ public extension UIColor {
     static let gray050 = DesignSystemAsset.gray050.color
     static let gray020 = DesignSystemAsset.gray020.color
     static let gray850 = DesignSystemAsset.gray850.color
+    static let calendarTileBackground = UIColor(red: 0.953, green: 0.965, blue: 0.976, alpha: 1)
 }

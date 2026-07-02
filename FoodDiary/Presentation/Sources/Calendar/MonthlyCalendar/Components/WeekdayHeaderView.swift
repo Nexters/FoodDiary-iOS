@@ -12,9 +12,9 @@ final class WeekdayHeaderView: UIView {
 
     // MARK: - Constants
 
-    private let weekdays = ["월", "화", "수", "목", "금", "토", "일"]
-
-    // MARK: - UI Components
+    private enum Constants {
+        static let weekdays = ["일", "월", "화", "수", "목", "금", "토"]
+    }
 
     private let stackView: UIStackView = {
         let sv = UIStackView()
@@ -42,9 +42,9 @@ final class WeekdayHeaderView: UIView {
     private func setupUI() {
         addSubview(stackView)
 
-        weekdays.forEach { day in
+        Constants.weekdays.enumerated().forEach { index, day in
             let label = UILabel()
-            label.setText(day, style: .p12, color: .gray300)
+            label.setText(day, style: .p12, color: index == 0 ? .redPostBase : .gray500)
             label.textAlignment = .center
             stackView.addArrangedSubview(label)
         }
