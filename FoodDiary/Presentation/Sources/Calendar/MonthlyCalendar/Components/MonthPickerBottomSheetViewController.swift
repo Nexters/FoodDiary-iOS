@@ -19,7 +19,6 @@ final class MonthPickerBottomSheetViewController: UIViewController {
         static let selectButtonHorizontalInset: CGFloat = 18
         static let selectButtonBottomInset: CGFloat = 40
         static let selectButtonHeight: CGFloat = 47
-        static let selectButtonCornerRadius: CGFloat = 28
 
         static let pickerLabelFontSize: CGFloat = 18
         static let pickerRowHeight: CGFloat = 40
@@ -54,7 +53,7 @@ final class MonthPickerBottomSheetViewController: UIViewController {
     private lazy var closeButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: "xmark"), for: .normal)
-        button.tintColor = .white
+        button.tintColor = .black
         button.addTarget(self, action: #selector(closeButtonTapped), for: .touchUpInside)
         return button
     }()
@@ -67,7 +66,7 @@ final class MonthPickerBottomSheetViewController: UIViewController {
         button.setTitleColor(.white, for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: Constants.pickerLabelFontSize, weight: .semibold)
         button.backgroundColor = DesignSystemAsset.primary.color
-        button.layer.cornerRadius = Constants.selectButtonCornerRadius
+        button.clipsToBounds = true
         button.addTarget(self, action: #selector(selectButtonTapped), for: .touchUpInside)
         return button
     }()
@@ -102,6 +101,11 @@ final class MonthPickerBottomSheetViewController: UIViewController {
         setupConstraints()
         setupPickerView()
     }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        selectButton.layer.cornerRadius = selectButton.bounds.height / 2
+    }
     
     public override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
@@ -111,7 +115,7 @@ final class MonthPickerBottomSheetViewController: UIViewController {
     // MARK: - Setup
 
     private func setupUI() {
-        view.backgroundColor = DesignSystemAsset.sdBase.color
+        view.backgroundColor = .white
         view.addSubview(closeButton)
         view.addSubview(pickerView)
         view.addSubview(selectButton)
@@ -215,7 +219,7 @@ extension MonthPickerBottomSheetViewController: UIPickerViewDelegate {
         let label = (view as? UILabel) ?? UILabel()
         label.textAlignment = .center
         label.font = .systemFont(ofSize: Constants.pickerLabelFontSize, weight: .regular)
-        label.textColor = .white
+        label.textColor = .black
 
         if component == 0 {
             label.text = "\(years[row])년"
