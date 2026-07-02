@@ -15,11 +15,11 @@ final class MealSectionView: UIView {
     // MARK: - Constants
 
     private enum Constants {
-        static let titleTopInset: CGFloat = 42
+        static let titleTopInset: CGFloat = 24
         static let contentTopInset: CGFloat = 16
-        static let horizontalInset: CGFloat = 20
-        static let textHorizontalInset: CGFloat = Self.horizontalInset + 10
-        static let pendingCardHorizontalInset: CGFloat = horizontalInset + 6
+        static let horizontalInset: CGFloat = 16
+        static let textHorizontalInset: CGFloat = Self.horizontalInset
+        static let pendingCardHorizontalInset: CGFloat = horizontalInset
         static let emptyImageSize: CGFloat = 160
         static let emptyTextTopSpacing: CGFloat = 10
     }
@@ -128,12 +128,25 @@ final class MealSectionView: UIView {
         case .snack:
             title = "야식"
         }
-        titleLabel.setText(title, style: .hd20, color: .detailSectionText)
+        titleLabel.attributedText = NSAttributedString(
+            string: title,
+            attributes: [
+                .font: DesignSystemFontFamily.Pretendard.semiBold.font(size: 16),
+                .foregroundColor: UIColor.detailSectionText,
+                .kern: -0.24
+            ]
+        )
     }
 
     private func configureEditButton() {
         let attributed = NSMutableAttributedString(
-            attributedString: Typography.p14.styled("수정", color: .detailSectionText))
+            string: "수정",
+            attributes: [
+                .font: DesignSystemFontFamily.Pretendard.regular.font(size: 13),
+                .foregroundColor: UIColor.detailSectionText,
+                .kern: -0.195
+            ]
+        )
         attributed.addAttribute(
             .underlineStyle, value: NSUnderlineStyle.single.rawValue,
             range: NSRange(location: 0, length: attributed.length))
