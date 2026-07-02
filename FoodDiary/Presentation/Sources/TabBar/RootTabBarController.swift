@@ -10,7 +10,7 @@ import DesignSystem
 import UIKit
 
 public final class RootTabBarController: UITabBarController {
-    let calendarVC: CalendarViewController
+    let calendarVC: MonthlyCalendarViewController
     let insightVC: UIViewController
     private let mypageButtonTapSubject = PassthroughSubject<Void, Never>()
 
@@ -19,7 +19,7 @@ public final class RootTabBarController: UITabBarController {
     }
 
     public init(
-        calendarVC: CalendarViewController,
+        calendarVC: MonthlyCalendarViewController,
         insightVC: UIViewController
     ) {
         self.calendarVC = calendarVC
