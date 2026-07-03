@@ -220,6 +220,16 @@ public final class MonthlyCalendarViewController: UIViewController, UICollection
             .store(in: &cancellables)
 
         viewModel.statePublisher
+            .map(\.currentDisplayDate)
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] date in
+                let isCurrentMonth = Calendar.current.isDate(date, equalTo: Date(), toGranularity: .month)
+                self?.monthYearHeaderView.setTodayButtonHidden(isCurrentMonth)
+            }
+            .store(in: &cancellables)
+
+        viewModel.statePublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] state in
                 self?.updateCalendar(days: state.monthDays, numberOfWeeks: state.numberOfWeeks)

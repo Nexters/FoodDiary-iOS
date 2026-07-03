@@ -121,6 +121,10 @@ final class MonthlyCalendarHeaderView: UIView {
         monthYearLabel.setText(text, style: .p15, color: .grayBase)
     }
 
+    func setTodayButtonHidden(_ isHidden: Bool) {
+        todayButton.isHidden = isHidden
+    }
+
     func resetChevron() {
         UIView.transition(
             with: chevronButton,
