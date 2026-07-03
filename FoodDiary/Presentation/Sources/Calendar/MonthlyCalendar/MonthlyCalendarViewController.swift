@@ -587,9 +587,9 @@ private final class SelectedDayMealSummaryView: UIView {
     private let stackView = UIStackView()
     private let mealRowConfigurations: [MealRowConfiguration] = [
         MealRowConfiguration(mealType: .breakfast, title: "아침", subtitle: "오전 5시 ~ 오전 10시"),
-        MealRowConfiguration(mealType: .lunch, title: "점심", subtitle: "오전 11시 ~ 오후 3시"),
-        MealRowConfiguration(mealType: .dinner, title: "저녁", subtitle: "오후 4시 ~ 오후 8시"),
-        MealRowConfiguration(mealType: .snack, title: "야식", subtitle: "오후 9시 ~ 오전 4시")
+        MealRowConfiguration(mealType: .lunch, title: "점심", subtitle: "오전 10시 ~ 오후 5시"),
+        MealRowConfiguration(mealType: .dinner, title: "저녁", subtitle: "오후 5시 ~ 오후 10시"),
+        MealRowConfiguration(mealType: .snack, title: "야식", subtitle: "오후 10시 ~ 오전 5시")
     ]
     private lazy var rows: [MealRowView] = mealRowConfigurations.map {
         MealRowView(title: $0.title, subtitle: $0.subtitle)
