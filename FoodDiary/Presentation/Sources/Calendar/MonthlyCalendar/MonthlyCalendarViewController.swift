@@ -740,8 +740,6 @@ private final class MealImageStackView: UIView {
         placeholderView.image = DesignSystemAsset.calendarEmptyMeal.image
         placeholderView.contentMode = .scaleAspectFit
         placeholderView.layer.cornerRadius = 10
-        placeholderView.layer.borderWidth = 1
-        placeholderView.layer.borderColor = UIColor.gray300.cgColor
         placeholderView.isHidden = true
         addSubview(placeholderView)
         placeholderView.snp.makeConstraints {
