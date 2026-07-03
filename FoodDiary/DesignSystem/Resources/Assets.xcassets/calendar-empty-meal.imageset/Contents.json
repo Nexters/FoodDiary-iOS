@@ -1,15 +1,17 @@
 {
   "images" : [
     {
+      "filename" : "pic.svg",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
+      "filename" : "pic 1.svg",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "calendar-empty-meal@3x.png",
+      "filename" : "pic 2.svg",
       "idiom" : "universal",
       "scale" : "3x"
     }

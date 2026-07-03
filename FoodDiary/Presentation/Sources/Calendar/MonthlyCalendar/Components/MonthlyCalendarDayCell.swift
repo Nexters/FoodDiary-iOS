@@ -89,7 +89,6 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
     // MARK: - Configuration
 
     func configure(with day: MonthlyCalendarDay, selectedDate: Date) {
-        isUserInteractionEnabled = day.isCurrentMonth
         applyRecordStyle(photoURLs: day.imageURLs)
 
         applyDayNumberStyle(
