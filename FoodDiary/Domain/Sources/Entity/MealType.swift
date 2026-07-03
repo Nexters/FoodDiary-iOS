@@ -20,8 +20,8 @@ public enum MealType: String, Sendable, CaseIterable, Equatable, Codable {
     public static func classify(from hour: Int) -> MealType {
         switch hour {
         case 5..<11: return .breakfast
-        case 11..<16: return .lunch
-        case 16..<21: return .dinner
+        case 10..<18: return .lunch
+        case 17..<23: return .dinner
         default: return .snack
         }
     }
