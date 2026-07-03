@@ -464,7 +464,7 @@ extension MonthlyCalendarViewController {
         static var progressHeight: CGFloat { 36 }
         static var selectedDateTopOffset: CGFloat { 34 }
         static var summaryTopOffset: CGFloat { 12 }
-        static var summaryHeight: CGFloat { 203 }
+        static var summaryHeight: CGFloat { 264 }
         static var numberOfDaysInWeek: CGFloat { 7 }
         static var monthPickerDetentRatio: CGFloat { 0.45 }
     }
@@ -563,17 +563,27 @@ private final class MonthlyRecordProgressView: UIView {
 }
 
 private final class SelectedDayMealSummaryView: UIView {
+    private struct MealRowConfiguration {
+        let mealType: MealType
+        let title: String
+        let subtitle: String
+    }
+
     private let tapSubject = PassthroughSubject<Void, Never>()
     var tapPublisher: AnyPublisher<Void, Never> {
         tapSubject.eraseToAnyPublisher()
     }
 
     private let stackView = UIStackView()
-    private let rows: [MealRowView] = [
-        MealRowView(title: "아침", subtitle: "오전 5시 ~ 오전 10시"),
-        MealRowView(title: "점심", subtitle: "오전 11시 ~ 오후 12시"),
-        MealRowView(title: "저녁", subtitle: "오후 5시 ~ 오후 9시")
+    private let mealRowConfigurations: [MealRowConfiguration] = [
+        MealRowConfiguration(mealType: .breakfast, title: "아침", subtitle: "오전 5시 ~ 오전 10시"),
+        MealRowConfiguration(mealType: .lunch, title: "점심", subtitle: "오전 11시 ~ 오후 3시"),
+        MealRowConfiguration(mealType: .dinner, title: "저녁", subtitle: "오후 4시 ~ 오후 8시"),
+        MealRowConfiguration(mealType: .snack, title: "야식", subtitle: "오후 9시 ~ 오전 4시")
     ]
+    private lazy var rows: [MealRowView] = mealRowConfigurations.map {
+        MealRowView(title: $0.title, subtitle: $0.subtitle)
+    }
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -588,16 +598,13 @@ private final class SelectedDayMealSummaryView: UIView {
 
     func configure(records: [FoodRecord], processingRecords: [FoodRecord], hasFoodPhotos: Bool) {
         let allRecords = records + processingRecords
-        let breakfastImageURLs = imageURLs(in: allRecords, for: .breakfast)
-        let lunchImageURLs = imageURLs(in: allRecords, for: .lunch)
-        let dinnerImageURLs = imageURLs(in: allRecords, for: .dinner)
-
-        rows[0].configure(imageURLs: breakfastImageURLs, showsPlaceholder: breakfastImageURLs.isEmpty)
-        rows[1].configure(imageURLs: lunchImageURLs, showsPlaceholder: lunchImageURLs.isEmpty)
-        rows[2].configure(
-            imageURLs: dinnerImageURLs,
-            showsPlaceholder: dinnerImageURLs.isEmpty || !hasFoodPhotos
-        )
+        for (configuration, row) in zip(mealRowConfigurations, rows) {
+            let imageURLs = imageURLs(in: allRecords, for: configuration.mealType)
+            row.configure(
+                imageURLs: imageURLs,
+                showsPlaceholder: imageURLs.isEmpty || (configuration.mealType == .dinner && !hasFoodPhotos)
+            )
+        }
     }
 
     private func setupUI() {
