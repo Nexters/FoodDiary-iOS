@@ -31,16 +31,16 @@ final class InsightDiaryTimeStatsView: UIView {
     // MARK: - Setup
 
     private func setupUI(diaryTimeStats: DiaryTimeStats) {
-        backgroundColor = .sd900
+        backgroundColor = .detailCardBackground
         layer.cornerRadius = 16
         clipsToBounds = true
 
         let timeText = diaryTimeStats.mostActiveTime
 
         let attributed = NSMutableAttributedString()
-        attributed.append(Typography.hd15.styled("식사는 늘,\n", color: .white, lineSpacing: 6))
+        attributed.append(Typography.hd15.styled("식사는 늘,\n", color: .gray850, lineSpacing: 6))
         attributed.append(Typography.hd15.styled(timeText, color: .primary))
-        attributed.append(Typography.hd15.styled(" 이 제일 많았어요", color: .gray200))
+        attributed.append(Typography.hd15.styled(" 이 제일 많았어요", color: .gray600))
 
         titleLabel.attributedText = attributed
         titleLabel.numberOfLines = 0
