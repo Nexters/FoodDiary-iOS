@@ -10,9 +10,7 @@ final class SplashView: UIView {
     init() {
         super.init(frame: .zero)
 
-        backgroundColor = UIColor(
-            red: 0.098, green: 0.094, blue: 0.129, alpha: 1
-        )
+        backgroundColor = .white
 
         let logoImageView = UIImageView(image: UIImage(named: "logo"))
         logoImageView.contentMode = .scaleAspectFit

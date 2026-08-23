@@ -16,7 +16,7 @@ public final class FoodRecordCardView: UIView {
 
     private enum Constants {
         static let cornerRadius: CGFloat = 20
-        static let imageInset: CGFloat = 4
+        static let imageInset: CGFloat = 0
         static let badgeTopInset: CGFloat = 16
         static let badgeLeadingInset: CGFloat = 16
         static let badgeSpacing: CGFloat = 4
@@ -27,6 +27,8 @@ public final class FoodRecordCardView: UIView {
     // MARK: - State
 
     private let imageURL: URL?
+    private let showsBadges: Bool
+    private let timeText: String
     private var isConfigured = false
 
     // MARK: - UI Components
@@ -63,6 +65,8 @@ public final class FoodRecordCardView: UIView {
 
     public init(time: String, district: String?, imageURL: URL?) {
         self.imageURL = imageURL
+        self.showsBadges = !time.isEmpty || district != nil
+        self.timeText = time
         self.timeBadge = PillBadgeView(text: time)
         self.locationBadge = district.map { PillBadgeView(text: $0) }
         super.init(frame: .zero)
@@ -87,9 +91,13 @@ public final class FoodRecordCardView: UIView {
     private func setupUI() {
         addSubview(containerView)
         containerView.addSubview(foodImageView)
-        containerView.addSubview(badgeStackView)
+        if showsBadges {
+            containerView.addSubview(badgeStackView)
+        }
 
-        badgeStackView.addArrangedSubview(timeBadge)
+        if !timeText.isEmpty {
+            badgeStackView.addArrangedSubview(timeBadge)
+        }
         if let locationBadge {
             badgeStackView.addArrangedSubview(locationBadge)
         }
@@ -104,9 +112,11 @@ public final class FoodRecordCardView: UIView {
             $0.edges.equalToSuperview().inset(Constants.imageInset)
         }
 
-        badgeStackView.snp.makeConstraints {
-            $0.top.equalTo(foodImageView).offset(Constants.badgeTopInset)
-            $0.leading.equalTo(foodImageView).offset(Constants.badgeLeadingInset)
+        if showsBadges {
+            badgeStackView.snp.makeConstraints {
+                $0.top.equalTo(foodImageView).offset(Constants.badgeTopInset)
+                $0.leading.equalTo(foodImageView).offset(Constants.badgeLeadingInset)
+            }
         }
     }
 

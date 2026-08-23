@@ -50,14 +50,14 @@ final class InsightPhotoStatsView: UIView {
     // MARK: - Setup
 
     private func setupUI(photoStats: PhotoStats, month: String) {
-        backgroundColor = .sd900
+        backgroundColor = .detailCardBackground
         layer.cornerRadius = 16
         clipsToBounds = true
 
         let descriptionText = photoStats.changeRate >= 0
             ? "먹기 전에\n카메라부터 찾았네요."
             : "이번 달엔 음식에 더 집중하셨네요."
-        descriptionLabel.setText(descriptionText, style: .hd15, color: .gray050, lineSpacing: 6)
+        descriptionLabel.setText(descriptionText, style: .hd15, color: .gray850, lineSpacing: 6)
         descriptionLabel.numberOfLines = 2
 
         setupChangeRateLabel(photoStats: photoStats)
@@ -75,13 +75,13 @@ final class InsightPhotoStatsView: UIView {
         let rate = photoStats.changeRate
 
         let prefixLabel = UILabel()
-        prefixLabel.setText("지난 달 대비 기록된 사진이 ", style: .p10, color: .gray050)
+        prefixLabel.setText("지난 달 대비 기록된 사진이 ", style: .p10, color: .gray600)
 
         let valueLabel = UILabel()
         valueLabel.setText("\(abs(rate))%", style: .hd16, color: .primary)
 
         let suffixLabel = UILabel()
-        suffixLabel.setText(rate >= 0 ? " 증가했어요." : " 감소했어요.", style: .p10, color: .gray050)
+        suffixLabel.setText(rate >= 0 ? " 증가했어요." : " 감소했어요.", style: .p10, color: .gray600)
 
         changeRateStackView.axis = .horizontal
         changeRateStackView.alignment = .center
@@ -106,7 +106,7 @@ final class InsightPhotoStatsView: UIView {
 
         for _ in 0..<Constants.lineCount {
             let line = UIView()
-            line.backgroundColor = .sd800
+            line.backgroundColor = .gray150
             line.translatesAutoresizingMaskIntoConstraints = false
             line.heightAnchor.constraint(equalToConstant: 0.5).isActive = true
             linesStackView.addArrangedSubview(line)
@@ -159,7 +159,7 @@ final class InsightPhotoStatsView: UIView {
 
         for name in ["\(previousMonthNum)월", "\(currentMonthNum)월"] {
             let label = UILabel()
-            label.setText(name, style: .p10, color: .gray200)
+            label.setText(name, style: .p10, color: .gray500)
             label.textAlignment = .center
             label.snp.makeConstraints { $0.width.equalTo(60) }
             monthLabelsStackView.addArrangedSubview(label)

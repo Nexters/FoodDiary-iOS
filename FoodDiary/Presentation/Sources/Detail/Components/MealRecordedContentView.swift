@@ -8,105 +8,91 @@ import Domain
 import SnapKit
 import UIKit
 
-/// 음식 기록이 있을 때 표시되는 카드 캐러셀 + 정보 영역
+/// 음식 기록이 있을 때 표시되는 카드형 콘텐츠
 final class MealRecordedContentView: UIView {
 
-    // MARK: - Constants
-
     private enum Constants {
-        static let cardSpacing: CGFloat = 12
+        static let horizontalInset: CGFloat = 16
+        static let verticalInset: CGFloat = 20
+        static let topRowBottomSpacing: CGFloat = 14
         static let pageControlTopSpacing: CGFloat = 8
         static let pageControlHeight: CGFloat = 20
-        static let infoTopSpacing: CGFloat = 16
-        static let buttonSpacing: CGFloat = 10
-        static let hashtagTopSpacing: CGFloat = 16
+        static let textTopSpacing: CGFloat = 16
+        static let hashtagTopSpacing: CGFloat = 6
+        static let actionSpacing: CGFloat = 10
+        static let badgeSpacing: CGFloat = 12
         static let buttonImagePadding: CGFloat = 4
-        static let textHorizontalInset: CGFloat = 10
-        static let noteTopSpacing: CGFloat = 16
     }
-
-    // MARK: - Types
 
     private struct CardItem {
         let record: FoodRecord
         let imageURL: URL
     }
 
-    // MARK: - Handlers
-
     private let onCopyTapped: ((FoodRecord) -> Void)?
     private let onShareTapped: ((FoodRecord) -> Void)?
-
-    // MARK: - State
 
     private var cardItems: [CardItem] = []
     private var currentRecord: FoodRecord?
 
-    // MARK: - Constraints
+    private var contentTopWithPageControl: Constraint?
+    private var contentTopWithoutPageControl: Constraint?
 
-    private var labelTrailingWithButton: Constraint?
-    private var labelTrailingWithoutButton: Constraint?
-    private var infoTopWithPageControl: Constraint?
-    private var infoTopWithoutPageControl: Constraint?
-    private var infoBottomConstraint: Constraint?
+    private let badgeStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.alignment = .center
+        stackView.spacing = Constants.badgeSpacing
+        return stackView
+    }()
 
-    // MARK: - UI Components
+    private let actionStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.alignment = .center
+        stackView.spacing = Constants.actionSpacing
+        return stackView
+    }()
 
     private lazy var collectionView: UICollectionView = {
-        let cv = UICollectionView(frame: .zero, collectionViewLayout: createLayout())
-        cv.backgroundColor = .clear
-        cv.showsHorizontalScrollIndicator = false
-        cv.isScrollEnabled = false
-        cv.delegate = self
-        cv.dataSource = self
-        cv.register(
-            DetailFoodCardCell.self, forCellWithReuseIdentifier: DetailFoodCardCell.reuseIdentifier)
-        return cv
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: createLayout())
+        collectionView.backgroundColor = .clear
+        collectionView.showsHorizontalScrollIndicator = false
+        collectionView.isScrollEnabled = false
+        collectionView.delegate = self
+        collectionView.dataSource = self
+        collectionView.register(
+            DetailFoodCardCell.self,
+            forCellWithReuseIdentifier: DetailFoodCardCell.reuseIdentifier
+        )
+        return collectionView
     }()
 
     private lazy var pageControl: UIPageControl = {
-        let pc = UIPageControl()
-        pc.currentPageIndicatorTintColor = .primary
-        pc.pageIndicatorTintColor = UIColor.white.withAlphaComponent(0.3)
-        pc.addTarget(self, action: #selector(pageControlChanged), for: .valueChanged)
-        return pc
+        let pageControl = UIPageControl()
+        pageControl.currentPageIndicatorTintColor = .primary
+        pageControl.pageIndicatorTintColor = .detailStroke
+        pageControl.addTarget(self, action: #selector(pageControlChanged), for: .valueChanged)
+        return pageControl
     }()
 
-    private let infoContainerView = UIView()
-
+    private let textContainerView = UIView()
     private let restaurantNameLabel = UILabel()
-
-    private let copyButton: UIButton = {
-        var config = UIButton.Configuration.plain()
-        config.image = DesignSystemAsset.iconCopy.image
-            .withRenderingMode(.alwaysTemplate)
-        config.imagePadding = Constants.buttonImagePadding
-        config.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)
-        let button = UIButton(configuration: config)
-        button.tintColor = .white
-        return button
-    }()
-
-    private let shareButton: UIButton = {
-        var config = UIButton.Configuration.plain()
-        config.image = UIImage(systemName: "link")?
-            .withConfiguration(UIImage.SymbolConfiguration(pointSize: 12, weight: .regular))
-        config.imagePadding = Constants.buttonImagePadding
-        config.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)
-        let button = UIButton(configuration: config)
-        button.tintColor = .white
-        return button
-    }()
-
     private let hashtagLabel: UILabel = {
         let label = UILabel()
         label.numberOfLines = 0
         return label
     }()
 
-    private var noteView: NoteContentView?
+    private lazy var copyButton = ActionButton(
+        title: "복사",
+        image: DesignSystemAsset.iconCopy.image
+    )
 
-    // MARK: - Init
+    private lazy var shareButton = ActionButton(
+        title: "공유",
+        image: DesignSystemAsset.iconShare.image
+    )
 
     init(
         records: [FoodRecord],
@@ -132,22 +118,39 @@ final class MealRecordedContentView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Setup
-
     private func setupUI() {
+        backgroundColor = .detailCardBackground
+        layer.cornerRadius = 10
+        clipsToBounds = true
+
+        addSubview(badgeStackView)
+        addSubview(actionStackView)
         addSubview(collectionView)
         addSubview(pageControl)
-        addSubview(infoContainerView)
+        addSubview(textContainerView)
 
-        infoContainerView.addSubview(restaurantNameLabel)
-        infoContainerView.addSubview(copyButton)
-        infoContainerView.addSubview(shareButton)
-        infoContainerView.addSubview(hashtagLabel)
+        textContainerView.addSubview(restaurantNameLabel)
+        textContainerView.addSubview(hashtagLabel)
+
+        actionStackView.addArrangedSubview(copyButton)
+        actionStackView.addArrangedSubview(shareButton)
     }
 
     private func setupConstraints() {
+        badgeStackView.snp.makeConstraints {
+            $0.top.equalToSuperview().inset(Constants.verticalInset)
+            $0.leading.equalToSuperview().inset(Constants.horizontalInset)
+            $0.centerY.equalTo(actionStackView)
+            $0.trailing.lessThanOrEqualTo(actionStackView.snp.leading).offset(-12)
+        }
+
+        actionStackView.snp.makeConstraints {
+            $0.top.equalToSuperview().inset(Constants.verticalInset)
+            $0.trailing.equalToSuperview().inset(Constants.horizontalInset)
+        }
+
         collectionView.snp.makeConstraints {
-            $0.top.equalToSuperview()
+            $0.top.equalTo(actionStackView.snp.bottom).offset(Constants.topRowBottomSpacing)
             $0.leading.trailing.equalToSuperview()
             $0.height.equalTo(collectionView.snp.width)
         }
@@ -158,40 +161,23 @@ final class MealRecordedContentView: UIView {
             $0.height.equalTo(Constants.pageControlHeight)
         }
 
-        infoContainerView.snp.makeConstraints {
-            infoTopWithPageControl = $0.top
-                .equalTo(pageControl.snp.bottom).offset(Constants.infoTopSpacing).constraint
-            infoTopWithoutPageControl = $0.top
-                .equalTo(collectionView.snp.bottom).offset(Constants.infoTopSpacing).constraint
-            $0.leading.trailing.equalToSuperview().inset(Constants.textHorizontalInset)
-            $0.bottom.equalToSuperview()
+        textContainerView.snp.makeConstraints {
+            contentTopWithPageControl = $0.top.equalTo(pageControl.snp.bottom).offset(Constants.textTopSpacing).constraint
+            contentTopWithoutPageControl = $0.top.equalTo(collectionView.snp.bottom).offset(Constants.textTopSpacing).constraint
+            $0.leading.trailing.equalToSuperview()
+            $0.bottom.equalToSuperview().inset(Constants.verticalInset)
         }
-        infoTopWithoutPageControl?.deactivate()
+        contentTopWithoutPageControl?.deactivate()
 
         restaurantNameLabel.snp.makeConstraints {
-            $0.top.leading.equalToSuperview()
-            labelTrailingWithButton = $0.trailing
-                .lessThanOrEqualTo(copyButton.snp.leading).offset(-8).constraint
-            labelTrailingWithoutButton = $0.trailing
-                .lessThanOrEqualToSuperview().constraint
-        }
-        labelTrailingWithoutButton?.deactivate()
-
-        shareButton.snp.makeConstraints {
-            $0.centerY.equalTo(restaurantNameLabel)
-            $0.trailing.equalToSuperview()
-            $0.height.greaterThanOrEqualTo(44)
-        }
-
-        copyButton.snp.makeConstraints {
-            $0.centerY.equalTo(restaurantNameLabel)
-            $0.trailing.equalTo(shareButton.snp.leading)
-            $0.height.greaterThanOrEqualTo(44)
+            $0.top.equalToSuperview()
+            $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
         }
 
         hashtagLabel.snp.makeConstraints {
             $0.top.equalTo(restaurantNameLabel.snp.bottom).offset(Constants.hashtagTopSpacing)
-            $0.leading.trailing.equalToSuperview()
+            $0.leading.trailing.equalToSuperview().inset(Constants.horizontalInset)
+            $0.bottom.equalToSuperview()
         }
     }
 
@@ -201,12 +187,7 @@ final class MealRecordedContentView: UIView {
             heightDimension: .fractionalHeight(1.0)
         )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        item.contentInsets = NSDirectionalEdgeInsets(
-            top: 0,
-            leading: Constants.cardSpacing / 2,
-            bottom: 0,
-            trailing: Constants.cardSpacing / 2
-        )
+        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 6, bottom: 0, trailing: 6)
 
         let groupSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
@@ -218,6 +199,7 @@ final class MealRecordedContentView: UIView {
         section.orthogonalScrollingBehavior = .groupPaging
         section.visibleItemsInvalidationHandler = { [weak self] _, offset, environment in
             let pageWidth = environment.container.contentSize.width
+            guard pageWidth > 0 else { return }
             let currentPage = Int((offset.x + pageWidth / 2) / pageWidth)
             self?.pageControl.currentPage = currentPage
             self?.updateCurrentRecord(for: currentPage)
@@ -238,70 +220,59 @@ final class MealRecordedContentView: UIView {
         let showPageControl = cardItems.count > 1
         pageControl.isHidden = !showPageControl
         if showPageControl {
-            infoTopWithPageControl?.activate()
-            infoTopWithoutPageControl?.deactivate()
+            contentTopWithPageControl?.activate()
+            contentTopWithoutPageControl?.deactivate()
         } else {
-            infoTopWithPageControl?.deactivate()
-            infoTopWithoutPageControl?.activate()
+            contentTopWithPageControl?.deactivate()
+            contentTopWithoutPageControl?.activate()
         }
 
         if let record = cardItems.first?.record {
             currentRecord = record
-            configureInfoSection(with: record)
+            configureBadges(with: record)
+            configureText(with: record)
         }
     }
 
-    private func configureInfoSection(with record: FoodRecord) {
-        let hasName = !(record.restaurantName ?? "").isEmpty
-
-        if hasName {
-            restaurantNameLabel.setText(record.restaurantName!, style: .hd16, color: .white)
-            copyButton.isHidden = false
-            shareButton.isHidden = false
-            labelTrailingWithButton?.activate()
-            labelTrailingWithoutButton?.deactivate()
-        } else {
-            restaurantNameLabel.setText("수정버튼을 눌러 내용을 기록해 보세요", style: .p12, color: .gray400)
-            copyButton.isHidden = true
-            shareButton.isHidden = true
-            labelTrailingWithButton?.deactivate()
-            labelTrailingWithoutButton?.activate()
+    private func configureBadges(with record: FoodRecord) {
+        badgeStackView.arrangedSubviews.forEach {
+            badgeStackView.removeArrangedSubview($0)
+            $0.removeFromSuperview()
         }
 
-        let copyTitle = Typography.p12.styled("복사", color: .white)
-        copyButton.setAttributedTitle(copyTitle, for: .normal)
+        let timeBadge = PillBadgeView(text: record.formattedShortTime)
+        badgeStackView.addArrangedSubview(timeBadge)
 
-        let shareTitle = Typography.p12.styled("공유", color: .white)
-        shareButton.setAttributedTitle(shareTitle, for: .normal)
+        if let district = record.district, !district.isEmpty {
+            let districtBadge = PillBadgeView(text: district)
+            badgeStackView.addArrangedSubview(districtBadge)
+        }
+    }
+
+    private func configureText(with record: FoodRecord) {
+        if let restaurantName = record.restaurantName, !restaurantName.isEmpty {
+            restaurantNameLabel.attributedText = NSAttributedString(
+                string: restaurantName,
+                attributes: [
+                    .font: DesignSystemFontFamily.Pretendard.semiBold.font(size: 14),
+                    .foregroundColor: UIColor.detailPrimaryText,
+                    .kern: -0.21
+                ]
+            )
+        } else {
+            restaurantNameLabel.setText("수정버튼을 눌러 내용을 기록해 보세요", style: .p12, color: .detailMutedText)
+        }
 
         let hashtagText = record.hashtags.map { "#\($0)" }.joined(separator: " ")
-        hashtagLabel.setText(hashtagText, style: .p12, color: .white)
-        hashtagLabel.isHidden = record.hashtags.isEmpty
-
-        configureNoteSection(with: record)
-    }
-
-    private func configureNoteSection(with record: FoodRecord) {
-        noteView?.removeFromSuperview()
-        noteView = nil
-        infoBottomConstraint?.deactivate()
-
-        let hasNote = !(record.note ?? "").isEmpty
-
-        if hasNote {
-            let newNoteView = NoteContentView(note: record.note!)
-            infoContainerView.addSubview(newNoteView)
-            newNoteView.snp.makeConstraints {
-                $0.top.equalTo(hashtagLabel.snp.bottom).offset(Constants.noteTopSpacing)
-                $0.leading.trailing.equalToSuperview()
-                infoBottomConstraint = $0.bottom.equalToSuperview().constraint
-            }
-            noteView = newNoteView
-        } else {
-            hashtagLabel.snp.makeConstraints {
-                infoBottomConstraint = $0.bottom.equalToSuperview().constraint
-            }
-        }
+        hashtagLabel.attributedText = NSAttributedString(
+            string: hashtagText,
+            attributes: [
+                .font: DesignSystemFontFamily.Pretendard.regular.font(size: 10),
+                .foregroundColor: UIColor.detailMutedText,
+                .kern: -0.15
+            ]
+        )
+        hashtagLabel.isHidden = hashtagText.isEmpty
     }
 
     private func updateCurrentRecord(for page: Int) {
@@ -309,10 +280,9 @@ final class MealRecordedContentView: UIView {
         let record = cardItems[page].record
         guard record != currentRecord else { return }
         currentRecord = record
-        configureInfoSection(with: record)
+        configureBadges(with: record)
+        configureText(with: record)
     }
-
-    // MARK: - Actions
 
     @objc private func pageControlChanged() {
         let indexPath = IndexPath(item: pageControl.currentPage, section: 0)
@@ -320,22 +290,18 @@ final class MealRecordedContentView: UIView {
     }
 
     @objc private func copyTapped() {
-        guard let record = currentRecord else { return }
-        onCopyTapped?(record)
+        guard let currentRecord else { return }
+        onCopyTapped?(currentRecord)
     }
 
     @objc private func shareTapped() {
-        guard let record = currentRecord else { return }
-        onShareTapped?(record)
+        guard let currentRecord else { return }
+        onShareTapped?(currentRecord)
     }
 }
 
-// MARK: - UICollectionViewDataSource
-
 extension MealRecordedContentView: UICollectionViewDataSource {
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int)
-        -> Int
-    {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         cardItems.count
     }
 
@@ -354,15 +320,45 @@ extension MealRecordedContentView: UICollectionViewDataSource {
 
         let cardItem = cardItems[indexPath.item]
         cell.configure(
-            time: cardItem.record.formattedShortTime,
-            district: cardItem.record.district,
+            time: "",
+            district: nil,
             imageURL: cardItem.imageURL
         )
-
         return cell
     }
 }
 
-// MARK: - UICollectionViewDelegate
-
 extension MealRecordedContentView: UICollectionViewDelegate {}
+
+private final class ActionButton: UIButton {
+    init(title: String, image: UIImage?) {
+        super.init(frame: .zero)
+
+        var configuration = UIButton.Configuration.plain()
+        configuration.image = image
+        configuration.imagePadding = 4
+        configuration.contentInsets = .zero
+        self.configuration = configuration
+        tintColor = .detailPrimaryText
+        imageView?.contentMode = .scaleAspectFit
+        imageView?.snp.makeConstraints {
+            $0.width.height.equalTo(18)
+        }
+        setAttributedTitle(
+            NSAttributedString(
+                string: title,
+                attributes: [
+                    .font: DesignSystemFontFamily.Pretendard.regular.font(size: 12),
+                    .foregroundColor: UIColor.detailPrimaryText,
+                    .kern: -0.18
+                ]
+            ),
+            for: .normal
+        )
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}

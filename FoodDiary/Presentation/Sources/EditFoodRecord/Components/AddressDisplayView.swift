@@ -71,6 +71,19 @@ final class AddressDisplayView: UIView {
     private func setupUI() {
         addSubview(stackView)
 
+        addressField.applyColors(
+            backgroundColor: .gray040,
+            textColor: .gray850,
+            placeholderColor: .gray600,
+            iconColor: .gray850
+        )
+        detailAddressTextField.applyColors(
+            backgroundColor: .gray040,
+            textColor: .gray850,
+            placeholderColor: .gray600,
+            iconColor: .gray850
+        )
+
         addressFieldContainer.addSubview(addressField)
 
         stackView.addArrangedSubview(addressFieldContainer)
@@ -107,7 +120,7 @@ final class AddressDisplayView: UIView {
     func configure(address: String?, detailAddress: String) {
         if let address, !address.isEmpty {
             addressField.text = address
-            addressField.textColor = .white
+            addressField.textColor = .gray850
             detailAddressTextField.isHidden = false
             detailAddressTextField.text = detailAddress
         } else {

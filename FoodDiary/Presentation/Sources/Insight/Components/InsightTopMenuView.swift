@@ -43,7 +43,7 @@ final class InsightTopMenuView: UIView {
     // MARK: - Setup
 
     private func setupUI(weeklyStats: WeeklyStats) {
-        backgroundColor = .sd900
+        backgroundColor = .detailCardBackground
         layer.cornerRadius = 16
         clipsToBounds = true
 
@@ -54,7 +54,7 @@ final class InsightTopMenuView: UIView {
 
     private func setupTitle(week: Int) {
         let attributed = NSMutableAttributedString()
-        attributed.append(Typography.hd15.styled("이번달 가장 자주먹은\n주차는 ", color: .white, lineSpacing: 6))
+        attributed.append(Typography.hd15.styled("이번달 가장 자주먹은\n주차는 ", color: .gray850, lineSpacing: 6))
         attributed.append(Typography.hd15.styled("\(week)주차", color: .primary))
 
         titleLabel.attributedText = attributed
@@ -63,7 +63,7 @@ final class InsightTopMenuView: UIView {
     }
 
     private func setupSeparator() {
-        separatorView.backgroundColor = .sd800
+        separatorView.backgroundColor = .gray150
         addSubview(separatorView)
     }
 
@@ -77,7 +77,7 @@ final class InsightTopMenuView: UIView {
 
         for _ in 0..<Constants.lineCount {
             let line = UIView()
-            line.backgroundColor = .sd800
+            line.backgroundColor = .gray150
             line.translatesAutoresizingMaskIntoConstraints = false
             line.heightAnchor.constraint(equalToConstant: 0.5).isActive = true
             linesStackView.addArrangedSubview(line)
@@ -112,7 +112,7 @@ final class InsightTopMenuView: UIView {
         barView.addSubview(countLabel)
 
         let weekLabel = UILabel()
-        weekLabel.setText("\(weekCount.week)주차", style: .p10, color: .gray200)
+        weekLabel.setText("\(weekCount.week)주차", style: .p10, color: .gray500)
         weekLabel.textAlignment = .center
         column.addSubview(weekLabel)
 

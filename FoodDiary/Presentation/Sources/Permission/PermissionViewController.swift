@@ -17,7 +17,7 @@ public final class PermissionViewController: UIViewController {
         label.numberOfLines = 2
         label.textAlignment = .left
         label.setText("앱 사용을 위해\n접근 권한을 허용해주세요", style: .hd18, lineSpacing: 6)
-        label.textColor = DesignSystemAsset.gray050.color
+        label.textColor = DesignSystemAsset.gray850.color
         return label
     }()
 
@@ -25,13 +25,13 @@ public final class PermissionViewController: UIViewController {
         let label = UILabel()
         label.textAlignment = .left
         label.setText("필수적 접근 권한", style: .p14)
-        label.textColor = DesignSystemAsset.gray400.color
+        label.textColor = DesignSystemAsset.gray600.color
         return label
     }()
 
     private let permissionCardView: UIView = {
         let view = UIView()
-        view.backgroundColor = .white.withAlphaComponent(0.02)
+        view.backgroundColor = DesignSystemAsset.gray040.color
         view.layer.cornerRadius = 16
         return view
     }()
@@ -51,7 +51,7 @@ public final class PermissionViewController: UIViewController {
 
     private let permissionNameLabel: UILabel = {
         let label = UILabel()
-        label.textColor = DesignSystemAsset.gray050.color
+        label.textColor = DesignSystemAsset.gray850.color
         label.setText("사진", style: .p15)
         return label
     }()
@@ -59,7 +59,7 @@ public final class PermissionViewController: UIViewController {
     private let permissionDescriptionLabel: UILabel = {
         let label = UILabel()
         label.setText("기록 시 사진 사용", style: .p15)
-        label.textColor = DesignSystemAsset.gray400.color
+        label.textColor = DesignSystemAsset.gray600.color
         return label
     }()
 
@@ -67,7 +67,7 @@ public final class PermissionViewController: UIViewController {
         let label = UILabel()
         label.textAlignment = .left
         label.setText("권한 허용이 되지 않는다면 앱을 사용할 수 없습니다.", style: .p12)
-        label.textColor = DesignSystemAsset.gray400.color
+        label.textColor = DesignSystemAsset.gray600.color
         return label
     }()
 
@@ -101,7 +101,7 @@ public final class PermissionViewController: UIViewController {
 
 private extension PermissionViewController {
     func setupUI() {
-        view.backgroundColor = DesignSystemAsset.sdBase.color
+        view.backgroundColor = DesignSystemAsset.white.color
 
         view.addSubview(titleLabel)
         view.addSubview(sectionLabel)

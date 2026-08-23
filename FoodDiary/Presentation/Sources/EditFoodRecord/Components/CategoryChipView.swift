@@ -91,10 +91,13 @@ final class CategoryChipView: UIView {
     private func updateAppearance() {
         if isChipSelected {
             backgroundColor = .primary
+            layer.borderWidth = 0
             label.setText(genre.displayName, style: .p14, color: .white)
         } else {
-            backgroundColor = .sd900
-            label.setText(genre.displayName, style: .p14, color: .gray400)
+            backgroundColor = .white
+            layer.borderWidth = 1
+            layer.borderColor = UIColor.gray200.cgColor
+            label.setText(genre.displayName, style: .p14, color: .gray850)
         }
     }
 

@@ -15,11 +15,11 @@ final class MealSectionView: UIView {
     // MARK: - Constants
 
     private enum Constants {
-        static let titleTopInset: CGFloat = 42
+        static let titleTopInset: CGFloat = 24
         static let contentTopInset: CGFloat = 16
-        static let horizontalInset: CGFloat = 20
-        static let textHorizontalInset: CGFloat = Self.horizontalInset + 10
-        static let pendingCardHorizontalInset: CGFloat = horizontalInset + 6
+        static let horizontalInset: CGFloat = 16
+        static let textHorizontalInset: CGFloat = Self.horizontalInset
+        static let pendingCardHorizontalInset: CGFloat = horizontalInset
         static let emptyImageSize: CGFloat = 160
         static let emptyTextTopSpacing: CGFloat = 10
     }
@@ -57,7 +57,7 @@ final class MealSectionView: UIView {
 
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.textColor = .white
+        label.textColor = .detailSectionText
         return label
     }()
 
@@ -128,12 +128,25 @@ final class MealSectionView: UIView {
         case .snack:
             title = "야식"
         }
-        titleLabel.setText(title, style: .hd20, color: .white)
+        titleLabel.attributedText = NSAttributedString(
+            string: title,
+            attributes: [
+                .font: DesignSystemFontFamily.Pretendard.semiBold.font(size: 16),
+                .foregroundColor: UIColor.detailSectionText,
+                .kern: -0.24
+            ]
+        )
     }
 
     private func configureEditButton() {
         let attributed = NSMutableAttributedString(
-            attributedString: Typography.p14.styled("수정", color: .white))
+            string: "수정",
+            attributes: [
+                .font: DesignSystemFontFamily.Pretendard.regular.font(size: 13),
+                .foregroundColor: UIColor.detailSectionText,
+                .kern: -0.195
+            ]
+        )
         attributed.addAttribute(
             .underlineStyle, value: NSUnderlineStyle.single.rawValue,
             range: NSRange(location: 0, length: attributed.length))
@@ -169,12 +182,12 @@ final class MealSectionView: UIView {
         imageView.contentMode = .scaleAspectFit
 
         let label = UILabel()
-        label.setText("오늘의 음식 사진을 촬영해보세요", style: .p12, color: .gray100)
+        label.setText("오늘의 음식 사진을 촬영해보세요", style: .p12, color: .detailMutedText)
         label.textAlignment = .center
 
-        let container = DashedBorderView()
+        let container = DashedBorderView(strokeColor: .detailStroke)
         container.cornerRadius = 16
-        container.backgroundColor = .sd900
+        container.backgroundColor = .detailCardBackground
         container.layer.cornerRadius = 16
         container.clipsToBounds = true
         container.addSubview(imageView)

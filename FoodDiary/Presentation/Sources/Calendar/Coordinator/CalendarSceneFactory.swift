@@ -9,7 +9,7 @@ import UIKit
 
 public final class CalendarSceneFactory {
     private let requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase
-    private let loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase
+    private let fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase
     private let saveFoodRecordUseCase: SaveFoodRecordUseCase
     private let pushNotificationObserver: PushNotificationObserver
     private let getNicknameUseCase: GetNicknameUseCase
@@ -20,7 +20,7 @@ public final class CalendarSceneFactory {
 
     public init(
         requestPhotoAuthorizationUseCase: RequestPhotoAuthorizationUseCase,
-        loadWeeklyCalendarDataUseCase: LoadWeeklyRecordUseCase,
+        fetchFoodImageAssetUseCase: FetchFoodImageAssetUseCase,
         saveFoodRecordUseCase: SaveFoodRecordUseCase,
         pushNotificationObserver: PushNotificationObserver,
         getNicknameUseCase: GetNicknameUseCase,
@@ -30,7 +30,7 @@ public final class CalendarSceneFactory {
         fetchFoodRecordsUseCase: FetchFoodRecordsUseCase
     ) {
         self.requestPhotoAuthorizationUseCase = requestPhotoAuthorizationUseCase
-        self.loadWeeklyCalendarDataUseCase = loadWeeklyCalendarDataUseCase
+        self.fetchFoodImageAssetUseCase = fetchFoodImageAssetUseCase
         self.saveFoodRecordUseCase = saveFoodRecordUseCase
         self.pushNotificationObserver = pushNotificationObserver
         self.getNicknameUseCase = getNicknameUseCase
@@ -40,29 +40,17 @@ public final class CalendarSceneFactory {
         self.fetchFoodRecordsUseCase = fetchFoodRecordsUseCase
     }
 
-    public func makeScene() -> CalendarViewController {
-        let weeklyVM = WeeklyCalendarViewModel(
-            requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase,
-            loadWeeklyCalendarDataUseCase: loadWeeklyCalendarDataUseCase,
-            saveFoodRecordUseCase: saveFoodRecordUseCase,
-            pushNotificationObserver: pushNotificationObserver,
-            getNicknameUseCase: getNicknameUseCase,
-            coachmarkStorage: coachmarkStorage,
-            checkAppReviewEligibilityUseCase: checkAppReviewEligibilityUseCase
-        )
+    public func makeScene() -> MonthlyCalendarViewController {
         let monthlyVM = MonthlyCalendarViewModel(
             fetchMonthlyCalendarDaysUseCase: fetchMonthlyCalendarDaysUseCase,
             requestPhotoAuthorizationUseCase: requestPhotoAuthorizationUseCase,
             fetchFoodRecordsUseCase: fetchFoodRecordsUseCase,
-            getNicknameUseCase: getNicknameUseCase
+            getNicknameUseCase: getNicknameUseCase,
+            fetchFoodImageAssetUseCase: fetchFoodImageAssetUseCase,
+            saveFoodRecordUseCase: saveFoodRecordUseCase,
+            pushNotificationObserver: pushNotificationObserver,
+            checkAppReviewEligibilityUseCase: checkAppReviewEligibilityUseCase
         )
-        let weeklyVC = WeeklyCalendarViewController(viewModel: weeklyVM)
-        let monthlyVC = MonthlyCalendarViewController(viewModel: monthlyVM)
-        return CalendarViewController(
-            weeklyVC: weeklyVC,
-            monthlyVC: monthlyVC,
-            weeklyFlowPublisher: weeklyVC.flowPublisher,
-            monthlyFlowPublisher: monthlyVC.flowPublisher
-        )
+        return MonthlyCalendarViewController(viewModel: monthlyVM)
     }
 }

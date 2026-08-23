@@ -59,6 +59,17 @@ public extension UIColor {
     static let gray300 = DesignSystemAsset.gray300.color
     static let gray200 = DesignSystemAsset.gray200.color
     static let gray100 = DesignSystemAsset.gray100.color
+    static let gray040 = DesignSystemAsset.gray040.color
+    static let gray150 = DesignSystemAsset.gray150.color
     static let gray050 = DesignSystemAsset.gray050.color
     static let gray020 = DesignSystemAsset.gray020.color
+    static let gray850 = DesignSystemAsset.gray850.color
+    static let calendarTileBackground = DesignSystemAsset.calendarTileBackground.color
+    static let detailBadgeBackground = DesignSystemAsset.detailBadgeBackground.color
+    static let detailBodyText = DesignSystemAsset.detailBodyText.color
+    static let detailCardBackground = DesignSystemAsset.detailCardBackground.color
+    static let detailMutedText = DesignSystemAsset.detailMutedText.color
+    static let detailPrimaryText = DesignSystemAsset.detailPrimaryText.color
+    static let detailSectionText = DesignSystemAsset.detailSectionText.color
+    static let detailStroke = DesignSystemAsset.detailStroke.color
 }

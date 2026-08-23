@@ -18,6 +18,11 @@ final class MonthlyCalendarHeaderView: UIView {
         monthPickerTapSubject.eraseToAnyPublisher()
     }
 
+    private let todayTapSubject = PassthroughSubject<Void, Never>()
+    var todayTapPublisher: AnyPublisher<Void, Never> {
+        todayTapSubject.eraseToAnyPublisher()
+    }
+
     // MARK: - UI Components
 
     private let monthYearLabel: UILabel = {
@@ -29,7 +34,16 @@ final class MonthlyCalendarHeaderView: UIView {
     private let chevronButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(DesignSystemAsset.iconDown.image, for: .normal)
-        button.tintColor = .white
+        button.tintColor = .grayBase
+        return button
+    }()
+
+    private let todayButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.layer.borderColor = UIColor.primary.cgColor
+        button.layer.borderWidth = 1
+        button.layer.cornerRadius = 12
+        button.setAttributedTitle(Typography.p12.styled("TODAY", color: .primary, alignment: .center), for: .normal)
         return button
     }()
 
@@ -67,6 +81,7 @@ final class MonthlyCalendarHeaderView: UIView {
     private func setupUI() {
         addSubview(containerStackView)
         addSubview(tapButton)
+        addSubview(todayButton)
     }
 
     private func setupConstraints() {
@@ -86,16 +101,28 @@ final class MonthlyCalendarHeaderView: UIView {
         tapButton.snp.makeConstraints {
             $0.edges.equalTo(containerStackView)
         }
+
+        todayButton.snp.makeConstraints {
+            $0.trailing.equalToSuperview()
+            $0.centerY.equalToSuperview()
+            $0.height.equalTo(24)
+            $0.width.equalTo(54)
+        }
     }
 
     private func setupActions() {
         tapButton.addTarget(self, action: #selector(handleMonthPickerTap), for: .touchUpInside)
+        todayButton.addTarget(self, action: #selector(handleTodayTap), for: .touchUpInside)
     }
 
     // MARK: - Configuration
 
     func setMonthYearText(_ text: String) {
-        monthYearLabel.setText(text, style: .p18, color: .gray050)
+        monthYearLabel.setText(text, style: .p15, color: .grayBase)
+    }
+
+    func setTodayButtonHidden(_ isHidden: Bool) {
+        todayButton.isHidden = isHidden
     }
 
     func resetChevron() {
@@ -121,5 +148,9 @@ final class MonthlyCalendarHeaderView: UIView {
             }
         )
         monthPickerTapSubject.send()
+    }
+
+    @objc private func handleTodayTap() {
+        todayTapSubject.send()
     }
 }

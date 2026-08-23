@@ -259,18 +259,6 @@ extension SceneDelegate {
             return FetchFoodRecordsUseCase(repository: repository)
         }
 
-        container.register(LoadWeeklyRecordUseCase.self) { resolver in
-            guard let recordRepo = resolver.resolve(FoodRecordRepositoryImpl.self),
-                  let fetchAssetUseCase = resolver.resolve(FetchFoodImageAssetUseCase.self) else {
-                fatalError("LoadWeeklyRecordUseCase dependencies not registered")
-            }
-            return LoadWeeklyRecordUseCase(
-                calendar: .current,
-                recordRepository: recordRepo,
-                fetchFoodImageAssetUseCase: fetchAssetUseCase
-            )
-        }
-
         container.register(UpdateFoodRecordUseCase.self) { resolver in
             guard let repository = resolver.resolve(FoodRecordRepositoryImpl.self) else {
                 fatalError("FoodRecordRepositoryImpl not registered")
@@ -418,7 +406,7 @@ extension SceneDelegate {
         // Calendar
         guard
             let requestPhotoAuthUseCase = try? container.resolve(RequestPhotoAuthorizationUseCase.self),
-            let loadWeeklyUseCase = try? container.resolve(LoadWeeklyRecordUseCase.self),
+            let fetchImageAssetUseCase = try? container.resolve(FetchFoodImageAssetUseCase.self),
             let coachmarkStorage = try? container.resolve(CoachmarkStoring.self),
             let checkAppReviewUseCase = try? container.resolve(CheckAppReviewEligibilityUseCase.self),
             let fetchMonthlyUseCase = try? container.resolve(FetchMonthlyCalendarDaysUseCase.self)
@@ -434,7 +422,7 @@ extension SceneDelegate {
             login: LoginSceneFactory(useCase: finalizeUseCase),
             calendar: CalendarSceneFactory(
                 requestPhotoAuthorizationUseCase: requestPhotoAuthUseCase,
-                loadWeeklyCalendarDataUseCase: loadWeeklyUseCase,
+                fetchFoodImageAssetUseCase: fetchImageAssetUseCase,
                 saveFoodRecordUseCase: saveFoodRecordUseCase,
                 pushNotificationObserver: pushNotificationObserver,
                 getNicknameUseCase: getNicknameUseCase,

@@ -13,7 +13,6 @@ final class PillBadgeView: UIView {
     // MARK: - Constants
 
     private enum Constants {
-        static let cornerRadius: CGFloat = 14
         static let verticalInset: CGFloat = 6
         static let horizontalInset: CGFloat = 12
     }
@@ -43,10 +42,14 @@ final class PillBadgeView: UIView {
     // MARK: - Setup
 
     private func setupUI() {
-        backgroundColor = UIColor.black.withAlphaComponent(0.65)
-        layer.cornerRadius = Constants.cornerRadius
+        backgroundColor = .detailBadgeBackground
         clipsToBounds = true
         addSubview(label)
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        layer.cornerRadius = bounds.height / 2
     }
 
     private func setupConstraints() {

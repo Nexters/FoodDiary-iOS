@@ -5,6 +5,7 @@
 
 import DesignSystem
 import Domain
+import Kingfisher
 import SnapKit
 import UIKit
 
@@ -12,10 +13,8 @@ import UIKit
 final class MonthlyCalendarDayCell: UICollectionViewCell {
 
     private enum Constants {
-        static let cornerRadius: CGFloat = 8
-        static let stackHorizontalInset: CGFloat = 4
-        static let stackVerticalInset: CGFloat = 6
-        static let todayBorderWidth: CGFloat = 1
+        static let cornerRadius: CGFloat = 10
+        static let borderWidth: CGFloat = 1.5
     }
 
     static let reuseIdentifier = "MonthlyCalendarDayCell"
@@ -24,43 +23,27 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
 
     private let containerView: UIView = {
         let view = UIView()
-        view.backgroundColor = .clear
+        view.backgroundColor = .calendarTileBackground
         view.clipsToBounds = true
         view.layer.cornerRadius = Constants.cornerRadius
         return view
     }()
 
-    private lazy var stackView: UIStackView = {
-        let view = UIStackView(arrangedSubviews: [
-            dayNumberLabel, dashedBorderView, polaroidImageCardsView,
-        ])
-        view.backgroundColor = .clear
-        view.axis = .vertical
-        view.alignment = .center
-        view.spacing = 6
-        view.clipsToBounds = true
-        view.layer.cornerRadius = Constants.cornerRadius
-        return view
+    private let imageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true
+        imageView.isHidden = true
+        return imageView
     }()
 
     private let dayNumberLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .center
+        label.layer.shadowColor = UIColor.black.cgColor
+        label.layer.shadowOffset = .zero
+        label.layer.shadowRadius = 3
         return label
-    }()
-
-    private let dashedBorderView = DashedBorderView()
-
-    private let polaroidImageCardsView: PolaroidImageCardsView = {
-        let view = PolaroidImageCardsView()
-        view.isHidden = true
-        return view
-    }()
-
-    private lazy var gradientBackgroundView: GradientBackgroundView = {
-        let view = GradientBackgroundView(cornerRadius: Constants.cornerRadius)
-        view.isHidden = true
-        return view
     }()
 
     // MARK: - Init
@@ -84,12 +67,9 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
     // MARK: - Setup
 
     private func setupUI() {
-        dashedBorderView.clipsToBounds = true
-        dashedBorderView.layer.cornerRadius = Constants.cornerRadius
-
         contentView.addSubview(containerView)
-        containerView.addSubview(gradientBackgroundView)
-        containerView.addSubview(stackView)
+        containerView.addSubview(imageView)
+        containerView.addSubview(dayNumberLabel)
     }
 
     private func setupConstraints() {
@@ -97,98 +77,60 @@ final class MonthlyCalendarDayCell: UICollectionViewCell {
             $0.edges.equalToSuperview()
         }
 
-        stackView.snp.makeConstraints {
-            $0.leading.trailing.equalToSuperview().inset(Constants.stackHorizontalInset)
-            $0.top.bottom.equalToSuperview().inset(Constants.stackVerticalInset)
-            $0.center.equalToSuperview()
-        }
-
-        dashedBorderView.snp.makeConstraints {
-            $0.height.equalTo(dashedBorderView.snp.width)
-        }
-
-        polaroidImageCardsView.snp.makeConstraints {
-            $0.height.equalTo(polaroidImageCardsView.snp.width)
-        }
-
-        gradientBackgroundView.snp.makeConstraints {
+        imageView.snp.makeConstraints {
             $0.edges.equalToSuperview()
+        }
+
+        dayNumberLabel.snp.makeConstraints {
+            $0.center.equalToSuperview()
         }
     }
 
     // MARK: - Configuration
 
-    func configure(with day: MonthlyCalendarDay) {
-        isUserInteractionEnabled = day.isCurrentMonth
-
-        applyRecordStyle(photoURLs: day.imageURLs, isCurrentMonth: day.isCurrentMonth)
+    func configure(with day: MonthlyCalendarDay, selectedDate: Date) {
+        applyRecordStyle(photoURLs: day.imageURLs)
 
         applyDayNumberStyle(
             dayNumber: day.dayNumber,
-            isCurrentMonth: day.isCurrentMonth,
-            isToday: day.isToday,
+            isCurrentMonth: day.isCurrentMonth
         )
 
-        if day.isToday {
-            applyTodayStyle()
-        }
+        applySelectionStyle(isSelected: Calendar.current.isDate(day.date, inSameDayAs: selectedDate))
     }
 
     private func resetCellState() {
         isUserInteractionEnabled = true
-        dashedBorderView.backgroundColor = .clear
-        containerView.backgroundColor = .clear
+        containerView.backgroundColor = .calendarTileBackground
         containerView.removeGradient()
         containerView.removeGlow()
         containerView.layer.borderColor = UIColor.clear.cgColor
-        stackView.backgroundColor = .clear
-        dashedBorderView.isHidden = false
-        polaroidImageCardsView.isHidden = true
-        polaroidImageCardsView.alpha = 1
-        gradientBackgroundView.isHidden = true
+        containerView.layer.borderWidth = 0
+        imageView.kf.cancelDownloadTask()
+        imageView.image = nil
+        imageView.isHidden = true
+        dayNumberLabel.layer.shadowOpacity = 0
     }
 
-    private func applyTodayStyle() {
-        gradientBackgroundView.isHidden = false
-        containerView.layer.borderWidth = Constants.todayBorderWidth
-        containerView.layer.borderColor = UIColor.white.withAlphaComponent(0.3).cgColor
-        containerView.applyGlow(
-            glowColor: .primary,
-            borderColor: UIColor.white.withAlphaComponent(0.3),
-            cornerRadius: Constants.cornerRadius
-        )
-        dashedBorderView.backgroundColor = .white.withAlphaComponent(0.2)
-        dashedBorderView.layer.borderColor = DesignSystemAsset.sd800.color.cgColor
-    }
-
-    private func applyRecordStyle(photoURLs: [URL], isCurrentMonth: Bool) {
-        let hasPhoto = !photoURLs.isEmpty
-        dashedBorderView.isHidden = hasPhoto
-        polaroidImageCardsView.isHidden = !hasPhoto
-
-        guard hasPhoto else { return }
-
-        polaroidImageCardsView.alpha = isCurrentMonth ? 1 : 0.3
-
-        if photoURLs.count == 1 {
-            polaroidImageCardsView.configure(imageURL: photoURLs[0])
-        } else {
-            polaroidImageCardsView.configure(
-                backImageURL: photoURLs[0], frontImageURL: photoURLs[1])
-        }
+    private func applyRecordStyle(photoURLs: [URL]) {
+        guard let imageURL = photoURLs.first else { return }
+        imageView.isHidden = false
+        imageView.kf.setImage(with: imageURL)
     }
 
     private func applyDayNumberStyle(
         dayNumber: Int,
-        isCurrentMonth: Bool,
-        isToday: Bool,
+        isCurrentMonth: Bool
     ) {
         let formattedDayNumber = String(format: "%d", dayNumber)
-        if isCurrentMonth {
-            dayNumberLabel.setText(formattedDayNumber, style: .p12, color: .white)
-        } else {
-            dayNumberLabel.setText(
-                formattedDayNumber, style: .p12, color: DesignSystemAsset.gray700.color)
-        }
+        let hasImage = !imageView.isHidden
+        let color: UIColor = hasImage ? .white : (isCurrentMonth ? .gray300 : .gray100)
+        dayNumberLabel.layer.shadowOpacity = hasImage ? 1 : 0
+        dayNumberLabel.setText(formattedDayNumber, style: .p12, color: color, alignment: .center)
+    }
+
+    private func applySelectionStyle(isSelected: Bool) {
+        containerView.layer.borderWidth = isSelected ? Constants.borderWidth : 0
+        containerView.layer.borderColor = isSelected ? UIColor.primary.cgColor : UIColor.clear.cgColor
     }
 }
