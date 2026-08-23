@@ -31,7 +31,7 @@ final class InsightCategoryStatsView: UIView {
     // MARK: - Setup
 
     private func setupUI(categoryStats: CategoryStats) {
-        backgroundColor = .sd900
+        backgroundColor = .detailCardBackground
         layer.cornerRadius = 16
         clipsToBounds = true
 
@@ -43,21 +43,21 @@ final class InsightCategoryStatsView: UIView {
         let previousName = FoodGenre(rawValue: previous.topCategory)?.displayName ?? previous.topCategory
 
         let descriptionText = isSameCategory ? "왕좌가 유지되었어요." : "왕좌가 바뀌었어요."
-        descriptionLabel.setText(descriptionText, style: .hd16, color: .gray050)
+        descriptionLabel.setText(descriptionText, style: .hd16, color: .gray850)
         addSubview(descriptionLabel)
 
         let attributed = NSMutableAttributedString()
         if !isSameCategory {
             attributed.append(Typography.hd16.styled(previousName, color: .blueGradientStart))
-            attributed.append(Typography.hd16.styled(" 대신 ", color: .gray050))
+            attributed.append(Typography.hd16.styled(" 대신 ", color: .gray850))
         }
         attributed.append(Typography.hd16.styled(currentName, color: .primary))
-        attributed.append(Typography.hd16.styled("이 1등이에요.", color: .gray050))
+        attributed.append(Typography.hd16.styled("이 1등이에요.", color: .gray850))
         rankLabel.attributedText = attributed
         addSubview(rankLabel)
 
         donutChartView.innerRadiusRatio = 0.3
-        donutChartView.separatorColor = .sd900
+        donutChartView.separatorColor = .detailCardBackground
         donutChartView.data = [
             DonutChartView.SliceData(value: Double(current.count), colors: [.primaryGradientStart, .primaryGradientEnd], label: "\(current.count)회"),
             DonutChartView.SliceData(value: Double(previous.count), colors: [.blueGradientStart, .blueGradientEnd], label: "\(previous.count)회")

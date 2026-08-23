@@ -12,6 +12,7 @@ final class BubbleChartView: UIView {
         let label: String
         let count: Int
         let color: UIColor
+        var textColor: UIColor = .white
     }
 
     var data: [BubbleData] = []
@@ -55,6 +56,7 @@ final class BubbleChartView: UIView {
                 center: centers[index],
                 diameter: diameters[index],
                 color: item.color,
+                textColor: item.textColor,
                 label: item.label,
                 count: item.count
             )
@@ -142,6 +144,7 @@ final class BubbleChartView: UIView {
         center: CGPoint,
         diameter: CGFloat,
         color: UIColor,
+        textColor: UIColor,
         label: String,
         count: Int
     ) -> CALayer {
@@ -175,11 +178,11 @@ final class BubbleChartView: UIView {
         let attributed = NSMutableAttributedString()
         attributed.append(NSAttributedString(
             string: label,
-            attributes: [.font: nameFont, .foregroundColor: UIColor.white, .paragraphStyle: paragraphStyle]
+            attributes: [.font: nameFont, .foregroundColor: textColor, .paragraphStyle: paragraphStyle]
         ))
         attributed.append(NSAttributedString(
             string: "\n(\(count)회)",
-            attributes: [.font: countFont, .foregroundColor: UIColor.white, .paragraphStyle: paragraphStyle]
+            attributes: [.font: countFont, .foregroundColor: textColor, .paragraphStyle: paragraphStyle]
         ))
 
         let textSize = attributed.boundingRect(

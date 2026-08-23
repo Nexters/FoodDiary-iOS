@@ -51,7 +51,7 @@ public final class InsightViewController: UIViewController {
 
     private let loadingIndicator: UIActivityIndicatorView = {
         let indicator = UIActivityIndicatorView(style: .large)
-        indicator.color = .gray300
+        indicator.color = .gray400
         indicator.hidesWhenStopped = true
         return indicator
     }()
@@ -86,7 +86,7 @@ public final class InsightViewController: UIViewController {
     // MARK: - Setup
 
     private func setupUI() {
-        view.backgroundColor = .sdBase
+        view.backgroundColor = .white
 
         view.addSubview(scrollView)
         scrollView.addSubview(contentStackView)
@@ -98,7 +98,7 @@ public final class InsightViewController: UIViewController {
         descriptionLabel.setText(
             "인사이트를 제공하기 위해\n최소 1주일간의 데이터가 필요해요.",
             style: .p14,
-            color: .gray050,
+            color: .detailMutedText,
             alignment: .center,
             lineSpacing: 4
         )

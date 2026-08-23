@@ -32,11 +32,11 @@ final class InsightHeaderView: UIView {
     private func setupUI(date: Date) {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy.MM.dd"
-        dateLabel.setText(formatter.string(from: date), style: .p12, color: .gray050)
+        dateLabel.setText(formatter.string(from: date), style: .p12, color: .gray600)
 
         let attributed = NSMutableAttributedString()
         attributed.append(Typography.hd20.styled("이번 달, ", color: .primary))
-        attributed.append(Typography.hd20.styled("잘 먹었습니다.", color: .gray050))
+        attributed.append(Typography.hd20.styled("잘 먹었습니다.", color: .gray850))
         titleLabel.attributedText = attributed
         titleLabel.numberOfLines = 0
 

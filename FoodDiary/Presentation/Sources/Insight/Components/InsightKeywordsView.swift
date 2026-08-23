@@ -44,11 +44,11 @@ final class InsightKeywordsView: UIView {
     // MARK: - Setup
 
     private func setupUI() {
-        backgroundColor = .sd900
+        backgroundColor = .detailCardBackground
         layer.cornerRadius = 16
         clipsToBounds = true
 
-        titleLabel.setText("나의 입맛과\n가장 잘 어울리는 키워드", style: .hd15, color: .gray050, lineSpacing: 6)
+        titleLabel.setText("나의 입맛과\n가장 잘 어울리는 키워드", style: .hd15, color: .gray850, lineSpacing: 6)
         titleLabel.numberOfLines = 2
         addSubview(titleLabel)
         addSubview(tagsContainer)
@@ -110,11 +110,11 @@ final class InsightKeywordsView: UIView {
 
     private func makeTagView(text: String) -> UIView {
         let container = UIView()
-        container.backgroundColor = .sd850
+        container.backgroundColor = .gray100
         container.layer.cornerRadius = Constants.tagHeight / 2
 
         let label = UILabel()
-        label.setText("#\(text)", style: .p14, color: .gray400)
+        label.setText("#\(text)", style: .p14, color: .gray850)
         container.addSubview(label)
 
         label.snp.makeConstraints {
