@@ -24,7 +24,7 @@ final class EditImageCell: UICollectionViewCell {
         iv.contentMode = .scaleAspectFill
         iv.clipsToBounds = true
         iv.layer.cornerRadius = 12
-        iv.backgroundColor = .sd800
+        iv.backgroundColor = .gray050
         return iv
     }()
 

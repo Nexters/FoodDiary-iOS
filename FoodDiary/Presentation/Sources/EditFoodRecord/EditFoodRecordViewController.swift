@@ -50,7 +50,7 @@ public final class EditFoodRecordViewController: UIViewController, UIGestureReco
 
     private let categoryTitleLabel: UILabel = {
         let label = UILabel()
-        label.setText("카테고리", style: .hd18)
+        label.setText("카테고리", style: .hd18, color: .gray850)
         return label
     }()
 
@@ -72,7 +72,7 @@ public final class EditFoodRecordViewController: UIViewController, UIGestureReco
 
     private let addressTitleLabel: UILabel = {
         let label = UILabel()
-        label.setText("주소", style: .hd18)
+        label.setText("주소", style: .hd18, color: .gray850)
         return label
     }()
 
@@ -80,7 +80,7 @@ public final class EditFoodRecordViewController: UIViewController, UIGestureReco
 
     private let tagTitleLabel: UILabel = {
         let label = UILabel()
-        label.setText("태그", style: .hd18)
+        label.setText("태그", style: .hd18, color: .gray850)
         return label
     }()
 
@@ -91,12 +91,12 @@ public final class EditFoodRecordViewController: UIViewController, UIGestureReco
     private lazy var deleteButton: UIButton = {
         let button = UIButton()
         button.setAttributedTitle(
-            Typography.hd16.styled("삭제", color: .white),
+            Typography.hd16.styled("삭제", color: .gray850),
             for: .normal
         )
         button.layer.cornerRadius = EditFoodRecordConstants.buttonCornerRadius
         button.layer.borderWidth = 1
-        button.layer.borderColor = UIColor.gray600.cgColor
+        button.layer.borderColor = UIColor.gray300.cgColor
         button.backgroundColor = .clear
         return button
     }()
@@ -158,6 +158,15 @@ public final class EditFoodRecordViewController: UIViewController, UIGestureReco
 
     private func setupNavigation() {
         title = "수정"
+        navigationController?.navigationBar.tintColor = .gray850
+
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .white
+        appearance.shadowColor = .gray150
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        navigationController?.navigationBar.compactAppearance = appearance
 
         let backButton = UIBarButtonItem(
             image: UIImage(systemName: "chevron.left"),
@@ -169,7 +178,7 @@ public final class EditFoodRecordViewController: UIViewController, UIGestureReco
     }
 
     private func setupUI() {
-        view.backgroundColor = .sdBase
+        view.backgroundColor = .white
 
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
@@ -184,7 +193,7 @@ public final class EditFoodRecordViewController: UIViewController, UIGestureReco
         contentView.addSubview(tagSectionView)
 
         view.addSubview(bottomBarView)
-        bottomBarView.backgroundColor = .sdBase
+        bottomBarView.backgroundColor = .white
 
         let buttonStack = UIStackView(arrangedSubviews: [deleteButton, saveButton])
         buttonStack.axis = .horizontal

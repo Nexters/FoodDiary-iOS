@@ -93,12 +93,12 @@ final class TagSectionView: UIView {
 
     private func createTagChip(text: String, index: Int) -> UIView {
         let container = UIView()
-        container.backgroundColor = .sd800
+        container.backgroundColor = .gray050
         container.layer.cornerRadius = Constants.cornerRadius
         container.clipsToBounds = true
 
         let label = UILabel()
-        label.setText(text, style: .p14, color: .gray400)
+        label.setText(text, style: .p14, color: .gray850)
 
         let deleteButton = UIButton()
         let config = UIImage.SymbolConfiguration(pointSize: 10, weight: .bold)
@@ -106,8 +106,8 @@ final class TagSectionView: UIView {
             UIImage(systemName: "xmark")?.withConfiguration(config),
             for: .normal
         )
-        deleteButton.backgroundColor = UIColor.sdBase.withAlphaComponent(0.8)
-        deleteButton.tintColor = .gray400
+        deleteButton.backgroundColor = .clear
+        deleteButton.tintColor = .gray600
         deleteButton.layer.cornerRadius = 8
         deleteButton.clipsToBounds = true
         deleteButton.tag = index
@@ -137,7 +137,7 @@ final class TagSectionView: UIView {
 
     private func createAddButton() -> UIView {
         let button = UIButton()
-        button.backgroundColor = .sd900
+        button.backgroundColor = .primary
         button.layer.cornerRadius = Constants.chipHeight / 2
         button.clipsToBounds = true
 
