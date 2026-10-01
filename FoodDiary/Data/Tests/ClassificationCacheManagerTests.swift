@@ -11,7 +11,8 @@ import Testing
 
 @Suite("ClassificationCacheManager Tests")
 struct ClassificationCacheManagerTests {
-    private let testFileName = "test_classification_cache.json"
+    // 테스트가 병렬 실행되므로 인스턴스마다 고유한 파일명을 사용해 파일 충돌 방지
+    private let testFileName = "test_classification_cache_\(UUID().uuidString).json"
 
     private func createCache() -> ClassificationCacheManager {
         // 테스트 전 기존 파일 삭제
