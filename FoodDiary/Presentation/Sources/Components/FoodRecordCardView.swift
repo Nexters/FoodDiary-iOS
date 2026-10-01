@@ -15,7 +15,6 @@ public final class FoodRecordCardView: UIView {
     // MARK: - Constants
 
     private enum Constants {
-        static let cornerRadius: CGFloat = 20
         static let imageInset: CGFloat = 0
         static let badgeTopInset: CGFloat = 16
         static let badgeLeadingInset: CGFloat = 16
@@ -27,6 +26,7 @@ public final class FoodRecordCardView: UIView {
     // MARK: - State
 
     private let imageURL: URL?
+    private let cornerRadius: CGFloat
     private let showsBadges: Bool
     private let timeText: String
     private var isConfigured = false
@@ -36,7 +36,6 @@ public final class FoodRecordCardView: UIView {
     private let containerView: UIView = {
         let view = UIView()
         view.backgroundColor = .white
-        view.layer.cornerRadius = Constants.cornerRadius
         view.clipsToBounds = true
         return view
     }()
@@ -45,7 +44,6 @@ public final class FoodRecordCardView: UIView {
         let iv = UIImageView()
         iv.contentMode = .scaleAspectFill
         iv.clipsToBounds = true
-        iv.layer.cornerRadius = Constants.cornerRadius - Constants.imageInset
         iv.backgroundColor = .gray300
         return iv
     }()
@@ -63,8 +61,14 @@ public final class FoodRecordCardView: UIView {
 
     // MARK: - Init
 
-    public init(time: String, district: String?, imageURL: URL?) {
+    public init(
+        time: String,
+        district: String?,
+        imageURL: URL?,
+        cornerRadius: CGFloat = 20
+    ) {
         self.imageURL = imageURL
+        self.cornerRadius = cornerRadius
         self.showsBadges = !time.isEmpty || district != nil
         self.timeText = time
         self.timeBadge = PillBadgeView(text: time)
@@ -89,6 +93,8 @@ public final class FoodRecordCardView: UIView {
     // MARK: - Setup
 
     private func setupUI() {
+        containerView.layer.cornerRadius = cornerRadius
+        foodImageView.layer.cornerRadius = cornerRadius - Constants.imageInset
         addSubview(containerView)
         containerView.addSubview(foodImageView)
         if showsBadges {

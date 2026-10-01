@@ -29,10 +29,15 @@ final class DetailFoodCardCell: UICollectionViewCell {
 
     // MARK: - Configuration
 
-    func configure(time: String, district: String?, imageURL: URL?) {
+    func configure(time: String, district: String?, imageURL: URL?, cornerRadius: CGFloat = 20) {
         cardView?.removeFromSuperview()
 
-        let newCardView = FoodRecordCardView(time: time, district: district, imageURL: imageURL)
+        let newCardView = FoodRecordCardView(
+            time: time,
+            district: district,
+            imageURL: imageURL,
+            cornerRadius: cornerRadius
+        )
         contentView.addSubview(newCardView)
         newCardView.snp.makeConstraints {
             $0.edges.equalToSuperview()
