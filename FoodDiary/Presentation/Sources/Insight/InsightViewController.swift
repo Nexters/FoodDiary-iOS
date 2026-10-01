@@ -106,7 +106,9 @@ public final class InsightViewController: UIViewController {
 
     private func setupConstraints() {
         scrollView.snp.makeConstraints {
-            $0.edges.equalTo(view.safeAreaLayoutGuide)
+            // 하단은 탭바 뒤까지 확장 (탭바 영역에 흰 배경이 보이지 않도록)
+            $0.top.leading.trailing.equalTo(view.safeAreaLayoutGuide)
+            $0.bottom.equalToSuperview()
         }
 
         contentStackView.snp.makeConstraints {
