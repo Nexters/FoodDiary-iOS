@@ -15,8 +15,9 @@ final class MealRecordedContentView: UIView {
         static let horizontalInset: CGFloat = 16
         static let verticalInset: CGFloat = 20
         static let topRowBottomSpacing: CGFloat = 14
-        static let pageControlTopSpacing: CGFloat = 8
-        static let pageControlHeight: CGFloat = 20
+        static let imageSize: CGFloat = 170
+        static let imageSpacing: CGFloat = 8
+        static let imageCornerRadius: CGFloat = 16
         static let textTopSpacing: CGFloat = 16
         static let hashtagTopSpacing: CGFloat = 6
         static let actionSpacing: CGFloat = 10
@@ -34,9 +35,6 @@ final class MealRecordedContentView: UIView {
 
     private var cardItems: [CardItem] = []
     private var currentRecord: FoodRecord?
-
-    private var contentTopWithPageControl: Constraint?
-    private var contentTopWithoutPageControl: Constraint?
 
     private let badgeStackView: UIStackView = {
         let stackView = UIStackView()
@@ -66,14 +64,6 @@ final class MealRecordedContentView: UIView {
             forCellWithReuseIdentifier: DetailFoodCardCell.reuseIdentifier
         )
         return collectionView
-    }()
-
-    private lazy var pageControl: UIPageControl = {
-        let pageControl = UIPageControl()
-        pageControl.currentPageIndicatorTintColor = .primary
-        pageControl.pageIndicatorTintColor = .detailStroke
-        pageControl.addTarget(self, action: #selector(pageControlChanged), for: .valueChanged)
-        return pageControl
     }()
 
     private let textContainerView = UIView()
@@ -126,7 +116,6 @@ final class MealRecordedContentView: UIView {
         addSubview(badgeStackView)
         addSubview(actionStackView)
         addSubview(collectionView)
-        addSubview(pageControl)
         addSubview(textContainerView)
 
         textContainerView.addSubview(restaurantNameLabel)
@@ -152,22 +141,14 @@ final class MealRecordedContentView: UIView {
         collectionView.snp.makeConstraints {
             $0.top.equalTo(actionStackView.snp.bottom).offset(Constants.topRowBottomSpacing)
             $0.leading.trailing.equalToSuperview()
-            $0.height.equalTo(collectionView.snp.width)
-        }
-
-        pageControl.snp.makeConstraints {
-            $0.top.equalTo(collectionView.snp.bottom).offset(Constants.pageControlTopSpacing)
-            $0.centerX.equalToSuperview()
-            $0.height.equalTo(Constants.pageControlHeight)
+            $0.height.equalTo(Constants.imageSize)
         }
 
         textContainerView.snp.makeConstraints {
-            contentTopWithPageControl = $0.top.equalTo(pageControl.snp.bottom).offset(Constants.textTopSpacing).constraint
-            contentTopWithoutPageControl = $0.top.equalTo(collectionView.snp.bottom).offset(Constants.textTopSpacing).constraint
+            $0.top.equalTo(collectionView.snp.bottom).offset(Constants.textTopSpacing)
             $0.leading.trailing.equalToSuperview()
             $0.bottom.equalToSuperview().inset(Constants.verticalInset)
         }
-        contentTopWithoutPageControl?.deactivate()
 
         restaurantNameLabel.snp.makeConstraints {
             $0.top.equalToSuperview()
@@ -183,27 +164,22 @@ final class MealRecordedContentView: UIView {
 
     private func createLayout() -> UICollectionViewCompositionalLayout {
         let itemSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .fractionalHeight(1.0)
+            widthDimension: .absolute(Constants.imageSize),
+            heightDimension: .absolute(Constants.imageSize)
         )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 6, bottom: 0, trailing: 6)
+        let group = NSCollectionLayoutGroup.horizontal(layoutSize: itemSize, subitems: [item])
 
-        let groupSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .fractionalHeight(1.0)
-        )
-        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
-
+        // 페이지네이션 없이 자유 스크롤 (다음 이미지가 일부 보임)
         let section = NSCollectionLayoutSection(group: group)
-        section.orthogonalScrollingBehavior = .groupPaging
-        section.visibleItemsInvalidationHandler = { [weak self] _, offset, environment in
-            let pageWidth = environment.container.contentSize.width
-            guard pageWidth > 0 else { return }
-            let currentPage = Int((offset.x + pageWidth / 2) / pageWidth)
-            self?.pageControl.currentPage = currentPage
-            self?.updateCurrentRecord(for: currentPage)
-        }
+        section.orthogonalScrollingBehavior = .continuous
+        section.interGroupSpacing = Constants.imageSpacing
+        section.contentInsets = NSDirectionalEdgeInsets(
+            top: 0,
+            leading: Constants.horizontalInset,
+            bottom: 0,
+            trailing: Constants.horizontalInset
+        )
 
         return UICollectionViewCompositionalLayout(section: section)
     }
@@ -214,19 +190,6 @@ final class MealRecordedContentView: UIView {
     }
 
     private func configureContent() {
-        pageControl.numberOfPages = cardItems.count
-        pageControl.currentPage = 0
-
-        let showPageControl = cardItems.count > 1
-        pageControl.isHidden = !showPageControl
-        if showPageControl {
-            contentTopWithPageControl?.activate()
-            contentTopWithoutPageControl?.deactivate()
-        } else {
-            contentTopWithPageControl?.deactivate()
-            contentTopWithoutPageControl?.activate()
-        }
-
         if let record = cardItems.first?.record {
             currentRecord = record
             configureBadges(with: record)
@@ -275,20 +238,6 @@ final class MealRecordedContentView: UIView {
         hashtagLabel.isHidden = hashtagText.isEmpty
     }
 
-    private func updateCurrentRecord(for page: Int) {
-        guard page >= 0, page < cardItems.count else { return }
-        let record = cardItems[page].record
-        guard record != currentRecord else { return }
-        currentRecord = record
-        configureBadges(with: record)
-        configureText(with: record)
-    }
-
-    @objc private func pageControlChanged() {
-        let indexPath = IndexPath(item: pageControl.currentPage, section: 0)
-        collectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: true)
-    }
-
     @objc private func copyTapped() {
         guard let currentRecord else { return }
         onCopyTapped?(currentRecord)
@@ -322,7 +271,8 @@ extension MealRecordedContentView: UICollectionViewDataSource {
         cell.configure(
             time: "",
             district: nil,
-            imageURL: cardItem.imageURL
+            imageURL: cardItem.imageURL,
+            cornerRadius: Constants.imageCornerRadius
         )
         return cell
     }
