@@ -151,6 +151,7 @@ public final class EditFoodRecordViewModel {
 
         do {
             let updatedRecord = try await updateFoodRecordUseCase.execute(request)
+            Analytics.track(.recordSaved(isNew: false))
             eventSubject.send(.saveCompleted(updatedRecord))
         } catch {
             eventSubject.send(.error(error))

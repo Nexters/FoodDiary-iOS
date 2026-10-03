@@ -59,6 +59,7 @@ let project = Project(
                     "CURRENT_PROJECT_VERSION": "26050725",
                     "BASE_URL": "$(BASE_URL)",
                     "SENTRY_DSN": "$(SENTRY_DSN)",
+                    "MIXPANEL_TOKEN": "$(MIXPANEL_TOKEN)",
                     "TARGETED_DEVICE_FAMILY": "1"
                 ],
                 configurations: []

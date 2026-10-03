@@ -22,6 +22,8 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         options connectionOptions: UIScene.ConnectionOptions
     ) {
         registerDependencies()
+        try? container.resolve(AnalyticsService.self).track(.appOpen)
+        UIViewController.enableScreenTracking()
 
         guard let windowScene = scene as? UIWindowScene else { return }
         window = UIWindow(windowScene: windowScene)
@@ -41,6 +43,19 @@ extension SceneDelegate {
     fileprivate func registerData() {
         container.register(NetworkMonitoring.self) { _ in
             NetworkMonitor()
+        }
+
+        container.register(AnalyticsService.self) { _ in
+            // Mixpanel은 Release 빌드에서만 활성화 (Debug는 콘솔 출력만)
+            #if DEBUG
+            return LoggingAnalyticsService(wrapping: NoopAnalyticsService())
+            #else
+            guard let token = Bundle.main.infoDictionary?["MIXPANEL_TOKEN"] as? String,
+                  !token.isEmpty else {
+                return LoggingAnalyticsService(wrapping: NoopAnalyticsService())
+            }
+            return LoggingAnalyticsService(wrapping: MixpanelAnalyticsService(token: token))
+            #endif
         }
 
         container.register(PushTokenStoring.self) { _ in

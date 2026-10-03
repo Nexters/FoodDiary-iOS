@@ -200,6 +200,7 @@ public final class DetailViewModel {
                 from: assets,
                 date: state.currentDate
             )
+            Analytics.track(.recordSaved(isNew: true))
             eventSubject.send(.uploadCompleted)
             await loadRecords(for: state.currentDate)
         } catch {

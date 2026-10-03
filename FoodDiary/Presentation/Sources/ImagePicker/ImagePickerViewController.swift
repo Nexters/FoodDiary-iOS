@@ -343,6 +343,7 @@ public final class ImagePickerViewController:
     // MARK: - Actions
 
     @objc private func selectAllButtonTapped() {
+        Analytics.track(.buttonTap(button: "select_all", screen: analyticsScreenName))
         switch selectAllButtonState {
         case .selectAllFood:
             for photo in foodPhotos {
@@ -372,6 +373,7 @@ public final class ImagePickerViewController:
     }
 
     @objc private func confirmButtonTapped() {
+        Analytics.track(.buttonTap(button: "confirm_photos", screen: analyticsScreenName))
         let selectedAssets = photos.filter { selectedPhotoIds.contains($0.id) }
         resultSubject.send(.selected(selectedAssets))
     }
@@ -506,4 +508,8 @@ public final class ImagePickerViewController:
             photoSection == .food && configuration.maxSelectionCount != nil ? 72 : 44
         return CGSize(width: collectionView.bounds.width, height: height)
     }
+}
+
+extension ImagePickerViewController: AnalyticsScreen {
+    public var analyticsScreenName: String { "image_picker" }
 }
