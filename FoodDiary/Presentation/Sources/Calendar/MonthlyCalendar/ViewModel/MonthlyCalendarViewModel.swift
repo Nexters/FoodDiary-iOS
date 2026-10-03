@@ -279,6 +279,7 @@ public final class MonthlyCalendarViewModel {
                 from: assets,
                 date: state.selectedDate
             )
+            Analytics.track(.recordSaved(isNew: true))
             let mealType = results.first?.mealType ?? .breakfast
             eventSubject.send(.uploadCompleted(date: state.selectedDate, mealType: mealType))
             startLoadMonth(for: state.currentDisplayDate)

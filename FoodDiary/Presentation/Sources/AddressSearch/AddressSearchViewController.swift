@@ -298,11 +298,13 @@ public final class AddressSearchViewController: UIViewController, UITextFieldDel
     }
 
     @objc private func searchButtonTapped() {
+        Analytics.track(.buttonTap(button: "search_address", screen: analyticsScreenName))
         viewModel.input.send(.search)
         searchTextField.resignFirstResponder()
     }
 
     @objc private func closeButtonTapped() {
+        Analytics.track(.buttonTap(button: "close", screen: analyticsScreenName))
         dismiss(animated: true)
     }
 
@@ -349,4 +351,8 @@ final class AddressSearchTableViewHandler: NSObject, UITableViewDataSource, UITa
         let result = searchResults[indexPath.row]
         onSelectAddress?(result)
     }
+}
+
+extension AddressSearchViewController: AnalyticsScreen {
+    public var analyticsScreenName: String { "address_search" }
 }

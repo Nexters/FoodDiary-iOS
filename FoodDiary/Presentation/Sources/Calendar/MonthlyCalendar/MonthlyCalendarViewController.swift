@@ -201,13 +201,17 @@ public final class MonthlyCalendarViewController: UIViewController, UICollection
         // Input: View → ViewModel
         monthYearHeaderView.monthPickerTapPublisher
             .sink { [weak self] in
-                self?.presentMonthPicker()
+                guard let self else { return }
+                Analytics.track(.buttonTap(button: "month_picker", screen: analyticsScreenName))
+                self.presentMonthPicker()
             }
             .store(in: &cancellables)
 
         monthYearHeaderView.todayTapPublisher
             .sink { [weak self] in
-                self?.viewModel.input.send(.selectMonth(Date()))
+                guard let self else { return }
+                Analytics.track(.buttonTap(button: "today", screen: analyticsScreenName))
+                self.viewModel.input.send(.selectMonth(Date()))
             }
             .store(in: &cancellables)
 
@@ -386,6 +390,7 @@ public final class MonthlyCalendarViewController: UIViewController, UICollection
     }
 
     @objc private func detailButtonTapped() {
+        Analytics.track(.buttonTap(button: "open_detail", screen: analyticsScreenName))
         viewModel.input.send(.navigateToSelectedDateDetail)
     }
 
@@ -759,4 +764,8 @@ private final class MealImageStackView: UIView {
             $0.trailing.centerY.equalToSuperview()
         }
     }
+}
+
+extension MonthlyCalendarViewController: AnalyticsScreen {
+    public var analyticsScreenName: String { "calendar" }
 }

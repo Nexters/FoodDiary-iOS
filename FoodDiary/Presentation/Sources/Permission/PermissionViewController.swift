@@ -168,7 +168,12 @@ private extension PermissionViewController {
     }
 
     @objc func didTapSettings() {
+        Analytics.track(.buttonTap(button: "open_settings", screen: analyticsScreenName))
         guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
         UIApplication.shared.open(url)
     }
+}
+
+extension PermissionViewController: AnalyticsScreen {
+    public var analyticsScreenName: String { "permission" }
 }
