@@ -46,15 +46,15 @@ extension SceneDelegate {
         }
 
         container.register(AnalyticsService.self) { _ in
-            // Mixpanel은 Release 빌드에서만 활성화 (Debug는 콘솔 출력만)
+            // Mixpanel은 Release 빌드에서만 활성화
             #if DEBUG
-            return LoggingAnalyticsService(wrapping: NoopAnalyticsService())
+            return NoopAnalyticsService()
             #else
             guard let token = Bundle.main.infoDictionary?["MIXPANEL_TOKEN"] as? String,
                   !token.isEmpty else {
-                return LoggingAnalyticsService(wrapping: NoopAnalyticsService())
+                return NoopAnalyticsService()
             }
-            return LoggingAnalyticsService(wrapping: MixpanelAnalyticsService(token: token))
+            return MixpanelAnalyticsService(token: token)
             #endif
         }
 
