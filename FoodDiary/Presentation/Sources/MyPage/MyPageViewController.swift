@@ -387,6 +387,7 @@ public final class MyPageViewController: UIViewController {
     }
 
     @objc private func backButtonTapped() {
+        Analytics.track(.buttonTap(button: "back", screen: analyticsScreenName))
         navigationController?.popViewController(animated: true)
     }
 }
@@ -460,6 +461,7 @@ extension MyPageViewController: UITableViewDelegate {
     public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         guard let row = Section(rawValue: indexPath.section)?.rows[indexPath.row] else { return }
+        Analytics.track(.buttonTap(button: "mypage_\(row)", screen: analyticsScreenName))
 
         switch row {
         case .notificationSetting:
@@ -516,4 +518,8 @@ extension MyPageViewController: UITableViewDelegate {
         guard let url = URL(string: link) else { return }
         UIApplication.shared.open(url)
     }
+}
+
+extension MyPageViewController: AnalyticsScreen {
+    public var analyticsScreenName: String { "mypage" }
 }

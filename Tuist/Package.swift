@@ -19,5 +19,6 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-log.git", from: "1.5.0"),
         .package(url: "https://github.com/firebase/firebase-ios-sdk.git", from: "11.0.0"),
         .package(url: "https://github.com/getsentry/sentry-cocoa.git", from: "9.5.0"),
+        .package(url: "https://github.com/mixpanel/mixpanel-swift.git", from: "6.0.0"),
     ]
 )

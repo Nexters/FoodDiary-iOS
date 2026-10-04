@@ -68,6 +68,7 @@ private extension LoginViewController {
     }
     
     @objc func loginButtonTapped() {
+        Analytics.track(.buttonTap(button: "apple_login", screen: analyticsScreenName))
         let provider = ASAuthorizationAppleIDProvider()
         let request = provider.createRequest()
         request.requestedScopes = [.email]
@@ -87,7 +88,9 @@ extension LoginViewController: ASAuthorizationControllerDelegate {
                 Task {
                     do {
                         try await viewModel.sendIdentityToken(tokenString)
+                        Analytics.track(.loginSuccess)
                     } catch {
+                        Analytics.track(.loginFailure)
                         print(error.localizedDescription)
                     }
                 }
@@ -100,6 +103,7 @@ extension LoginViewController: ASAuthorizationControllerDelegate {
     
     public func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: any Error) {
         // TODO: 구체적인 Alert
+        Analytics.track(.loginFailure)
         print("에러 발생")
     }
 }
@@ -111,4 +115,8 @@ extension LoginViewController: ASAuthorizationControllerPresentationContextProvi
         }
         return window
     }
+}
+
+extension LoginViewController: AnalyticsScreen {
+    public var analyticsScreenName: String { "login" }
 }

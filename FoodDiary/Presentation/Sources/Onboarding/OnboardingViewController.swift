@@ -197,13 +197,18 @@ private extension OnboardingViewController {
     }
 
     @objc func skipButtonTapped() {
+        Analytics.track(.buttonTap(button: "onboarding_skip", screen: analyticsScreenName))
+        Analytics.track(.onboardingFinish(skipped: true))
         didCompleteSubject.send()
     }
 
     @objc func nextButtonTapped() {
         if currentPage == pages.count - 1 {
+            Analytics.track(.buttonTap(button: "onboarding_start", screen: analyticsScreenName))
+            Analytics.track(.onboardingFinish(skipped: false))
             didCompleteSubject.send()
         } else {
+            Analytics.track(.buttonTap(button: "onboarding_next", screen: analyticsScreenName))
             let nextPage = currentPage + 1
             pageViewController.setViewControllers(
                 [pageViewControllers[nextPage]],
@@ -237,4 +242,8 @@ extension OnboardingViewController: UIPageViewControllerDelegate {
               let contentVC = pageViewController.viewControllers?.first as? OnboardPageContentViewController else { return }
         currentPage = contentVC.pageIndex
     }
+}
+
+extension OnboardingViewController: AnalyticsScreen {
+    public var analyticsScreenName: String { "onboarding" }
 }

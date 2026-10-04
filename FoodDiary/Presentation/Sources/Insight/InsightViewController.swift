@@ -214,3 +214,7 @@ public final class InsightViewController: UIViewController {
         sections.forEach { contentStackView.addArrangedSubview($0) }
     }
 }
+
+extension InsightViewController: AnalyticsScreen {
+    public var analyticsScreenName: String { "insight" }
+}

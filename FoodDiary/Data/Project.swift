@@ -22,6 +22,7 @@ let project = Project(
                 .project(target: "Domain", path: "../Domain"),
                 .external(name: "TensorFlowLiteSwift"),
                 .external(name: "Logging"),
+                .external(name: "Mixpanel"),
             ]
         ),
         .target(

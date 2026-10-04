@@ -110,6 +110,7 @@ public final class MyPageViewModel {
     private func logout() {
         do {
             try logoutUseCase.execute()
+            Analytics.reset()
             eventSubject.send(.didLogout)
         } catch {
             print("로그아웃 실패: \(error)")
@@ -120,6 +121,7 @@ public final class MyPageViewModel {
     private func withdraw() async {
         do {
             try await withdrawUserUseCase.execute()
+            Analytics.reset()
             eventSubject.send(.didWithdraw)
         } catch {
             print("회원탈퇴 실패: \(error)")

@@ -161,10 +161,12 @@ final class MonthPickerBottomSheetViewController: UIViewController {
     }
 
     @objc private func closeButtonTapped() {
+        Analytics.track(.buttonTap(button: "month_picker_close", screen: analyticsScreenName))
         dismiss(animated: true)
     }
 
     @objc private func selectButtonTapped() {
+        Analytics.track(.buttonTap(button: "month_picker_select", screen: analyticsScreenName))
         var components = DateComponents()
         components.year = selectedYear
         components.month = selectedMonth
@@ -234,4 +236,8 @@ extension MonthPickerBottomSheetViewController: UIPickerViewDelegate {
     func pickerView(_ pickerView: UIPickerView, rowHeightForComponent component: Int) -> CGFloat {
         return Constants.pickerRowHeight
     }
+}
+
+extension MonthPickerBottomSheetViewController: AnalyticsScreen {
+    var analyticsScreenName: String { "month_picker" }
 }

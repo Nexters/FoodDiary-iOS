@@ -33,6 +33,7 @@ extension InfoPlist {
                 "NSUserNotificationsUsageDescription": "AI 분석 완료 및 매일 식단 기록 리마인더 알림을 받기 위해선 알림 권한이 필요합니다.",
                 "BASE_URL": "$(BASE_URL)",
                 "SENTRY_DSN": "$(SENTRY_DSN)",
+                "MIXPANEL_TOKEN": "$(MIXPANEL_TOKEN)",
                 "NSAppTransportSecurity": [
                     "NSAllowsArbitraryLoads": true
                 ],

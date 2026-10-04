@@ -204,6 +204,7 @@ public final class DetailViewController: UIViewController {
     }
 
     @objc private func backButtonTapped() {
+        Analytics.track(.buttonTap(button: "back", screen: analyticsScreenName))
         dismissDetail()
     }
 
@@ -297,13 +298,17 @@ public final class DetailViewController: UIViewController {
         // Input: View → ViewModel
         dateNavigatorView.previousTapPublisher
             .sink { [weak self] in
-                self?.viewModel.input.send(.goToPreviousDay)
+                guard let self else { return }
+                Analytics.track(.buttonTap(button: "previous_day", screen: analyticsScreenName))
+                self.viewModel.input.send(.goToPreviousDay)
             }
             .store(in: &cancellables)
 
         dateNavigatorView.nextTapPublisher
             .sink { [weak self] in
-                self?.viewModel.input.send(.goToNextDay)
+                guard let self else { return }
+                Analytics.track(.buttonTap(button: "next_day", screen: analyticsScreenName))
+                self.viewModel.input.send(.goToNextDay)
             }
             .store(in: &cancellables)
 
@@ -395,7 +400,9 @@ public final class DetailViewController: UIViewController {
                 snackSection.copyTapPublisher
             )
             .sink { [weak self] record in
-                self?.handleCopy(record: record)
+                guard let self else { return }
+                Analytics.track(.buttonTap(button: "copy_record", screen: analyticsScreenName))
+                self.handleCopy(record: record)
             }
             .store(in: &cancellables)
 
@@ -405,7 +412,9 @@ public final class DetailViewController: UIViewController {
                 snackSection.shareTapPublisher
             )
             .sink { [weak self] record in
-                self?.handleShare(record: record)
+                guard let self else { return }
+                Analytics.track(.buttonTap(button: "share_record", screen: analyticsScreenName))
+                self.handleShare(record: record)
             }
             .store(in: &cancellables)
 
@@ -415,7 +424,9 @@ public final class DetailViewController: UIViewController {
                 snackSection.editTapPublisher
             )
             .sink { [weak self] record in
-                self?.handleEdit(record: record)
+                guard let self else { return }
+                Analytics.track(.buttonTap(button: "edit_record", screen: analyticsScreenName))
+                self.handleEdit(record: record)
             }
             .store(in: &cancellables)
 
@@ -425,7 +436,9 @@ public final class DetailViewController: UIViewController {
                 snackSection.addButtonTapPublisher
             )
             .sink { [weak self] mealType in
-                self?.handleAddPhoto(for: mealType)
+                guard let self else { return }
+                Analytics.track(.buttonTap(button: "add_photo_meal", screen: analyticsScreenName))
+                self.handleAddPhoto(for: mealType)
             }
             .store(in: &cancellables)
     }
@@ -536,6 +549,7 @@ public final class DetailViewController: UIViewController {
     }
 
     @objc private func floatingAddButtonTapped() {
+        Analytics.track(.buttonTap(button: "add_photo_floating", screen: analyticsScreenName))
         handleAddPhoto()
     }
 
@@ -626,4 +640,8 @@ public final class DetailViewController: UIViewController {
         )
         scrollView.setContentOffset(targetOffset, animated: false)
     }
+}
+
+extension DetailViewController: AnalyticsScreen {
+    public var analyticsScreenName: String { "detail" }
 }

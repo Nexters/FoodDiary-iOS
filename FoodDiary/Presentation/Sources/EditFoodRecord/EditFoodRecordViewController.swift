@@ -468,6 +468,7 @@ public final class EditFoodRecordViewController: UIViewController, UIGestureReco
     // MARK: - Actions
 
     @objc private func backButtonTapped() {
+        Analytics.track(.buttonTap(button: "back", screen: analyticsScreenName))
         guard !viewModel.state.isSaving else { return }
         if viewModel.state.hasChanges {
             showUnsavedChangesAlert()
@@ -477,6 +478,7 @@ public final class EditFoodRecordViewController: UIViewController, UIGestureReco
     }
 
     @objc private func deleteButtonTapped() {
+        Analytics.track(.buttonTap(button: "delete_record", screen: analyticsScreenName))
         let alert = UIAlertController(
             title: "기록 삭제",
             message: "이 기록을 삭제하시겠습니까?",
@@ -490,6 +492,7 @@ public final class EditFoodRecordViewController: UIViewController, UIGestureReco
     }
 
     @objc private func saveButtonTapped() {
+        Analytics.track(.buttonTap(button: "save_record", screen: analyticsScreenName))
         viewModel.input.send(.save)
     }
 
@@ -505,3 +508,6 @@ public final class EditFoodRecordViewController: UIViewController, UIGestureReco
     }
 }
 
+extension EditFoodRecordViewController: AnalyticsScreen {
+    public var analyticsScreenName: String { "edit_record" }
+}

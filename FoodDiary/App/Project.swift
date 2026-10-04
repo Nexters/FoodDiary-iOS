@@ -55,10 +55,11 @@ let project = Project(
             ],
             settings: .settings(
                 base: [
-                    "MARKETING_VERSION": "1.1.0",
+                    "MARKETING_VERSION": "1.2.0",
                     "CURRENT_PROJECT_VERSION": "26050725",
                     "BASE_URL": "$(BASE_URL)",
                     "SENTRY_DSN": "$(SENTRY_DSN)",
+                    "MIXPANEL_TOKEN": "$(MIXPANEL_TOKEN)",
                     "TARGETED_DEVICE_FAMILY": "1"
                 ],
                 configurations: []
